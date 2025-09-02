@@ -1,0 +1,9 @@
+techtemplate_name: ${techtemplate.name}
+
+# Version Info
+${techtemplate.name}_rel_version: ${project.version}
+${techtemplate.name}_api_version: ${techtemplate.api.version}
+
+# Heap Memory Details
+${techtemplate.name}_xms: -Xms${docker.runtime.jms}
+${techtemplate.name}_xmx: -Xmx${docker.runtime.jmx}

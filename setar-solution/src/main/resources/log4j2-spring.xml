@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <properties>
+        <!--<property name="NEID">UIV-FRAMEWORK</property>-->
+        <property name="NEID">${env:SERVICE_NAME}</property>
+        <property name="HOST">${env:HOSTNAME}</property>
+        <property name="SYSTEM">UIV</property>
+        <property name="TYPE">log</property>
+        <property name="TIMEZONE">${sys:TZ:-UTC}</property>
+    </properties>
+    <CustomLevels>
+        <CustomLevel name="AUDIT" intLevel="150" />
+    </CustomLevels>
+    <Appenders>
+        <Console name="csf-logging" target="SYSTEM_OUT">
+            <PatternLayout alwaysWriteExceptions="true" pattern=
+                    "{&quot;type&quot;:&quot;${TYPE}&quot;,
+&quot;host&quot;:&quot;${HOST}&quot;,
+&quot;level&quot;:&quot;%level{TRACE=INFO, FATAL=CRIT}&quot;,
+&quot;neid&quot;:&quot;${NEID}&quot;,
+&quot;system&quot;:&quot;${SYSTEM}&quot;,
+&quot;time&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}{UTC}&quot;,
+&quot;timezone&quot;:&quot;${TIMEZONE}&quot;,
+&quot;classname&quot;:&quot;%C&quot;,
+&quot;threadname&quot;:&quot;%t&quot;,
+&quot;log&quot;:&quot;%enc{%message}{JSON}&quot;}\n" />
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="csf-logging"/>
+        </Root>
+    </Loggers>
+</Configuration>

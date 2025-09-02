@@ -1,0 +1,18 @@
+package com.nokia.nsw.uiv.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+public class ChangeStateResponse {
+    private String status;
+    private String message;
+    private String timestamp;
+    private String cbmName;
+    private String ontName;
+    private String subscriptionId;
+}
+
