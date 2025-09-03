@@ -19,6 +19,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.request.DeleteCBMRequest;
 import com.nokia.nsw.uiv.response.DeleteCBMResponse;
+import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.Product;
 import com.setar.uiv.model.product.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +62,12 @@ public class DeleteCBM implements HttpAction {
 
         DeleteCBMRequest request = (DeleteCBMRequest) actionContext.getObject();
 
+        // 1. Validate mandatory params
+        Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+        Validations.validateMandatoryParams(request.getProductType(), "productType");
+        Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
+        Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
+        Validations.validateMandatoryParams(request.getServiceFlag(), "serviceFlag");
 
         String subscriptionName = request.getSubscriberName() + request.getServiceId();
         String cfsName = "CFS" + subscriptionName;

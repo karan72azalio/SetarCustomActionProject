@@ -35,6 +35,7 @@ public class CreateServiceCBMRequest {
     private String subsAddress;
     private String userName;
     private String fxOrderID;
+    private String hhid;
     private String customerGroupId;
     private String subscriberId;
     private String servicePackage;

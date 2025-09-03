@@ -13,8 +13,10 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.request.CreateServiceFibernetRequest;
+import com.nokia.nsw.uiv.response.ChangeStateResponse;
 import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.utils.Constants;
+import com.nokia.nsw.uiv.utils.MandatoryParamMissingResponse;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.*;
 import lombok.extern.slf4j.Slf4j;
@@ -67,11 +69,16 @@ public class CreateServiceFibernet implements HttpAction {
 
         try {
             // 1. Validate mandatory params
-            Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
-            Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
-            Validations.validateMandatoryParams(request.getOntSN(), "ontSN");
-            Validations.validateMandatoryParams(request.getProductType(), "productType");
-            Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
+            try{
+                Validations.validateMandatory(request.getSubscriberName(), "subscriberName");
+                Validations.validateMandatory(request.getServiceID(), "serviceID");
+                Validations.validateMandatory(request.getOntSN(), "ontSN");
+                Validations.validateMandatory(request.getProductType(), "productType");
+                Validations.validateMandatory(request.getProductSubtype(), "productSubtype");
+            }catch (BadRequestException bre) {
+                return new MandatoryParamMissingResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString(), bre.getMessage());
+            }
             // optional: template names etc.
 
             // Build canonical names
@@ -255,6 +262,9 @@ public class CreateServiceFibernet implements HttpAction {
                     logicalInterfaceRepository.save(vlan, 2);
                     log.info("Created VLAN interface: {}", vlanGdn);
                 }
+            }
+            if(ontDevice!=null){
+                ontDevice.setContainingLogicalDevice(oltDevice);
             }
 
             // 10. Link RFS -> ONT or OLT (if model supports linking via properties)

@@ -18,6 +18,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.request.ChangeStateRequest;
 import com.nokia.nsw.uiv.response.ChangeStateResponse;
 
+import com.nokia.nsw.uiv.utils.MandatoryParamMissingResponse;
 import com.setar.uiv.model.product.ResourceFacingService;
 import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -65,8 +66,8 @@ public class ChangeState implements HttpAction {
             validateMandatory(req.getServiceId(), "serviceId");
             validateMandatory(req.getActionType(), "actionType");
         } catch (BadRequestException bre) {
-            return new ChangeStateResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                    java.time.Instant.now().toString(), "", "", "");
+            return new MandatoryParamMissingResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                    java.time.Instant.now().toString(), bre.getMessage());
         }
 
         // 2. Prepare names based on product type and service link

@@ -18,4 +18,8 @@ public class Validations {
             throw new BadRequestException(errorMsg);
         }
     }
+
+    public static void validateMandatory(String val, String name) throws BadRequestException {
+        if (val == null || val.trim().isEmpty()) throw new BadRequestException(name);
+    }
 }

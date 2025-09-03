@@ -16,6 +16,7 @@ import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.request.CreateServiceCBMRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.utils.Constants;
+import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.Product;
@@ -62,7 +63,9 @@ public class CreateServiceCBM implements HttpAction {
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
         CreateServiceCBMRequest request = (CreateServiceCBMRequest) actionContext.getObject();
-
+        // 1. Validate mandatory params
+        Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+        Validations.validateMandatoryParams(request.getProductType(), "productType");
 
 
         // --- 2. Subscriber Logic ---
@@ -160,6 +163,7 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("subscriberID_CableModem", request.getSubscriberId());
                     prop.put("servicePackage", request.getServicePackage());
                     prop.put("kenanSubscriberId", request.getKenanUidNo());
+                    prop.put("hhid",request.getHhid());
                     sub.setCustomer(subscriber);
                     sub.setProperties(prop);
                     subscriptionRepository.save(sub, 2);
