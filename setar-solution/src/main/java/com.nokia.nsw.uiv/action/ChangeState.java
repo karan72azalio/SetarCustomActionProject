@@ -1,12 +1,10 @@
 package com.nokia.nsw.uiv.action;
 
 import com.nokia.nsw.uiv.exception.BadRequestException;
-import com.nokia.nsw.uiv.exception.InternalServerErrorException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 
-import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 
 import com.nokia.nsw.uiv.model.service.Subscription;
@@ -18,7 +16,6 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.request.ChangeStateRequest;
 import com.nokia.nsw.uiv.response.ChangeStateResponse;
 
-import com.nokia.nsw.uiv.utils.MandatoryParamMissingResponse;
 import com.setar.uiv.model.product.ResourceFacingService;
 import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
 import java.util.Optional;
 
 @Component

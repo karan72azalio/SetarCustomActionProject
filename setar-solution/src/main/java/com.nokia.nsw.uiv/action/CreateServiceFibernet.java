@@ -13,10 +13,8 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.request.CreateServiceFibernetRequest;
-import com.nokia.nsw.uiv.response.ChangeStateResponse;
 import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.utils.Constants;
-import com.nokia.nsw.uiv.utils.MandatoryParamMissingResponse;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.*;
 import lombok.extern.slf4j.Slf4j;
@@ -76,8 +74,8 @@ public class CreateServiceFibernet implements HttpAction {
                 Validations.validateMandatory(request.getProductType(), "productType");
                 Validations.validateMandatory(request.getProductSubtype(), "productSubtype");
             }catch (BadRequestException bre) {
-                return new MandatoryParamMissingResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        java.time.Instant.now().toString(), bre.getMessage());
+                return new CreateServiceFibernetResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString(), "","");
             }
             // optional: template names etc.
 
