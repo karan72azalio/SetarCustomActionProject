@@ -163,6 +163,7 @@ public class CreateServiceFibernet implements HttpAction {
                 prodProps.put("productType", request.getProductType());
                 prodProps.put("productSubtype", request.getProductSubtype());
                 product.setProperties(prodProps);
+                product.setSubscription(subscription);
                 productRepository.save(product, 2);
                 log.info("Created product: {}", productGdn);
             }
@@ -262,9 +263,6 @@ public class CreateServiceFibernet implements HttpAction {
                     logicalInterfaceRepository.save(vlan, 2);
                     log.info("Created VLAN interface: {}", vlanGdn);
                 }
-            }
-            if(ontDevice!=null){
-                ontDevice.setContainingLogicalDevice(oltDevice);
             }
 
             // 10. Link RFS -> ONT or OLT (if model supports linking via properties)
