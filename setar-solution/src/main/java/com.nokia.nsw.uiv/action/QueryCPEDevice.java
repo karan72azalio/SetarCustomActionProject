@@ -1,11 +1,13 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.request.QueryCPEDeviceRequest;
+import com.nokia.nsw.uiv.response.ChangeStateResponse;
 import com.nokia.nsw.uiv.response.QueryCPEDeviceResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,8 @@ public class QueryCPEDevice implements HttpAction {
 
     @Autowired
     private LogicalDeviceRepository cpeDeviceRepository;
+    private static final String ERROR_PREFIX = "UIV action QueryDevice execution failed - ";
+
 
     @Override
     public Class getActionClass() {
@@ -29,6 +33,16 @@ public class QueryCPEDevice implements HttpAction {
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
         QueryCPEDeviceRequest request = (QueryCPEDeviceRequest) actionContext.getObject();
+
+        // 1. Mandatory validation
+        try {
+            validateMandatory(request.getResourceSN(), "resourceSN");
+            validateMandatory(request.getResourceType(), "resourceType");
+        } catch (BadRequestException bre) {
+            return new QueryCPEDeviceResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                    java.time.Instant.now().toString());
+        }
+
         String resourceType = request.getResourceType();
         if ("Cable_Modem".equalsIgnoreCase(resourceType)) {
             resourceType = "CBM";
@@ -38,14 +52,14 @@ public class QueryCPEDevice implements HttpAction {
         Optional<LogicalDevice> deviceOpt = cpeDeviceRepository.uivFindByGdn(devName);
 
         if (!deviceOpt.isPresent()) {
-            return new QueryCPEDeviceResponse("404", "CPE Details Not Found", System.currentTimeMillis());
+            return new QueryCPEDeviceResponse("404", "CPE Details Not Found", String.valueOf(System.currentTimeMillis()));
         }
 
         LogicalDevice device = deviceOpt.get();
         QueryCPEDeviceResponse response = new QueryCPEDeviceResponse();
         response.setStatus("200");
         response.setMessage("CPE Details Found.");
-        response.setTimestamp(System.currentTimeMillis());
+        response.setTimestamp(String.valueOf(System.currentTimeMillis()));
 
         response.setResourceModel((String) device.getProperties().get("deviceModel"));
         response.setResourceModelMTA((String) device.getProperties().get("deviceModelMta"));
@@ -73,12 +87,26 @@ public class QueryCPEDevice implements HttpAction {
             response.setResourceModelSubtype("GPON");
             for (int portNumber = 1; portNumber <= 5; portNumber++) {
                 String portName = request.getResourceSN() + "_P" + portNumber + "_SINGLETAGGED";
-//                 int vlanCount = cpeDeviceRepository.countVlanInterfaces(portName, portNumber);
-//                 String dataPortStatus = vlanCount <= 7 ? "Available" : "Allocated";
-//                 response.setDataPortStatus(portNumber, dataPortStatus);
+//                int vlanCount = cpeDeviceRepository.countVlanInterfaces(portName, portNumber);
+//                String dataPortStatus = vlanCount <= 7 ? "Available" : "Allocated";
+//                response.setDataPortStatus(portNumber, dataPortStatus);
             }
+
         }
 
         return response;
     }
+    private void validateMandatory(String val, String name) throws BadRequestException {
+        if (val == null || val.trim().isEmpty()) throw new BadRequestException(name);
+    }
+
+    private boolean isEmpty(String s) { return s == null || s.trim().isEmpty(); }
+
+    private boolean equalsAny(String s, String... opts) {
+        if (s == null) return false;
+        for (String o : opts) if (o != null && s.equalsIgnoreCase(o)) return true;
+        return false;
+    }
+
+    private String nullSafe(String s) { return s == null ? "" : s; }
 }

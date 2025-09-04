@@ -8,7 +8,7 @@ import lombok.Setter;
 public class QueryCPEDeviceResponse {
     private String status;
     private String message;
-    private long timestamp;
+    private String timestamp;
     private String resourceModel;
     private String resourceModelMTA;
     private String resourceGWMac;
@@ -48,7 +48,7 @@ public class QueryCPEDeviceResponse {
         }
     }
 
-    public QueryCPEDeviceResponse(String status, String message, long timestamp) {
+    public QueryCPEDeviceResponse(String status, String message, String timestamp) {
         this.status = status;
         this.message = message;
         this.timestamp = timestamp;
