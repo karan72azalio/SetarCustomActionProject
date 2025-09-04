@@ -15,6 +15,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.request.CreateServiceCBMRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
+import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.CustomerFacingService;
@@ -64,8 +65,14 @@ public class CreateServiceCBM implements HttpAction {
     public Object doPost(ActionContext actionContext) throws Exception {
         CreateServiceCBMRequest request = (CreateServiceCBMRequest) actionContext.getObject();
         // 1. Validate mandatory params
-        Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
-        Validations.validateMandatoryParams(request.getProductType(), "productType");
+        try{
+            Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+            Validations.validateMandatoryParams(request.getProductType(), "productType");
+        }catch (BadRequestException bre) {
+            return new CreateServiceFibernetResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                    java.time.Instant.now().toString(), "","");
+        }
+
 
 
         // --- 2. Subscriber Logic ---

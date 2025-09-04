@@ -17,6 +17,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.request.ImportCPEDeviceRequest;
+import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.response.ImportCPEDeviceResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ImportCPEDevice implements HttpAction {
 
     protected static final String ACTION_LABEL = Constants.IMPORT_CPE_DEVICE;
+    private static final String ERROR_PREFIX = "UIV action CreateServiceFibernet execution failed - ";
 
     @Autowired
     private LogicalDeviceRepository cpeDeviceRepository;
@@ -55,12 +57,16 @@ public class ImportCPEDevice implements HttpAction {
 
         try {
             log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
-
-            Validations.validateMandatoryParams(request.getCpeSerialNo(), "cpeSerialNo");
-            Validations.validateMandatoryParams(request.getCpeModel(), "cpeModel");
-            Validations.validateMandatoryParams(request.getCpeType(), "cpeType");
-            Validations.validateMandatoryParams(request.getCpeMacAddress(), "cpeMacAddress");
-            Validations.validateMandatoryParams(request.getCpeGwMacAddress(), "cpeGwMacAddress");
+            try{
+                Validations.validateMandatoryParams(request.getCpeSerialNo(), "cpeSerialNo");
+                Validations.validateMandatoryParams(request.getCpeModel(), "cpeModel");
+                Validations.validateMandatoryParams(request.getCpeType(), "cpeType");
+                Validations.validateMandatoryParams(request.getCpeMacAddress(), "cpeMacAddress");
+                Validations.validateMandatoryParams(request.getCpeGwMacAddress(), "cpeGwMacAddress");
+            }catch (BadRequestException bre) {
+                return new ImportCPEDeviceResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString());
+            }
 
             log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
