@@ -168,7 +168,7 @@ public class DeleteCBM implements HttpAction {
                 subscriberRepository.findById(subscriberName).ifPresent(subscriberRepository::delete);
             }
 
-            return new DeleteCBMResponse("200", "SPR objects Deleted", java.time.Instant.now().toString(),
+            return new DeleteCBMResponse("200", "CBM objects Deleted", java.time.Instant.now().toString(),
                     cbmName, subscriptionName);
 
         } catch (Exception e) {
