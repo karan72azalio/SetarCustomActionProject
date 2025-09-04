@@ -69,7 +69,7 @@ public class CreateServiceCBM implements HttpAction {
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
         }catch (BadRequestException bre) {
-            return new CreateServiceFibernetResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+            return new CreateServiceCBMResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                     java.time.Instant.now().toString(), "","");
         }
 
