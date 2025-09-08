@@ -84,7 +84,7 @@ public class ImportCPEDevice implements HttpAction {
                 cpeDevice = new LogicalDevice();
                 cpeDevice.setLocalName(devName);
                 cpeDevice.setKind(Constants.SETAR_KIND_CPE_DEVICE);
-
+                cpeDevice.setContext("NA");
                 Map<String, Object> properties = new HashMap<>();
                 properties.put("name", devName);
                 properties.put("serialNo", request.getCpeSerialNo());
@@ -148,7 +148,7 @@ public class ImportCPEDevice implements HttpAction {
             potsPort.setLocalName(portName);
             potsPort.setKind(Constants.SETAR_KIND_CPE_PORT);
             potsPort.setDescription("Voice Port");
-
+potsPort.setContext("NA");
             Map<String, Object> properties = new HashMap<>();
             properties.put("portName", portName);
             properties.put("serialNumber", serialNo);
@@ -179,7 +179,7 @@ public class ImportCPEDevice implements HttpAction {
             ethPort.setLocalName(portName);
             ethPort.setKind(Constants.SETAR_KIND_CPE_PORT);
             ethPort.setDescription("Data Port");
-
+ethPort.setContext("NA");
             Map<String, Object> properties = new HashMap<>();
             properties.put("portName", portName);
             properties.put("serialNumber", serialNo);
@@ -203,6 +203,7 @@ public class ImportCPEDevice implements HttpAction {
                     LogicalInterface vlan = new LogicalInterface();
                     vlan.setLocalName(vlanName);
                     vlan.setKind(Constants.SETAR_KIND_VLAN_INTERFACE);
+                    vlan.setContext("NA");
                     vlan.setDescription("VLAN Interface for " + portName);
 
                     Map<String, Object> vlanProps = new HashMap<>();

@@ -156,6 +156,11 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
+                    try {
+                        sub.setContext("NA");
+                    } catch (BadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
                     Map<String, Object> prop = new HashMap<>();
 
                     prop.put("subscriptionStatus", "Active");
@@ -198,6 +203,11 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
+                    try {
+                        p.setContext("NA");
+                    } catch (BadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
                     p.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
@@ -223,6 +233,11 @@ public class CreateServiceCBM implements HttpAction {
                     try {
                         c.setKind(Constants.SETAR_KIND_SETAR_CFS);
                     } catch (ModificationNotAllowedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        c.setContext("NA");
+                    } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
                     c.setType(request.getProductType());
@@ -253,6 +268,11 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
+                    try {
+                        r.setContext("NA");
+                    } catch (BadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
                     r.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
@@ -281,6 +301,11 @@ public class CreateServiceCBM implements HttpAction {
                     try {
                         d.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
                     } catch (ModificationNotAllowedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        d.setContext("NA");
+                    } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> deviceProps = new HashMap<>();

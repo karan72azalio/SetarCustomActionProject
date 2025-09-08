@@ -111,6 +111,7 @@ public class CreateServiceFibernet implements HttpAction {
                 subscriber = new Customer();
                 subscriber.setLocalName(subscriberGdn);
                 subscriber.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER); // if you have a constant
+                subscriber.setContext("NA");
                 Map<String, Object> custProps = new HashMap<>();
                 custProps.put("accountNumber", request.getSubscriberName());
                 if (request.getFirstName() != null) custProps.put("subscriberFirstName", request.getFirstName());
@@ -134,6 +135,7 @@ public class CreateServiceFibernet implements HttpAction {
                 subscription = new Subscription();
                 subscription.setLocalName(subscriptionGdn);
                 subscription.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
+                subscription.setContext("NA");
                 Map<String, Object> subProps = new HashMap<>();
                 subProps.put("serviceSubType", request.getProductSubtype());
                 subProps.put("serviceLink", "ONT");
@@ -157,6 +159,7 @@ public class CreateServiceFibernet implements HttpAction {
                 product = new Product();
                 product.setLocalName(productGdn);
                 product.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
+                product.setContext("NA");
                 Map<String, Object> prodProps = new HashMap<>();
                 prodProps.put("productType", request.getProductType());
                 prodProps.put("productSubtype", request.getProductSubtype());
@@ -176,6 +179,7 @@ public class CreateServiceFibernet implements HttpAction {
                 cfs = new CustomerFacingService();
                 cfs.setLocalName(cfsGdn);
                 cfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
+                cfs.setContext("NA");
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStartDate", Instant.now().toString());
                 if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
@@ -195,6 +199,7 @@ public class CreateServiceFibernet implements HttpAction {
                 rfs = new ResourceFacingService();
                 rfs.setLocalName(rfsGdn);
                 rfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
+                rfs.setContext("NA");
                 Map<String, Object> rfsProps = new HashMap<>();
                 rfsProps.put("status", "Active");
                 if (request.getFxOrderID() != null) rfsProps.put("transactionId", request.getFxOrderID());
@@ -215,6 +220,7 @@ public class CreateServiceFibernet implements HttpAction {
                     oltDevice = new LogicalDevice();
                     oltDevice.setLocalName(oltGdn);
                     oltDevice.setKind(Constants.SETAR_KIND_OLT_DEVICE);
+                    oltDevice.setContext("NA");
                     Map<String, Object> props = new HashMap<>();
                     props.put("localName", oltGdn);
                     if (request.getTemplateNameVEIP() != null) props.put("veipServiceTemplate", request.getTemplateNameVEIP());
@@ -235,6 +241,7 @@ public class CreateServiceFibernet implements HttpAction {
                 ontDevice = new LogicalDevice();
                 ontDevice.setLocalName(ontGdn);
                 ontDevice.setKind(Constants.SETAR_KIND_ONT_DEVICE);
+                ontDevice.setContext("NA");
                 Map<String, Object> ontProps = new HashMap<>();
                 ontProps.put("serialNo", request.getOntSN());
                 if (request.getOntModel() != null) ontProps.put("deviceModel", request.getOntModel());
@@ -254,6 +261,7 @@ public class CreateServiceFibernet implements HttpAction {
                     LogicalInterface vlan = new LogicalInterface();
                     vlan.setLocalName(vlanGdn);
                     vlan.setKind(Constants.SETAR_KIND_VLAN_INTERFACE);
+                    vlan.setContext("NA");
                     Map<String, Object> vlanProps = new HashMap<>();
                     vlanProps.put("vlanId", request.getVlanID());
                     vlanProps.put("serviceId", request.getServiceID());
