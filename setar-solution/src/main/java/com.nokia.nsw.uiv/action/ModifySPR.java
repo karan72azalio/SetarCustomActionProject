@@ -67,7 +67,7 @@ public class ModifySPR implements HttpAction {
             log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             // 2. Name Construction
-            String subscriberName = request.getSubscriberName() + "_" + request.getOntSN();
+            String subscriberName = request.getSubscriberName();
             String subscriptionName = request.getSubscriberName() + request.getServiceId() + request.getOntSN();
             String ontName = "ONT" + request.getOntSN();
 
@@ -75,7 +75,7 @@ public class ModifySPR implements HttpAction {
                 throw new BadRequestException("ONT name too long");
             }
 
-            // 3. Fetch Required Entities
+// 3. Fetch Required Entities
             Optional<LogicalDevice> optSubscriber = logicalDeviceRepository.uivFindByGdn(subscriberName);
             if (!optSubscriber.isPresent()) {
                 throw new BadRequestException("Object with name \"" + subscriberName + "\" not found");
@@ -87,6 +87,7 @@ public class ModifySPR implements HttpAction {
                 throw new BadRequestException("Subscription not found");
             }
             LogicalComponent subscription = optSubscription.get();
+
 
             // 4. Modify Logic for Fibernet/Broadband
             if ("Fibernet".equalsIgnoreCase(request.getProductType()) || "Broadband".equalsIgnoreCase(request.getProductType())) {
@@ -146,24 +147,33 @@ public class ModifySPR implements HttpAction {
                     success = true;
 
                 } else if ("Password".equalsIgnoreCase(request.getModifyType())) {
-                    Map<String, Object> subrProps = subscriber.getProperties();
-                    subrProps.put("email_pwd", request.getModifyParam1());
-                    subscriber.setProperties(subrProps);
-                    logicalDeviceRepository.save(subscriber, 2);
-                    success = true;
-
-
-                } else if (List.of("Package", "Component", "Product", "Contract").contains(request.getModifyType())) {
-                    Map<String, Object> subProps = subscription.getProperties();
-                    if ("Cloudstarter".equalsIgnoreCase(request.getProductSubtype()) || "Bridged".equalsIgnoreCase(request.getProductSubtype())) {
-                        subProps.put("evpnQosSessionProfile", request.getModifyParam1());
-                    } else {
-                        subProps.put("veipQosSessionProfile", request.getModifyParam1());
+                    try {
+                        Map<String, Object> subrProps = subscriber.getProperties();
+                        subrProps.put("email_pwd", request.getModifyParam1());
+                        subscriber.setProperties(subrProps);
+                        logicalDeviceRepository.save(subscriber, 2);
+                        success = true;
+                    } catch (Exception e) {
+                        throw new ModificationNotAllowedException("Failed to persist password update"+e.getMessage());
                     }
-                    subscription.setProperties(subProps);
-                    logicalComponentRepository.save(subscription, 2);
-                    success = true;
                 }
+
+                else if (List.of("Package", "Component", "Product", "Contract").contains(request.getModifyType())) {
+                    Map<String, Object> subProps = subscription.getProperties();
+                    try {
+                        if ("Cloudstarter".equalsIgnoreCase(request.getProductSubtype()) || "Bridged".equalsIgnoreCase(request.getProductSubtype())) {
+                            subProps.put("evpnQosSessionProfile", request.getModifyParam1());
+                        } else {
+                            subProps.put("veipQosSessionProfile", request.getModifyParam1());
+                        }
+                        subscription.setProperties(subProps);
+                        logicalComponentRepository.save(subscription, 2);
+                        success = true;
+                    } catch (Exception e) {
+                    throw new ModificationNotAllowedException("Failed to update QoS profile "+e.getMessage());
+                }
+
+            }
             }
 
             // 5. Modify Logic for EVPN/ENTERPRISE
@@ -215,25 +225,36 @@ public class ModifySPR implements HttpAction {
                     success = true;
 
                 } else if ("Component".equalsIgnoreCase(request.getModifyType())) {
-                    Map<String, Object> subProps = subscription.getProperties();
-                    subProps.put("evpnQosSessionProfile", request.getModifyParam1());
-                    subscription.setProperties(subProps);
-                    logicalComponentRepository.save(subscription, 2);
-                    success = true;
+                    try {
+                        Map<String, Object> subProps = subscription.getProperties();
+                        subProps.put("evpnQosSessionProfile", request.getModifyParam1());
+                        subscription.setProperties(subProps);
+                        logicalComponentRepository.save(subscription, 2);
+                        success=true;
+                    } catch (Exception e) {
+                        throw new ModificationNotAllowedException("Failed to update EVPN component "+ e);
+                    }
+
                 }
             }
 
             // 6. Modify Logic for VOIP/Voice
             else if ("VOIP".equalsIgnoreCase(request.getProductType()) || "Voice".equalsIgnoreCase(request.getProductType())) {
-                if (List.of("Package", "Product").contains(request.getModifyType())) {
-                    Map<String, Object> subProps = subscription.getProperties();
-                    subProps.put("voipPackage1", request.getModifyParam1());
-                    subProps.put("voipServiceCode1", request.getModifyParam2());
-                    subscription.setProperties(subProps);
-                    logicalComponentRepository.save(subscription, 2);
-                    success = true;
+                try {
+                    if (List.of("Package", "Product").contains(request.getModifyType())) {
+                        Map<String, Object> subProps = subscription.getProperties();
+                        subProps.put("voipPackage1", request.getModifyParam1());
+                        subProps.put("voipServiceCode1", request.getModifyParam2());
+                        subscription.setProperties(subProps);
+                        logicalComponentRepository.save(subscription, 2);
+                        success = true;
+                    }
+                } catch (Exception e) {
+                    throw new ModificationNotAllowedException("Failed to update VoIP package "+e.getMessage());
+                }
 
                 } else if ("Modify_Number".equalsIgnoreCase(request.getModifyType())) {
+                try {
                     Map<String, Object> subProps = subscription.getProperties();
                     subProps.put("serviceID", request.getModifyParam1());
                     subscription.setProperties(subProps);
@@ -277,8 +298,11 @@ public class ModifySPR implements HttpAction {
                     logicalDeviceRepository.save(ont, 2);
                     logicalComponentRepository.save(subscription, 2);
                     success = true;
+                } catch (Exception e) {
+                    throw new ModificationNotAllowedException("Failed to modify VOIP number: "+e.getMessage());
                 }
-            }
+                }
+
 
             // 7. Modify Logic for ONT
             else if ("Modify_ONT".equalsIgnoreCase(request.getModifyType()) || "ONT".equalsIgnoreCase(request.getModifyType())) {
@@ -303,7 +327,7 @@ public class ModifySPR implements HttpAction {
 
                 Map<String, Object> ontProps = ont.getProperties();
                 ontProps.put("serialNo", request.getModifyParam1());
-                ont.setLocalName("ONT" + request.getModifyParam1());
+                ont.setLocalName("resourceName " + request.getModifyParam1());
                 ont.setProperties(ontProps);
 
                 List<LogicalInterface> allIfaces = (List<LogicalInterface>) logicalInterfaceRepository.findAll();
@@ -313,6 +337,9 @@ public class ModifySPR implements HttpAction {
                         String newVlanName = vlan.getLocalName().replace(request.getOntSN(), request.getModifyParam1());
                         vlan.setLocalName(newVlanName);
                         logicalInterfaceRepository.save(vlan, 2); // depth 2 to persist relationships
+                    }
+                    else{
+                        System.out.println("ONT update failed");
                     }
                 }
 
