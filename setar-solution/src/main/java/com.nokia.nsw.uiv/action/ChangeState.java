@@ -86,20 +86,20 @@ public class ChangeState implements HttpAction {
                 && !isEmpty(serviceLink)) {
 
             if (serviceLink.equalsIgnoreCase("ONT")) {
-                subscriptionName = req.getSubscriberName() + req.getServiceId() + nullSafe(req.getOntSN());
-                rfsName = "RFS_" + req.getSubscriberName() + req.getServiceId() + nullSafe(req.getOntSN());
+                subscriptionName = req.getSubscriberName() + "_" + req.getServiceId()+ "_" + nullSafe(req.getOntSN());
+                rfsName = "RFS_" + req.getSubscriberName()+ "_" + req.getServiceId() + "_" + nullSafe(req.getOntSN());
             } else { // Cable_Modem
-                subscriptionName = req.getSubscriberName() + req.getServiceId();
+                subscriptionName = req.getSubscriberName() +"_" + req.getServiceId();
                 rfsName = "RFS" + req.getSubscriberName() + "_" + req.getServiceId();
             }
         }
         // fallback when ontSN present
         else if (!isEmpty(req.getOntSN())) {
-            subscriptionName = req.getSubscriberName() + req.getServiceId() + req.getOntSN();
-            rfsName = "RFS_" + req.getSubscriberName() + req.getServiceId() + req.getOntSN();
+            subscriptionName = req.getSubscriberName()+ "_" + req.getServiceId()+ "_" + req.getOntSN();
+            rfsName = "RFS_" + req.getSubscriberName()+ "_" + req.getServiceId()+ "_" + req.getOntSN();
         } else {
             // default fallback: subscriber + serviceId
-            subscriptionName = req.getSubscriberName() + req.getServiceId();
+            subscriptionName = req.getSubscriberName()+ "_" + req.getServiceId();
             rfsName = "RFS_" + subscriptionName;
         }
 

@@ -117,6 +117,11 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
+                    try {
+                        s.setContext("NA");
+                    } catch (BadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
                     s.setType("Regular");
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("accountNumber", request.getSubscriberName());
