@@ -22,4 +22,13 @@ public class Validations {
     public static void validateMandatory(String val, String name) throws BadRequestException {
         if (val == null || val.trim().isEmpty()) throw new BadRequestException(name);
     }
+
+    public static boolean equalsAny(String data, String ...args){
+        for(String arg:args){
+            if(data.equalsIgnoreCase(arg)){
+                return true;
+            }
+        }
+        return false;
+    }
 }
