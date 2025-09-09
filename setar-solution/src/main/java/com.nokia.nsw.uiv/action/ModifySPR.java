@@ -10,12 +10,16 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.common.party.Customer;
+import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponent;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponentRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
+import com.nokia.nsw.uiv.model.service.Subscription;
+import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.request.ModifySPRRequest;
 import com.nokia.nsw.uiv.response.ModifySPRResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -38,10 +42,16 @@ public class ModifySPR implements HttpAction {
     private LogicalDeviceRepository logicalDeviceRepository;
 
     @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
     private LogicalComponentRepository logicalComponentRepository;
 
     @Autowired
     private LogicalInterfaceRepository logicalInterfaceRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     @Override
     public Class getActionClass() {
@@ -67,8 +77,8 @@ public class ModifySPR implements HttpAction {
             log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             // 2. Name Construction
-            String subscriberName = request.getSubscriberName();
-            String subscriptionName = request.getSubscriberName() + request.getServiceId() + request.getOntSN();
+            String subscriberName = request.getSubscriberName() + "_" + request.getOntSN();
+            String subscriptionName = request.getSubscriberName() + "_" + request.getServiceId() + "_" + request.getOntSN();
             String ontName = "ONT" + request.getOntSN();
 
             if (ontName.length() > 100) {
@@ -76,17 +86,17 @@ public class ModifySPR implements HttpAction {
             }
 
 // 3. Fetch Required Entities
-            Optional<LogicalDevice> optSubscriber = logicalDeviceRepository.uivFindByGdn(subscriberName);
+            Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberName);
             if (!optSubscriber.isPresent()) {
                 throw new BadRequestException("Object with name \"" + subscriberName + "\" not found");
             }
-            LogicalDevice subscriber = optSubscriber.get();
+            Customer subscriber = optSubscriber.get();
 
-            Optional<LogicalComponent> optSubscription = logicalComponentRepository.uivFindByGdn(subscriptionName);
+            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
             if (!optSubscription.isPresent()) {
                 throw new BadRequestException("Subscription not found");
             }
-            LogicalComponent subscription = optSubscription.get();
+            Subscription subscription = optSubscription.get();
 
 
             // 4. Modify Logic for Fibernet/Broadband
@@ -142,8 +152,8 @@ public class ModifySPR implements HttpAction {
                         subscription.setLocalName(subscriptionNameNew);
                     }
 
-                    logicalComponentRepository.save(subscription, 2);
-                    logicalDeviceRepository.save(subscriber, 2);
+                    subscriptionRepository.save(subscription, 2);
+                    customerRepository.save(subscriber, 2);
                     success = true;
 
                 } else if ("Password".equalsIgnoreCase(request.getModifyType())) {
@@ -151,7 +161,7 @@ public class ModifySPR implements HttpAction {
                         Map<String, Object> subrProps = subscriber.getProperties();
                         subrProps.put("email_pwd", request.getModifyParam1());
                         subscriber.setProperties(subrProps);
-                        logicalDeviceRepository.save(subscriber, 2);
+                        customerRepository.save(subscriber, 2);
                         success = true;
                     } catch (Exception e) {
                         throw new ModificationNotAllowedException("Failed to persist password update"+e.getMessage());
@@ -167,7 +177,7 @@ public class ModifySPR implements HttpAction {
                             subProps.put("veipQosSessionProfile", request.getModifyParam1());
                         }
                         subscription.setProperties(subProps);
-                        logicalComponentRepository.save(subscription, 2);
+                        subscriptionRepository.save(subscription, 2);
                         success = true;
                     } catch (Exception e) {
                     throw new ModificationNotAllowedException("Failed to update QoS profile "+e.getMessage());
@@ -221,7 +231,7 @@ public class ModifySPR implements HttpAction {
                         subscription.setLocalName(subscriptionNameNew);
                     }
 
-                    logicalComponentRepository.save(subscription, 2);
+                    subscriptionRepository.save(subscription, 2);
                     success = true;
 
                 } else if ("Component".equalsIgnoreCase(request.getModifyType())) {
@@ -229,7 +239,7 @@ public class ModifySPR implements HttpAction {
                         Map<String, Object> subProps = subscription.getProperties();
                         subProps.put("evpnQosSessionProfile", request.getModifyParam1());
                         subscription.setProperties(subProps);
-                        logicalComponentRepository.save(subscription, 2);
+                        subscriptionRepository.save(subscription, 2);
                         success=true;
                     } catch (Exception e) {
                         throw new ModificationNotAllowedException("Failed to update EVPN component "+ e);
@@ -246,7 +256,7 @@ public class ModifySPR implements HttpAction {
                         subProps.put("voipPackage1", request.getModifyParam1());
                         subProps.put("voipServiceCode1", request.getModifyParam2());
                         subscription.setProperties(subProps);
-                        logicalComponentRepository.save(subscription, 2);
+                        subscriptionRepository.save(subscription, 2);
                         success = true;
                     }
                 } catch (Exception e) {
@@ -296,7 +306,7 @@ public class ModifySPR implements HttpAction {
                     }
 
                     logicalDeviceRepository.save(ont, 2);
-                    logicalComponentRepository.save(subscription, 2);
+                    subscriptionRepository.save(subscription, 2);
                     success = true;
                 } catch (Exception e) {
                     throw new ModificationNotAllowedException("Failed to modify VOIP number: "+e.getMessage());
