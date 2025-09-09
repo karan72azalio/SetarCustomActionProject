@@ -61,6 +61,7 @@ public class DeleteCBM implements HttpAction {
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
         log.info("Executing action {}", ACTION_LABEL);
+        String context = "";
 
         DeleteCBMRequest request = (DeleteCBMRequest) actionContext.getObject();
 
@@ -76,11 +77,11 @@ public class DeleteCBM implements HttpAction {
                     java.time.Instant.now().toString(), "","");
         }
 
-        String subscriptionName = request.getSubscriberName() + request.getServiceId();
-        String cfsName = "CFS" + subscriptionName;
-        String rfsName = "RFS_" + subscriptionName;
-        String productName = request.getSubscriberName() + request.getProductSubtype() + request.getServiceId();
-        String cbmName = "CBM" + request.getCbmSN();
+        String subscriptionName = request.getSubscriberName()+Constants.UNDER_SCORE + request.getServiceId();
+        String cfsName = "CFS"+Constants.UNDER_SCORE + subscriptionName;
+        String rfsName = "RFS"+Constants.UNDER_SCORE + subscriptionName;
+        String productName = request.getSubscriberName()+Constants.UNDER_SCORE + request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
+        String cbmName = "CBM"+Constants.UNDER_SCORE + request.getCbmSN();
         String subscriberName = request.getSubscriberName();
 
         try {

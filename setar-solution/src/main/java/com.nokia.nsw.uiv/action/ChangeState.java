@@ -71,7 +71,7 @@ public class ChangeState implements HttpAction {
         String rfsName;
         String ontName = null;
         String cbmName = null;
-        String context = "NA";
+        String context = "";
 
         String productType = nullSafe(req.getProductType());
         String productSubType = nullSafe(req.getProductSubtype());
@@ -115,8 +115,8 @@ public class ChangeState implements HttpAction {
 
         // 4. Search for subscription, rfs, ontd & cbm device
         try {
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(context+","+subscriptionName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(context+","+rfsName);
+            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
+            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsName);
             Optional<LogicalDevice> optOnt = Optional.empty();
             Optional<LogicalDevice> optCbm = Optional.empty();
 
