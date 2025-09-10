@@ -120,7 +120,7 @@ public class ModifyCBM implements HttpAction {
                 Optional<Customer> optSub = customerRepository.uivFindByGdn(subscriberNameDerived);
                 if (!optSub.isPresent()) {
                     String msg = ERROR_PREFIX + "Object with UOR \"" + subscriberNameDerived + "\" not found";
-//                    return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");
+                    return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");
                 }
                 subscriber = optSub.get();
             }
