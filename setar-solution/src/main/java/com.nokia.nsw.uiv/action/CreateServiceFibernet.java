@@ -248,9 +248,11 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getTemplateNameONT() != null) ontProps.put("ontTemplate", request.getTemplateNameONT());
                 if (request.getMenm() != null) ontProps.put("description", request.getMenm());
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
-                ontDevice.setProperties(ontProps);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.info("Created ONT device: {}", ontGdn);
+            }
+            if(oltDevice!=null && ontDevice!=null){
+                oltDevice.addManagingDevices(ontDevice);
             }
 
             // 9. VLAN interface (LogicalInterface) creation if needed
@@ -266,6 +268,7 @@ public class CreateServiceFibernet implements HttpAction {
                     vlanProps.put("vlanId", request.getVlanID());
                     vlanProps.put("serviceId", request.getServiceID());
                     vlan.setProperties(vlanProps);
+                    vlan.setContainingLogicalDevice(oltDevice);
                     logicalInterfaceRepository.save(vlan, 2);
                     log.info("Created VLAN interface: {}", vlanGdn);
                 }
