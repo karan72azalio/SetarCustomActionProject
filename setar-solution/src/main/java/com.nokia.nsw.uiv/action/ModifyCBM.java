@@ -109,6 +109,15 @@ public class ModifyCBM implements HttpAction {
             String rfsName = "RFS"+Constants.UNDER_SCORE + subscriptionName;
             String productName = input.getSubscriberName()+Constants.UNDER_SCORE + input.getProductSubtype()+Constants.UNDER_SCORE + input.getServiceId();
             String cbmDeviceName = "CBM"+Constants.UNDER_SCORE + input.getServiceId();
+            String subscriptionContext = Validations.getGlobalName("",subscriberNameDerived);
+            String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String cfsContext = Validations.getGlobalName(productContext,productName);
+            String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
+            String subscriberGdn = Validations.getGlobalName("",subscriberNameDerived);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String productGdn = Validations.getGlobalName(productContext,productName);
+            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
 
             // 4. Retrieve and update Key Entities
             // If modifyType includes package/components/products/contracts skip subscriber retrieval as per spec
@@ -117,29 +126,29 @@ public class ModifyCBM implements HttpAction {
 
             Customer subscriber = null;
             if (!skipEntities) {
-                Optional<Customer> optSub = customerRepository.uivFindByGdn(subscriberNameDerived);
+                Optional<Customer> optSub = customerRepository.uivFindByGdn(subscriberGdn);
                 if (!optSub.isPresent()) {
-                    String msg = ERROR_PREFIX + "Object with UOR \"" + subscriberNameDerived + "\" not found";
+                    String msg = ERROR_PREFIX + "Object with UOR \"" + subscriberGdn + "\" not found";
                     return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");
                 }
                 subscriber = optSub.get();
             }
 
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
+            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
             if (!optSubscription.isPresent()) {
                 String msg = ERROR_PREFIX + "Object with UOR \"" + subscriptionName + "\" not found";
                 return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");
             }
             Subscription subscription = optSubscription.get();
 
-            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsName);
+            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
             if (!optCfs.isPresent()) {
                 String msg = ERROR_PREFIX + "Object with UOR \"" + cfsName + "\" not found";
                 return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");
             }
             CustomerFacingService cfs = optCfs.get();
 
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsName);
+            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             if (!optRfs.isPresent()) {
                 String msg = ERROR_PREFIX + "Object with UOR \"" + rfsName + "\" not found";
                 return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");
@@ -168,6 +177,15 @@ public class ModifyCBM implements HttpAction {
 
                 // _subscriberWithMAC_ is subscriberName + resourceSN (without colons?) spec says:
                 String subscriberWithMAC = input.getSubscriberName() + sanitizeForName(input.getResourceSN());
+                subscriptionContext = Validations.getGlobalName("",subscriberWithMAC);
+                productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
+                cfsContext = Validations.getGlobalName(productContext,productName);
+                rfsContext = Validations.getGlobalName(cfsContext,cfsName);
+                subscriberGdn = Validations.getGlobalName("",subscriberNameDerived);
+                subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+                productGdn = Validations.getGlobalName(productContext,productName);
+                cfsGdn = Validations.getGlobalName(productContext,productName);
+                rfsGdn = Validations.getGlobalName(cfsContext,cfsName);
                 Optional<Customer> optSubscriberWithMac = customerRepository.uivFindByGdn(subscriberWithMAC);
                 Customer subscriberWithMac = optSubscriberWithMac.orElse(null);
 

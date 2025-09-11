@@ -40,7 +40,6 @@ public class Constants {
     public static final String SETAR_KIND_SETAR_PRODUCT = "SetarProduct";
     public static final String SETAR_KIND_SETAR_CFS = "SetarCFS";
     public static final String SETAR_KIND_SETAR_RFS = "SetarRFS";
-    public static final String COMMA=",";
 
     public static final String SETAR_KIND_OLT_DEVICE = "OLTDevice";
     public static final String SETAR_KIND_CPE_DEVICE = "CPEDevice";
