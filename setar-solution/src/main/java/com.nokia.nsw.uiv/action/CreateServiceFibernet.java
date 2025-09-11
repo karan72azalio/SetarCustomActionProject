@@ -60,6 +60,8 @@ public class CreateServiceFibernet implements HttpAction {
         return CreateServiceFibernetRequest.class;
     }
 
+
+
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
         log.info("Executing action {}", ACTION_LABEL);
@@ -86,6 +88,12 @@ public class CreateServiceFibernet implements HttpAction {
             String cfsGdn = "CFS_" + subscriptionGdn;
             String rfsGdn = "RFS_" + subscriptionGdn;
             String ontGdn = "ONT" + request.getOntSN();
+            String subscriptionConext=Validations.getGlobalName("",subscriberGdn);
+            String ProductContext=Validations.getGlobalName(subscriptionConext,productGdn);
+            String cfsContext=Validations.getGlobalName(ProductContext,cfsGdn);
+            String rfsContext=Validations.getGlobalName(cfsContext,rfsGdn);
+            String ontContext=Validations.getGlobalName(rfsContext,ontGdn);
+
 
             // Length checks
             if (subscriberGdn.length() > 100) {
@@ -135,7 +143,7 @@ public class CreateServiceFibernet implements HttpAction {
                 subscription = new Subscription();
                 subscription.setLocalName(subscriptionGdn);
                 subscription.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
-                subscription.setContext("");
+                subscription.setContext(subscriptionConext);
                 Map<String, Object> subProps = new HashMap<>();
                 subProps.put("serviceSubType", request.getProductSubtype());
                 subProps.put("serviceLink", "ONT");
@@ -159,7 +167,7 @@ public class CreateServiceFibernet implements HttpAction {
                 product = new Product();
                 product.setLocalName(productGdn);
                 product.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
-                product.setContext("");
+                product.setContext(ProductContext);
                 Map<String, Object> prodProps = new HashMap<>();
                 prodProps.put("productType", request.getProductType());
                 prodProps.put("productSubtype", request.getProductSubtype());
@@ -179,7 +187,7 @@ public class CreateServiceFibernet implements HttpAction {
                 cfs = new CustomerFacingService();
                 cfs.setLocalName(cfsGdn);
                 cfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
-                cfs.setContext("");
+                cfs.setContext(cfsContext);
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStartDate", Instant.now().toString());
                 if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
@@ -199,7 +207,7 @@ public class CreateServiceFibernet implements HttpAction {
                 rfs = new ResourceFacingService();
                 rfs.setLocalName(rfsGdn);
                 rfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
-                rfs.setContext("");
+                rfs.setContext(rfsContext);
                 Map<String, Object> rfsProps = new HashMap<>();
                 rfsProps.put("status", "Active");
                 if (request.getFxOrderID() != null) rfsProps.put("transactionId", request.getFxOrderID());
@@ -220,7 +228,7 @@ public class CreateServiceFibernet implements HttpAction {
                     oltDevice = new LogicalDevice();
                     oltDevice.setLocalName(oltGdn);
                     oltDevice.setKind(Constants.SETAR_KIND_OLT_DEVICE);
-                    oltDevice.setContext("");
+                    oltDevice.setContext(ontContext);
                     Map<String, Object> props = new HashMap<>();
                     props.put("localName", oltGdn);
                     if (request.getTemplateNameVEIP() != null) props.put("veipServiceTemplate", request.getTemplateNameVEIP());
