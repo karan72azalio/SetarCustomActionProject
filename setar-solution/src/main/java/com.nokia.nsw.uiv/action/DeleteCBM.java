@@ -15,6 +15,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponent;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponentRepository;
+import com.nokia.nsw.uiv.model.service.ServiceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.request.DeleteCBMRequest;
@@ -22,13 +23,14 @@ import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.response.DeleteCBMResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
+import com.setar.uiv.model.product.*;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.swing.text.html.Option;
 
 @Component
 @RestController
@@ -48,10 +50,16 @@ public class DeleteCBM implements HttpAction {
     private ProductRepository productRepository;
 
     @Autowired
-    private LogicalComponentRepository rfsRepository;
+    private ResourceFacingServiceRepository rfsRepository;
+
+    @Autowired
+    private ServiceRepository serviceRepository;
 
     @Autowired
     private CustomerRepository subscriberRepository;
+
+    @Autowired
+    private CustomerFacingServiceRepository cfsRepository;
 
     @Override
     public Class getActionClass() {
@@ -83,33 +91,66 @@ public class DeleteCBM implements HttpAction {
         String productName = request.getSubscriberName()+Constants.UNDER_SCORE + request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
         String cbmName = "CBM"+Constants.UNDER_SCORE + request.getCbmSN();
         String subscriberName = request.getSubscriberName();
+        String subscriptionContext="";
+        String productContext="";
+        String rfsContext = "";
+        String cfsContext = "";
 
         try {
-            // 2. Fetch CBM device
-            Optional<LogicalDevice> optCbmDevice = cbmDeviceRepository.uivFindByGdn(cbmName);
-            if (!optCbmDevice.isPresent()) {
-                log.warn("CBM device {} not found", cbmName);
-            }
-
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
-
+            ResourceFacingService setarRFS = null;
+            Optional<Product> optProduct = Optional.empty();
+            Optional<Subscription> optSubscription = Optional.empty();
+            Optional<LogicalDevice> optCbmDevice = Optional.empty();
+            Optional<CustomerFacingService> setarCFS = Optional.empty();
             int subscriptionCount = 0;
-            if (optSubscription.isPresent()) {
-                Subscription subscription = optSubscription.get();
-                Customer customer = subscription.getCustomer();
-                if (customer != null && customer.getSubscription() != null) {
-                    subscriptionCount = customer.getSubscription().size();
+            try{
+                // --- 3. Fetch CBM Device ---
+                optCbmDevice = cbmDeviceRepository.uivFindByGdn(cbmName);
+                if (!optCbmDevice.isPresent()) {
+                    log.warn("CBM device {} not found", cbmName);
                 }
+                LogicalDevice cbm = optCbmDevice.get();
+                System.out.println(cbm.getProperties().size());
+                System.out.println(cbm.getPropertiesMap().size());
+
+                Customer setarSubscriber;
+
+                if ("IPTV".equalsIgnoreCase(request.getProductType())) {
+                    // Direct subscriber lookup
+                    setarSubscriber = subscriberRepository.uivFindByGdn(subscriberName).get();
+                    subscriptionCount = setarSubscriber.getSubscription().size();
+                } else {
+                    // Use MAC address to build subscriberName
+                    String cbmMacAddr = cbm.getProperties().get("macAddress").toString();
+                    String macWithoutColons = cbmMacAddr.replaceAll(":", "");
+                    String newSubscriberName = subscriberName + Constants.UNDER_SCORE + macWithoutColons;
+                    subscriptionContext = Validations.getGlobalName("",newSubscriberName);
+                    String subscriberGdn = Validations.getGlobalName("",newSubscriberName);
+                    Optional<Customer> subscriber = subscriberRepository.uivFindByGdn(subscriberGdn);
+                    subscriptionCount = subscriber.get().getSubscription().size();
+                }
+
+                // --- 4. Retrieve Associated Entities ---
+                String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+                optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+                productContext = subscriptionGdn;
+                String productGdn = Validations.getGlobalName(productContext,productName);
+                optProduct = productRepository.uivFindByGdn(productGdn);
+                cfsContext = productGdn;
+                String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+                setarCFS = cfsRepository.uivFindByGdn(cfsGdn);
+
+                rfsContext = cfsGdn;
+                String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+                Optional<ResourceFacingService> RFSComponent = rfsRepository.uivFindByGdn(rfsGdn);
+                if(RFSComponent.isPresent()){
+                    setarRFS = RFSComponent.get();
+                }
+            } catch (Exception e) {
+
             }
 
-
-            // 4. Fetch Product
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productName);
-
-            // 5. Fetch RFS
-            Optional<LogicalComponent> optRfs = rfsRepository.uivFindByGdn(rfsName);
-
-            // 6. CPE Device logic (Voice/Broadband)
+            // 5. CPE Device logic (Voice/Broadband)
             if (optSubscription.isPresent() && optCbmDevice.isPresent()) {
                 Subscription subscription = optSubscription.get();
                 LogicalDevice cbmDevice = optCbmDevice.get();
@@ -124,19 +165,16 @@ public class DeleteCBM implements HttpAction {
                 }
             }
 
-            // 7. Validate CBM name length
+            // 6. Validate CBM name length
             if (cbmName.length() > 100) {
                 throw new BadRequestException("CBM name too long");
             }
 
-            // 8. Delete CBM device
+            // 7. Delete CBM device
             optCbmDevice.ifPresent(cbmDeviceRepository::delete);
 
-            // 9. Reset RFS linked resources
-            if (optRfs.isPresent()) {
-                LogicalComponent rfs = optRfs.get();
-
-                rfs.getContained().forEach(resource -> {
+            // 8. Reset RFS linked resources
+                setarRFS.getUsedResource().forEach(resource -> {
                     if (resource.getLocalName().startsWith("AP") || resource.getLocalName().startsWith("STB")) {
 
                         // Create a properties map
@@ -151,20 +189,17 @@ public class DeleteCBM implements HttpAction {
                         resource.setProperties(props);
 
                         // Save the resource
-                        rfsRepository.save(resource, 2);
+                        cbmDeviceRepository.save((LogicalDevice) resource, 2);
                     }
                 });
 
                 // Delete RFS after processing its contained resources
-                rfsRepository.delete(rfs);
-            }
+                rfsRepository.delete(setarRFS);
 
 
-            // 10. Delete Product & Subscription
+            // 9. Delete Product & Subscription
             optProduct.ifPresent(productRepository::delete);
             optSubscription.ifPresent(subscriptionRepository::delete);
-
-
             if (subscriptionCount == 1) {
                 subscriberRepository.findById(subscriberName).ifPresent(subscriberRepository::delete);
             }

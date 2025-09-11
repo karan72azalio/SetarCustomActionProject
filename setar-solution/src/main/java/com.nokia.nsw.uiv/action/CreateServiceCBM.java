@@ -97,6 +97,7 @@ public class CreateServiceCBM implements HttpAction {
         } else {
             subscriberName = request.getSubscriberName();
         }
+        String subscriptionContext = Validations.getGlobalName("",subscriberName);
 
         if (subscriberName.length() > 100) {
             return createErrorResponse("Subscriber name too long", 400);
@@ -162,7 +163,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        sub.setContext("");
+                        sub.setContext(subscriptionContext);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -189,6 +190,7 @@ public class CreateServiceCBM implements HttpAction {
 
         // --- 4. Product Logic ---
         String productName = request.getSubscriberName() +Constants.UNDER_SCORE+ request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
+        String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
         if (productName.length() > 100) {
             return createErrorResponse("Product name too long", 400);
         }
@@ -209,7 +211,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        p.setContext("");
+                        p.setContext(productContext);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -225,6 +227,7 @@ public class CreateServiceCBM implements HttpAction {
 
         // --- 5. CFS Logic ---
         String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;
+        String cfsContext = Validations.getGlobalName(productContext,productName);
         CustomerFacingService cfs = cfsRepository.uivFindByGdn(cfsName)
                 .orElseGet(() -> {
                     CustomerFacingService c = new CustomerFacingService();
@@ -241,7 +244,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        c.setContext("");
+                        c.setContext(cfsContext);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -255,38 +258,6 @@ public class CreateServiceCBM implements HttpAction {
                     cfsRepository.save(c, 2);
                     return c;
                 });
-
-        // --- 6. RFS Logic ---
-        String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
-        ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsName)
-                .orElseGet(() -> {
-                    ResourceFacingService r = new ResourceFacingService();
-                    try {
-                        r.setName(rfsName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        r.setKind(Constants.SETAR_KIND_SETAR_RFS);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        r.setContext("");
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    r.setType(request.getProductType());
-                    Map<String, Object> prop = new HashMap<>();
-                    prop.put("status", "Active");
-                    r.setProperties(prop);
-                    r.setContainingCfs(cfs);
-                    rfsRepository.save(r, 2);
-                    return r;
-                });
-
         // --- 7. CBM Device Logic ---
         String cbmName = "CBM" +Constants.UNDER_SCORE+ request.getCbmSN();
         if (cbmName.length() > 100) {
@@ -321,9 +292,43 @@ public class CreateServiceCBM implements HttpAction {
                     deviceProps.put("manufacturer", request.getCbmManufacturer());
                     deviceProps.put("deviceModel", request.getCbmModel());
                     deviceProps.put("OperationalState", "Active");
+                    d.setProperties(deviceProps);
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });
+        // --- 6. RFS Logic ---
+        String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
+        String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
+        ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsName)
+                .orElseGet(() -> {
+                    ResourceFacingService r = new ResourceFacingService();
+                    try {
+                        r.setName(rfsName);
+                    } catch (AccessForbiddenException e) {
+                        throw new RuntimeException(e);
+                    } catch (BadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        r.setKind(Constants.SETAR_KIND_SETAR_RFS);
+                    } catch (ModificationNotAllowedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        r.setContext(rfsContext);
+                    } catch (BadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
+                    r.setType(request.getProductType());
+                    Map<String, Object> prop = new HashMap<>();
+                    prop.put("status", "Active");
+                    r.setProperties(prop);
+                    r.setContainingCfs(cfs);
+                    r.addUsedResource(cbmDevice);
+                    rfsRepository.save(r, 2);
+                    return r;
+                });
+
 
         // --- 8. Final Response ---
         CreateServiceCBMResponse response = new CreateServiceCBMResponse();
