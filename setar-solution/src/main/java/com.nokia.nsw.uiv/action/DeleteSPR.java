@@ -97,7 +97,7 @@ public class DeleteSPR implements HttpAction {
         // -----------------------------
         String subscriberNameWithOnt = req.getSubscriberName() + "_" + req.getOntSN();
         String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN();
-        String cfsName = "CFS_" + subscriptionName;
+        String cfsName = "CFS_" + subscriberNameWithOnt;
         String rfsName = "RFS_" + subscriptionName;
         String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
         String ontName = "ONT" + req.getOntSN();
