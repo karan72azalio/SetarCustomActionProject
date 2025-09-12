@@ -17,6 +17,7 @@ import com.nokia.nsw.uiv.request.ChangeStateRequest;
 import com.nokia.nsw.uiv.response.ChangeStateResponse;
 
 import com.nokia.nsw.uiv.utils.Constants;
+import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.ResourceFacingService;
 import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +72,16 @@ public class ChangeState implements HttpAction {
         String rfsName;
         String ontName = null;
         String cbmName = null;
-        String context = "";
+        String subscriberName = req.getSubscriberName() +Constants.COMMA+req.getOntSN();
+        String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
+        String cfsName = "";
+        String subscriberGdn = Validations.getGlobalName("",subscriberName);
+        String subscriptionContext = subscriberGdn;
+        String productContext = "";
+        String rfsContext = "";
+        String cfsContext = "";
+        String oltDeviceContext = "";
+        String ontDeviceContext = "";
 
         String productType = nullSafe(req.getProductType());
         String productSubType = nullSafe(req.getProductSubtype());
@@ -80,6 +90,10 @@ public class ChangeState implements HttpAction {
         // IPTV case
         if (!isEmpty(productType) && productType.toUpperCase().contains("IPTV")) {
             subscriptionName = req.getSubscriberName() + "_" + req.getServiceId();
+            productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            cfsContext = Validations.getGlobalName(productContext,productName);
+            cfsName = "CFS_" + req.getSubscriberName() + "_" + req.getServiceId();
+            rfsContext = Validations.getGlobalName(cfsContext,cfsName);
             rfsName = "RFS_" + req.getSubscriberName() + "_" + req.getServiceId();
         }
         // Broadband/Voice with serviceLink provided and not Cloudstarter/Bridged
@@ -103,6 +117,10 @@ public class ChangeState implements HttpAction {
             subscriptionName = req.getSubscriberName()+ "_" + req.getServiceId();
             rfsName = "RFS_" + subscriptionName;
         }
+        productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
+        cfsContext = Validations.getGlobalName(productContext,productName);
+        cfsName = "CFS_" + req.getSubscriberName() + "_" + req.getServiceId();
+        rfsContext = Validations.getGlobalName(cfsContext,cfsName);
 
         // 3. Check ONT name length if present
         if (!isEmpty(req.getOntSN())) {
@@ -115,8 +133,13 @@ public class ChangeState implements HttpAction {
 
         // 4. Search for subscription, rfs, ontd & cbm device
         try {
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsName);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            if(optSubscription.isPresent()){
+                Subscription subscription = optSubscription.get();
+            }
+            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             Optional<LogicalDevice> optOnt = Optional.empty();
             Optional<LogicalDevice> optCbm = Optional.empty();
 
