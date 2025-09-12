@@ -9,6 +9,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.request.QueryCPEDeviceRequest;
 import com.nokia.nsw.uiv.response.ChangeStateResponse;
 import com.nokia.nsw.uiv.response.QueryCPEDeviceResponse;
+import com.nokia.nsw.uiv.utils.Validations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,6 @@ public class QueryCPEDevice implements HttpAction {
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
         QueryCPEDeviceRequest request = (QueryCPEDeviceRequest) actionContext.getObject();
-
         // 1. Mandatory validation
         try {
             validateMandatory(request.getResourceSN(), "resourceSN");

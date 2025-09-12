@@ -54,7 +54,7 @@ public class ImportCPEDevice implements HttpAction {
         log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
 
         ImportCPEDeviceRequest request = (ImportCPEDeviceRequest) actionContext.getObject();
-
+        String portContext = "";
         try {
             log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             try{
@@ -74,6 +74,7 @@ public class ImportCPEDevice implements HttpAction {
             log.info("devName :: {}", devName);
 
             Optional<LogicalDevice> optDevice = cpeDeviceRepository.uivFindByGdn(devName);
+            portContext = Validations.getGlobalName("",devName);
 
             LogicalDevice cpeDevice;
             if (optDevice.isPresent()) {
@@ -108,14 +109,14 @@ public class ImportCPEDevice implements HttpAction {
 
             // Create POTS ports
             log.info("-----------------Create POTS ports------------------");
-            createPotsPort(request.getCpeSerialNo(), "POTS_1", cpeDevice);
-            createPotsPort(request.getCpeSerialNo(), "POTS_2", cpeDevice);
+            createPotsPort(request.getCpeSerialNo(), "POTS_1", cpeDevice,portContext);
+            createPotsPort(request.getCpeSerialNo(), "POTS_2", cpeDevice,portContext);
 
             // Create Ethernet ports
             log.info("-----------------Create Ethernet ports------------------");
             int noOfPorts = determineNumberOfEthernetPorts(request.getCpeType(), request.getCpeModel());
             for (int i = 1; i <= noOfPorts; i++) {
-                createEthernetPort(request.getCpeSerialNo(), "ETH_" + i, cpeDevice);
+                createEthernetPort(request.getCpeSerialNo(), "ETH_" + i, cpeDevice,portContext);
             }
 
             log.info(Constants.ACTION_COMPLETED);
@@ -136,11 +137,12 @@ public class ImportCPEDevice implements HttpAction {
         }
     }
 
-    private void createPotsPort(String serialNo, String portType, LogicalDevice cpeDevice)
+    private void createPotsPort(String serialNo, String portType, LogicalDevice cpeDevice, String portContext)
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
         log.info("-----------------Create POTS ports-Started------------------");
         String portName = serialNo + "_" + portType;
-        Optional<LogicalComponent> optPort = componentRepository.uivFindByGdn(portName);
+        String portGdn = Validations.getGlobalName(portContext,portName);
+        Optional<LogicalComponent> optPort = componentRepository.uivFindByGdn(portGdn);
 
         if (!optPort.isPresent()) {
             log.info("Creating POTS port: {}", portName);
@@ -148,7 +150,7 @@ public class ImportCPEDevice implements HttpAction {
             potsPort.setLocalName(portName);
             potsPort.setKind(Constants.SETAR_KIND_CPE_PORT);
             potsPort.setDescription("Voice Port");
-potsPort.setContext("");
+            potsPort.setContext(portContext);
             Map<String, Object> properties = new HashMap<>();
             properties.put("portName", portName);
             properties.put("serialNumber", serialNo);
@@ -167,11 +169,12 @@ potsPort.setContext("");
         log.info("-----------------Create POTS ports-Completed------------------");
     }
 
-    private void createEthernetPort(String serialNo, String portType, LogicalDevice cpeDevice)
+    private void createEthernetPort(String serialNo, String portType, LogicalDevice cpeDevice, String portContext)
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
 
         String portName = serialNo + "_" + portType;
-        Optional<LogicalComponent> optPort = componentRepository.uivFindByGdn(portName);
+        String portGdn = Validations.getGlobalName(portContext,portName);
+        Optional<LogicalComponent> optPort = componentRepository.uivFindByGdn(portGdn);
 
         if (!optPort.isPresent()) {
             log.info("Creating Ethernet port: {}", portName);
@@ -179,7 +182,7 @@ potsPort.setContext("");
             ethPort.setLocalName(portName);
             ethPort.setKind(Constants.SETAR_KIND_CPE_PORT);
             ethPort.setDescription("Data Port");
-ethPort.setContext("");
+            ethPort.setContext(portContext);
             Map<String, Object> properties = new HashMap<>();
             properties.put("portName", portName);
             properties.put("serialNumber", serialNo);
@@ -193,17 +196,19 @@ ethPort.setContext("");
             cpeDeviceRepository.save(cpeDevice, 2);
             log.info("Ethernet port created and associated: {}", portName);
 
+            String vlanContext = portGdn;
             // VLAN interfaces (LogicalInterface)
             for (int vlanIndex = 1; vlanIndex <= 7; vlanIndex++) {
                 String vlanName = portName + "_" + vlanIndex;
-                Optional<LogicalInterface> optVlan = logicalInterfaceRepository.uivFindByGdn(vlanName);
+                String vlanGdn = Validations.getGlobalName(vlanContext,vlanName);
+                Optional<LogicalInterface> optVlan = logicalInterfaceRepository.uivFindByGdn(vlanGdn);
 
                 if (!optVlan.isPresent()) {
                     log.info("Creating VLAN interface: {}", vlanName);
                     LogicalInterface vlan = new LogicalInterface();
                     vlan.setLocalName(vlanName);
                     vlan.setKind(Constants.SETAR_KIND_VLAN_INTERFACE);
-                    vlan.setContext("");
+                    vlan.setContext(vlanContext);
                     vlan.setDescription("VLAN Interface for " + portName);
 
                     Map<String, Object> vlanProps = new HashMap<>();
