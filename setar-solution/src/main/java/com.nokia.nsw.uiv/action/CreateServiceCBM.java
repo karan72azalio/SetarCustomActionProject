@@ -266,6 +266,38 @@ public class CreateServiceCBM implements HttpAction {
         if (cbmName.length() > 100) {
             return createErrorResponse("CBM name too long", 400);
         }
+        // --- 6. RFS Logic ---
+        String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
+        String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
+        String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+        ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn)
+                .orElseGet(() -> {
+                    ResourceFacingService r = new ResourceFacingService();
+                    try {
+                        r.setName(rfsName);
+                    } catch (AccessForbiddenException e) {
+                        throw new RuntimeException(e);
+                    } catch (BadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        r.setKind(Constants.SETAR_KIND_SETAR_RFS);
+                    } catch (ModificationNotAllowedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        r.setContext(rfsContext);
+                    } catch (BadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
+                    r.setType(request.getProductType());
+                    Map<String, Object> prop = new HashMap<>();
+                    prop.put("status", "Active");
+                    r.setProperties(prop);
+                    r.setContainingCfs(cfs);
+                    rfsRepository.save(r, 2);
+                    return r;
+                });
 
         LogicalDevice cbmDevice = cbmDeviceRepository.uivFindByGdn(cbmName)
                 .orElseGet(() -> {
@@ -296,42 +328,11 @@ public class CreateServiceCBM implements HttpAction {
                     deviceProps.put("deviceModel", request.getCbmModel());
                     deviceProps.put("OperationalState", "Active");
                     d.setProperties(deviceProps);
+                    d.addUsingService(rfs);
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });
-        // --- 6. RFS Logic ---
-        String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
-        String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
-        String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
-        ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn)
-                .orElseGet(() -> {
-                    ResourceFacingService r = new ResourceFacingService();
-                    try {
-                        r.setName(rfsName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        r.setKind(Constants.SETAR_KIND_SETAR_RFS);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        r.setContext(rfsContext);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    r.setType(request.getProductType());
-                    Map<String, Object> prop = new HashMap<>();
-                    prop.put("status", "Active");
-                    r.setProperties(prop);
-                    r.setContainingCfs(cfs);
-                    r.addUsedResource(cbmDevice);
-                    rfsRepository.save(r, 2);
-                    return r;
-                });
+
 
 
         // --- 8. Final Response ---

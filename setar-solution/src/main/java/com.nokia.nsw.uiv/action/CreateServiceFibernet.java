@@ -97,7 +97,7 @@ public class CreateServiceFibernet implements HttpAction {
             String cfsGdn=Validations.getGlobalName(cfsContext,cfsName);
             String rfsContext=Validations.getGlobalName(cfsContext,cfsName);
             String rfsGdn=Validations.getGlobalName(rfsContext,rfsName);
-            String oltContext=Validations.getGlobalName(rfsContext,rfsName);
+            String oltContext="";
 
 
 
@@ -225,8 +225,32 @@ public class CreateServiceFibernet implements HttpAction {
                 log.info("Created RFS: {}", rfsName);
             }
 
+            // 8. ONT device: find or create as LogicalDevice with kind=ONT
+            String ontGdn=Validations.getGlobalName("",ontName);
+            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
+            LogicalDevice ontDevice;
+            if (optOnt.isPresent()) {
+                ontDevice = optOnt.get();
+                log.info("Found existing ONT: {}", ontName);
+            } else {
+                ontDevice = new LogicalDevice();
+                ontDevice.setLocalName(ontName);
+                ontDevice.setKind(Constants.SETAR_KIND_ONT_DEVICE);
+                ontDevice.setContext("");
+                Map<String, Object> ontProps = new HashMap<>();
+                ontProps.put("serialNo", request.getOntSN());
+                if (request.getOntModel() != null) ontProps.put("deviceModel", request.getOntModel());
+                if (request.getTemplateNameONT() != null) ontProps.put("ontTemplate", request.getTemplateNameONT());
+                if (request.getMenm() != null) ontProps.put("description", request.getMenm());
+                if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
+                ontDevice.addUsingService(rfs);
+                logicalDeviceRepository.save(ontDevice, 2);
+                log.info("Created ONT device: {}", ontName);
+            }
+
             // 7. OLT device: find or create as LogicalDevice with kind=OLT
             String oltname = request.getOltName() == null ? "" : request.getOltName();
+            oltContext = ontGdn;
             String oltGdn=Validations.getGlobalName(oltContext,oltname);
             LogicalDevice oltDevice = null;
             if (!oltGdn.isEmpty()) {
@@ -243,36 +267,16 @@ public class CreateServiceFibernet implements HttpAction {
                     if (request.getTemplateNameVEIP() != null) props.put("veipServiceTemplate", request.getTemplateNameVEIP());
                     if (request.getTemplateNameHSI() != null) props.put("veipHsiTemplate", request.getTemplateNameHSI());
                     oltDevice.setProperties(props);
+                    oltDevice.addUsingService(rfs);
                     logicalDeviceRepository.save(oltDevice, 2);
                     log.info("Created OLT device: {}", oltGdn);
                 }
             }
 
-            // 8. ONT device: find or create as LogicalDevice with kind=ONT
-            String ontContext=Validations.getGlobalName(oltContext,oltname);
-            String ontGdn=Validations.getGlobalName(ontContext,ontName);
-            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
-            LogicalDevice ontDevice;
-            if (optOnt.isPresent()) {
-                ontDevice = optOnt.get();
-                log.info("Found existing ONT: {}", ontName);
-            } else {
-                ontDevice = new LogicalDevice();
-                ontDevice.setLocalName(ontName);
-                ontDevice.setKind(Constants.SETAR_KIND_ONT_DEVICE);
-                ontDevice.setContext(ontContext);
-                Map<String, Object> ontProps = new HashMap<>();
-                ontProps.put("serialNo", request.getOntSN());
-                if (request.getOntModel() != null) ontProps.put("deviceModel", request.getOntModel());
-                if (request.getTemplateNameONT() != null) ontProps.put("ontTemplate", request.getTemplateNameONT());
-                if (request.getMenm() != null) ontProps.put("description", request.getMenm());
-                if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
-                logicalDeviceRepository.save(ontDevice, 2);
-                log.info("Created ONT device: {}", ontName);
-            }
             if(oltDevice!=null && ontDevice!=null){
-                oltDevice.addManagingDevices(ontDevice);
+                ontDevice.addContained(oltDevice);
             }
+
 
             // 9. VLAN interface (LogicalInterface) creation if needed
             if (request.getMenm() != null && request.getVlanID() != null) {

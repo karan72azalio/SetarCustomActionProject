@@ -135,9 +135,6 @@ public class ChangeState implements HttpAction {
         try {
             String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
             Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            if(optSubscription.isPresent()){
-                Subscription subscription = optSubscription.get();
-            }
             String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
             Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             Optional<LogicalDevice> optOnt = Optional.empty();
@@ -146,6 +143,7 @@ public class ChangeState implements HttpAction {
             if (!isEmpty(ontName)) {
                 optOnt = logicalDeviceRepository.uivFindByGdn(ontName);
             }
+
             if (!isEmpty(req.getCbmMac())) {
                 // attempt find by GDN "CBM" + mac (as per naming in your system)
                 cbmName = "CBM" + req.getCbmMac();
