@@ -36,6 +36,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.request.DeleteSPRRequest;
 import com.nokia.nsw.uiv.response.DeleteSPRResponse;
 
+import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,11 +96,15 @@ public class DeleteSPR implements HttpAction {
         // 2) Construct Required Names
         // -----------------------------
         String subscriberNameWithOnt = req.getSubscriberName() + "_" + req.getOntSN();
-        String subscriptionName = req.getSubscriberName() + req.getServiceId() + req.getOntSN();
+        String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN();
         String cfsName = "CFS_" + subscriptionName;
         String rfsName = "RFS_" + subscriptionName;
-        String productName = req.getSubscriberName() + req.getProductSubtype() + req.getServiceId();
+        String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
         String ontName = "ONT" + req.getOntSN();
+        String subscriptionContext="";
+        String productContext="";
+        String rfsContext = "";
+        String cfsContext = "";
 
         if (ontName.length() > 100) {
             // Code6
@@ -116,7 +121,8 @@ public class DeleteSPR implements HttpAction {
             // -----------------------------
             // 3) Retrieve Subscriber & determine "last service"
             // -----------------------------
-            Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberNameWithOnt);
+            String subscriberGdn = Validations.getGlobalName("",subscriberNameWithOnt);
+            Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberGdn);
             boolean lastServiceForSubscriber = false;
             if (optSubscriber.isPresent()) {
                 Customer sub = optSubscriber.get();
@@ -133,11 +139,20 @@ public class DeleteSPR implements HttpAction {
             // -----------------------------
             // 4) Retrieve Objects
             // -----------------------------
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productName);
-            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsName);
-            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontName);
+             subscriptionContext=Validations.getGlobalName("",subscriberNameWithOnt);
+            String subscriptionGdn=Validations.getGlobalName(subscriptionContext,subscriptionName);
+            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            productContext=Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String productGdn=Validations.getGlobalName(productContext,productName);
+            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
+            cfsContext=Validations.getGlobalName(productContext,productName);
+            String cfsGdn=Validations.getGlobalName(cfsContext,cfsName);
+            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
+            rfsContext=Validations.getGlobalName(cfsContext,cfsName);
+            String rfsGdn=Validations.getGlobalName(rfsContext,rfsName);
+            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
+            String ontGdn=Validations.getGlobalName("",ontName);
+            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
 
             // From ONT, try to retrieve parent OLT (if your data model links it via "parent" or property)
             Optional<LogicalDevice> optOlt = Optional.empty();
