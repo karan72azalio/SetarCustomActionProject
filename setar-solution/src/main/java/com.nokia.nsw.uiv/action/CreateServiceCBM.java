@@ -103,7 +103,8 @@ public class CreateServiceCBM implements HttpAction {
             return createErrorResponse("Subscriber name too long", 400);
         }
 
-        Customer subscriber = subscriberRepository.uivFindByGdn(subscriberName)
+        String subscriberGdn = Validations.getGlobalName("",subscriberName);
+        Customer subscriber = subscriberRepository.uivFindByGdn(subscriberGdn)
                 .orElseGet(() -> {
                     Customer s = new Customer();
                     try {
@@ -146,8 +147,8 @@ public class CreateServiceCBM implements HttpAction {
         if (subscriptionName.length() > 100) {
             return createErrorResponse("Subscription name too long", 400);
         }
-
-        Subscription subscription = subscriptionRepository.uivFindByGdn(subscriptionName)
+        String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+        Subscription subscription = subscriptionRepository.uivFindByGdn(subscriptionGdn)
                 .orElseGet(() -> {
                     Subscription sub = new Subscription();
                     try {
@@ -195,7 +196,8 @@ public class CreateServiceCBM implements HttpAction {
             return createErrorResponse("Product name too long", 400);
         }
 
-        Product product = productRepository.uivFindByGdn(productName)
+        String productGdn = Validations.getGlobalName(productContext,productName);
+        Product product = productRepository.uivFindByGdn(productGdn)
                 .orElseGet(() -> {
                     Product p = new Product();
                     try {
@@ -228,7 +230,8 @@ public class CreateServiceCBM implements HttpAction {
         // --- 5. CFS Logic ---
         String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;
         String cfsContext = Validations.getGlobalName(productContext,productName);
-        CustomerFacingService cfs = cfsRepository.uivFindByGdn(cfsName)
+        String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+        CustomerFacingService cfs = cfsRepository.uivFindByGdn(cfsGdn)
                 .orElseGet(() -> {
                     CustomerFacingService c = new CustomerFacingService();
                     try {
@@ -299,7 +302,8 @@ public class CreateServiceCBM implements HttpAction {
         // --- 6. RFS Logic ---
         String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
         String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
-        ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsName)
+        String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+        ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn)
                 .orElseGet(() -> {
                     ResourceFacingService r = new ResourceFacingService();
                     try {
