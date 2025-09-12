@@ -90,15 +90,16 @@ public class CreateServiceFibernet implements HttpAction {
             String ontName = "ONT" + request.getOntSN();
 
             String subscriptionConext=Validations.getGlobalName("",subscriberName);
+            String subscriptionGdn=Validations.getGlobalName(subscriptionConext,subscriptionName);
             String ProductContext=Validations.getGlobalName(subscriptionConext,subscriptionName);
+            String ProductGdn=Validations.getGlobalName(ProductContext,productName);
             String cfsContext=Validations.getGlobalName(ProductContext,productName);
+            String cfsGdn=Validations.getGlobalName(cfsContext,cfsName);
             String rfsContext=Validations.getGlobalName(cfsContext,cfsName);
+            String rfsGdn=Validations.getGlobalName(rfsContext,rfsName);
             String oltContext=Validations.getGlobalName(rfsContext,rfsName);
-            String subscriptionGdn=Validations.getGlobalName("",subscriberName);
-            String ProductGdn=Validations.getGlobalName(subscriptionConext,subscriptionName);
-            String cfsGdn=Validations.getGlobalName(ProductContext,productName);
-            String rfsGdn=Validations.getGlobalName(cfsContext,cfsName);
-            String oltGdn=Validations.getGlobalName(rfsContext,rfsName);
+
+
 
 
 
@@ -226,6 +227,7 @@ public class CreateServiceFibernet implements HttpAction {
 
             // 7. OLT device: find or create as LogicalDevice with kind=OLT
             String oltname = request.getOltName() == null ? "" : request.getOltName();
+            String oltGdn=Validations.getGlobalName(oltContext,oltname);
             LogicalDevice oltDevice = null;
             if (!oltGdn.isEmpty()) {
                 Optional<LogicalDevice> optOlt = logicalDeviceRepository.uivFindByGdn(oltGdn);
@@ -248,7 +250,7 @@ public class CreateServiceFibernet implements HttpAction {
 
             // 8. ONT device: find or create as LogicalDevice with kind=ONT
             String ontContext=Validations.getGlobalName(oltContext,oltname);
-            String ontGdn=Validations.getGlobalName(oltContext,oltname);
+            String ontGdn=Validations.getGlobalName(ontContext,ontName);
             Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
             LogicalDevice ontDevice;
             if (optOnt.isPresent()) {
@@ -276,7 +278,7 @@ public class CreateServiceFibernet implements HttpAction {
             if (request.getMenm() != null && request.getVlanID() != null) {
                 String vlanName = request.getMenm() + "_" + request.getVlanID();
                 String vlanContext=Validations.getGlobalName(oltContext,oltGdn);
-                String vlanGdn=Validations.getGlobalName(oltContext,oltGdn);
+                String vlanGdn=Validations.getGlobalName(vlanContext,vlanName);
                 Optional<LogicalInterface> optVlan = logicalInterfaceRepository.uivFindByGdn(vlanGdn);
                 if (!optVlan.isPresent()) {
                     LogicalInterface vlan = new LogicalInterface();
