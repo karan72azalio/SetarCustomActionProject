@@ -78,16 +78,19 @@ public class ModifySPR implements HttpAction {
             String subscriberName = request.getSubscriberName() + "_" + request.getOntSN();
             String subscriptionName = request.getSubscriberName() + "_" + request.getServiceId() + "_" + request.getOntSN();
             String ontName = "ONT" + request.getOntSN();
+            String subscriberGdn = subscriberName;
+            String subscriptionContext = subscriberGdn;
 
             if (ontName.length() > 100) {
                 throw new BadRequestException("ONT name too long");
             }
 
             // 3. Fetch Entities
-            Customer subscriber = customerRepository.uivFindByGdn(subscriberName)
+            Customer subscriber = customerRepository.uivFindByGdn(subscriberGdn)
                     .orElseThrow(() -> new BadRequestException("Subscriber not found: " + subscriberName));
 
-            Subscription subscription = subscriptionRepository.uivFindByGdn(subscriptionName)
+            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            Subscription subscription = subscriptionRepository.uivFindByGdn(subscriptionGdn)
                     .orElseThrow(() -> new BadRequestException("Subscription not found: " + subscriptionName));
 
             // 4. Route to correct handler

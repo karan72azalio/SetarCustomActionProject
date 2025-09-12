@@ -72,7 +72,7 @@ public class ChangeState implements HttpAction {
         String rfsName;
         String ontName = null;
         String cbmName = null;
-        String subscriberName = req.getSubscriberName() +Constants.COMMA+req.getOntSN();
+        String subscriberName = req.getSubscriberName() +Constants.UNDER_SCORE+req.getOntSN();
         String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
         String cfsName = "";
         String subscriberGdn = Validations.getGlobalName("",subscriberName);
@@ -90,10 +90,6 @@ public class ChangeState implements HttpAction {
         // IPTV case
         if (!isEmpty(productType) && productType.toUpperCase().contains("IPTV")) {
             subscriptionName = req.getSubscriberName() + "_" + req.getServiceId();
-            productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-            cfsContext = Validations.getGlobalName(productContext,productName);
-            cfsName = "CFS_" + req.getSubscriberName() + "_" + req.getServiceId();
-            rfsContext = Validations.getGlobalName(cfsContext,cfsName);
             rfsName = "RFS_" + req.getSubscriberName() + "_" + req.getServiceId();
         }
         // Broadband/Voice with serviceLink provided and not Cloudstarter/Bridged
@@ -119,7 +115,7 @@ public class ChangeState implements HttpAction {
         }
         productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
         cfsContext = Validations.getGlobalName(productContext,productName);
-        cfsName = "CFS_" + req.getSubscriberName() + "_" + req.getServiceId();
+        cfsName = "CFS_" + subscriberName;
         rfsContext = Validations.getGlobalName(cfsContext,cfsName);
 
         // 3. Check ONT name length if present
@@ -188,11 +184,10 @@ public class ChangeState implements HttpAction {
             rfsRepository.save(rfs, 2);
 
             // Also persist ONT/CBM if we located and want to reflect state (optional)
-            if (optOnt.isPresent()) {
-                LogicalDevice ont = optOnt.get();
-                // optionally mark device-level flags (no explicit requirement, kept minimal)
-                logicalDeviceRepository.save(ont, 2);
-            }
+//            if (optOnt.isPresent()) {
+//                LogicalDevice ont = optOnt.get();
+//                logicalDeviceRepository.save(ont, 2);
+//            }
             if (optCbm.isPresent()) {
                 LogicalDevice cbm = optCbm.get();
                 logicalDeviceRepository.save(cbm, 2);
