@@ -82,44 +82,44 @@ public class CreateServiceFibernet implements HttpAction {
             // optional: template names etc.
 
             // Build canonical names
-            String subscriberGdn = request.getSubscriberName() + "_" + request.getOntSN(); // subscriber with ONT suffix as per your conventions
-            String subscriptionGdn = request.getSubscriberName() + "_" + request.getServiceID() + "_" + request.getOntSN();
-            String productGdn = request.getSubscriberName() + "_" + request.getProductSubtype() + "_" + request.getServiceID();
-            String cfsGdn = "CFS_" + subscriptionGdn;
-            String rfsGdn = "RFS_" + subscriptionGdn;
-            String ontGdn = "ONT" + request.getOntSN();
+            String subscriberName = request.getSubscriberName() + "_" + request.getOntSN(); // subscriber with ONT suffix as per your conventions
+            String subscriptionName = request.getSubscriberName() + "_" + request.getServiceID() + "_" + request.getOntSN();
+            String productName = request.getSubscriberName() + "_" + request.getProductSubtype() + "_" + request.getServiceID();
+            String cfsName = "CFS_" + subscriberName;
+            String rfsName = "RFS_" + subscriptionName;
+            String ontName = "ONT" + request.getOntSN();
 
-            String subscriptionConext=Validations.getGlobalName("",subscriberGdn);
-            String ProductContext=Validations.getGlobalName(subscriptionConext,subscriptionGdn);
-            String cfsContext=Validations.getGlobalName(ProductContext,productGdn);
-            String rfsContext=Validations.getGlobalName(cfsContext,cfsGdn);
-            String oltContext=Validations.getGlobalName(rfsContext,rfsGdn);
+            String subscriptionConext=Validations.getGlobalName("",subscriberName);
+            String ProductContext=Validations.getGlobalName(subscriptionConext,subscriptionName);
+            String cfsContext=Validations.getGlobalName(ProductContext,productName);
+            String rfsContext=Validations.getGlobalName(cfsContext,cfsName);
+            String oltContext=Validations.getGlobalName(rfsContext,rfsName);
 
 
 
             // Length checks
-            if (subscriberGdn.length() > 100) {
+            if (subscriberName.length() > 100) {
                 return createErrorResponse("Subscriber name too long", "400", "", "");
             }
-            if (subscriptionGdn.length() > 100) {
+            if (subscriptionName.length() > 100) {
                 return createErrorResponse("Subscription name too long", "400", "", "");
             }
-            if (productGdn.length() > 100) {
+            if (productName.length() > 100) {
                 return createErrorResponse("Product name too long", "400", "", "");
             }
-            if (ontGdn.length() > 100) {
+            if (ontName.length() > 100) {
                 return createErrorResponse("ONT name too long", "400", "", "");
             }
 
             // 2. Subscriber: create or fetch
-            Optional<Customer> optCustomer = customerRepository.uivFindByGdn(subscriberGdn);
+            Optional<Customer> optCustomer = customerRepository.uivFindByGdn(subscriberName);
             Customer subscriber;
             if (optCustomer.isPresent()) {
                 subscriber = optCustomer.get();
-                log.info("Found existing subscriber: {}", subscriberGdn);
+                log.info("Found existing subscriber: {}", subscriberName);
             } else {
                 subscriber = new Customer();
-                subscriber.setLocalName(subscriberGdn);
+                subscriber.setLocalName(subscriberName);
                 subscriber.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER); // if you have a constant
                 subscriber.setContext("");
                 Map<String, Object> custProps = new HashMap<>();
@@ -132,18 +132,18 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getHhid() != null) custProps.put("houseHoldId", request.getHhid());
                 subscriber.setProperties(custProps);
                 customerRepository.save(subscriber, 2);
-                log.info("Created subscriber: {}", subscriberGdn);
+                log.info("Created subscriber: {}", subscriberName);
             }
 
             // 3. Subscription: create or fetch (stored as LogicalComponent or service in your model — here we use Subscription entity)
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
             Subscription subscription;
             if (optSubscription.isPresent()) {
                 subscription = optSubscription.get();
-                log.info("Found existing subscription: {}", subscriptionGdn);
+                log.info("Found existing subscription: {}", subscriptionName);
             } else {
                 subscription = new Subscription();
-                subscription.setLocalName(subscriptionGdn);
+                subscription.setLocalName(subscriptionName);
                 subscription.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
                 subscription.setContext(subscriptionConext);
                 Map<String, Object> subProps = new HashMap<>();
@@ -156,18 +156,18 @@ public class CreateServiceFibernet implements HttpAction {
                 subscription.setProperties(subProps);
                 subscription.setCustomer(subscriber);
                 subscriptionRepository.save(subscription, 2);
-                log.info("Created subscription: {}", subscriptionGdn);
+                log.info("Created subscription: {}", subscriptionName);
             }
 
             // 4. Product: create or fetch
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
+            Optional<Product> optProduct = productRepository.uivFindByGdn(productName);
             Product product;
             if (optProduct.isPresent()) {
                 product = optProduct.get();
-                log.info("Found existing product: {}", productGdn);
+                log.info("Found existing product: {}", productName);
             } else {
                 product = new Product();
-                product.setLocalName(productGdn);
+                product.setLocalName(productName);
                 product.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
                 product.setContext(ProductContext);
                 Map<String, Object> prodProps = new HashMap<>();
@@ -176,18 +176,18 @@ public class CreateServiceFibernet implements HttpAction {
                 product.setProperties(prodProps);
                 product.setSubscription(subscription);
                 productRepository.save(product, 2);
-                log.info("Created product: {}", productGdn);
+                log.info("Created product: {}", productName);
             }
 
             // 5. CFS: create or fetch
-            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
+            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsName);
             CustomerFacingService cfs;
             if (optCfs.isPresent()) {
                 cfs = optCfs.get();
-                log.info("Found existing CFS: {}", cfsGdn);
+                log.info("Found existing CFS: {}", cfsName);
             } else {
                 cfs = new CustomerFacingService();
-                cfs.setLocalName(cfsGdn);
+                cfs.setLocalName(cfsName);
                 cfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
                 cfs.setContext(cfsContext);
                 Map<String, Object> cfsProps = new HashMap<>();
@@ -196,18 +196,18 @@ public class CreateServiceFibernet implements HttpAction {
                 cfs.setProperties(cfsProps);
                 cfs.setContainingProduct(product);
                 cfsRepository.save(cfs, 2);
-                log.info("Created CFS: {}", cfsGdn);
+                log.info("Created CFS: {}", cfsName);
             }
 
             // 6. RFS: create or fetch
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
+            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsName);
             ResourceFacingService rfs;
             if (optRfs.isPresent()) {
                 rfs = optRfs.get();
-                log.info("Found existing RFS: {}", rfsGdn);
+                log.info("Found existing RFS: {}", rfsName);
             } else {
                 rfs = new ResourceFacingService();
-                rfs.setLocalName(rfsGdn);
+                rfs.setLocalName(rfsName);
                 rfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
                 rfs.setContext(rfsContext);
                 Map<String, Object> rfsProps = new HashMap<>();
@@ -216,7 +216,7 @@ public class CreateServiceFibernet implements HttpAction {
                 rfs.setProperties(rfsProps);
                 rfs.setContainingCfs(cfs);
                 rfsRepository.save(rfs, 2);
-                log.info("Created RFS: {}", rfsGdn);
+                log.info("Created RFS: {}", rfsName);
             }
 
             // 7. OLT device: find or create as LogicalDevice with kind=OLT
@@ -243,14 +243,14 @@ public class CreateServiceFibernet implements HttpAction {
 
             // 8. ONT device: find or create as LogicalDevice with kind=ONT
             String ontContext=Validations.getGlobalName(oltContext,oltGdn);
-            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
+            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontName);
             LogicalDevice ontDevice;
             if (optOnt.isPresent()) {
                 ontDevice = optOnt.get();
-                log.info("Found existing ONT: {}", ontGdn);
+                log.info("Found existing ONT: {}", ontName);
             } else {
                 ontDevice = new LogicalDevice();
-                ontDevice.setLocalName(ontGdn);
+                ontDevice.setLocalName(ontName);
                 ontDevice.setKind(Constants.SETAR_KIND_ONT_DEVICE);
                 ontDevice.setContext(ontContext);
                 Map<String, Object> ontProps = new HashMap<>();
@@ -260,7 +260,7 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getMenm() != null) ontProps.put("description", request.getMenm());
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
                 logicalDeviceRepository.save(ontDevice, 2);
-                log.info("Created ONT device: {}", ontGdn);
+                log.info("Created ONT device: {}", ontName);
             }
             if(oltDevice!=null && ontDevice!=null){
                 oltDevice.addManagingDevices(ontDevice);
@@ -299,7 +299,7 @@ public class CreateServiceFibernet implements HttpAction {
             response.setStatus("201");
             response.setMessage("Fibernet service created");
             response.setTimestamp(Instant.now().toString());
-            response.setSubscriptionName(subscriptionGdn);
+            response.setSubscriptionName(subscriptionName);
             response.setOntName(ontNameResp);
             return response;
 
