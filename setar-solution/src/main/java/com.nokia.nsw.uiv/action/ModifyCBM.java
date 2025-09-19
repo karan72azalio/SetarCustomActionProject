@@ -111,11 +111,12 @@ public class ModifyCBM implements HttpAction {
             String cbmDeviceName = "CBM"+Constants.UNDER_SCORE + input.getServiceId();
             String subscriptionContext = Validations.getGlobalName("",subscriberNameDerived);
             String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-            String rfsContext = Validations.getGlobalName("",cfsName);
+            String cfsContext = Validations.getGlobalName(productContext,productName);
+            String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
             String subscriberGdn = Validations.getGlobalName("",subscriberNameDerived);
             String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
             String productGdn = Validations.getGlobalName(productContext,productName);
-            String cfsGdn = Validations.getGlobalName("",cfsName);
+            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
             String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
 
             // 4. Retrieve and update Key Entities
@@ -178,12 +179,13 @@ public class ModifyCBM implements HttpAction {
                 String subscriberWithMAC = input.getSubscriberName() + sanitizeForName(input.getResourceSN());
                 subscriptionContext = Validations.getGlobalName("",subscriberWithMAC);
                 productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-                rfsContext = Validations.getGlobalName("",cfsName);
+                cfsContext = Validations.getGlobalName(productContext,productName);
+                rfsContext = Validations.getGlobalName(cfsContext,cfsName);
                 subscriberGdn = Validations.getGlobalName("",subscriberNameDerived);
                 subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
                 productGdn = Validations.getGlobalName(productContext,productName);
                 cfsGdn = Validations.getGlobalName(productContext,productName);
-                rfsGdn = Validations.getGlobalName("",cfsName);
+                rfsGdn = Validations.getGlobalName(cfsContext,cfsName);
                 Optional<Customer> optSubscriberWithMac = customerRepository.uivFindByGdn(subscriberWithMAC);
                 Customer subscriberWithMac = optSubscriberWithMac.orElse(null);
 

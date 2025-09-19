@@ -79,6 +79,7 @@ public class ChangeState implements HttpAction {
         String subscriptionContext = subscriberGdn;
         String productContext = "";
         String rfsContext = "";
+        String cfsContext = "";
         String oltDeviceContext = "";
         String ontDeviceContext = "";
 
@@ -113,8 +114,9 @@ public class ChangeState implements HttpAction {
             rfsName = "RFS_" + subscriptionName;
         }
         productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
+        cfsContext = Validations.getGlobalName(productContext,productName);
         cfsName = "CFS_" + subscriberName;
-        rfsContext = Validations.getGlobalName("",cfsName);
+        rfsContext = Validations.getGlobalName(cfsContext,cfsName);
 
         // 3. Check ONT name length if present
         if (!isEmpty(req.getOntSN())) {

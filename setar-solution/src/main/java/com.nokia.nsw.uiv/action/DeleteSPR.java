@@ -100,10 +100,11 @@ public class DeleteSPR implements HttpAction {
         String cfsName = "CFS_" + subscriberNameWithOnt;
         String rfsName = "RFS_" + subscriptionName;
         String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
-        String ontName = "ONT_" + req.getOntSN();
+        String ontName = "ONT" + req.getOntSN();
         String subscriptionContext="";
         String productContext="";
         String rfsContext = "";
+        String cfsContext = "";
 
         if (ontName.length() > 100) {
             // Code6
@@ -138,15 +139,16 @@ public class DeleteSPR implements HttpAction {
             // -----------------------------
             // 4) Retrieve Objects
             // -----------------------------
-             subscriptionContext=Validations.getGlobalName("",subscriberNameWithOnt);
+            subscriptionContext=Validations.getGlobalName("",subscriberNameWithOnt);
             String subscriptionGdn=Validations.getGlobalName(subscriptionContext,subscriptionName);
             Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
             productContext=Validations.getGlobalName(subscriptionContext,subscriptionName);
             String productGdn=Validations.getGlobalName(productContext,productName);
             Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
-            String cfsGdn=Validations.getGlobalName("",cfsName);
+            cfsContext=Validations.getGlobalName(productContext,productName);
+            String cfsGdn=Validations.getGlobalName(cfsContext,cfsName);
             Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
-            rfsContext=Validations.getGlobalName("",cfsName);
+            rfsContext=Validations.getGlobalName(cfsContext,cfsName);
             String rfsGdn=Validations.getGlobalName(rfsContext,rfsName);
             Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             String ontGdn=Validations.getGlobalName("",ontName);

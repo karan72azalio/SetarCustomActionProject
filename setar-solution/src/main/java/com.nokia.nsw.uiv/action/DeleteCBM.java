@@ -94,6 +94,7 @@ public class DeleteCBM implements HttpAction {
         String subscriptionContext="";
         String productContext="";
         String rfsContext = "";
+        String cfsContext = "";
 
         try {
             ResourceFacingService setarRFS = null;
@@ -135,7 +136,8 @@ public class DeleteCBM implements HttpAction {
                 productContext = subscriptionGdn;
                 String productGdn = Validations.getGlobalName(productContext,productName);
                 optProduct = productRepository.uivFindByGdn(productGdn);
-                String cfsGdn = Validations.getGlobalName("",cfsName);
+                cfsContext = productGdn;
+                String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
                 setarCFS = cfsRepository.uivFindByGdn(cfsGdn);
 
                 rfsContext = cfsGdn;
@@ -172,27 +174,27 @@ public class DeleteCBM implements HttpAction {
             optCbmDevice.ifPresent(cbmDeviceRepository::delete);
 
             // 8. Reset RFS linked resources
-                setarRFS.getUsedResource().forEach(resource -> {
-                    if (resource.getLocalName().startsWith("AP") || resource.getLocalName().startsWith("STB")) {
+            setarRFS.getUsedResource().forEach(resource -> {
+                if (resource.getLocalName().startsWith("AP") || resource.getLocalName().startsWith("STB")) {
 
-                        // Create a properties map
-                        Map<String, Object> props = new HashMap<>();
-                        props.put("AdministrativeState", "Available");
+                    // Create a properties map
+                    Map<String, Object> props = new HashMap<>();
+                    props.put("AdministrativeState", "Available");
 
-                        if (resource.getLocalName().startsWith("STB")) {
-                            props.put("DeviceGroupId", null);
-                        }
-
-                        // Set the map into resource properties
-                        resource.setProperties(props);
-
-                        // Save the resource
-                        cbmDeviceRepository.save((LogicalDevice) resource, 2);
+                    if (resource.getLocalName().startsWith("STB")) {
+                        props.put("DeviceGroupId", null);
                     }
-                });
 
-                // Delete RFS after processing its contained resources
-                rfsRepository.delete(setarRFS);
+                    // Set the map into resource properties
+                    resource.setProperties(props);
+
+                    // Save the resource
+                    cbmDeviceRepository.save((LogicalDevice) resource, 2);
+                }
+            });
+
+            // Delete RFS after processing its contained resources
+            rfsRepository.delete(setarRFS);
 
 
             // 9. Delete Product & Subscription

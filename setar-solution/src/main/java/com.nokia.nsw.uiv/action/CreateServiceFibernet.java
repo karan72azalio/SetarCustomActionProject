@@ -87,14 +87,15 @@ public class CreateServiceFibernet implements HttpAction {
             String productName = request.getSubscriberName() + "_" + request.getProductSubtype() + "_" + request.getServiceID();
             String cfsName = "CFS_" + subscriberName;
             String rfsName = "RFS_" + subscriptionName;
-            String ontName = "ONT_" + request.getOntSN();
+            String ontName = "ONT" + request.getOntSN();
 
             String subscriptionConext=Validations.getGlobalName("",subscriberName);
             String subscriptionGdn=Validations.getGlobalName(subscriptionConext,subscriptionName);
             String ProductContext=Validations.getGlobalName(subscriptionConext,subscriptionName);
             String ProductGdn=Validations.getGlobalName(ProductContext,productName);
-            String cfsGdn=Validations.getGlobalName("",cfsName);
-            String rfsContext=Validations.getGlobalName("",cfsName);
+            String cfsContext=Validations.getGlobalName(ProductContext,productName);
+            String cfsGdn=Validations.getGlobalName(cfsContext,cfsName);
+            String rfsContext=Validations.getGlobalName(cfsContext,cfsName);
             String rfsGdn=Validations.getGlobalName(rfsContext,rfsName);
             String oltContext="";
 
@@ -194,7 +195,7 @@ public class CreateServiceFibernet implements HttpAction {
                 cfs = new CustomerFacingService();
                 cfs.setLocalName(cfsName);
                 cfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
-                cfs.setContext("");
+                cfs.setContext(cfsContext);
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStartDate", Instant.now().toString());
                 if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
