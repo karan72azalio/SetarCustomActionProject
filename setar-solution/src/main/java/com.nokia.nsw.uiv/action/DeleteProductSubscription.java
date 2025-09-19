@@ -55,15 +55,23 @@ public class DeleteProductSubscription implements HttpAction {
             log.info("Mandatory parameter validation completed");
 
             // ========== Construct Product Name ==========
-            String productNameStr = request.getServiceID() + "_" + request.getComponentName();
-            if (productNameStr.length() > 100) {
+            String subscriberName = request.getSubscriberName();
+            String subscriptionName = subscriberName + "_" + request.getServiceID();
+            String subscriptionContext = Validations.getGlobalName("",subscriptionName);
+            String productName = request.getServiceID() + "_" + request.getComponentName();
+            String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String productGdn = Validations.getGlobalName(productContext,productName);
+            if (productName.length() > 100) {
                 throw new BadRequestException("Product Name String exceeds 100 characters");
             }
 
             // ========== RFS Update ==========
             if (request.getFxOrderID() != null && !request.getFxOrderID().isEmpty()) {
+                String cfsName = "CFS_" + request.getSubscriberName() + "_" + request.getServiceID();
+                String rfsContext = Validations.getGlobalName("",cfsName);
                 String rfsName = "RFS_" + request.getSubscriberName() + "_" + request.getServiceID();
-                Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsName);
+                String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+                Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
 
                 if (optRfs.isPresent()) {
                     ResourceFacingService rfs = optRfs.get();
@@ -77,22 +85,22 @@ public class DeleteProductSubscription implements HttpAction {
             }
 
             // ========== Delete Product ==========
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productNameStr);
+            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
 
             if (optProduct.isPresent()) {
                 Product product = optProduct.get();
                 productRepository.delete(product);
-                log.info("Deleted Product Subscription {}", productNameStr);
+                log.info("Deleted Product Subscription {}", productName);
 
                 return new DeleteProductSubscriptionResponse(
                         "200",
                         "UIV action DeleteProductSubscription executed successfully. Product Subscription Deleted.",
                         Instant.now().toString(),
-                        productNameStr
+                        productName
                 );
             } else {
                 String msg = "UIV action DeleteProductSubscription execution failed - " +
-                        "Error, Product Subscription with name " + productNameStr + " not found.";
+                        "Error, Product Subscription with name " + productName + " not found.";
                 return new DeleteProductSubscriptionResponse("404", msg,
                         Instant.now().toString(), "");
             }

@@ -87,7 +87,7 @@ public class CreateServiceFibernet implements HttpAction {
             String productName = request.getSubscriberName() + "_" + request.getProductSubtype() + "_" + request.getServiceID();
             String cfsName = "CFS_" + subscriberName;
             String rfsName = "RFS_" + subscriptionName;
-            String ontName = "ONT" + request.getOntSN();
+            String ontName = "ONT_" + request.getOntSN();
 
             String subscriptionConext=Validations.getGlobalName("",subscriberName);
             String subscriptionGdn=Validations.getGlobalName(subscriptionConext,subscriptionName);

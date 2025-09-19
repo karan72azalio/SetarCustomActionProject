@@ -92,11 +92,13 @@ public class CreateProductSubscription implements HttpAction {
 
             // ================== Subscription ==================
             String subscriptionName = subscriberName + "_" + request.getServiceID();
+            String subscriptionContext = Validations.getGlobalName("",subscriptionName);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
             if (subscriptionName.length() > 100) {
                 throw new BadRequestException("Subscription name too long");
             }
 
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
+            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
             Subscription subscription;
             if (optSubscription.isPresent()) {
                 subscription = optSubscription.get();
@@ -105,7 +107,7 @@ public class CreateProductSubscription implements HttpAction {
                 subscription = new Subscription();
                 subscription.setLocalName(subscriptionName);
                 subscription.setKind("SetarSubscription");
-                subscription.setContext("NA");
+                subscription.setContext(subscriptionContext);
                 Map<String, Object> props = new HashMap<>();
                 props.put("name", subscriptionName);
                 props.put("status", "Active");
@@ -117,12 +119,14 @@ public class CreateProductSubscription implements HttpAction {
             }
 
             // ================== Product ==================
+            String productContext = subscriptionGdn;
             String productName = request.getServiceID() + "_" + request.getComponentName();
+            String productGdn = Validations.getGlobalName(productContext,productName);
             if (productName.length() > 100) {
                 throw new BadRequestException("Product name too long");
             }
 
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productName);
+            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
             Product product;
             if (optProduct.isPresent()) {
                 product = optProduct.get();
@@ -131,7 +135,7 @@ public class CreateProductSubscription implements HttpAction {
                 product = new Product();
                 product.setLocalName(productName);
                 product.setKind("SetarProduct");
-                product.setContext("NA");
+                product.setContext(productContext);
                 Map<String, Object> props = new HashMap<>();
                 props.put("name", productName);
                 props.put("status", "Active");

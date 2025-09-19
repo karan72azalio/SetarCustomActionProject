@@ -51,31 +51,36 @@ public class QueryProductSubscription implements HttpAction {
             log.info("Mandatory parameter validation completed");
 
             // ================== Construct Product Name ==================
-            String productNameStr = request.getServiceID() + "_" + request.getComponentName();
-            if (productNameStr.length() > 100) {
+            String subscriberName = request.getSubscriberName();
+            String subscriptionName = subscriberName + "_" + request.getServiceID();
+            String subscriptionContext = Validations.getGlobalName("",subscriptionName);
+            String productName = request.getServiceID() + "_" + request.getComponentName();
+            String productCtx = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String productGdn = Validations.getGlobalName(productCtx,productName);
+            if (productName.length() > 100) {
                 throw new BadRequestException("Product Name String exceeds 100 characters");
             }
 
             // ================== Lookup Product ==================
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productNameStr);
+            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
 
             if (optProduct.isPresent()) {
                 Product product = optProduct.get();
                 String productId = (String) product.getProperties().getOrDefault("productId", "");
 
-                log.info("Product Subscription found: {} with ID {}", productNameStr, productId);
+                log.info("Product Subscription found: {} with ID {}", productName, productId);
 
                 return new QueryProductSubscriptionResponse(
                         "200",
                         "UIV action QueryProductSubscription executed successfully.",
                         java.time.Instant.now().toString(),
-                        productNameStr,
+                        productName,
                         productId
                 );
             } else {
-                log.error("Product Subscription not found: {}", productNameStr);
+                log.error("Product Subscription not found: {}", productName);
                 String msg = "UIV action QueryProductSubscription execution failed - " +
-                        "Error, Product Subscription with name " + productNameStr + " not found.";
+                        "Error, Product Subscription with name " + productName + " not found.";
                 return new QueryProductSubscriptionResponse("404", msg,
                         java.time.Instant.now().toString(), "", "");
             }

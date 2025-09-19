@@ -100,7 +100,7 @@ public class DeleteSPR implements HttpAction {
         String cfsName = "CFS_" + subscriberNameWithOnt;
         String rfsName = "RFS_" + subscriptionName;
         String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
-        String ontName = "ONT" + req.getOntSN();
+        String ontName = "ONT_" + req.getOntSN();
         String subscriptionContext="";
         String productContext="";
         String rfsContext = "";

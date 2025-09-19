@@ -399,7 +399,7 @@ public class QueryFlags implements HttpAction {
 
             log.info("------------Test Trace # 12---------------");
             if ("ONT".equalsIgnoreCase(serviceLink) || "SRX".equalsIgnoreCase(serviceLink) || (ontSN != null && ontSN.contains("ALCL"))) {
-                String ontGdn = ontSN == null ? "" : "ONT" + ontSN;
+                String ontGdn = ontSN == null ? "" : "ONT_" + ontSN;
                 if (ontGdn.length() > 100) {
                     return new QueryFlagsResponse("400", ERROR_PREFIX + "ONT name too long", getCurrentTimestamp(), Collections.emptyMap());
                 }

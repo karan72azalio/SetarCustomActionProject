@@ -77,7 +77,7 @@ public class ModifySPR implements HttpAction {
             // 2. Name Construction
             String subscriberName = request.getSubscriberName() + "_" + request.getOntSN();
             String subscriptionName = request.getSubscriberName() + "_" + request.getServiceId() + "_" + request.getOntSN();
-            String ontName = "ONT" + request.getOntSN();
+            String ontName = "ONT_" + request.getOntSN();
             String subscriberGdn = subscriberName;
             String subscriptionContext = subscriberGdn;
 
