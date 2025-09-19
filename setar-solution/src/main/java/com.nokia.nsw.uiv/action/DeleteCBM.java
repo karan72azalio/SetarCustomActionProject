@@ -94,7 +94,6 @@ public class DeleteCBM implements HttpAction {
         String subscriptionContext="";
         String productContext="";
         String rfsContext = "";
-        String cfsContext = "";
 
         try {
             ResourceFacingService setarRFS = null;
@@ -136,8 +135,7 @@ public class DeleteCBM implements HttpAction {
                 productContext = subscriptionGdn;
                 String productGdn = Validations.getGlobalName(productContext,productName);
                 optProduct = productRepository.uivFindByGdn(productGdn);
-                cfsContext = productGdn;
-                String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+                String cfsGdn = Validations.getGlobalName("",cfsName);
                 setarCFS = cfsRepository.uivFindByGdn(cfsGdn);
 
                 rfsContext = cfsGdn;

@@ -104,7 +104,6 @@ public class DeleteSPR implements HttpAction {
         String subscriptionContext="";
         String productContext="";
         String rfsContext = "";
-        String cfsContext = "";
 
         if (ontName.length() > 100) {
             // Code6
@@ -145,10 +144,9 @@ public class DeleteSPR implements HttpAction {
             productContext=Validations.getGlobalName(subscriptionContext,subscriptionName);
             String productGdn=Validations.getGlobalName(productContext,productName);
             Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
-            cfsContext=Validations.getGlobalName(productContext,productName);
-            String cfsGdn=Validations.getGlobalName(cfsContext,cfsName);
+            String cfsGdn=Validations.getGlobalName("",cfsName);
             Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
-            rfsContext=Validations.getGlobalName(cfsContext,cfsName);
+            rfsContext=Validations.getGlobalName("",cfsName);
             String rfsGdn=Validations.getGlobalName(rfsContext,rfsName);
             Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             String ontGdn=Validations.getGlobalName("",ontName);

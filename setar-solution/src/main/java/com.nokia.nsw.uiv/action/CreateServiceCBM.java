@@ -229,8 +229,7 @@ public class CreateServiceCBM implements HttpAction {
 
         // --- 5. CFS Logic ---
         String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;
-        String cfsContext = Validations.getGlobalName(productContext,productName);
-        String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+        String cfsGdn = Validations.getGlobalName("",cfsName);
         CustomerFacingService cfs = cfsRepository.uivFindByGdn(cfsGdn)
                 .orElseGet(() -> {
                     CustomerFacingService c = new CustomerFacingService();
@@ -247,7 +246,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        c.setContext(cfsContext);
+                        c.setContext("");
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -268,7 +267,7 @@ public class CreateServiceCBM implements HttpAction {
         }
         // --- 6. RFS Logic ---
         String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
-        String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
+        String rfsContext = Validations.getGlobalName("",cfsName);
         String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
         ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn)
                 .orElseGet(() -> {
