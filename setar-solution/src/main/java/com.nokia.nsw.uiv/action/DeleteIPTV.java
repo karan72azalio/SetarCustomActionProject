@@ -10,6 +10,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.Product;
@@ -67,7 +68,7 @@ public class DeleteIPTV implements HttpAction {
 
             // Step 2: Prepare entity names
             String subscriptionName = subscriberName + "_" + serviceId;
-            String productName = subscriberName + productSubType + serviceId;
+            String productName = subscriberName+ Constants.UNDER_SCORE + productSubType+Constants.UNDER_SCORE + serviceId;
             String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
             String ontName = "ONT_" + ontSN;

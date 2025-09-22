@@ -108,7 +108,7 @@ public class ModifyCBM implements HttpAction {
             String cfsName = "CFS"+Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS"+Constants.UNDER_SCORE + subscriptionName;
             String productName = input.getSubscriberName()+Constants.UNDER_SCORE + input.getProductSubtype()+Constants.UNDER_SCORE + input.getServiceId();
-            String cbmDeviceName = "CBM"+Constants.UNDER_SCORE + input.getServiceId();
+            String cbmDeviceName = "CBM"+ input.getServiceId();
             String subscriptionContext = Validations.getGlobalName("",subscriberNameDerived);
             String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
             String cfsContext = Validations.getGlobalName(productContext,productName);

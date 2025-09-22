@@ -142,7 +142,7 @@ public class ChangeState implements HttpAction {
 
             if (!isEmpty(req.getCbmMac())) {
                 // attempt find by GDN "CBM" + mac (as per naming in your system)
-                cbmName = "CBM" + req.getCbmMac();
+                cbmName = "CBM" +"_"+ req.getCbmMac();
                 optCbm = logicalDeviceRepository.uivFindByGdn(cbmName);
             }
 
