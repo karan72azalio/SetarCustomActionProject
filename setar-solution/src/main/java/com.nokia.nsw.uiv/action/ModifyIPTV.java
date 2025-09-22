@@ -86,13 +86,21 @@ public class ModifyIPTV implements HttpAction {
             String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
             String cbmDeviceName = "CBM" + request.getServiceId();
+            String subscriptionContext = subscriberName;
+            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String productContext = subscriptionGdn;
+            String productGdn = Validations.getGlobalName(productContext,productName);
+            String cfsContext = productGdn;
+            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+            String rfsContext = cfsGdn;
+            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
 
             // -------------------- Fetch entities --------------------
             Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberName);
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionName);
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productName);
-            Optional<CustomerFacingService> optCFS = cfsRepository.uivFindByGdn(cfsName);
-            Optional<ResourceFacingService> optRFS = rfsRepository.uivFindByGdn(rfsName);
+            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
+            Optional<CustomerFacingService> optCFS = cfsRepository.uivFindByGdn(cfsGdn);
+            Optional<ResourceFacingService> optRFS = rfsRepository.uivFindByGdn(rfsGdn);
 
             if (optSubscriber.isEmpty() || optSubscription.isEmpty() || optProduct.isEmpty() || optCFS.isEmpty() || optRFS.isEmpty()) {
                 return new ModifyIPTVResponse(
@@ -210,6 +218,8 @@ public class ModifyIPTV implements HttpAction {
                     customerRepository.save(subscriber, 2);
                 }
             }
+            String s = subscriber.getName();
+            String sub = subscription.getName();
 
             return new ModifyIPTVResponse(
                     "200",

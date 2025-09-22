@@ -101,7 +101,9 @@ public class CreateServiceIPTV implements HttpAction {
             String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
             String productContext = subscriptionGdn;
             String productGdn = Validations.getGlobalName(productContext,productName);
-            String rfsContext = Validations.getGlobalName("",cfsName);
+            String cfsContext = productGdn;
+            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+            String rfsContext = cfsGdn;
             String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
 
 
@@ -184,7 +186,7 @@ public class CreateServiceIPTV implements HttpAction {
             }
 
             // ------------------- Customer Facing Service (CFS) -------------------
-            Optional<CustomerFacingService> optCFS = cfsRepository.uivFindByGdn(cfsName);
+            Optional<CustomerFacingService> optCFS = cfsRepository.uivFindByGdn(cfsGdn);
             CustomerFacingService cfs;
             if (optCFS.isPresent()) {
                 cfs = optCFS.get();
@@ -193,7 +195,7 @@ public class CreateServiceIPTV implements HttpAction {
                 cfs = new CustomerFacingService();
                 cfs.setLocalName(cfsName);
                 cfs.setKind("SetarCFS");
-                cfs.setContext(cfsName);
+                cfs.setContext(cfsContext);
 
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStartDate", java.time.Instant.now().toString());
@@ -202,7 +204,7 @@ public class CreateServiceIPTV implements HttpAction {
                 cfsProps.put("serviceType", request.getProductType());
 
                 cfs.setProperties(cfsProps);
-//                cfs.addContained(product);
+                cfs.setContainingProduct(product);
                 cfsRepository.save(cfs, 2);
                 log.info("Created CFS: {}", cfsName);
             }
@@ -228,35 +230,12 @@ public class CreateServiceIPTV implements HttpAction {
                 rfsRepository.save(rfs, 2);
                 log.info("Created RFS: {}", rfsName);
             }
-            // ONT Device
-            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontName);
-            LogicalDevice ontDevice;
-            if (optOnt.isPresent()) {
-                ontDevice = optOnt.get();
-                log.info("ONT already exists: {}", ontName);
-            } else {
-                ontDevice = new LogicalDevice();
-                ontDevice.setLocalName(ontName);
-                ontDevice.setKind("ONTDevice");
-                ontDevice.setContext("");
 
-                Map<String, Object> ontProps = new HashMap<>();
-                ontProps.put("serialNo", request.getOntSN());
-                ontProps.put("deviceModel", request.getOntModel());
-                ontProps.put("operationalState", "ACTIVE");
-                ontProps.put("iptvVlan", request.getVlanID());
-                ontDevice.setProperties(ontProps);
-
-                logicalDeviceRepository.save(ontDevice, 2);
-                log.info("Created ONT Device: {}", ontName);
-            }
-
-            String oltContext = ontName;
-            String oltGdn = Validations.getGlobalName(oltContext,request.getOltName()==null?"":request.getOltName());
+            String oltName=request.getOltName()==null?"":request.getOltName();
 
             // ------------------- Logical Devices -------------------
             // OLT Device
-            Optional<LogicalDevice> optOlt = logicalDeviceRepository.uivFindByGdn(oltGdn);
+            Optional<LogicalDevice> optOlt = logicalDeviceRepository.uivFindByGdn(oltName);
             LogicalDevice oltDevice;
             if (optOlt.isPresent()) {
                 oltDevice = optOlt.get();
@@ -265,7 +244,7 @@ public class CreateServiceIPTV implements HttpAction {
                 oltDevice = new LogicalDevice();
                 oltDevice.setLocalName(request.getOltName());
                 oltDevice.setKind("OLTDevice");
-                oltDevice.setContext(oltContext);
+                oltDevice.setContext("");
 
                 Map<String, Object> oltProps = new HashMap<>();
                 oltProps.put("oltPosition", request.getOltName());
@@ -278,6 +257,31 @@ public class CreateServiceIPTV implements HttpAction {
                 oltDevice.setProperties(oltProps);
                 logicalDeviceRepository.save(oltDevice, 2);
                 log.info("Created OLT Device: {}", request.getOltName());
+            }
+
+            // ONT Device
+            String ontContext = oltName;
+            String ontGdn = Validations.getGlobalName(ontContext,ontName);
+            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
+            LogicalDevice ontDevice;
+            if (optOnt.isPresent()) {
+                ontDevice = optOnt.get();
+                log.info("ONT already exists: {}", ontName);
+            } else {
+                ontDevice = new LogicalDevice();
+                ontDevice.setLocalName(ontName);
+                ontDevice.setKind("ONTDevice");
+                ontDevice.setContext(ontContext);
+
+                Map<String, Object> ontProps = new HashMap<>();
+                ontProps.put("serialNo", request.getOntSN());
+                ontProps.put("deviceModel", request.getOntModel());
+                ontProps.put("operationalState", "ACTIVE");
+                ontProps.put("iptvVlan", request.getVlanID());
+                ontDevice.setProperties(ontProps);
+
+                logicalDeviceRepository.save(ontDevice, 2);
+                log.info("Created ONT Device: {}", ontName);
             }
 
             // VLAN Interface

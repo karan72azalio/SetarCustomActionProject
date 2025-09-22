@@ -71,6 +71,14 @@ public class DeleteIPTV implements HttpAction {
             String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
             String ontName = "ONT_" + ontSN;
+            String subscriptionContext = subscriberName;
+            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String productContext = subscriptionGdn;
+            String productGdn = Validations.getGlobalName(productContext,productName);
+            String cfsContext = productGdn;
+            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+            String rfsContext = cfsGdn;
+            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
 
             if (ontName.length() > 100) {
                 return errorResponse("400", ERROR_PREFIX + "ONT name too long");
@@ -78,10 +86,10 @@ public class DeleteIPTV implements HttpAction {
 
             // Step 3: Retrieve entities
             Optional<Customer> optCust = customerRepository.uivFindByGdn(subscriberName);
-            Optional<Subscription> optSub = subscriptionRepository.uivFindByGdn(subscriptionName);
-            Optional<Product> optProd = productRepository.uivFindByGdn(productName);
-            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsName);
+            Optional<Subscription> optSub = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            Optional<Product> optProd = productRepository.uivFindByGdn(productGdn);
+            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
+            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             Optional<LogicalDevice> optOnt = deviceRepository.uivFindByGdn(ontName);
 
             if (optCust.isEmpty() || optSub.isEmpty()) {
@@ -121,7 +129,7 @@ public class DeleteIPTV implements HttpAction {
 
             // Step 6: Delete RFS, CFS, Product
             optRfs.ifPresent(rfsRepository::delete);
-            optCfs.ifPresent(cfsRepository::delete);
+            //optCfs.ifPresent(cfsRepository::delete);
             optProd.ifPresent(productRepository::delete);
 
             // Step 7: Conditional deletion of devices
