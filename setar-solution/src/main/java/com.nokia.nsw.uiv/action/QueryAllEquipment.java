@@ -48,6 +48,7 @@ public class QueryAllEquipment implements HttpAction {
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
             } catch (BadRequestException bre) {
+
                 return new QueryAllEquipmentResponse(
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),

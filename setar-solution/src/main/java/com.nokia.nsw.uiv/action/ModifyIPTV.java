@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
@@ -74,12 +75,17 @@ public class ModifyIPTV implements HttpAction {
 
         try {
             // -------------------- Validate mandatory parameters --------------------
-            Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
-            Validations.validateMandatoryParams(request.getProductType(), "productType");
-            Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
-            Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
-            Validations.validateMandatoryParams(request.getModifyType(), "modifyType");
+            try{
+                Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+                Validations.validateMandatoryParams(request.getProductType(), "productType");
+                Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
+                Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
+                Validations.validateMandatoryParams(request.getModifyType(), "modifyType");
 
+            }catch (BadRequestException bre) {
+                return new ModifyIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString(), "","");
+            }
             String subscriberName = request.getSubscriberName();
             String subscriptionName = subscriberName + "_" + request.getServiceId();
             String productName = subscriberName+Constants.UNDER_SCORE + request.getProductSubtype()+Constants.UNDER_SCORE + request.getServiceId();

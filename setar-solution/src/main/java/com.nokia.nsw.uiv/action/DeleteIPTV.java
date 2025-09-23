@@ -60,12 +60,17 @@ public class DeleteIPTV implements HttpAction {
 
         try {
             // Step 1: Validate mandatory parameters
-            Validations.validateMandatoryParams(subscriberName, "subscriberName");
-            Validations.validateMandatoryParams(productType, "productType");
-            Validations.validateMandatoryParams(productSubType, "productSubType");
-            Validations.validateMandatoryParams(serviceId, "serviceId");
-            Validations.validateMandatoryParams(ontSN, "ontSN");
+            try{
+                Validations.validateMandatoryParams(subscriberName, "subscriberName");
+                Validations.validateMandatoryParams(productType, "productType");
+                Validations.validateMandatoryParams(productSubType, "productSubType");
+                Validations.validateMandatoryParams(serviceId, "serviceId");
+                Validations.validateMandatoryParams(ontSN, "ontSN");
 
+            }catch (BadRequestException bre) {
+                return new DeleteIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString(), "","");
+            }
             // Step 2: Prepare entity names
             String subscriptionName = subscriberName + "_" + serviceId;
             String productName = subscriberName+ Constants.UNDER_SCORE + productSubType+Constants.UNDER_SCORE + serviceId;
@@ -155,8 +160,6 @@ public class DeleteIPTV implements HttpAction {
             // Step 9: Return success
             return successResponse(subscriptionName, ontName, "UIV action DeleteIPTV executed successfully.");
 
-        } catch (BadRequestException bre) {
-            return errorResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage());
         } catch (Exception ex) {
             return errorResponse("500", ERROR_PREFIX + "Internal server error occurred - " + ex.getMessage());
         }
