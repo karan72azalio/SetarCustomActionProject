@@ -77,17 +77,23 @@ public class CreateServiceIPTV implements HttpAction {
         try {
             // Validate mandatory parameters
             log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
-            Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
-            Validations.validateMandatoryParams(request.getProductType(), "productType");
-            Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
-            Validations.validateMandatoryParams(request.getOntSN(), "ontSN");
-            Validations.validateMandatoryParams(request.getOltName(), "oltName");
-            Validations.validateMandatoryParams(request.getQosProfile(), "qosProfile");
-            Validations.validateMandatoryParams(request.getVlanID(), "vlanID");
-            Validations.validateMandatoryParams(request.getHhid(), "hhid");
-            Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
-            Validations.validateMandatoryParams(request.getCustomerGroupID(), "customerGroupID");
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            try{
+                Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+                Validations.validateMandatoryParams(request.getProductType(), "productType");
+                Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
+                Validations.validateMandatoryParams(request.getOntSN(), "ontSN");
+                Validations.validateMandatoryParams(request.getOltName(), "oltName");
+                Validations.validateMandatoryParams(request.getQosProfile(), "qosProfile");
+                Validations.validateMandatoryParams(request.getVlanID(), "vlanID");
+                Validations.validateMandatoryParams(request.getHhid(), "hhid");
+                Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
+                Validations.validateMandatoryParams(request.getCustomerGroupID(), "customerGroupID");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            }catch (BadRequestException bre) {
+                return new CreateServiceIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString(), "","");
+            }
+
 
             // Construct entity names
             String subscriberName = request.getSubscriberName();

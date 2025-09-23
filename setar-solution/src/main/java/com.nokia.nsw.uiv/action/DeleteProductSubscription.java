@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.request.DeleteProductSubscriptionRequest;
 import com.nokia.nsw.uiv.response.DeleteProductSubscriptionResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.Product;
 import com.setar.uiv.model.product.ProductRepository;
@@ -48,10 +49,15 @@ public class DeleteProductSubscription implements HttpAction {
 
         try {
             log.info("Mandatory parameter validation started...");
-            Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
-            Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
-            Validations.validateMandatoryParams(request.getProductType(), "productType");
-            Validations.validateMandatoryParams(request.getComponentName(), "componentName");
+            try{
+                Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+                Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
+                Validations.validateMandatoryParams(request.getProductType(), "productType");
+                Validations.validateMandatoryParams(request.getComponentName(), "componentName");
+            }catch (BadRequestException bre) {
+                return new DeleteProductSubscriptionResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString(), "");
+            }
             log.info("Mandatory parameter validation completed");
 
             // ========== Construct Product Name ==========

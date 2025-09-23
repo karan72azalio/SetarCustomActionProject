@@ -55,14 +55,18 @@ public class CreateProductSubscription implements HttpAction {
 
         try {
             log.info("Mandatory parameter validation started...");
-
-            Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
-            Validations.validateMandatoryParams(request.getProductType(), "productType");
-            Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
-            Validations.validateMandatoryParams(request.getComponentName(), "componentName");
-            Validations.validateMandatoryParams(request.getProductVariant(), "productVariant");
-            Validations.validateMandatoryParams(request.getProduct(), "product");
-            Validations.validateMandatoryParams(request.getReferenceID(), "referenceID");
+            try{
+                Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+                Validations.validateMandatoryParams(request.getProductType(), "productType");
+                Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
+                Validations.validateMandatoryParams(request.getComponentName(), "componentName");
+                Validations.validateMandatoryParams(request.getProductVariant(), "productVariant");
+                Validations.validateMandatoryParams(request.getProduct(), "product");
+                Validations.validateMandatoryParams(request.getReferenceID(), "referenceID");
+            }catch (BadRequestException bre) {
+                return new CreateProductSubscriptionResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString(), "","");
+            }
 
             log.info("Mandatory parameter validation completed");
 
