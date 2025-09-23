@@ -88,9 +88,6 @@ public class QueryFlags implements HttpAction {
         String ontSN = request.getOntSN();
         String ontPort = request.getOntPort();
         String serviceID = request.getServiceId();
-        String subscriberContext = "";
-        String subscriptionContext = "";
-        String productContext = "";
 
         try {
             log.info("------------Test Trace # 2---------------");
@@ -240,8 +237,8 @@ public class QueryFlags implements HttpAction {
             } else if (!equalsIgnoreCase(actionType, "Configure") && ontSN != null && ontSN.contains("ALCL")) {
                 log.info("Trace: Configure with ALCL ONT -> check subscriber_ONT existence");
                 String subscriberWithOnt = subscriber + "_" + ontSN;
-                subscriptionContext = Validations.getGlobalName(subscriberContext,subscriberWithOnt);
-                boolean exists = customerRepository.uivFindByGdn(subscriberWithOnt).isPresent();
+                String subscriberGdn = Validations.getGlobalName(subscriberWithOnt);
+                boolean exists = customerRepository.uivFindByGdn(subscriberGdn).isPresent();
                 flags.put("ACCOUNT_EXIST", exists ? "Exist" : "New");
                 flags.put("SERVICE_FLAG", exists ? "Exist" : "New");
             } else if (equalsIgnoreCase(actionType, "Migrate") && ontSN != null && ontSN.contains("ALCL")) {
@@ -336,13 +333,13 @@ public class QueryFlags implements HttpAction {
 
             log.info("------------Test Trace # 10---------------");
             if (!equalsIgnoreCase(actionType, "Configure")) {
-                String subscriptionGdnToSearch;
+                String subscriptionToSearch;
                 if (ontSN != null && ontSN.contains("ALCL")) {
-                    subscriptionGdnToSearch = subscriber + "_" + (serviceID == null ? "" : serviceID) + "_" + ontSN;
+                    subscriptionToSearch = subscriber + "_" + (serviceID == null ? "" : serviceID) + "_" + ontSN;
                 } else {
-                    subscriptionGdnToSearch = subscriber + "_" + (serviceID == null ? "" : serviceID);
+                    subscriptionToSearch = subscriber + "_" + (serviceID == null ? "" : serviceID);
                 }
-                subscriptionGdnToSearch = Validations.getGlobalName(subscriptionContext,subscriptionGdnToSearch);
+                String subscriptionGdnToSearch = Validations.getGlobalName(subscriptionToSearch);
                 log.info("Trace: Searching subscription by GDN: " + subscriptionGdnToSearch);
                 Optional<Subscription> optFound = subscriptionRepository.uivFindByGdn(subscriptionGdnToSearch);
                 if (optFound.isPresent()) {

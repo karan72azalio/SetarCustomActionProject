@@ -53,7 +53,8 @@ public class QueryResource implements HttpAction {
             }
 
             // Step 3: Search Device
-            Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devName);
+            String devGdn = Validations.getGlobalName(devName);
+            Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devGdn);
             if (optDev.isEmpty()) {
                 return errorResponse("404", ERROR_PREFIX + "Resource not found, SN is: " + resourceSN);
             }

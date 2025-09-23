@@ -77,29 +77,14 @@ public class AssociateResources implements HttpAction {
             System.out.println("----Trace #3: Preparing entity names ----");
             if ("IPTV".equalsIgnoreCase(request.getProductSubType())) {
                 subscriptionName = subscriberName + "_" + request.getServiceId();
-                subscriptionContext = subscriberName;
-                productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-                cfsContext = Validations.getGlobalName(productContext,productName);
-                String cfsName = "CFS_"+subscriptionName;
-                rfsContext = Validations.getGlobalName(cfsContext,cfsName);
                 rfsName = "RFS_" + subscriptionName;
             } else if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
                 subscriptionName = subscriberName + request.getServiceId() + request.getOntSN();
                 subscriberName = subscriberName + "_" + request.getOntSN();
-                subscriptionContext = subscriberName;
-                productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-                cfsContext = Validations.getGlobalName(productContext,productName);
-                String cfsName = "CFS_"+subscriptionName;
-                rfsContext = Validations.getGlobalName(cfsContext,cfsName);
                 rfsName = "RFS_" + subscriptionName;
             } else if (request.getCbmSN() != null && !"NA".equalsIgnoreCase(request.getCbmSN())) {
                 subscriptionName = subscriberName + request.getServiceId() + request.getCbmSN();
                 subscriberName = subscriberName + "_" + request.getCbmSN();
-                subscriptionContext = subscriberName;
-                productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-                cfsContext = Validations.getGlobalName(productContext,productName);
-                String cfsName = "CFS_"+subscriptionName;
-                rfsContext = Validations.getGlobalName(cfsContext,cfsName);
                 rfsName = "RFS_" + subscriptionName;
             } else {
                 return new AssociateResourcesResponse(
@@ -111,7 +96,7 @@ public class AssociateResources implements HttpAction {
             }
 
             // Step 3: Retrieve RFS and Admin State
-            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+            String rfsGdn = Validations.getGlobalName(rfsName);
             System.out.println("----Trace #4: Retrieving RFS and AdminState ----");
             Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             if (!optRfs.isPresent()) {
@@ -192,7 +177,8 @@ public class AssociateResources implements HttpAction {
                     if (sn != null && !"NA".equalsIgnoreCase(sn)) {
                         String devName = "AP_" + sn;
                         System.out.println("----Trace #7: Processing AP device: " + devName + " ----");
-                        Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devName);
+                        String devGdn = Validations.getGlobalName(devName);
+                        Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devGdn);
                         if (!optDev.isPresent()) {
                             return new AssociateResourcesResponse(
                                     "404",
@@ -220,7 +206,8 @@ public class AssociateResources implements HttpAction {
                 }
 
                 if (devName != null) {
-                    Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devName);
+                    String devGdn = Validations.getGlobalName(devName);
+                    Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devGdn);
                     if (!optDev.isPresent()) {
                         return new AssociateResourcesResponse(
                                 "404",

@@ -57,20 +57,15 @@ public class DeleteProductSubscription implements HttpAction {
             // ========== Construct Product Name ==========
             String subscriberName = request.getSubscriberName();
             String subscriptionName = subscriberName + "_" + request.getServiceID();
-            String subscriptionContext = Validations.getGlobalName("",subscriptionName);
             String productName = request.getServiceID() + "_" + request.getComponentName();
-            String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-            String productGdn = Validations.getGlobalName(productContext,productName);
             if (productName.length() > 100) {
                 throw new BadRequestException("Product Name String exceeds 100 characters");
             }
 
             // ========== RFS Update ==========
             if (request.getFxOrderID() != null && !request.getFxOrderID().isEmpty()) {
-                String cfsName = "CFS_" + request.getSubscriberName() + "_" + request.getServiceID();
-                String rfsContext = Validations.getGlobalName("",cfsName);
                 String rfsName = "RFS_" + request.getSubscriberName() + "_" + request.getServiceID();
-                String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+                String rfsGdn = Validations.getGlobalName(rfsName);
                 Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
 
                 if (optRfs.isPresent()) {
@@ -85,6 +80,7 @@ public class DeleteProductSubscription implements HttpAction {
             }
 
             // ========== Delete Product ==========
+            String productGdn = Validations.getGlobalName(productName);
             Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
 
             if (optProduct.isPresent()) {

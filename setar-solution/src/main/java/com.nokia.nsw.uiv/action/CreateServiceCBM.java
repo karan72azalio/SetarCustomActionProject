@@ -97,13 +97,11 @@ public class CreateServiceCBM implements HttpAction {
         } else {
             subscriberName = request.getSubscriberName();
         }
-        String subscriptionContext = Validations.getGlobalName("",subscriberName);
 
         if (subscriberName.length() > 100) {
             return createErrorResponse("Subscriber name too long", 400);
         }
-
-        String subscriberGdn = Validations.getGlobalName("",subscriberName);
+        String subscriberGdn = Validations.getGlobalName(subscriberName);
         Customer subscriber = subscriberRepository.uivFindByGdn(subscriberGdn)
                 .orElseGet(() -> {
                     Customer s = new Customer();
@@ -120,7 +118,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        s.setContext("");
+                        s.setContext(Constants.SETAR);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -147,7 +145,7 @@ public class CreateServiceCBM implements HttpAction {
         if (subscriptionName.length() > 100) {
             return createErrorResponse("Subscription name too long", 400);
         }
-        String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+        String subscriptionGdn = Validations.getGlobalName(subscriptionName);
         Subscription subscription = subscriptionRepository.uivFindByGdn(subscriptionGdn)
                 .orElseGet(() -> {
                     Subscription sub = new Subscription();
@@ -164,7 +162,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        sub.setContext(subscriptionContext);
+                        sub.setContext(Constants.SETAR);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -191,12 +189,11 @@ public class CreateServiceCBM implements HttpAction {
 
         // --- 4. Product Logic ---
         String productName = request.getSubscriberName() +Constants.UNDER_SCORE+ request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
-        String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
         if (productName.length() > 100) {
             return createErrorResponse("Product name too long", 400);
         }
 
-        String productGdn = Validations.getGlobalName(productContext,productName);
+        String productGdn = Validations.getGlobalName(productName);
         Product product = productRepository.uivFindByGdn(productGdn)
                 .orElseGet(() -> {
                     Product p = new Product();
@@ -213,7 +210,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        p.setContext(productContext);
+                        p.setContext(Constants.SETAR);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -229,8 +226,7 @@ public class CreateServiceCBM implements HttpAction {
 
         // --- 5. CFS Logic ---
         String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;
-        String cfsContext = Validations.getGlobalName(productContext,productName);
-        String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+        String cfsGdn = Validations.getGlobalName(cfsName);
         CustomerFacingService cfs = cfsRepository.uivFindByGdn(cfsGdn)
                 .orElseGet(() -> {
                     CustomerFacingService c = new CustomerFacingService();
@@ -247,7 +243,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        c.setContext(cfsContext);
+                        c.setContext(Constants.SETAR);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -268,8 +264,7 @@ public class CreateServiceCBM implements HttpAction {
         }
         // --- 6. RFS Logic ---
         String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
-        String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
-        String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+        String rfsGdn = Validations.getGlobalName(rfsName);
         ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn)
                 .orElseGet(() -> {
                     ResourceFacingService r = new ResourceFacingService();
@@ -286,7 +281,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        r.setContext(rfsContext);
+                        r.setContext(Constants.SETAR);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
@@ -315,7 +310,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     try {
-                        d.setContext("");
+                        d.setContext(Constants.SETAR);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }

@@ -72,17 +72,6 @@ public class ChangeState implements HttpAction {
         String rfsName;
         String ontName = null;
         String cbmName = null;
-        String subscriberName = req.getSubscriberName() +Constants.UNDER_SCORE+req.getOntSN();
-        String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
-        String cfsName = "";
-        String subscriberGdn = Validations.getGlobalName("",subscriberName);
-        String subscriptionContext = subscriberGdn;
-        String productContext = "";
-        String rfsContext = "";
-        String cfsContext = "";
-        String oltDeviceContext = "";
-        String ontDeviceContext = "";
-
         String productType = nullSafe(req.getProductType());
         String productSubType = nullSafe(req.getProductSubtype());
         String serviceLink = nullSafe(req.getServiceLink());
@@ -113,10 +102,6 @@ public class ChangeState implements HttpAction {
             subscriptionName = req.getSubscriberName()+ "_" + req.getServiceId();
             rfsName = "RFS_" + subscriptionName;
         }
-        productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-        cfsContext = Validations.getGlobalName(productContext,productName);
-        cfsName = "CFS_" + subscriberName;
-        rfsContext = Validations.getGlobalName(cfsContext,cfsName);
 
         // 3. Check ONT name length if present
         if (!isEmpty(req.getOntSN())) {
@@ -129,9 +114,9 @@ public class ChangeState implements HttpAction {
 
         // 4. Search for subscription, rfs, ontd & cbm device
         try {
-            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
             Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+            String rfsGdn = Validations.getGlobalName(rfsName);
             Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             Optional<LogicalDevice> optOnt = Optional.empty();
             Optional<LogicalDevice> optCbm = Optional.empty();
@@ -143,7 +128,8 @@ public class ChangeState implements HttpAction {
             if (!isEmpty(req.getCbmMac())) {
                 // attempt find by GDN "CBM" + mac (as per naming in your system)
                 cbmName = "CBM" +"_"+ req.getCbmMac();
-                optCbm = logicalDeviceRepository.uivFindByGdn(cbmName);
+                String cbmGdn = Validations.getGlobalName(cbmName);
+                optCbm = logicalDeviceRepository.uivFindByGdn(cbmGdn);
             }
 
             if (!optSubscription.isPresent() || !optRfs.isPresent()) {

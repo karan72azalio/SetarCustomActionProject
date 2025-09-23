@@ -109,15 +109,11 @@ public class ModifyCBM implements HttpAction {
             String rfsName = "RFS"+Constants.UNDER_SCORE + subscriptionName;
             String productName = input.getSubscriberName()+Constants.UNDER_SCORE + input.getProductSubtype()+Constants.UNDER_SCORE + input.getServiceId();
             String cbmDeviceName = "CBM"+ input.getServiceId();
-            String subscriptionContext = Validations.getGlobalName("",subscriberNameDerived);
-            String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-            String cfsContext = Validations.getGlobalName(productContext,productName);
-            String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
-            String subscriberGdn = Validations.getGlobalName("",subscriberNameDerived);
-            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
-            String productGdn = Validations.getGlobalName(productContext,productName);
-            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
-            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+            String cbmDeviceGdn = Validations.getGlobalName(cbmDeviceName);
+            String subscriberGdn = Validations.getGlobalName(subscriberNameDerived);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
+            String cfsGdn = Validations.getGlobalName(cfsName);
+            String rfsGdn = Validations.getGlobalName(rfsName);
 
             // 4. Retrieve and update Key Entities
             // If modifyType includes package/components/products/contracts skip subscriber retrieval as per spec
@@ -155,7 +151,7 @@ public class ModifyCBM implements HttpAction {
             }
             ResourceFacingService rfs = optRfs.get();
 
-            Optional<LogicalDevice> optCbm = logicalDeviceRepository.uivFindByGdn(cbmDeviceName);
+            Optional<LogicalDevice> optCbm = logicalDeviceRepository.uivFindByGdn(cbmDeviceGdn);
             if (!optCbm.isPresent()) {
                 String msg = ERROR_PREFIX + "Object with UOR \"" + cbmDeviceName + "\" not found";
                 return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");
@@ -177,16 +173,8 @@ public class ModifyCBM implements HttpAction {
 
                 // _subscriberWithMAC_ is subscriberName + resourceSN (without colons?) spec says:
                 String subscriberWithMAC = input.getSubscriberName() + sanitizeForName(input.getResourceSN());
-                subscriptionContext = Validations.getGlobalName("",subscriberWithMAC);
-                productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-                cfsContext = Validations.getGlobalName(productContext,productName);
-                rfsContext = Validations.getGlobalName(cfsContext,cfsName);
-                subscriberGdn = Validations.getGlobalName("",subscriberNameDerived);
-                subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
-                productGdn = Validations.getGlobalName(productContext,productName);
-                cfsGdn = Validations.getGlobalName(productContext,productName);
-                rfsGdn = Validations.getGlobalName(cfsContext,cfsName);
-                Optional<Customer> optSubscriberWithMac = customerRepository.uivFindByGdn(subscriberWithMAC);
+                subscriberGdn = Validations.getGlobalName(subscriberWithMAC);
+                Optional<Customer> optSubscriberWithMac = customerRepository.uivFindByGdn(subscriberGdn);
                 Customer subscriberWithMac = optSubscriberWithMac.orElse(null);
 
                 // Try retrieving CBM device for modifyParam1 (if present)
@@ -194,7 +182,8 @@ public class ModifyCBM implements HttpAction {
                 LogicalDevice cbmForParam1 = null;
                 if (modifyParam1 != null && !modifyParam1.trim().isEmpty()) {
                     cbmForParam1Name = "CBM" + removeColons(modifyParam1);
-                    Optional<LogicalDevice> opt = logicalDeviceRepository.uivFindByGdn(cbmForParam1Name);
+                    cbmDeviceGdn = Validations.getGlobalName(cbmForParam1Name);
+                    Optional<LogicalDevice> opt = logicalDeviceRepository.uivFindByGdn(cbmDeviceGdn);
                     if (opt.isPresent()) cbmForParam1 = opt.get();
                 }
 
@@ -255,7 +244,8 @@ public class ModifyCBM implements HttpAction {
                         // serviceMAC mismatch: try to find CBM by serviceID (from subscription) and update that device
                         String serviceID = (String) subscription.getProperties().getOrDefault("serviceID", "");
                         String newCBMName = "CBM" + serviceID;
-                        Optional<LogicalDevice> optNewCbm = logicalDeviceRepository.uivFindByGdn(newCBMName);
+                        cbmDeviceGdn = Validations.getGlobalName(newCBMName);
+                        Optional<LogicalDevice> optNewCbm = logicalDeviceRepository.uivFindByGdn(cbmDeviceGdn);
                         if (optNewCbm.isPresent()) {
                             LogicalDevice newCBM = optNewCbm.get();
                             Map<String, Object> sProps = subscription.getProperties() == null ? new HashMap<>() : subscription.getProperties();
@@ -303,8 +293,10 @@ public class ModifyCBM implements HttpAction {
                     String oldCbmName = "CBM_" + sanitizeForName(input.getResourceSN());
                     String newCbmName = "CBM_" + sanitizeForName(modifyParam1);
 
-                    Optional<LogicalDevice> optOldCbm = logicalDeviceRepository.uivFindByGdn(oldCbmName);
-                    Optional<LogicalDevice> optNewCbm = logicalDeviceRepository.uivFindByGdn(newCbmName);
+                    cbmDeviceGdn = Validations.getGlobalName(oldCbmName);
+                    Optional<LogicalDevice> optOldCbm = logicalDeviceRepository.uivFindByGdn(cbmDeviceGdn);
+                    cbmDeviceGdn = Validations.getGlobalName(newCbmName);
+                    Optional<LogicalDevice> optNewCbm = logicalDeviceRepository.uivFindByGdn(cbmDeviceGdn);
 
                     if (optOldCbm.isPresent() && optNewCbm.isPresent()) {
                         LogicalDevice oldCbm = optOldCbm.get();
@@ -364,7 +356,9 @@ public class ModifyCBM implements HttpAction {
                 try {
                     if (subscriber == null) {
                         // try to get subscriber by original subscriberName
-                        Optional<Customer> alt = customerRepository.uivFindByGdn(input.getSubscriberName());
+
+                        subscriberGdn = Validations.getGlobalName(input.getSubscriberName());
+                        Optional<Customer> alt = customerRepository.uivFindByGdn(subscriberGdn);
                         if (alt.isPresent()) subscriber = alt.get();
                     }
                     if (subscriber != null) {
@@ -407,7 +401,8 @@ public class ModifyCBM implements HttpAction {
                             subscriptionRepository.save(subscription, 2);
 
                             // rename product
-                            Optional<Product> optProduct = productRepository.uivFindByGdn(productName);
+                            String productGdn = Validations.getGlobalName(productName);
+                            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
                             if (optProduct.isPresent()) {
                                 Product prod = optProduct.get();
                                 prod.setLocalName(productNameNew);
@@ -438,7 +433,8 @@ public class ModifyCBM implements HttpAction {
                             }
 
                             // rename CBM
-                            Optional<LogicalDevice> optOldCbmDevice = logicalDeviceRepository.uivFindByGdn(cbmDeviceName);
+                            cbmDeviceGdn = Validations.getGlobalName(cbmDeviceName);
+                            Optional<LogicalDevice> optOldCbmDevice = logicalDeviceRepository.uivFindByGdn(cbmDeviceGdn);
                             if (optOldCbmDevice.isPresent()) {
                                 LogicalDevice oldCbmDevice = optOldCbmDevice.get();
                                 oldCbmDevice.setLocalName(cbmDeviceNameNew);

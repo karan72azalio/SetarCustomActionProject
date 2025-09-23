@@ -91,11 +91,6 @@ public class DeleteCBM implements HttpAction {
         String productName = request.getSubscriberName()+Constants.UNDER_SCORE + request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
         String cbmName = "CBM"+ request.getCbmSN();
         String subscriberName = request.getSubscriberName();
-        String subscriptionContext="";
-        String productContext="";
-        String rfsContext = "";
-        String cfsContext = "";
-
         try {
             ResourceFacingService setarRFS = null;
             Optional<Product> optProduct = Optional.empty();
@@ -124,24 +119,19 @@ public class DeleteCBM implements HttpAction {
                     String cbmMacAddr = cbm.getProperties().get("macAddress").toString();
                     String macWithoutColons = cbmMacAddr.replaceAll(":", "");
                     String newSubscriberName = subscriberName + Constants.UNDER_SCORE + macWithoutColons;
-                    subscriptionContext = Validations.getGlobalName("",newSubscriberName);
-                    String subscriberGdn = Validations.getGlobalName("",newSubscriberName);
+                    String subscriberGdn = Validations.getGlobalName(newSubscriberName);
                     Optional<Customer> subscriber = subscriberRepository.uivFindByGdn(subscriberGdn);
                     subscriptionCount = subscriber.get().getSubscription().size();
                 }
 
                 // --- 4. Retrieve Associated Entities ---
-                String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+                String subscriptionGdn = Validations.getGlobalName(subscriptionName);
                 optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-                productContext = subscriptionGdn;
-                String productGdn = Validations.getGlobalName(productContext,productName);
+                String productGdn = Validations.getGlobalName(productName);
                 optProduct = productRepository.uivFindByGdn(productGdn);
-                cfsContext = productGdn;
-                String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+                String cfsGdn = Validations.getGlobalName(cfsName);
                 setarCFS = cfsRepository.uivFindByGdn(cfsGdn);
-
-                rfsContext = cfsGdn;
-                String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+                String rfsGdn = Validations.getGlobalName(rfsName);
                 Optional<ResourceFacingService> RFSComponent = rfsRepository.uivFindByGdn(rfsGdn);
                 if(RFSComponent.isPresent()){
                     setarRFS = RFSComponent.get();

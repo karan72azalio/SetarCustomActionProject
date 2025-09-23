@@ -53,15 +53,13 @@ public class QueryProductSubscription implements HttpAction {
             // ================== Construct Product Name ==================
             String subscriberName = request.getSubscriberName();
             String subscriptionName = subscriberName + "_" + request.getServiceID();
-            String subscriptionContext = Validations.getGlobalName("",subscriptionName);
             String productName = request.getServiceID() + "_" + request.getComponentName();
-            String productCtx = Validations.getGlobalName(subscriptionContext,subscriptionName);
-            String productGdn = Validations.getGlobalName(productCtx,productName);
             if (productName.length() > 100) {
                 throw new BadRequestException("Product Name String exceeds 100 characters");
             }
 
             // ================== Lookup Product ==================
+            String productGdn = Validations.getGlobalName(productName);
             Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
 
             if (optProduct.isPresent()) {

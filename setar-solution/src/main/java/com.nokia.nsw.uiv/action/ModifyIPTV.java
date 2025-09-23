@@ -86,20 +86,17 @@ public class ModifyIPTV implements HttpAction {
             String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
             String cbmDeviceName = "CBM" + request.getServiceId();
-            String subscriptionContext = subscriberName;
-            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
-            String productContext = subscriptionGdn;
-            String productGdn = Validations.getGlobalName(productContext,productName);
-            String cfsContext = productGdn;
-            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
-            String rfsContext = cfsGdn;
-            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
 
             // -------------------- Fetch entities --------------------
-            Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberName);
+            String subscriberGdn = Validations.getGlobalName(subscriberName);
+            Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberGdn);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
             Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            String productGdn = Validations.getGlobalName(productName);
             Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
+            String cfsGdn = Validations.getGlobalName(cfsName);
             Optional<CustomerFacingService> optCFS = cfsRepository.uivFindByGdn(cfsGdn);
+            String rfsGdn = Validations.getGlobalName(rfsName);
             Optional<ResourceFacingService> optRFS = rfsRepository.uivFindByGdn(rfsGdn);
 
             if (optSubscriber.isEmpty() || optSubscription.isEmpty() || optProduct.isEmpty() || optCFS.isEmpty() || optRFS.isEmpty()) {
@@ -145,7 +142,8 @@ public class ModifyIPTV implements HttpAction {
 
             // Modify Cable Modem
             if (modifyType.contains("ModfiyCableModem")) {
-                Optional<LogicalDevice> optCbM = stbApCmDeviceRepository.uivFindByGdn(cbmDeviceName);
+                String cbmDeviceGdn = Validations.getGlobalName(cbmDeviceName);
+                Optional<LogicalDevice> optCbM = stbApCmDeviceRepository.uivFindByGdn(cbmDeviceGdn);
                 LogicalDevice cbmDevice = optCbM.orElse(null);
 
                 if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {

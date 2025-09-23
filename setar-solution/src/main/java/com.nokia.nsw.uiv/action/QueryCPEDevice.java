@@ -49,7 +49,8 @@ public class QueryCPEDevice implements HttpAction {
         }
 
         String devName = resourceType + "_" + request.getResourceSN();
-        Optional<LogicalDevice> deviceOpt = cpeDeviceRepository.uivFindByGdn(devName);
+        String devGdn = Validations.getGlobalName(devName);
+        Optional<LogicalDevice> deviceOpt = cpeDeviceRepository.uivFindByGdn(devGdn);
 
         if (!deviceOpt.isPresent()) {
             return new QueryCPEDeviceResponse("404", "CPE Details Not Found", String.valueOf(System.currentTimeMillis()));

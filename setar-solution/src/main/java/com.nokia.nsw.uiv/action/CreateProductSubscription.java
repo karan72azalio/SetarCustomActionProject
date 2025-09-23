@@ -72,7 +72,8 @@ public class CreateProductSubscription implements HttpAction {
                 throw new BadRequestException("Subscriber name too long");
             }
 
-            Optional<Customer> optSubscriber = subscriberRepository.uivFindByGdn(subscriberName);
+            String subscriberGdn = Validations.getGlobalName(subscriberName);
+            Optional<Customer> optSubscriber = subscriberRepository.uivFindByGdn(subscriberGdn);
             Customer subscriber;
             if (optSubscriber.isPresent()) {
                 subscriber = optSubscriber.get();
@@ -81,6 +82,7 @@ public class CreateProductSubscription implements HttpAction {
                 subscriber = new Customer();
                 subscriber.setLocalName(subscriberName);
                 subscriber.setKind("SetarSubscriber");
+                subscriber.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();
                 props.put("name", subscriberName);
                 props.put("status", "Active");
@@ -92,8 +94,7 @@ public class CreateProductSubscription implements HttpAction {
 
             // ================== Subscription ==================
             String subscriptionName = subscriberName + "_" + request.getServiceID();
-            String subscriptionContext = Validations.getGlobalName("",subscriptionName);
-            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
             if (subscriptionName.length() > 100) {
                 throw new BadRequestException("Subscription name too long");
             }
@@ -107,7 +108,7 @@ public class CreateProductSubscription implements HttpAction {
                 subscription = new Subscription();
                 subscription.setLocalName(subscriptionName);
                 subscription.setKind("SetarSubscription");
-                subscription.setContext(subscriptionContext);
+                subscription.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();
                 props.put("name", subscriptionName);
                 props.put("status", "Active");
@@ -119,9 +120,8 @@ public class CreateProductSubscription implements HttpAction {
             }
 
             // ================== Product ==================
-            String productContext = subscriptionGdn;
             String productName = request.getServiceID() + "_" + request.getComponentName();
-            String productGdn = Validations.getGlobalName(productContext,productName);
+            String productGdn = Validations.getGlobalName(productName);
             if (productName.length() > 100) {
                 throw new BadRequestException("Product name too long");
             }
@@ -135,7 +135,7 @@ public class CreateProductSubscription implements HttpAction {
                 product = new Product();
                 product.setLocalName(productName);
                 product.setKind("SetarProduct");
-                product.setContext(productContext);
+                product.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();
                 props.put("name", productName);
                 props.put("status", "Active");

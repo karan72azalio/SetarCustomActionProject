@@ -55,10 +55,6 @@ public class DetachResources implements HttpAction {
         String cfsName = "CFS_" + subscriptionName;
         String rfsName = "RFS_" + subscriptionName;
         String productName = request.getSubscriberName()+Constants.UNDER_SCORE + request.getProductSubType()+Constants.UNDER_SCORE + request.getServiceID();
-        String subscriptionContext = request.getSubscriberName();
-        String productContext = Validations.getGlobalName(subscriptionContext,subscriptionName);
-        String cfsContext = Validations.getGlobalName(productContext,productName);
-        String rfsContext = Validations.getGlobalName(cfsContext,cfsName);
 
         try {
             // 1. Mandatory validation
@@ -70,13 +66,13 @@ public class DetachResources implements HttpAction {
 
             // 2. Fetch entities
             Optional<Customer> subscriber = subscriberRepository.uivFindByGdn(request.getSubscriberName());
-            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
             Optional<Subscription> subscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            String productGdn = Validations.getGlobalName(productContext,productName);
+            String productGdn = Validations.getGlobalName(productName);
             Optional<Product> product = productRepository.uivFindByGdn(productGdn);
-            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
+            String cfsGdn = Validations.getGlobalName(cfsName);
             Optional<CustomerFacingService> cfs = cfsRepository.uivFindByGdn(cfsGdn);
-            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
+            String rfsGdn = Validations.getGlobalName(rfsName);
             Optional<ResourceFacingService> rfs = rfsRepository.uivFindByGdn(rfsGdn);
 
             if (!subscriber.isPresent() || !subscription.isPresent() || !product.isPresent() || !cfs.isPresent() || !rfs.isPresent()) {
@@ -135,7 +131,8 @@ public class DetachResources implements HttpAction {
     }
 
     private boolean detachDevice(String devName, ResourceFacingService rfsEntity, boolean isSTB) {
-        Optional<LogicalDevice> optDevice = deviceRepository.uivFindByGdn(devName);
+        String devGdn = Validations.getGlobalName(devName);
+        Optional<LogicalDevice> optDevice = deviceRepository.uivFindByGdn(devGdn);
         if (optDevice.isPresent()) {
             LogicalDevice device = optDevice.get();
             if (isSTB) {

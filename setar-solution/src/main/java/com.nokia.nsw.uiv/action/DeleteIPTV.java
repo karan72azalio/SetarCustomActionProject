@@ -72,26 +72,24 @@ public class DeleteIPTV implements HttpAction {
             String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
             String ontName = "ONT_" + ontSN;
-            String subscriptionContext = subscriberName;
-            String subscriptionGdn = Validations.getGlobalName(subscriptionContext,subscriptionName);
-            String productContext = subscriptionGdn;
-            String productGdn = Validations.getGlobalName(productContext,productName);
-            String cfsContext = productGdn;
-            String cfsGdn = Validations.getGlobalName(cfsContext,cfsName);
-            String rfsContext = cfsGdn;
-            String rfsGdn = Validations.getGlobalName(rfsContext,rfsName);
 
             if (ontName.length() > 100) {
                 return errorResponse("400", ERROR_PREFIX + "ONT name too long");
             }
 
             // Step 3: Retrieve entities
-            Optional<Customer> optCust = customerRepository.uivFindByGdn(subscriberName);
+            String subscriberGdn = Validations.getGlobalName(subscriberName);
+            Optional<Customer> optCust = customerRepository.uivFindByGdn(subscriberGdn);
+            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
             Optional<Subscription> optSub = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            String productGdn = Validations.getGlobalName(productName);
             Optional<Product> optProd = productRepository.uivFindByGdn(productGdn);
+            String cfsGdn = Validations.getGlobalName(cfsName);
             Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
+            String rfsGdn = Validations.getGlobalName(rfsName);
             Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
-            Optional<LogicalDevice> optOnt = deviceRepository.uivFindByGdn(ontName);
+            String ontGdn = Validations.getGlobalName(ontName);
+            Optional<LogicalDevice> optOnt = deviceRepository.uivFindByGdn(ontGdn);
 
             if (optCust.isEmpty() || optSub.isEmpty()) {
                 return successResponse(subscriptionName, ontName, "No entry found for Delete.");
