@@ -89,16 +89,6 @@ public class CreateServiceFibernet implements HttpAction {
             String rfsName = "RFS_" + subscriptionName;
             String ontName = "ONT" + request.getOntSN();
 
-            String subscriptionConext=Validations.getGlobalName("",subscriberName);
-            String subscriptionGdn=Validations.getGlobalName(subscriptionConext,subscriptionName);
-            String ProductContext=Validations.getGlobalName(subscriptionConext,subscriptionName);
-            String ProductGdn=Validations.getGlobalName(ProductContext,productName);
-            String cfsContext=Validations.getGlobalName(ProductContext,productName);
-            String cfsGdn=Validations.getGlobalName(cfsContext,cfsName);
-            String rfsContext=Validations.getGlobalName(cfsContext,cfsName);
-            String rfsGdn=Validations.getGlobalName(rfsContext,rfsName);
-            String oltContext="";
-
 
 
 
@@ -118,7 +108,8 @@ public class CreateServiceFibernet implements HttpAction {
             }
 
             // 2. Subscriber: create or fetch
-            Optional<Customer> optCustomer = customerRepository.uivFindByGdn(subscriberName);
+            String subscriberGdn=Validations.getGlobalName(subscriberName);
+            Optional<Customer> optCustomer = customerRepository.uivFindByGdn(subscriberGdn);
             Customer subscriber;
             if (optCustomer.isPresent()) {
                 subscriber = optCustomer.get();
@@ -127,7 +118,7 @@ public class CreateServiceFibernet implements HttpAction {
                 subscriber = new Customer();
                 subscriber.setLocalName(subscriberName);
                 subscriber.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER); // if you have a constant
-                subscriber.setContext("");
+                subscriber.setContext(Constants.SETAR);
                 Map<String, Object> custProps = new HashMap<>();
                 custProps.put("accountNumber", request.getSubscriberName());
                 if (request.getFirstName() != null) custProps.put("subscriberFirstName", request.getFirstName());
@@ -142,6 +133,7 @@ public class CreateServiceFibernet implements HttpAction {
             }
 
             // 3. Subscription: create or fetch (stored as LogicalComponent or service in your model — here we use Subscription entity)
+            String subscriptionGdn=Validations.getGlobalName(subscriptionName);
             Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
             Subscription subscription;
             if (optSubscription.isPresent()) {
@@ -151,7 +143,7 @@ public class CreateServiceFibernet implements HttpAction {
                 subscription = new Subscription();
                 subscription.setLocalName(subscriptionName);
                 subscription.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
-                subscription.setContext(subscriptionConext);
+                subscription.setContext(Constants.SETAR);
                 Map<String, Object> subProps = new HashMap<>();
                 subProps.put("serviceSubType", request.getProductSubtype());
                 subProps.put("serviceLink", "ONT");
@@ -166,7 +158,8 @@ public class CreateServiceFibernet implements HttpAction {
             }
 
             // 4. Product: create or fetch
-            Optional<Product> optProduct = productRepository.uivFindByGdn(ProductGdn);
+            String productGdn=Validations.getGlobalName(productName);
+            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
             Product product;
             if (optProduct.isPresent()) {
                 product = optProduct.get();
@@ -175,7 +168,7 @@ public class CreateServiceFibernet implements HttpAction {
                 product = new Product();
                 product.setLocalName(productName);
                 product.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
-                product.setContext(ProductContext);
+                product.setContext(Constants.SETAR);
                 Map<String, Object> prodProps = new HashMap<>();
                 prodProps.put("productType", request.getProductType());
                 prodProps.put("productSubtype", request.getProductSubtype());
@@ -186,6 +179,7 @@ public class CreateServiceFibernet implements HttpAction {
             }
 
             // 5. CFS: create or fetch
+            String cfsGdn=Validations.getGlobalName(cfsName);
             Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
             CustomerFacingService cfs;
             if (optCfs.isPresent()) {
@@ -195,7 +189,7 @@ public class CreateServiceFibernet implements HttpAction {
                 cfs = new CustomerFacingService();
                 cfs.setLocalName(cfsName);
                 cfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
-                cfs.setContext(cfsContext);
+                cfs.setContext(Constants.SETAR);
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStartDate", Instant.now().toString());
                 if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
@@ -206,6 +200,7 @@ public class CreateServiceFibernet implements HttpAction {
             }
 
             // 6. RFS: create or fetch
+            String rfsGdn=Validations.getGlobalName(rfsName);
             Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
             ResourceFacingService rfs;
             if (optRfs.isPresent()) {
@@ -215,7 +210,7 @@ public class CreateServiceFibernet implements HttpAction {
                 rfs = new ResourceFacingService();
                 rfs.setLocalName(rfsName);
                 rfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
-                rfs.setContext(rfsContext);
+                rfs.setContext(Constants.SETAR);
                 Map<String, Object> rfsProps = new HashMap<>();
                 rfsProps.put("status", "Active");
                 if (request.getFxOrderID() != null) rfsProps.put("transactionId", request.getFxOrderID());
@@ -228,14 +223,15 @@ public class CreateServiceFibernet implements HttpAction {
             String oltName = request.getOltName() == null ? "" : request.getOltName();
             LogicalDevice oltDevice = null;
             if (!oltName.isEmpty()) {
-                Optional<LogicalDevice> optOlt = logicalDeviceRepository.uivFindByGdn(oltName);
+                String oltGdn=Validations.getGlobalName(oltName);
+                Optional<LogicalDevice> optOlt = logicalDeviceRepository.uivFindByGdn(oltGdn);
                 if (optOlt.isPresent()) {
                     oltDevice = optOlt.get();
                 } else {
                     oltDevice = new LogicalDevice();
                     oltDevice.setLocalName(oltName);
                     oltDevice.setKind(Constants.SETAR_KIND_OLT_DEVICE);
-                    oltDevice.setContext("");
+                    oltDevice.setContext(Constants.SETAR);
                     Map<String, Object> props = new HashMap<>();
                     props.put("localName", oltName);
                     if (request.getTemplateNameVEIP() != null) props.put("veipServiceTemplate", request.getTemplateNameVEIP());
@@ -249,8 +245,8 @@ public class CreateServiceFibernet implements HttpAction {
 
 
             // 8. ONT device: find or create as LogicalDevice with kind=ONT
-            String ontContext = oltName;
-            String ontGdn=Validations.getGlobalName(ontContext,ontName);
+            String ontContext = Constants.SETAR;
+            String ontGdn=Validations.getGlobalName(ontName);
             Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
             LogicalDevice ontDevice;
             if (optOnt.isPresent()) {
@@ -281,8 +277,8 @@ public class CreateServiceFibernet implements HttpAction {
             // 9. VLAN interface (LogicalInterface) creation if needed
             if (request.getMenm() != null && request.getVlanID() != null) {
                 String vlanName = request.getMenm() + "_" + request.getVlanID();
-                String vlanContext=oltName;
-                String vlanGdn=Validations.getGlobalName(vlanContext,vlanName);
+                String vlanContext=Constants.SETAR;
+                String vlanGdn=Validations.getGlobalName(vlanName);
                 Optional<LogicalInterface> optVlan = logicalInterfaceRepository.uivFindByGdn(vlanGdn);
                 if (!optVlan.isPresent()) {
                     LogicalInterface vlan = new LogicalInterface();

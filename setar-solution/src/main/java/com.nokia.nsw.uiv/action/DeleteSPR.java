@@ -101,10 +101,6 @@ public class DeleteSPR implements HttpAction {
         String rfsName = "RFS_" + subscriptionName;
         String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
         String ontName = "ONT" + req.getOntSN();
-        String subscriptionContext="";
-        String productContext="";
-        String rfsContext = "";
-        String cfsContext = "";
 
         if (ontName.length() > 100) {
             // Code6
@@ -121,7 +117,7 @@ public class DeleteSPR implements HttpAction {
             // -----------------------------
             // 3) Retrieve Subscriber & determine "last service"
             // -----------------------------
-            String subscriberGdn = Validations.getGlobalName("",subscriberNameWithOnt);
+            String subscriberGdn = Validations.getGlobalName(subscriberNameWithOnt);
             Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberGdn);
             boolean lastServiceForSubscriber = false;
             if (optSubscriber.isPresent()) {
@@ -139,19 +135,15 @@ public class DeleteSPR implements HttpAction {
             // -----------------------------
             // 4) Retrieve Objects
             // -----------------------------
-            subscriptionContext=Validations.getGlobalName("",subscriberNameWithOnt);
-            String subscriptionGdn=Validations.getGlobalName(subscriptionContext,subscriptionName);
+            String subscriptionGdn=Validations.getGlobalName(subscriptionName);
             Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            productContext=Validations.getGlobalName(subscriptionContext,subscriptionName);
-            String productGdn=Validations.getGlobalName(productContext,productName);
+            String productGdn=Validations.getGlobalName(productName);
             Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
-            cfsContext=Validations.getGlobalName(productContext,productName);
-            String cfsGdn=Validations.getGlobalName(cfsContext,cfsName);
+            String cfsGdn=Validations.getGlobalName(cfsName);
             Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
-            rfsContext=Validations.getGlobalName(cfsContext,cfsName);
-            String rfsGdn=Validations.getGlobalName(rfsContext,rfsName);
+            String rfsGdn=Validations.getGlobalName(rfsName);
             Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
-            String ontGdn=Validations.getGlobalName("",ontName);
+            String ontGdn=Validations.getGlobalName(ontName);
             Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
 
             // From ONT, try to retrieve parent OLT (if your data model links it via "parent" or property)
