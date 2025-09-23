@@ -98,7 +98,7 @@ public class DeleteIPTV implements HttpAction {
             LogicalDevice olt = null;
             if (optOnt.isPresent()) {
                 LogicalDevice ont = optOnt.get();
-                olt = (LogicalDevice) ont.getContained();
+                olt = (LogicalDevice) ont.getContainingLogicalDevice();
             }
 
             // Step 4: Update OLT template values

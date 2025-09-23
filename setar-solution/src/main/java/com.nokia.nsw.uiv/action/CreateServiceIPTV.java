@@ -253,6 +253,7 @@ public class CreateServiceIPTV implements HttpAction {
                 oltProps.put("igmpTemplate", request.getTemplateNameIGMP());
 
                 oltDevice.setProperties(oltProps);
+                oltDevice.addUsingService(rfs);
                 logicalDeviceRepository.save(oltDevice, 2);
                 log.info("Created OLT Device: {}", request.getOltName());
             }
@@ -276,7 +277,8 @@ public class CreateServiceIPTV implements HttpAction {
                 ontProps.put("operationalState", "ACTIVE");
                 ontProps.put("iptvVlan", request.getVlanID());
                 ontDevice.setProperties(ontProps);
-
+                ontDevice.addUsingService(rfs);
+                ontDevice.addManagingDevices(oltDevice);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.info("Created ONT Device: {}", ontName);
             }
@@ -292,7 +294,7 @@ public class CreateServiceIPTV implements HttpAction {
                 vlanInterface = new LogicalInterface();
                 vlanInterface.setLocalName(mgmtVlanName);
                 vlanInterface.setKind("VLANInterface");
-                vlanInterface.setContext("NA");
+                vlanInterface.setContext(Constants.SETAR);
 
                 Map<String, Object> vlanProps = new HashMap<>();
                 vlanProps.put("vlanId", request.getVlanID());

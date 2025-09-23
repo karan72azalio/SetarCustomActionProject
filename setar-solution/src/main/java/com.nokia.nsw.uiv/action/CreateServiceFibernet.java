@@ -264,6 +264,7 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getMenm() != null) ontProps.put("description", request.getMenm());
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
                 ontDevice.addUsingService(rfs);
+                ontDevice.setContainingLogicalDevice(oltDevice);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.info("Created ONT device: {}", ontName);
             }

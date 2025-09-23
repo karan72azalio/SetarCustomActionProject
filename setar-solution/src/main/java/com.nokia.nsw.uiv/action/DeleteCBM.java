@@ -100,14 +100,15 @@ public class DeleteCBM implements HttpAction {
             int subscriptionCount = 0;
             try{
                 // --- 3. Fetch CBM Device ---
-                optCbmDevice = cbmDeviceRepository.uivFindByGdn(cbmName);
+                String cbmGdn = Validations.getGlobalName(cbmName);
+                optCbmDevice = cbmDeviceRepository.uivFindByGdn(cbmGdn);
                 if (!optCbmDevice.isPresent()) {
                     log.warn("CBM device {} not found", cbmName);
                 }
-                LogicalDevice cbm = optCbmDevice.get();
-                System.out.println(cbm.getProperties().size());
-                System.out.println(cbm.getPropertiesMap().size());
-
+                LogicalDevice cbm=new LogicalDevice();
+                if(optCbmDevice!=null){
+                  cbm = optCbmDevice.get();
+                }
                 Customer setarSubscriber;
 
                 if ("IPTV".equalsIgnoreCase(request.getProductType())) {
