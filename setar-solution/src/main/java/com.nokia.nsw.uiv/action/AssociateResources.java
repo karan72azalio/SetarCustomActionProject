@@ -68,23 +68,15 @@ public class AssociateResources implements HttpAction {
             String subscriberName = request.getSubscriberName();
             String subscriptionName;
             String rfsName;
-            String subscriptionContext;
-            String productContext;
-            String cfsContext = "";
-            String rfsContext = "";
-            String ontContext = "";
-            String productName = subscriberName + Constants.UNDER_SCORE+ request.getProductSubType() + Constants.UNDER_SCORE+ request.getServiceId();
             System.out.println("----Trace #3: Preparing entity names ----");
             if ("IPTV".equalsIgnoreCase(request.getProductSubType())) {
                 subscriptionName = subscriberName + "_" + request.getServiceId();
                 rfsName = "RFS_" + subscriptionName;
             } else if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
                 subscriptionName = subscriberName + request.getServiceId() + request.getOntSN();
-                subscriberName = subscriberName + "_" + request.getOntSN();
                 rfsName = "RFS_" + subscriptionName;
             } else if (request.getCbmSN() != null && !"NA".equalsIgnoreCase(request.getCbmSN())) {
                 subscriptionName = subscriberName + request.getServiceId() + request.getCbmSN();
-                subscriberName = subscriberName + "_" + request.getCbmSN();
                 rfsName = "RFS_" + subscriptionName;
             } else {
                 return new AssociateResourcesResponse(
