@@ -154,7 +154,9 @@ public class DeleteSPR implements HttpAction {
             }
 
             // Attempt to retrieve a CPE device named "ONT_" + ontSN (optional)
-            Optional<LogicalDevice> optCpe = logicalDeviceRepository.uivFindByGdn("ONT_" + req.getOntSN());
+            String optCpeName="ONT" + req.getOntSN();
+            String optCpeGdn=Validations.getGlobalName(optCpeName);
+            Optional<LogicalDevice> optCpe = logicalDeviceRepository.uivFindByGdn(optCpeGdn);
 
             // -----------------------------
             // 5) Delete Fibernet/Broadband Services
