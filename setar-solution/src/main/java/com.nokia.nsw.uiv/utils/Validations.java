@@ -31,10 +31,10 @@ public class Validations {
         }
         return false;
     }
-    public static String getGlobalName(String context,String localName){
-        if(context.trim().isEmpty() || context==null){
-            return localName;
+    public static String getGlobalName(String localName){
+        if(localName.trim().isEmpty() || localName==null){
+            return "";
         }
-        return context+ Constants.COMMA+localName;
+        return Constants.SETAR+ Constants.COMMA+localName;
     }
 }
