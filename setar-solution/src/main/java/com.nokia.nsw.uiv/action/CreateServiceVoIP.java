@@ -100,8 +100,8 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-
-            Customer subscriber = customerRepo.uivFindByGdn(subscriberNameStr)
+            String subscriberNameStrGdn=Validations.getGlobalName(subscriberNameStr);
+            Customer subscriber = customerRepo.uivFindByGdn(subscriberNameStrGdn)
                     .orElseGet(() -> {
                         Customer newSub = new Customer();
                         try {
@@ -132,8 +132,8 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-
-            Subscription subscription = subscriptionRepo.uivFindByGdn(subscriptionName)
+            String subscriptionNameGdn=Validations.getGlobalName(subscriptionName);
+            Subscription subscription = subscriptionRepo.uivFindByGdn(subscriptionNameGdn)
                     .orElseGet(() -> {
                         Subscription subs = new Subscription();
                         try {
@@ -186,8 +186,8 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-
-            Product product = productRepo.uivFindByGdn(productNameStr)
+            String productNameStrGdn=Validations.getGlobalName(productNameStr);
+            Product product = productRepo.uivFindByGdn(productNameStrGdn)
                     .orElseGet(() -> {
                         Product prod = new Product();
                         try {
@@ -207,7 +207,8 @@ public class CreateServiceVoIP implements HttpAction {
 
             // Step 8: CFS
             String cfsName = "CFS_" + subscriptionName;
-            CustomerFacingService cfs = cfsRepo.uivFindByGdn(cfsName)
+            String cfsNameGdn=Validations.getGlobalName(cfsName);
+            CustomerFacingService cfs = cfsRepo.uivFindByGdn(cfsNameGdn)
                     .orElseGet(() -> {
                         CustomerFacingService newCfs = new CustomerFacingService();
                         try {
@@ -227,7 +228,8 @@ public class CreateServiceVoIP implements HttpAction {
 
             // Step 9: RFS
             String rfsName = "RFS_" + subscriptionName;
-            ResourceFacingService rfs = rfsRepo.uivFindByGdn(rfsName)
+            String rfsNameGdn=Validations.getGlobalName(rfsName);
+            ResourceFacingService rfs = rfsRepo.uivFindByGdn(rfsNameGdn)
                     .orElseGet(() -> {
                         ResourceFacingService newRfs = new ResourceFacingService();
                         try {
@@ -257,7 +259,9 @@ public class CreateServiceVoIP implements HttpAction {
                 );
             }
 
-            LogicalDevice olt = logicalDeviceRepo.uivFindByGdn(req.getOltName())
+            String oltName=req.getOltName();
+            String oltNameGdn=Validations.getGlobalName(oltName);
+            LogicalDevice olt = logicalDeviceRepo.uivFindByGdn(oltNameGdn)
                     .orElseGet(() -> {
                         LogicalDevice dev = new LogicalDevice();
                         try {
@@ -276,7 +280,8 @@ public class CreateServiceVoIP implements HttpAction {
                         return logicalDeviceRepo.save(dev);
                     });
 
-            LogicalDevice ont = logicalDeviceRepo.uivFindByGdn(ontName)
+            String ontNameGdn=Validations.getGlobalName(ontName);
+            LogicalDevice ont = logicalDeviceRepo.uivFindByGdn(ontNameGdn)
                     .orElseGet(() -> {
                         LogicalDevice dev = new LogicalDevice();
                         try {
