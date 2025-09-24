@@ -58,7 +58,7 @@ public class QueryVoipNumber implements HttpAction {
             // Step 2: Service link
             String linkType = (req.getServiceLink() != null && "CBM".equalsIgnoreCase(req.getServiceLink()))
                     ? "CBM" : "ONT";
-            String ontName = "ONT_" + req.getOntSN();
+            String ontName = "ONT" + req.getOntSN();
 
             // Step 3: Prepare empty fields
             String voipNumber1 = "";
