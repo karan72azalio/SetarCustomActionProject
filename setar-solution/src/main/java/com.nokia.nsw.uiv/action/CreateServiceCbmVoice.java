@@ -80,15 +80,18 @@ public class CreateServiceCbmVoice implements HttpAction {
         try {
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
-            Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
             Validations.validateMandatoryParams(request.getCbmSN(), "cbmSN");
             Validations.validateMandatoryParams(request.getCbmMac(), "cbmMac");
+            Validations.validateMandatoryParams(request.getCbmManufacturer(), "cbmManufacturer");
+            Validations.validateMandatoryParams(request.getCbmType(), "cbmType");
+            Validations.validateMandatoryParams(request.getCbmModel(), "cbmModel");
+            Validations.validateMandatoryParams(request.getHhid(), "hhid");
             Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
+            Validations.validateMandatoryParams(request.getQosProfile(), "qosProfile");
             Validations.validateMandatoryParams(request.getVoipNumber1(), "voipNumber1");
             Validations.validateMandatoryParams(request.getSimaCustId(), "simaCustId");
             Validations.validateMandatoryParams(request.getSimaSubsId(), "simaSubsId");
             Validations.validateMandatoryParams(request.getSimaEndpointId(), "simaEndpointId");
-            Validations.validateMandatoryParams(request.getHhid(), "hhId");
         } catch (BadRequestException bre) {
             return createErrorResponse(CODE_MISSING_PARAMS,
                     "Missing mandatory parameter(s): " + bre.getMessage());
