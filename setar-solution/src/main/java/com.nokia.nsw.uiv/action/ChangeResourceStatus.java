@@ -1,0 +1,136 @@
+package com.nokia.nsw.uiv.action;
+
+import com.nokia.nsw.uiv.framework.action.Action;
+import com.nokia.nsw.uiv.framework.action.ActionContext;
+import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.resource.AdministrativeState;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.request.ChangeResourceStatusRequest;
+import com.nokia.nsw.uiv.response.ChangeResourceStatusResponse;
+import com.nokia.nsw.uiv.utils.Validations;
+
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Instant;
+import java.util.Optional;
+
+@Component
+@RestController
+@Action
+@Slf4j
+public class ChangeResourceStatus implements HttpAction {
+
+    private static final String ERROR_PREFIX = "UIV action ChangeResourceStatus execution failed - ";
+
+    @Autowired
+    private LogicalDeviceRepository stbRepo;
+
+    @Override
+    public Class<?> getActionClass() {
+        return ChangeResourceStatusRequest.class;
+    }
+
+    @Override
+    public Object doPost(ActionContext actionContext) {
+        System.out.println("------------Test Trace # 1--------------- ChangeResourceStatus started");
+        ChangeResourceStatusRequest req = (ChangeResourceStatusRequest) actionContext.getObject();
+
+        try {
+            // 1. Mandatory validation
+            try {
+                Validations.validateMandatory(req.getResourceSn(), "resourceSn");
+                Validations.validateMandatory(req.getResourceType(), "resourceType");
+                Validations.validateMandatory(req.getResourceStatus(), "resourceStatus");
+            } catch (Exception bre) {
+                System.out.println("------------Test Trace # 2--------------- Missing param: " + bre.getMessage());
+                return new ChangeResourceStatusResponse(
+                        "400",
+                        ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
+                        Instant.now().toString(),
+                        "", "", "", "", ""
+                );
+            }
+
+            String sn = req.getResourceSn();
+            String type = req.getResourceType();
+            String targetStatus = req.getResourceStatus();
+
+            System.out.println("------------Test Trace # 3--------------- Inputs: SN=" + sn + ", Type=" + type + ", TargetStatus=" + targetStatus);
+
+            // 2. Resolve states
+            if (!("Available".equalsIgnoreCase(targetStatus) || "Allocated".equalsIgnoreCase(targetStatus))) {
+                return new ChangeResourceStatusResponse(
+                        "400",
+                        ERROR_PREFIX + "Invalid resourceStatus: " + targetStatus,
+                        Instant.now().toString(),
+                        sn, "", targetStatus, "", type
+                );
+            }
+
+            // 3. Derive Device Name
+            String devName = type + "_" + sn;
+            System.out.println("------------Test Trace # 4--------------- Derived device name: " + devName);
+
+            // 4. Locate device
+            Optional<LogicalDevice> devOpt = stbRepo.uivFindByGdn(devName);
+            if (!devOpt.isPresent()) {
+                System.out.println("------------Test Trace # 5--------------- Device not found: " + devName);
+                return new ChangeResourceStatusResponse(
+                        "404",
+                        ERROR_PREFIX + type + sn + " not found",
+                        Instant.now().toString(),
+                        sn, "", "", "", type
+                );
+            }
+
+            LogicalDevice device = devOpt.get();
+            String currentStatus = String.valueOf(device.getAdministrativeState());
+            String model = device.getProperties().get("Model").toString() == null ? "" : device.getProperties().get("Model").toString();
+            String mac = device.getProperties().get("MacAddress").toString() == null ? "" : device.getProperties().get("MacAddress").toString() ;
+
+            System.out.println("------------Test Trace # 6--------------- Device found. Current status=" + currentStatus);
+
+            // 5. Apply status change
+            if (targetStatus.equalsIgnoreCase(currentStatus)) {
+                System.out.println("------------Test Trace # 7--------------- No change required");
+                return new ChangeResourceStatusResponse(
+                        "404",
+                        ERROR_PREFIX + "No change required. Resource already in status " + targetStatus,
+                        Instant.now().toString(),
+                        sn, mac, currentStatus, model, type
+                );
+            }
+
+            device.setAdministrativeState(AdministrativeState.valueOf(targetStatus));
+            stbRepo.save(device);
+
+            System.out.println("------------Test Trace # 8--------------- Device status updated to " + targetStatus);
+
+            // 6. Success response
+            return new ChangeResourceStatusResponse(
+                    "200",
+                    "UIV action ChangeResourceStatus executed successfully.",
+                    Instant.now().toString(),
+                    sn,
+                    mac,
+                    targetStatus,
+                    model,
+                    type
+            );
+
+        } catch (Exception ex) {
+            log.error("Unhandled exception in ChangeResourceStatus", ex);
+            return new ChangeResourceStatusResponse(
+                    "500",
+                    ERROR_PREFIX + "Internal server error occurred - " + ex.getMessage(),
+                    Instant.now().toString(),
+                    "", "", "", "", ""
+            );
+        }
+    }
+}
