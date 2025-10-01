@@ -63,11 +63,14 @@ public class AccountTransferByServiceID implements HttpAction {
             String oldSubscriberName = req.getSubscriberNameOld();
             String subscriberName = req.getSubscriberName();
             // Step 2: Search for CFS containing old subscriber and service ID
-            List<CustomerFacingService> cfsList1 = (List<CustomerFacingService>) cfsRepo.findAll();
+            Iterable<CustomerFacingService> cfsList1 = cfsRepo.findAll();
             List<CustomerFacingService> cfsList = new ArrayList<>();
             for(CustomerFacingService cfs:cfsList1)
             {
-                if(cfs.getProperties().get("SubscriberName").toString().contains(req.getSubscriberNameOld()))
+                Product p = cfs.getContainingProduct();
+                String productGdn = p.getGlobalName();
+                p = prodRepo.uivFindByGdn(productGdn).get();
+                if(p.getCustomer().getName().contains(oldSubscriberName))
                 {
                     cfsList.add(cfs);
                 }
@@ -87,10 +90,10 @@ public class AccountTransferByServiceID implements HttpAction {
                 String rfsName = cfsName.replace("CFS", "RFS");
                 String rfsGdn = Validations.getGlobalName(rfsName);
                 Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsGdn);
-
-                String subscriberGdn = Validations.getGlobalName(subscriberName);
-                Subscription subs = subsRepo.uivFindByGdn(subscriberGdn).orElse(null);
                 Product prod = cfs.getContainingProduct();
+                String productGdn = prod.getGlobalName();
+                prod = prodRepo.uivFindByGdn(productGdn).get();
+                Subscription subs = prod.getSubscription();
                 String oldSubscriberGdn = Validations.getGlobalName(oldSubscriberName);
                 Customer oldCust = custRepo.uivFindByGdn(oldSubscriberGdn).orElse(null);
 
@@ -103,6 +106,7 @@ public class AccountTransferByServiceID implements HttpAction {
                 if (newCust == null) {
                     newCust = oldCust;
                     newCust.setName(req.getSubscriberName());
+                    newCust.setLocalName(req.getSubscriberName());
                     Map<String,Object>prop=new HashMap<>();
                     prop.put("AccountNumber",req.getSubscriberName());
                 }

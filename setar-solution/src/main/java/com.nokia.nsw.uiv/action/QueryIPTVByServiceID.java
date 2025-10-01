@@ -161,6 +161,8 @@ public class QueryIPTVByServiceID implements HttpAction {
                 Customer customer = null;
                 if (product != null) {
                     try {
+                        String productGdn = product.getGlobalName();
+                        product = productRepo.uivFindByGdn(productGdn).get();
                         subscription = product.getSubscription();
                     } catch (Exception e) {
                         subscription = null;

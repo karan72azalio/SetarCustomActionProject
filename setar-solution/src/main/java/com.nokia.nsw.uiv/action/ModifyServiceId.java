@@ -182,6 +182,7 @@
 //                        if (res instanceof LogicalDevice) {
 //                            LogicalDevice ont = (LogicalDevice) res;
 //                            if (oldServiceId.equals(ont.getPotsPort1Number())) {
+//                                ont.get
 //                                ont.setPotsPort1Number(newServiceId);
 //                            }
 //                            if (oldServiceId.equals(ont.getPotsPort2Number())) {

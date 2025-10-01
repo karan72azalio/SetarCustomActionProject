@@ -247,6 +247,8 @@ public class CreateServiceCbmVoice implements HttpAction {
                         p.setProperties(prodProps);
                         p.setCustomer(subscriber);
                         p.setSubscription(subscription);
+                        Subscription s1 = p.getSubscription();
+                        String localN = s1.getLocalName();
                         productRepository.save(p, 2);
                         return p;
                     });
@@ -261,6 +263,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                             c.setName(cfsName);
                             c.setContext(Constants.SETAR);
                             c.setKind(Constants.SETAR_KIND_SETAR_CFS);
+                            c.setCustomer(subscriber);
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                             throw new RuntimeException(e);
                         }
