@@ -103,14 +103,14 @@ public class ModifySubscriber implements HttpAction {
                 Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsName);
 
                 // Retrieve product linked (via properties or association)
-                Optional<Product> productOpt = productRepo.findById(cfs.getId()); // adjust to actual association
+                Optional<Product> productOpt = Optional.of(cfs.getContainingProduct()); // adjust to actual association
                 Optional<Subscription> subsOpt = Optional.empty();
                 Optional<Customer> oldCustOpt = Optional.empty();
 
                 if (productOpt.isPresent()) {
                     Product prod = productOpt.get();
-                    subsOpt = subscriptionRepo.findById(prod.getId()); // adjust to actual association
-                    oldCustOpt = customerRepo.findById(prod.getId()); // adjust to actual association
+                    subsOpt = Optional.of(prod.getSubscription()); // adjust to actual association
+                    oldCustOpt = Optional.of(subsOpt.get().getCustomer()); // adjust to actual association
                 }
 
                 // Try to find new subscriber

@@ -1,16 +1,43 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.AccessForbiddenException;
+import com.nokia.nsw.uiv.exception.BadRequestException;
+import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
+import com.nokia.nsw.uiv.request.AssociateResourcesRequest;
 import com.nokia.nsw.uiv.request.ChangeTechnologyRequest;
 import com.nokia.nsw.uiv.response.ChangeTechnologyResponse;
+import com.nokia.nsw.uiv.utils.Constants;
+import com.nokia.nsw.uiv.utils.Validations;
+
+import com.nokia.nsw.uiv.model.common.party.Customer;
+import com.nokia.nsw.uiv.model.service.Subscription;
+import com.setar.uiv.model.product.Product;
+import com.setar.uiv.model.product.CustomerFacingService;
+import com.setar.uiv.model.product.ResourceFacingService;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+
+import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
+import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.setar.uiv.model.product.CustomerFacingServiceRepository;
+import com.setar.uiv.model.product.ResourceFacingServiceRepository;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.setar.uiv.model.product.ProductRepository;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RestController
@@ -20,93 +47,311 @@ public class ChangeTechnology implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action ChangeTechnology execution failed - ";
 
+    @Autowired private CustomerRepository customerRepo;
+    @Autowired private SubscriptionRepository subscriptionRepo;
+    @Autowired private ProductRepository productRepo;
+    @Autowired private CustomerFacingServiceRepository cfsRepo;
+    @Autowired private ResourceFacingServiceRepository rfsRepo;
+    @Autowired private LogicalDeviceRepository logicalDeviceRepo;
+    @Autowired private LogicalDeviceRepository cpeRepo;
+    @Autowired private LogicalInterfaceRepository vlanRepo;
+    @Autowired private LogicalDeviceRepository cbmRepo;
+
     @Override
     public Class<?> getActionClass() {
-        return ChangeTechnologyRequest.class;
+        return Map.class; // expecting JSON map of inputs
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Object doPost(ActionContext actionContext) {
+        log.info("Executing ChangeTechnology action...");
         ChangeTechnologyRequest req = (ChangeTechnologyRequest) actionContext.getObject();
-        System.out.println("------Trace #1: Starting ChangeTechnology");
 
         try {
-            // Step 1: Mandatory validation
-            if (isEmpty(req.getSubscriberName()) ||
-                    isEmpty(req.getProductSubtype()) ||
-                    isEmpty(req.getServiceId()) ||
-                    isEmpty(req.getOntSN()) ||
-                    isEmpty(req.getOntMacAddr()) ||
-                    isEmpty(req.getCbmSn()) ||
-                    isEmpty(req.getOltName()) ||
-                    isEmpty(req.getMenm()) ||
-                    isEmpty(req.getVlanId()) ||
-                    isEmpty(req.getOntModel()) ||
-                    isEmpty(req.getCbmMac())) {
-                return errorResponse("400", "Missing mandatory parameter(s)", null, null);
-            }
-            System.out.println("------Trace #2: Validated mandatory params");
+            // Declare variables from req
+            String subscriberName   = req.getSubscriberName();
+            String productSubtype   = req.getProductSubtype();
+            String serviceId        = req.getServiceId();
+            String fxOrderId        = req.getFxOrderId();
+            String ontSN            = req.getOntSN();
+            String ontMacAddr       = req.getOntMacAddr();
+            String cbmSn            = req.getCbmSn();
+            String qosProfile       = req.getQosProfile();
+            String oltName          = req.getOltName();
+            String templateNameOnt  = req.getTemplateNameOnt();
+            String templateNameVeip = req.getTemplateNameVeip();
+            String templateNameHsi  = req.getTemplateNameHsi();
+            String templateNameIptv = req.getTemplateNameIptv();
+            String templateNameIgmp = req.getTemplateNameIgmp();
+            String menm             = req.getMenm();
+            String vlanId           = req.getVlanId();
+            String ontModel         = req.getOntModel();
+            String cbmMac           = req.getCbmMac();
+            String hhid             = req.getHhid();
 
-            // Step 3: Prepare names
-            String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId();
+// Validate mandatory parameters
+            try {
+                Validations.validateMandatoryParams(subscriberName, "subscriberName");
+                Validations.validateMandatoryParams(productSubtype, "productSubtype");
+                Validations.validateMandatoryParams(serviceId, "serviceId");
+                Validations.validateMandatoryParams(ontSN, "ontSN");
+                Validations.validateMandatoryParams(ontMacAddr, "ontMacAddr");
+                Validations.validateMandatoryParams(cbmSn, "cbmSn");
+                Validations.validateMandatoryParams(oltName, "oltName");
+                Validations.validateMandatoryParams(menm, "menm");
+                Validations.validateMandatoryParams(vlanId, "vlanId");
+                Validations.validateMandatoryParams(ontModel, "ontModel");
+                Validations.validateMandatoryParams(cbmMac, "cbmMac");
+            } catch (BadRequestException bre) {
+                return new ChangeTechnologyResponse(
+                        "400",
+                        Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        java.time.Instant.now().toString(),
+                        "",
+                        ""
+                );
+            }
+
+
+
+            // 2. Prepare states - in UIV we typically store as properties; if there are dedicated entities, repo lookups would be used.
+            // Legacy ensures existence of SubscriberStatus/SubscriberType/Admin/Operational state entities.
+            // In UIV mapped model we set properties accordingly (create missing objects handled by repositories when needed).
+
+            // 3. Prepare names
+            String subscriptionName = subscriberName + "_" + serviceId;
             String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
-            String cbmName = "CBM" + req.getCbmSn();
-            String mgmtVlanName = req.getMenm() + "_" + req.getVlanId();
-            String ontName = "ONT_" + req.getOntSN();
-            String subscriberNameFibernet = req.getSubscriberName() + "_" + req.getOntSN();
-            String subscriberNameCbmKey = req.getSubscriberName() + "_" + req.getCbmMac().replace(":", "");
+            String cbmName = "CBM" + cbmSn;
+            String mgmtVlanName = menm + "_" + vlanId;
+            String ontName = "ONT" + ontSN;
+            String subscriberNameFibernet = subscriberName + "_" + ontSN;
+            String subscriberNameCbmKey = subscriberName + "_" + cbmMac.replace(":", "");
 
-            System.out.println("------Trace #3: Prepared names");
-
-            // Step 4: Validate name length
-            if ("Fibernet".equalsIgnoreCase(req.getProductSubtype()) &&
-                    subscriberNameFibernet.length() > 100) {
-                return errorResponse("400", "Subscriber name too long", subscriptionName, ontName);
+            // 4. Update existing subscriber (only when productSubType == Fibernet)
+            if ("Fibernet".equalsIgnoreCase(productSubtype)) {
+                if (subscriberNameFibernet.length() > 100) {
+                    return new ChangeTechnologyResponse("400", ERROR_PREFIX + "Subscriber name too long", Instant.now().toString(),"","");
+                }
+                // Try find CBM-keyed subscriber
+                String gdnCbm = Validations.getGlobalName(subscriberNameCbmKey);
+                Optional<Customer> maybeCbmSubscriber = customerRepo.uivFindByGdn(gdnCbm);
+                if (maybeCbmSubscriber.isPresent()) {
+                    Customer cbmSubscriber = maybeCbmSubscriber.get();
+                    cbmSubscriber.setLocalName(subscriberNameFibernet);
+                    cbmSubscriber.setName(subscriberNameFibernet);
+                    cbmSubscriber.setContext("Setar");
+                    cbmSubscriber.setKind("SetarSubscriber");
+                    Map<String, Object> props = cbmSubscriber.getProperties() != null ? cbmSubscriber.getProperties() : new HashMap<>();
+                    props.put("status", "Active");
+                    props.put("type", "Regular");
+                    props.put("accountNumber", subscriberName);
+                    if (hhid != null) props.put("householdId", hhid);
+                    cbmSubscriber.setProperties(props);
+                    customerRepo.save(cbmSubscriber);
+                }
             }
+
+            // 5. Update existing subscription (if exists)
+            String subGdn = Validations.getGlobalName(subscriptionName);
+            Optional<Subscription> maybeSubscription = subscriptionRepo.uivFindByGdn(subGdn);
+            Subscription subscription = null;
+            if (maybeSubscription.isPresent()) {
+                subscription = maybeSubscription.get();
+                Map<String, Object> subProps = subscription.getProperties() != null ? subscription.getProperties() : new HashMap<>();
+                subProps.put("serviceLink", "ONT");
+                subProps.put("serviceMAC", ontMacAddr);
+                subProps.put("serviceSN", ontSN);
+                subProps.put("serviceSubtype", "Broadband");
+                if ("Fibernet".equalsIgnoreCase(productSubtype)) {
+                    if (qosProfile != null) subProps.put("veipQosSessionProfile", qosProfile);
+                    subscription.setLocalName(subscriptionName + "_" + ontSN);
+                    subscription.setName(subscriptionName + "_" + ontSN);
+                    // link to subscriber updated earlier if present
+                    String gdnFibernet = Validations.getGlobalName(subscriberNameFibernet);
+                    Optional<Customer> maybeSub = customerRepo.uivFindByGdn(gdnFibernet);
+                    maybeSub.ifPresent(subscription::setCustomer);
+                }
+                subscription.setProperties(subProps);
+                subscriptionRepo.save(subscription);
+            }
+
+            // 6. Update existing CFS (if exists)
+            String cfsGdn = Validations.getGlobalName(cfsName);
+            Optional<CustomerFacingService> maybeCfs = cfsRepo.uivFindByGdn(cfsGdn);
+            if (maybeCfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
+                CustomerFacingService cfs = maybeCfs.get();
+                cfs.setLocalName(cfs.getLocalName() + "_" + ontSN);
+                cfs.setName(cfs.getName() + "_" + ontSN);
+                if (fxOrderId != null) {
+                    Map<String, Object> p = cfs.getProperties() != null ? cfs.getProperties() : new HashMap<>();
+                    p.put("transactionId", fxOrderId);
+                    cfs.setProperties(p);
+                }
+                cfsRepo.save(cfs);
+            }
+
+            // 7. Update existing RFS (if exists)
+            String rfsGdn = Validations.getGlobalName(rfsName);
+            Optional<ResourceFacingService> maybeRfs = rfsRepo.uivFindByGdn(rfsGdn);
+            if (maybeRfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
+                ResourceFacingService rfs = maybeRfs.get();
+                rfs.setLocalName(rfs.getLocalName() + "_" + ontSN);
+                rfs.setName(rfs.getName() + "_" + ontSN);
+                rfsRepo.save(rfs);
+            }
+
+            // 8. Prepare OLT device (create if missing)
+            String oltGdn = Validations.getGlobalName(oltName);
+            LogicalDevice olt = logicalDeviceRepo.uivFindByGdn(oltGdn)
+                    .orElseGet(() -> {
+                        LogicalDevice d = new LogicalDevice();
+                        try {
+                            d.setLocalName(oltName);
+                            d.setName(oltName);
+                            d.setContext("Setar");
+                            d.setKind("OLTDevice");
+                        } catch (AccessForbiddenException e) {
+                            throw new RuntimeException(e);
+                        } catch (BadRequestException e) {
+                            throw new RuntimeException(e);
+                        } catch (ModificationNotAllowedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        Map<String, Object> p = new HashMap<>();
+                        p.put("status", "Active");
+                        p.put("oltPosition", oltName);
+                        if (templateNameOnt != null) p.put("ontTemplate", templateNameOnt);
+                        if (templateNameVeip != null) p.put("veipServiceTemplate", templateNameVeip);
+                        if (templateNameIptv != null) p.put("veipIptvTemplate", templateNameIptv);
+                        if (templateNameHsi != null) p.put("veipHsiTemplate", templateNameHsi);
+                        if (templateNameIgmp != null) p.put("igmpTemplate", templateNameIgmp);
+                        d.setProperties(p);
+                        // if RFS exists link to it
+                        maybeRfs.ifPresent(rfs -> d.addUsingService(rfs));
+                        return logicalDeviceRepo.save(d);
+                    });
+
+            // validate ont name length
             if (ontName.length() > 100) {
-                return errorResponse("400", "ONT name too long", subscriptionName, ontName);
+                return new ChangeTechnologyResponse("400", ERROR_PREFIX + "ONT name too long", Instant.now().toString(),"","");
             }
 
-            // Step 5..12 - Repository / Entity operations
-            // ⚠️ Stubbed with traces (real implementation would call repositories)
-            System.out.println("------Trace #4: Update Subscriber (if found by " + subscriberNameCbmKey + ")");
-            System.out.println("------Trace #5: Update Subscription with ONT details, MAC, SN, QoS");
-            System.out.println("------Trace #6: Update CFS " + cfsName);
-            System.out.println("------Trace #7: Update RFS " + rfsName);
-            System.out.println("------Trace #8: Prepare OLT device " + req.getOltName());
-            System.out.println("------Trace #9: Prepare ONT device " + ontName);
-            System.out.println("------Trace #10: Create/Retrieve VLAN interface " + mgmtVlanName);
-            System.out.println("------Trace #11: Remove CBM device " + cbmName);
-            System.out.println("------Trace #12: Reassign CPE devices ONT vs CBM");
+            // 9. Prepare ONT device (create if missing)
+            String ontGdn = Validations.getGlobalName(ontName);
+            LogicalDevice ont = logicalDeviceRepo.uivFindByGdn(ontGdn)
+                    .orElseGet(() -> {
+                        LogicalDevice d = new LogicalDevice();
+                        try {
+                            d.setLocalName(ontName);
+                            d.setName(ontName);
+                            d.setContext("Setar");
+                            d.setKind("ONTDevice");
+                        } catch (AccessForbiddenException e) {
+                            throw new RuntimeException(e);
+                        } catch (BadRequestException e) {
+                            throw new RuntimeException(e);
+                        } catch (ModificationNotAllowedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        Map<String, Object> p = new HashMap<>();
+                        p.put("status", "Active");
+                        p.put("serialNo", ontSN);
+                        p.put("deviceModel",ontModel );
+                        p.put("description", menm);
+                        p.put("veipVlan", vlanId);
+                        p.put("iptvVlan", vlanId);
+                        p.put("oltPosition", oltName);
+                        if (templateNameOnt != null) p.put("ontTemplate", templateNameOnt);
+                        d.setProperties(p);
+                        // link containing logical device (OLT)
+                        d.addManagingDevices(olt);
+                        // link rfs if present
+                        maybeRfs.ifPresent(rfs -> d.addUsingService(rfs));
+                        return logicalDeviceRepo.save(d);
+                    });
 
-            // Step 13: Success response
-            ChangeTechnologyResponse resp = new ChangeTechnologyResponse();
-            resp.setStatus("200");
-            resp.setMessage("UIV action ChangeTechnology executed successfully.");
-            resp.setTimestamp(Instant.now().toString());
-            resp.setSubscriptionName(subscriptionName);
-            resp.setOntName(ontName);
-            return resp;
+            // 10. Create or retrieve management VLAN interface
+            String vlanGdn = Validations.getGlobalName(mgmtVlanName);
+            vlanRepo.uivFindByGdn(vlanGdn).orElseGet(() -> {
+                LogicalInterface v = new LogicalInterface();
+                try {
+                    v.setLocalName(mgmtVlanName);
+                    v.setName(mgmtVlanName);
+                    v.setContext("Setar");
+                    v.setKind("VLANInterface");
+                } catch (AccessForbiddenException e) {
+                    throw new RuntimeException(e);
+                } catch (BadRequestException e) {
+                    throw new RuntimeException(e);
+                } catch (ModificationNotAllowedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                Map<String, Object> p = new HashMap<>();
+                p.put("vlanId", vlanId);
+                p.put("status", "Active");
+                v.setProperties(p);
+                return vlanRepo.save(v);
+            });
+
+            // 11. Remove CBM device if exists
+            String cbmGdn = Validations.getGlobalName(cbmName);
+            Optional<LogicalDevice> maybeCbm = cbmRepo.uivFindByGdn(cbmGdn);
+            if (maybeCbm.isPresent()) {
+                LogicalDevice cbmDevice = maybeCbm.get();
+                // clear RFS link and set states
+                cbmDevice.addManagingDevices(null);
+                Map<String, Object> cbmProps = cbmDevice.getProperties() != null ? cbmDevice.getProperties() : new HashMap<>();
+                cbmProps.put("administrativeState", "Available");
+                cbmProps.put("operationalState", "Available");
+                cbmDevice.setProperties(cbmProps);
+                // remove from inventory
+                cbmRepo.delete(cbmDevice);
+            }
+
+            // 12. Reassign CPE devices
+            String cpeDeviceName = "ONT_" + ontSN;
+            String cpeDeviceOldName = "CBM_" + cbmMac.replace(":", "");
+            String cpeGdnNew = Validations.getGlobalName(cpeDeviceName);
+            String cpeGdnOld = Validations.getGlobalName(cpeDeviceOldName);
+
+            Optional<LogicalDevice> maybeCpeNew = cpeRepo.uivFindByGdn(cpeGdnNew);
+            Optional<LogicalDevice> maybeCpeOld = cpeRepo.uivFindByGdn(cpeGdnOld);
+
+            if (maybeCpeNew.isPresent() && maybeCpeOld.isPresent()) {
+                LogicalDevice cpeNew = maybeCpeNew.get();
+                LogicalDevice cpeOld = maybeCpeOld.get();
+
+                Map<String, Object> newProps = cpeNew.getProperties() != null ? cpeNew.getProperties() : new HashMap<>();
+                newProps.put("description", "Internet");
+                newProps.put("administrativeState", "Allocated");
+
+                Map<String, Object> oldProps = cpeOld.getProperties() != null ? cpeOld.getProperties() : new HashMap<>();
+                oldProps.put("description", null);
+                oldProps.put("administrativeState", "Available");
+
+                cpeNew.setProperties(newProps);
+                cpeOld.setProperties(oldProps);
+
+                cpeRepo.save(cpeOld);
+                cpeRepo.save(cpeNew);
+            } else {
+                // legacy returns error if either missing
+                return new ChangeTechnologyResponse("500", ERROR_PREFIX + "ONT name String: " + ontName + " is not found in CPEDevice", Instant.now().toString(),"","");
+            }
+
+            // 13. Final success response: include subscriptionName and ontName
+            Map<String, String> out = new HashMap<>();
+            out.put("subscriptionName", subscriptionName);
+            out.put("ontName", ontName);
+
+            return new ChangeTechnologyResponse("200", "ChangeTechnology executed successfully.", Instant.now().toString(), "","");
 
         } catch (Exception ex) {
             log.error("Exception in ChangeTechnology", ex);
-            return errorResponse("500", "Unexpected error - " + ex.getMessage(), null, null);
+            return new ChangeTechnologyResponse("500", ERROR_PREFIX + ex.getMessage(), Instant.now().toString(),"","");
         }
-    }
-
-    private boolean isEmpty(String val) {
-        return val == null || val.trim().isEmpty();
-    }
-
-    private ChangeTechnologyResponse errorResponse(String status, String msg,
-                                                   String subscriptionName, String ontName) {
-        ChangeTechnologyResponse resp = new ChangeTechnologyResponse();
-        resp.setStatus(status);
-        resp.setMessage(ERROR_PREFIX + msg);
-        resp.setTimestamp(Instant.now().toString());
-        resp.setSubscriptionName(subscriptionName == null ? "" : subscriptionName);
-        resp.setOntName(ontName == null ? "" : ontName);
-        return resp;
     }
 }

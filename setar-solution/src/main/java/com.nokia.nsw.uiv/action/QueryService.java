@@ -75,7 +75,7 @@ public class QueryService implements HttpAction {
             Set<String> cfsNameSet = new LinkedHashSet<>();
 
             // Step 3: Build candidate CFS set
-            List<CustomerFacingService> cfsSearchResults = cfsRepo.findByServiceId(serviceId);
+            Iterable<CustomerFacingService> cfsSearchResults = cfsRepo.findAll();
             if (cfsSearchResults != null) {
                 for (CustomerFacingService cfs : cfsSearchResults) {
                     String cfsName = cfs.getName();

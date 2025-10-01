@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.request.QueryAllServicesByCPERequest;
 import com.nokia.nsw.uiv.response.QueryAllServicesByCPEResponse;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.ResourceFacingService;
 import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 
@@ -50,7 +51,8 @@ public class QueryAllServicesByCPE implements HttpAction {
 
             // Step 2: Identify ONT
             String ontName = "ONT" + req.getOntSn();
-            Optional<LogicalDevice> ontOpt = logicalDeviceRepo.uivFindByGdn(ontName);
+            String ontGdn = Validations.getGlobalName(ontName);
+            Optional<LogicalDevice> ontOpt = logicalDeviceRepo.uivFindByGdn(ontGdn);
             if (!ontOpt.isPresent()) {
                 return errorResponse("404", "CPE/ONT not found");
             }

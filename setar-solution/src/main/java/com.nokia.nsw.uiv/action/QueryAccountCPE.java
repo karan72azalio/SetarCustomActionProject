@@ -65,7 +65,7 @@ public class QueryAccountCPE implements HttpAction {
 
             // Step 2: Find candidate subscriptions (Name CONTAINS pattern)
             String pattern = accountNumber + "_" + serviceId;
-            List<Subscription> subscriptionList = subscriptionRepo.findByNameContains(pattern);
+            Iterable<Subscription> subscriptionList = subscriptionRepo.findAll(pattern);
 
             // Step 3: Select matching subscription
             for (Subscription s : subscriptionList) {

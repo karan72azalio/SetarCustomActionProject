@@ -7,6 +7,7 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.request.AccountTransferByServiceIDRequest;
 import com.nokia.nsw.uiv.response.AccountTransferByServiceIDResponse;
 
+import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.ResourceFacingService;
@@ -59,6 +60,8 @@ public class AccountTransferByServiceID implements HttpAction {
             }
             System.out.println("------Trace #2: Validated mandatory params");
 
+            String oldSubscriberName = req.getSubscriberNameOld();
+            String subscriberName = req.getSubscriberName();
             // Step 2: Search for CFS containing old subscriber and service ID
             List<CustomerFacingService> cfsList1 = (List<CustomerFacingService>) cfsRepo.findAll();
             List<CustomerFacingService> cfsList = new ArrayList<>();
@@ -82,18 +85,21 @@ public class AccountTransferByServiceID implements HttpAction {
             for (CustomerFacingService cfs : cfsList) {
                 String cfsName = cfs.getName();
                 String rfsName = cfsName.replace("CFS", "RFS");
-                Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsName);
+                String rfsGdn = Validations.getGlobalName(rfsName);
+                Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsGdn);
 
-                Subscription subs = subsRepo.uivFindByGdn(cfsName.replace("CFS", "SUBS")).orElse(null);
-                Product prod = prodRepo.uivFindByGdn(cfsName.replace("CFS", "PROD")).orElse(null);
-                Customer oldCust = custRepo.uivFindByGdn(req.getSubscriberNameOld()).orElse(null);
+                String subscriberGdn = Validations.getGlobalName(subscriberName);
+                Subscription subs = subsRepo.uivFindByGdn(subscriberGdn).orElse(null);
+                Product prod = cfs.getContainingProduct();
+                String oldSubscriberGdn = Validations.getGlobalName(oldSubscriberName);
+                Customer oldCust = custRepo.uivFindByGdn(oldSubscriberGdn).orElse(null);
 
                 if (subs == null || prod == null || oldCust == null) {
                     continue;
                 }
 
                 // Step 4: Find or fallback new subscriber
-                Customer newCust = custRepo.uivFindByGdn(req.getSubscriberName()).orElse(null);
+                Customer newCust = custRepo.uivFindByGdn(Validations.getGlobalName(req.getSubscriberName())).orElse(null);
                 if (newCust == null) {
                     newCust = oldCust;
                     newCust.setName(req.getSubscriberName());
