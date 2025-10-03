@@ -24,6 +24,7 @@ import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 
+import com.tailf.jnc.Device;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.kernel.api.query.SchemaIndexUsage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +96,7 @@ public class AccountTransferByServiceID implements HttpAction {
             Subscription childSubs = null;
             CustomerFacingService childCfs = null;
             ResourceFacingService childRfs = null;
+            LogicalDevice childDevice = null;
 
             // Step 3: Iterate matching CFS
             for (CustomerFacingService cfs : cfsList) {
@@ -104,7 +106,6 @@ public class AccountTransferByServiceID implements HttpAction {
                 Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsGdn,1);
                 Product prod = cfs.getContainingProduct();
                 String productGdn = prod.getGlobalName();
-                Subscription s1 = prod.getSubscription();
                 prod = prodRepo.uivFindByGdn(productGdn).get();
                 Subscription subs = prod.getSubscription();
                 String oldSubscriberGdn = Validations.getGlobalName(oldSubscriberName);
@@ -148,73 +149,82 @@ public class AccountTransferByServiceID implements HttpAction {
                         }
                     }
                     Set<Resource> usedResource = childRfs.getUsedResource();
-                    LogicalDevice childDevice = null;
                     for (Resource r : usedResource) {
                         if (r instanceof LogicalDevice) {
                             childDevice = (LogicalDevice)r;
                             cbmDeviceRepository.delete((LogicalDevice) r);
                         }
                     }
-                    custRepo.save(newCust);
-                    cfsRepo.save(childCfs);
-                    childRfs.setContainingCfs(childCfs);
-                    rfsRepo.save(childRfs);
-                    childDevice.addUsingService(childRfs);
-                    cbmDeviceRepository.save(childDevice);
                     rfsRepo.delete(childRfs);
                     cfsRepo.delete(childCfs);
                     custRepo.delete(oldCust);
-
-                    System.out.println("customer is deleted");
                 }
-
+                Customer saveCustomer = new Customer();
+                saveCustomer.setLocalName(childSubs.getLocalName().replace(oldSubscriberName,subscriberName));
+                saveCustomer.setContext(Constants.SETAR);
+                saveCustomer.setProperties(childSubs.getProperties());
+                custRepo.save(saveCustomer);
                 // Step 5: Update Subscription
-                Subscription dataToSave = new Subscription();
-                dataToSave.setCustomer(newCust);
-                dataToSave.setLocalName(childSubs.getLocalName().replace(oldSubscriberName,subscriberName));
-                dataToSave.setContext(Constants.SETAR);
-                dataToSave.setProperties(childSubs.getProperties());
-                subsRepo.save(dataToSave);
-
-                String subtype = subs.getProperties().get("ServiceSubtype").toString();
+                Subscription saveSubs = new Subscription();
+                saveSubs.setLocalName(childSubs.getLocalName());
+                saveSubs.setName(childSubs.getName());
+                saveSubs.setContext(Constants.SETAR);
+                saveSubs.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
+                saveSubs.setProperties(childSubs.getProperties());
+                saveSubs.setCustomer(saveCustomer);
+                String subtype = saveSubs.getProperties().get("serviceSubType").toString();
                 if ("Broadband".equalsIgnoreCase(subtype) && req.getKenanUidNo() != null) {
-                    subs.getProperties().put("kenanUidNo", req.getKenanUidNo());
+                    saveSubs.getProperties().put("kenanUidNo", req.getKenanUidNo());
                 }
                 if ("IPTV".equalsIgnoreCase(subtype)) {
-                    subs.getProperties().put("cbmSubscriberId", req.getSubscriberName());
+                    saveSubs.getProperties().put("cbmSubscriberId", req.getSubscriberName());
                 }
-                subsRepo.save(subs);
+                subsRepo.save(saveSubs);
                 System.out.println("------Trace #4: Subscription updated");
 
                 // Step 6: Update Product
                 Product prodSave = new Product();
                 prodSave.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
-                prodSave.setName(childProd.getName());
-                prodSave.setLocalName(childProd.getLocalName());
-                prodSave.setSubscription(dataToSave);
-                prodSave.setCustomer(newCust);
+                prodSave.setName(childProd.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                prodSave.setLocalName(childProd.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                prodSave.setSubscription(saveSubs);
+                prodSave.setCustomer(saveCustomer);
                 prodRepo.save(prodSave);
-                prod.setName(prod.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                prod.setCustomer(newCust);
-                prodRepo.save(prod);
                 System.out.println("------Trace #5: Product updated");
 
                 // Step 7: Update Subscriber if fallback used
-                if (newCust == oldCust) {
-                    custRepo.save(newCust);
-                    System.out.println("------Trace #6: Subscriber renamed");
-                }
+//                if (newCust == oldCust) {
+//                    custRepo.save(newCust);
+//                    System.out.println("------Trace #6: Subscriber renamed");
+//                }
 
                 // Step 8: Update CFS and RFS
-                cfs.setName(cfsName.replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                cfsRepo.save(cfs);
+                CustomerFacingService saveCfs = new CustomerFacingService();
+                saveCfs.setLocalName(childCfs.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                saveCfs.setName(childCfs.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                saveCfs.setContext(Constants.SETAR);
+                saveCfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
+                saveCfs.setCustomer(saveCustomer);
+                saveCfs.setContainingProduct(prodSave);
+                cfsRepo.save(saveCfs);
                 System.out.println("------Trace #7: CFS updated");
 
                 if (rfsOpt.isPresent()) {
-                    ResourceFacingService rfs = rfsOpt.get();
-                    rfs.setName(rfsName.replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                    rfsRepo.save(rfs);
+                    ResourceFacingService saveRfs = new ResourceFacingService();
+                    saveRfs.setLocalName(childRfs.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                    saveRfs.setName(childRfs.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                    saveRfs.setContext(Constants.SETAR);
+                    saveRfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
+                    saveRfs.setContainingCfs(saveCfs);
+                    rfsRepo.save(saveRfs);
                     System.out.println("------Trace #8: RFS updated");
+                    LogicalDevice saveDevice = new LogicalDevice();
+                    saveDevice.setLocalName(childDevice.getLocalName());
+                    saveDevice.setName(childDevice.getName());
+                    saveDevice.setContext(Constants.SETAR);
+                    saveDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
+                    saveDevice.addUsingService(saveRfs);
+                    cbmDeviceRepository.save(saveDevice);
                 }
 
                 updated = true;
