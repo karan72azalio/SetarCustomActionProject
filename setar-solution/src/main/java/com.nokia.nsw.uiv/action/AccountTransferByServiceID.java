@@ -4,9 +4,14 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.framework.rda.Associations;
+import com.nokia.nsw.uiv.model.resource.Resource;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.request.AccountTransferByServiceIDRequest;
 import com.nokia.nsw.uiv.response.AccountTransferByServiceIDResponse;
 
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
@@ -20,12 +25,14 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 
 import lombok.extern.slf4j.Slf4j;
+import org.neo4j.kernel.api.query.SchemaIndexUsage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.Flow;
 
 @Component
 @RestController
@@ -40,6 +47,7 @@ public class AccountTransferByServiceID implements HttpAction {
     @Autowired private SubscriptionRepository subsRepo;
     @Autowired private ProductRepository prodRepo;
     @Autowired private CustomerRepository custRepo;
+    @Autowired private LogicalDeviceRepository cbmDeviceRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -83,15 +91,20 @@ public class AccountTransferByServiceID implements HttpAction {
             System.out.println("------Trace #3: Matching CFS found count=" + cfsList.size());
 
             boolean updated = false;
+            Product childProd = null;
+            Subscription childSubs = null;
+            CustomerFacingService childCfs = null;
+            ResourceFacingService childRfs = null;
 
             // Step 3: Iterate matching CFS
             for (CustomerFacingService cfs : cfsList) {
                 String cfsName = cfs.getName();
                 String rfsName = cfsName.replace("CFS", "RFS");
                 String rfsGdn = Validations.getGlobalName(rfsName);
-                Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsGdn);
+                Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsGdn,1);
                 Product prod = cfs.getContainingProduct();
                 String productGdn = prod.getGlobalName();
+                Subscription s1 = prod.getSubscription();
                 prod = prodRepo.uivFindByGdn(productGdn).get();
                 Subscription subs = prod.getSubscription();
                 String oldSubscriberGdn = Validations.getGlobalName(oldSubscriberName);
@@ -104,16 +117,64 @@ public class AccountTransferByServiceID implements HttpAction {
                 // Step 4: Find or fallback new subscriber
                 Customer newCust = custRepo.uivFindByGdn(Validations.getGlobalName(req.getSubscriberName())).orElse(null);
                 if (newCust == null) {
-                    newCust = oldCust;
+                    newCust = new Customer();
                     newCust.setName(req.getSubscriberName());
                     newCust.setLocalName(req.getSubscriberName());
-                    Map<String,Object>prop=new HashMap<>();
+                    newCust.setContext(Constants.SETAR);
+                    Map<String,Object>prop= oldCust.getPropertiesMap();
                     prop.put("AccountNumber",req.getSubscriberName());
+                    newCust.setProperties(prop);
+                    newCust.setSubscription(oldCust.getSubscription());
+                    newCust.setProduct(oldCust.getProduct());
+                    Set<Subscription> subs1 = oldCust.getSubscription();
+                    Set<Product> prodSet = oldCust.getProduct();
+                    for(Product p : prodSet){
+                        if(p.getLocalName().contains(req.getServiceId())){
+                            childProd = p;
+                            childProd = prodRepo.uivFindByGdn(childProd.getGlobalName()).get();
+                            childSubs = childProd.getSubscription();
+                            Set<CustomerFacingService> cfsSet = childProd.getContainedCfs();
+                            for(CustomerFacingService cf:cfsSet){
+                                if(cf.getLocalName().contains(req.getServiceId())){
+                                    childCfs = cfs;
+                                    childCfs = cfsRepo.uivFindByGdn(childCfs.getGlobalName()).get();
+                                    childRfs = rfsRepo.uivFindByGdn(childCfs.getGlobalName().replace("CFS","RFS")).get();
+                                    break;
+                                }
+                            }
+                            if(childRfs!=null){
+                                break;
+                            }
+                        }
+                    }
+                    Set<Resource> usedResource = childRfs.getUsedResource();
+                    LogicalDevice childDevice = null;
+                    for (Resource r : usedResource) {
+                        if (r instanceof LogicalDevice) {
+                            childDevice = (LogicalDevice)r;
+                            cbmDeviceRepository.delete((LogicalDevice) r);
+                        }
+                    }
+                    custRepo.save(newCust);
+                    cfsRepo.save(childCfs);
+                    childRfs.setContainingCfs(childCfs);
+                    rfsRepo.save(childRfs);
+                    childDevice.addUsingService(childRfs);
+                    cbmDeviceRepository.save(childDevice);
+                    rfsRepo.delete(childRfs);
+                    cfsRepo.delete(childCfs);
+                    custRepo.delete(oldCust);
+
+                    System.out.println("customer is deleted");
                 }
 
                 // Step 5: Update Subscription
-                subs.setName(subs.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                subs.setCustomer(newCust);
+                Subscription dataToSave = new Subscription();
+                dataToSave.setCustomer(newCust);
+                dataToSave.setLocalName(childSubs.getLocalName().replace(oldSubscriberName,subscriberName));
+                dataToSave.setContext(Constants.SETAR);
+                dataToSave.setProperties(childSubs.getProperties());
+                subsRepo.save(dataToSave);
 
                 String subtype = subs.getProperties().get("ServiceSubtype").toString();
                 if ("Broadband".equalsIgnoreCase(subtype) && req.getKenanUidNo() != null) {
@@ -126,6 +187,13 @@ public class AccountTransferByServiceID implements HttpAction {
                 System.out.println("------Trace #4: Subscription updated");
 
                 // Step 6: Update Product
+                Product prodSave = new Product();
+                prodSave.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
+                prodSave.setName(childProd.getName());
+                prodSave.setLocalName(childProd.getLocalName());
+                prodSave.setSubscription(dataToSave);
+                prodSave.setCustomer(newCust);
+                prodRepo.save(prodSave);
                 prod.setName(prod.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
                 prod.setCustomer(newCust);
                 prodRepo.save(prod);
