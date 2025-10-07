@@ -13,9 +13,9 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
 import com.nokia.nsw.uiv.request.CreateServiceCBMRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
-import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.CustomerFacingService;
@@ -56,6 +56,9 @@ public class CreateServiceCBM implements HttpAction {
     @Autowired
     private LogicalDeviceRepository cpeDeviceRepository;
 
+    @Autowired
+    private CustomerCustomRepository customerCustomRepository;
+
     @Override
     public Class<?> getActionClass() {
         return CreateServiceCBMRequest.class;
@@ -64,19 +67,21 @@ public class CreateServiceCBM implements HttpAction {
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
         CreateServiceCBMRequest request = (CreateServiceCBMRequest) actionContext.getObject();
+
         // 1. Validate mandatory params
-        try{
+        try {
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
-        }catch (BadRequestException bre) {
-            return new CreateServiceCBMResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                    java.time.Instant.now().toString(), "","");
+        } catch (BadRequestException bre) {
+            return new CreateServiceCBMResponse("400",
+                    Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                    java.time.Instant.now().toString(), "", "");
         }
-
-
 
         // --- 2. Subscriber Logic ---
         String subscriberName;
+        Customer existingSubscriber = null;
+
         if ("Broadband".equalsIgnoreCase(request.getProductSubtype())
                 || "Cloudstarter".equalsIgnoreCase(request.getProductSubtype())
                 || "Bridged".equalsIgnoreCase(request.getProductSubtype())) {
@@ -94,6 +99,7 @@ public class CreateServiceCBM implements HttpAction {
             }
 
             subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getCbmMac().replace(":", "");
+            existingSubscriber = customerCustomRepository.findByDiscoveredName(subscriberName);
         } else {
             subscriberName = request.getSubscriberName();
         }
@@ -101,43 +107,53 @@ public class CreateServiceCBM implements HttpAction {
         if (subscriberName.length() > 100) {
             return createErrorResponse("Subscriber name too long", 400);
         }
-        String subscriberGdn = Validations.getGlobalName(subscriberName);
-        Customer subscriber = subscriberRepository.uivFindByGdn(subscriberGdn)
-                .orElseGet(() -> {
-                    Customer s = new Customer();
-                    try {
-                        s.setName(subscriberName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        s.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        s.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    s.setType("Regular");
-                    Map<String, Object> prop = new HashMap<>();
-                    prop.put("accountNumber", request.getSubscriberName());
-                    prop.put("status", "Active");
-                    prop.put("subscriberUserName", request.getUserName());
-                    s.setProperties(prop);
-                    subscriberRepository.save(s, 2);
-                    return s;
-                });
 
-        // Optional subscriber info
-        if (request.getFirstName() != null) subscriber.getProperties().get(request.getFirstName());
-        if (request.getLastName() != null) subscriber.getProperties().get(request.getLastName());
-        if (request.getCompanyName() != null) subscriber.getProperties().get(request.getCompanyName());
-        if (request.getContactPhone() != null) subscriber.getProperties().get(request.getContactPhone());
-        if (request.getSubsAddress() != null) subscriber.getProperties().get(request.getSubsAddress());
+        // --- Fix: compute subscriberGdn using a String (not a Customer) ---
+        String subscriberGdn;
+        Customer subscriber;
+
+        if (existingSubscriber != null) {
+            // existingSubscriber found by discoveredName; use it
+            log.info("Existing subscriber found for discoveredName: {}", existingSubscriber.getDiscoveredName());
+            subscriber = existingSubscriber;
+            // Use name field (local name) to derive GDN; fallback to constructed subscriberName if null
+            String nameToUse = (subscriber.getName() != null) ? subscriber.getName() : subscriberName;
+            subscriberGdn = Validations.getGlobalName(nameToUse);
+        } else {
+            // not found via custom repo -> create-or-get via subscriberRepository
+            subscriberGdn = Validations.getGlobalName(subscriberName);
+            subscriber = subscriberRepository.uivFindByGdn(subscriberGdn)
+                    .orElseGet(() -> {
+                        Customer s = new Customer();
+                        try {
+                            s.setName(subscriberName);
+                            s.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER);
+                            s.setContext(Constants.SETAR);
+                        } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        s.setType("Regular");
+                        Map<String, Object> prop = new HashMap<>();
+                        prop.put("accountNumber", request.getSubscriberName());
+                        prop.put("status", "Active");
+                        prop.put("subscriberUserName", request.getUserName());
+                        s.setProperties(prop);
+                        subscriberRepository.save(s, 2);
+                        return s;
+                    });
+        }
+
+        // --- Optional subscriber info (correctly put into properties) ---
+        Map<String, Object> subscriberProps = subscriber.getProperties();
+        if (subscriberProps == null) subscriberProps = new HashMap<>();
+
+        if (request.getFirstName() != null) subscriberProps.put("firstName", request.getFirstName());
+        if (request.getLastName() != null) subscriberProps.put("lastName", request.getLastName());
+        if (request.getCompanyName() != null) subscriberProps.put("companyName", request.getCompanyName());
+        if (request.getContactPhone() != null) subscriberProps.put("contactPhone", request.getContactPhone());
+        if (request.getSubsAddress() != null) subscriberProps.put("subsAddress", request.getSubsAddress());
+
+        subscriber.setProperties(subscriberProps);
         subscriberRepository.save(subscriber, 2);
 
         // --- 3. Subscription Logic ---
@@ -151,23 +167,12 @@ public class CreateServiceCBM implements HttpAction {
                     Subscription sub = new Subscription();
                     try {
                         sub.setLocalName(subscriptionName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         sub.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         sub.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
+                    } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> prop = new HashMap<>();
-
                     prop.put("subscriptionStatus", "Active");
                     prop.put("serviceSubType", request.getProductSubtype());
                     prop.put("serviceLink", "Cable_Modem");
@@ -175,12 +180,11 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("macAddress", request.getCbmMac());
                     prop.put("serviceID", request.getServiceId());
                     prop.put("veipQosSessionProfile", request.getQosProfile());
-//                    prop.put("houseHoldId", request.getHhid());
                     prop.put("customerGroupId", request.getCustomerGroupId());
                     prop.put("subscriberID_CableModem", request.getSubscriberId());
                     prop.put("servicePackage", request.getServicePackage());
                     prop.put("kenanSubscriberId", request.getKenanUidNo());
-                    prop.put("hhid",request.getHhid());
+                    prop.put("hhid", request.getHhid());
                     sub.setCustomer(subscriber);
                     sub.setProperties(prop);
                     subscriptionRepository.save(sub, 2);
@@ -188,30 +192,20 @@ public class CreateServiceCBM implements HttpAction {
                 });
 
         // --- 4. Product Logic ---
-        String productName = request.getSubscriberName() +Constants.UNDER_SCORE+ request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
+        String productName = request.getSubscriberName() + Constants.UNDER_SCORE +
+                request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceId();
         if (productName.length() > 100) {
             return createErrorResponse("Product name too long", 400);
         }
-
         String productGdn = Validations.getGlobalName(productName);
         Product product = productRepository.uivFindByGdn(productGdn)
                 .orElseGet(() -> {
                     Product p = new Product();
                     try {
                         p.setName(productName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         p.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         p.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
+                    } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
                     p.setType(request.getProductType());
@@ -225,26 +219,16 @@ public class CreateServiceCBM implements HttpAction {
                 });
 
         // --- 5. CFS Logic ---
-        String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;
+        String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String cfsGdn = Validations.getGlobalName(cfsName);
         CustomerFacingService cfs = cfsRepository.uivFindByGdn(cfsGdn)
                 .orElseGet(() -> {
                     CustomerFacingService c = new CustomerFacingService();
                     try {
                         c.setName(cfsName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         c.setKind(Constants.SETAR_KIND_SETAR_CFS);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         c.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
+                    } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
                     c.setType(request.getProductType());
@@ -257,32 +241,18 @@ public class CreateServiceCBM implements HttpAction {
                     cfsRepository.save(c, 2);
                     return c;
                 });
-        // --- 7. CBM Device Logic ---
-        String cbmName = "CBM" + request.getCbmSN();
-        if (cbmName.length() > 100) {
-            return createErrorResponse("CBM name too long", 400);
-        }
+
         // --- 6. RFS Logic ---
-        String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
+        String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsGdn = Validations.getGlobalName(rfsName);
         ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn)
                 .orElseGet(() -> {
                     ResourceFacingService r = new ResourceFacingService();
                     try {
                         r.setName(rfsName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         r.setKind(Constants.SETAR_KIND_SETAR_RFS);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         r.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
+                    } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
                     r.setType(request.getProductType());
@@ -294,24 +264,19 @@ public class CreateServiceCBM implements HttpAction {
                     return r;
                 });
 
+        // --- 7. CBM Device Logic ---
+        String cbmName = "CBM" + request.getCbmSN();
+        if (cbmName.length() > 100) {
+            return createErrorResponse("CBM name too long", 400);
+        }
         LogicalDevice cbmDevice = cbmDeviceRepository.uivFindByGdn(cbmName)
                 .orElseGet(() -> {
                     LogicalDevice d = new LogicalDevice();
                     try {
                         d.setName(cbmName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         d.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         d.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
+                    } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> deviceProps = new HashMap<>();
@@ -327,8 +292,6 @@ public class CreateServiceCBM implements HttpAction {
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });
-
-
 
         // --- 8. Final Response ---
         CreateServiceCBMResponse response = new CreateServiceCBMResponse();
