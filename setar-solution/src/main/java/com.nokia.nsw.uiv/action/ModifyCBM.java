@@ -16,6 +16,8 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
+import com.nokia.nsw.uiv.repository.CustomerCustomRepositoryImpl;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.Product;
@@ -43,7 +45,7 @@ public class ModifyCBM implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action ModifyCBM execution failed - ";
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private CustomerCustomRepository CustomerCustomRepository;
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
@@ -122,12 +124,15 @@ public class ModifyCBM implements HttpAction {
 
             Customer subscriber = null;
             if (!skipEntities) {
-                Optional<Customer> optSub = customerRepository.uivFindByGdn(subscriberGdn);
-                if (!optSub.isPresent()) {
+                Customer optSub = CustomerCustomRepository.findByDiscoveredName(subscriberNameDerived);
+                Customer optSub1 = CustomerCustomRepository.findByProperty("status", "Active");
+                optSub.setDiscoveredName(subscriptionName+"_Modified");
+                CustomerCustomRepository.save(optSub);
+                if (optSub!=null) {
                     String msg = ERROR_PREFIX + "Object with UOR \"" + subscriberGdn + "\" not found";
                     return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");
                 }
-                subscriber = optSub.get();
+                subscriber = optSub;
             }
 
             Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
@@ -174,8 +179,8 @@ public class ModifyCBM implements HttpAction {
                 // _subscriberWithMAC_ is subscriberName + resourceSN (without colons?) spec says:
                 String subscriberWithMAC = input.getSubscriberName() + sanitizeForName(input.getResourceSN());
                 subscriberGdn = Validations.getGlobalName(subscriberWithMAC);
-                Optional<Customer> optSubscriberWithMac = customerRepository.uivFindByGdn(subscriberGdn);
-                Customer subscriberWithMac = optSubscriberWithMac.orElse(null);
+                Customer optSubscriberWithMac = CustomerCustomRepository.findByDiscoveredName(subscriberWithMAC);
+                Customer subscriberWithMac = optSubscriberWithMac;
 
                 // Try retrieving CBM device for modifyParam1 (if present)
                 String cbmForParam1Name = null;
@@ -237,7 +242,7 @@ public class ModifyCBM implements HttpAction {
                                 Map<String, Object> custProps = subscriber.getProperties() == null ? new HashMap<>() : subscriber.getProperties();
                                 custProps.put("name", newSubscriberName);
                                 subscriber.setProperties(custProps);
-                                customerRepository.save(subscriber, 2);
+                                CustomerCustomRepository.save(subscriber, 2);
                             }
                         }
                     } else {
@@ -274,7 +279,7 @@ public class ModifyCBM implements HttpAction {
                                 Map<String, Object> custProps = subscriber.getProperties() == null ? new HashMap<>() : subscriber.getProperties();
                                 custProps.put("name", newSubscriberName);
                                 subscriber.setProperties(custProps);
-                                customerRepository.save(subscriber, 2);
+                                CustomerCustomRepository.save(subscriber, 2);
                             }
                         } else {
                             // nothing to do - proceed
@@ -358,14 +363,14 @@ public class ModifyCBM implements HttpAction {
                         // try to get subscriber by original subscriberName
 
                         subscriberGdn = Validations.getGlobalName(input.getSubscriberName());
-                        Optional<Customer> alt = customerRepository.uivFindByGdn(subscriberGdn);
-                        if (alt.isPresent()) subscriber = alt.get();
+                        Customer alt = CustomerCustomRepository.findByDiscoveredName(input.getSubscriberName());
+                        subscriber = alt;
                     }
                     if (subscriber != null) {
                         Map<String, Object> custProps = subscriber.getProperties() == null ? new HashMap<>() : subscriber.getProperties();
                         custProps.put("email_pwd", modifyParam1 != null ? modifyParam1 : "");
                         subscriber.setProperties(custProps);
-                        customerRepository.save(subscriber, 2);
+                        CustomerCustomRepository.save(subscriber, 2);
                     } else {
                         String msg = ERROR_PREFIX + "Subscriber not found for password update";
                         return new ModifyCBMResponse("409", msg, String.valueOf(System.currentTimeMillis()), "", "");

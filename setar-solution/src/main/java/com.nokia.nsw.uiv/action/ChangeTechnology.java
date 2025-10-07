@@ -58,9 +58,7 @@ public class ChangeTechnology implements HttpAction {
     @Autowired private LogicalDeviceRepository cbmRepo;
 
     @Override
-    public Class<?> getActionClass() {
-        return Map.class; // expecting JSON map of inputs
-    }
+    public Class<?> getActionClass() { return ChangeTechnologyRequest.class; }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

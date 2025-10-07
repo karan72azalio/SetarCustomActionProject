@@ -133,6 +133,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                             s.setName(subscriberNameString);
                             s.setContext(Constants.SETAR);
                             s.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER);
+                            s.setDiscoveredName(subscriberNameString);
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                             throw new RuntimeException(e);
                         }
