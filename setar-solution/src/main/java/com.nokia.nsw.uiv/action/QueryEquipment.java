@@ -7,11 +7,15 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.request.QueryEquipmentRequest;
 import com.nokia.nsw.uiv.response.QueryEquipmentResponse;
 import com.nokia.nsw.uiv.utils.Validations;
+import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
+import com.setar.uiv.model.product.Product;
+import com.setar.uiv.model.product.ProductRepository;
 import com.setar.uiv.model.product.ResourceFacingService;
 import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +50,9 @@ public class QueryEquipment implements HttpAction {
     @Autowired
     private LogicalDeviceRepository logicalDeviceRepository;
 
+    @Autowired
+    private ProductRepository productRepository;  // ✅ Added for product lookup
+
     @Override
     public Class<?> getActionClass() {
         return QueryEquipmentRequest.class;
@@ -78,46 +85,97 @@ public class QueryEquipment implements HttpAction {
         int stbCounter = 1;
 
         try {
-            // 3. Locate entities
-            ResourceFacingService rfs = rfsRepository.uivFindByGdn(Validations.getGlobalName(rfsName)).orElse(null);
+            // 3️⃣ Locate entities
+            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
+            Optional<Subscription> subscriptionOpt = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            if (subscriptionOpt.isEmpty()) {
+                return createErrorResponse(CODE_NO_ENTRY, "Subscription not found for subscriber/service");
+            }
+
+            String cfsGdn = Validations.getGlobalName(cfsName);
+            Optional<CustomerFacingService> cfsOpt = cfsRepository.uivFindByGdn(cfsGdn);
+            if (cfsOpt.isEmpty()) {
+                log.warn("CFS not found: {}", cfsName);
+            }
+
+            String rfsGdn = Validations.getGlobalName(rfsName);
+            ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn).orElse(null);
             if (rfs == null) {
                 return createErrorResponse(CODE_NO_ENTRY, "No RFS entry found for subscriber/service");
             }
 
-            List<String> apSns = new ArrayList<>();
-            List<String> stbSns = new ArrayList<>();
+            String productGdn = Validations.getGlobalName(productName);
+            Optional<Product> productOpt = productRepository.uivFindByGdn(productGdn);
+            if (productOpt.isEmpty()) {
+                log.warn("Product not found: {}", productName);
+            }
 
-            // 4. Process linked devices
+            log.info("Subscription GDN: {}", subscriptionGdn);
+            log.info("CFS GDN: {}", cfsGdn);
+            log.info("RFS GDN: {}", rfsGdn);
+            log.info("Product GDN: {}", productGdn);
+
+            // 4️⃣ Retrieve linked devices
             Object linkedDevicesObj = null;
             if (rfs.getProperties() != null) {
                 linkedDevicesObj = rfs.getProperties().get("linkedDevices");
             }
 
-            if (linkedDevicesObj != null && linkedDevicesObj instanceof List) {
+            // Fallback to Product if not found in RFS
+            if (linkedDevicesObj == null && productOpt.isPresent()) {
+                Product product = productOpt.get();
+                if (product.getProperties() != null) {
+                    linkedDevicesObj = product.getProperties().get("linkedDevices");
+                }
+            }
+
+            log.info("RFS Properties: {}", rfs.getProperties());
+            if (productOpt.isPresent()) {
+                log.info("Product Properties: {}", productOpt.get().getProperties());
+            }
+            log.info("linkedDevicesObj: {}", linkedDevicesObj);
+
+            List<String> apSns = new ArrayList<>();
+            List<String> stbSns = new ArrayList<>();
+
+            // 5️⃣ Process linked devices
+            if (linkedDevicesObj instanceof List<?>) {
                 List<?> linkedDevicesList = (List<?>) linkedDevicesObj;
 
                 for (Object gdnObj : linkedDevicesList) {
                     if (!(gdnObj instanceof String)) continue;
                     String gdn = (String) gdnObj;
+                    String gdnGdn = Validations.getGlobalName(gdn);
 
-                    LogicalDevice device = logicalDeviceRepository.uivFindByGdn(gdn).orElse(null);
+                    LogicalDevice device = logicalDeviceRepository.uivFindByGdn(gdnGdn).orElse(null);
                     if (device == null) continue;
 
                     String devName = device.getName();
                     if (devName == null) continue;
 
-                    if (devName.startsWith("AP") && apCounter <= 5) {
-                        Object serial = device.getProperties() != null ? device.getProperties().get("serialNo") : null;
-                        apSns.add(serial != null ? serial.toString() : "");
-                        apCounter++;
-                        successFlag = true;
-                    } else if (devName.startsWith("STB") && stbCounter <= 5) {
-                        Object serial = device.getProperties() != null ? device.getProperties().get("serialNo") : null;
-                        stbSns.add(serial != null ? serial.toString() : "");
-                        stbCounter++;
-                        successFlag = true;
+                    Object serialObj = device.getProperties() != null ? device.getProperties().get("serialNo") : null;
+                    String serialNo = serialObj != null ? serialObj.toString() : "";
+
+                    if (devName.startsWith("AP")) {
+                        if (apCounter <= 5) {
+                            apSns.add(serialNo);
+                            apCounter++;
+                            successFlag = true;
+                        } else {
+                            log.warn("Ignored extra AP device beyond 5: {}", devName);
+                        }
+                    } else if (devName.startsWith("STB")) {
+                        if (stbCounter <= 5) {
+                            stbSns.add(serialNo);
+                            stbCounter++;
+                            successFlag = true;
+                        } else {
+                            log.warn("Ignored extra STB device beyond 5: {}", devName);
+                        }
                     }
                 }
+            } else {
+                log.warn("linkedDevicesObj is null or not a List, cannot process equipment");
             }
 
 
@@ -166,8 +224,16 @@ public class QueryEquipment implements HttpAction {
         resp.setMessage("QueryEquipment execution failed - " + message);
         resp.setTimestamp(new Date().toString());
         resp.setSubscriptionId(null);
-        resp.setApSn1(null); resp.setApSn2(null); resp.setApSn3(null); resp.setApSn4(null); resp.setApSn5(null);
-        resp.setStbSn1(null); resp.setStbSn2(null); resp.setStbSn3(null); resp.setStbSn4(null); resp.setStbSn5(null);
+        resp.setApSn1(null);
+        resp.setApSn2(null);
+        resp.setApSn3(null);
+        resp.setApSn4(null);
+        resp.setApSn5(null);
+        resp.setStbSn1(null);
+        resp.setStbSn2(null);
+        resp.setStbSn3(null);
+        resp.setStbSn4(null);
+        resp.setStbSn5(null);
         return resp;
     }
 }
