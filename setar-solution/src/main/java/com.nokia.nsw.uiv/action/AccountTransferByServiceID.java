@@ -107,7 +107,7 @@ public class AccountTransferByServiceID implements HttpAction {
                 Subscription subs = prod.getSubscription();
                 String oldSubscriberGdn = Validations.getGlobalName(oldSubscriberName);
                 Customer oldCust = custRepo.uivFindByGdn(oldSubscriberGdn).orElse(null);
-                Customer oldCust1 = customerCustomRepository.findByDiscoveredName(oldSubscriberName);
+//                Customer oldCust1 = customerCustomRepository.findByDiscoveredName(oldSubscriberName);
 
                 if (subs == null || prod == null || oldCust == null) {
                     continue;

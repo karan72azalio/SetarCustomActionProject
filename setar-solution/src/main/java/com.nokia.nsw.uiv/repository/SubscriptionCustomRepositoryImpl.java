@@ -3,15 +3,18 @@ package com.nokia.nsw.uiv.repository;
 import com.nokia.nsw.uiv.datatype.Neo4jDomainObject;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
-
+@Repository
+@Primary
 public class SubscriptionCustomRepositoryImpl implements SubscriptionCustomRepository{
 
     private final SubscriptionRepository subscriptionRepository;
