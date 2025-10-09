@@ -166,7 +166,8 @@ public class CreateServiceFibernet implements HttpAction {
                 log.info("Found existing product: {}", productName);
             } else {
                 product = new Product();
-                product.setLocalName(productName);
+                product.setLocalName(Validations.encryptName(productName));
+                product.setDiscoveredName(productName);
                 product.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
                 product.setContext(Constants.SETAR);
                 Map<String, Object> prodProps = new HashMap<>();
@@ -186,7 +187,8 @@ public class CreateServiceFibernet implements HttpAction {
                 log.info("Found existing CFS: {}", cfsName);
             } else {
                 cfs = new CustomerFacingService();
-                cfs.setLocalName(cfsName);
+                cfs.setLocalName(Validations.encryptName(cfsName));
+                cfs.setDiscoveredName(cfsName);
                 cfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
                 cfs.setContext(Constants.SETAR);
                 Map<String, Object> cfsProps = new HashMap<>();
@@ -206,7 +208,8 @@ public class CreateServiceFibernet implements HttpAction {
                 log.info("Found existing RFS: {}", rfsName);
             } else {
                 rfs = new ResourceFacingService();
-                rfs.setLocalName(rfsName);
+                rfs.setLocalName(Validations.encryptName(rfsName));
+                rfs.setDiscoveredName(rfsName);
                 rfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
                 rfs.setContext(Constants.SETAR);
                 Map<String, Object> rfsProps = new HashMap<>();
@@ -297,12 +300,12 @@ public class CreateServiceFibernet implements HttpAction {
             // 10. Link RFS -> ONT or OLT (if model supports linking via properties)
             Map<String, Object> rfsProps = rfs.getProperties() == null ? new HashMap<>() : rfs.getProperties();
             rfsProps.put("serviceSN", request.getOntSN());
-            if (oltDevice != null) rfsProps.put("oltPosition", oltDevice.getLocalName());
+            if (oltDevice != null) rfsProps.put("oltPosition", oltDevice.getDiscoveredName());
             rfs.setProperties(rfsProps);
             rfsRepository.save(rfs, 2);
 
             // 11. Final response
-            String ontNameResp = ontDevice != null ? ontDevice.getLocalName() : "";
+            String ontNameResp = ontDevice != null ? ontDevice.getDiscoveredName() : "";
             CreateServiceFibernetResponse response = new CreateServiceFibernetResponse();
             response.setStatus("201");
             response.setMessage("Fibernet service created");

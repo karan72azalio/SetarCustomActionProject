@@ -20,6 +20,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifySPRRequest;
 import com.nokia.nsw.uiv.response.ModifySPRResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -39,18 +40,18 @@ public class ModifySPR implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action ModifySPR execution failed - ";
 
     @Autowired
-    private LogicalDeviceRepository logicalDeviceRepository;
+    private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Autowired
-    private LogicalComponentRepository logicalComponentRepository;
+    private LogicalComponentCustomRepository logicalComponentRepository;
 
     @Autowired
-    private LogicalInterfaceRepository logicalInterfaceRepository;
+    private LogicalInterfaceCustomRepository logicalInterfaceRepository;
     @Autowired
-    private CustomerRepository customerRepository;
+    private CustomerCustomRepository customerRepository;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
     @Override
     public Class getActionClass() {
         return ModifySPRRequest.class;
@@ -84,12 +85,10 @@ public class ModifySPR implements HttpAction {
             }
 
             // 3. Fetch Entities
-            String subscriberGdn=Validations.getGlobalName(subscriberName);
-            Customer subscriber = customerRepository.uivFindByGdn(subscriberGdn)
+            Customer subscriber = customerRepository.findByDiscoveredName(subscriberName)
                     .orElseThrow(() -> new BadRequestException("Subscriber not found: " + subscriberName));
 
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Subscription subscription = subscriptionRepository.uivFindByGdn(subscriptionGdn)
+            Subscription subscription = subscriptionRepository.findByDiscoveredName(subscriptionName)
                     .orElseThrow(() -> new BadRequestException("Subscription not found: " + subscriptionName));
 
             // 4. Route to correct handler
@@ -264,31 +263,25 @@ public class ModifySPR implements HttpAction {
         // update ONT
         Map<String, Object> ontProps = ont.getProperties();
         ontProps.put("serialNo", request.getModifyParam1());
-        ont.setLocalName("resourceName " + request.getModifyParam1());
+        ont.setDiscoveredName("resourceName " + request.getModifyParam1());
         ont.setProperties(ontProps);
 
         // update VLAN interfaces
         List<LogicalInterface> allIfaces = (List<LogicalInterface>) logicalInterfaceRepository.findAll();
         for (LogicalInterface vlan : allIfaces) {
-            if (vlan.getLocalName() != null && vlan.getLocalName().contains(request.getOntSN())) {
-                String newVlanName = vlan.getLocalName().replace(request.getOntSN(), request.getModifyParam1());
-                vlan.setLocalName(newVlanName);
+            if (vlan.getDiscoveredName() != null && vlan.getDiscoveredName().contains(request.getOntSN())) {
+                String newVlanName = vlan.getDiscoveredName().replace(request.getOntSN(), request.getModifyParam1());
+                vlan.setDiscoveredName(newVlanName);
                 logicalInterfaceRepository.save(vlan, 2);
             }
         }
 
         // update CPE Device
         String cpeDeviceName = request.getProductType() + "_" + request.getOntSN();
-        logicalDeviceRepository.uivFindByGdn(cpeDeviceName).ifPresent(cpe -> {
+        logicalDeviceRepository.findByDiscoveredName(cpeDeviceName).ifPresent(cpe -> {
             Map<String, Object> cpeProps = cpe.getProperties();
             cpeProps.put("serialNo", request.getModifyParam1());
-            try {
-                cpe.setLocalName(request.getProductType() + "_" + request.getModifyParam1());
-            } catch (AccessForbiddenException e) {
-                throw new RuntimeException(e);
-            } catch (BadRequestException e) {
-                throw new RuntimeException(e);
-            }
+            cpe.setDiscoveredName(request.getProductType() + "_" + request.getModifyParam1());
             cpe.setProperties(cpeProps);
             logicalDeviceRepository.save(cpe, 2);
         });
@@ -312,36 +305,18 @@ public class ModifySPR implements HttpAction {
         String cfsNameNew = "CFS_" + subscriptionNameNew;
         String rfsNameNew = "RFS_" + subscriptionNameNew;
 
-        logicalComponentRepository.uivFindByGdn(productName).ifPresent(product -> {
-            try {
-                product.setLocalName(productNameNew);
-            } catch (AccessForbiddenException e) {
-                throw new RuntimeException(e);
-            } catch (BadRequestException e) {
-                throw new RuntimeException(e);
-            }
+        logicalComponentRepository.findByDiscoveredName(productName).ifPresent(product -> {
+            product.setDiscoveredName(productNameNew);
             logicalComponentRepository.save(product, 2);
         });
 
-        logicalComponentRepository.uivFindByGdn(cfsName).ifPresent(cfs -> {
-            try {
-                cfs.setLocalName(cfsNameNew);
-            } catch (AccessForbiddenException e) {
-                throw new RuntimeException(e);
-            } catch (BadRequestException e) {
-                throw new RuntimeException(e);
-            }
+        logicalComponentRepository.findByDiscoveredName(cfsName).ifPresent(cfs -> {
+            cfs.setDiscoveredName(cfsNameNew);
             logicalComponentRepository.save(cfs, 2);
         });
 
-        logicalComponentRepository.uivFindByGdn(rfsName).ifPresent(rfs -> {
-            try {
-                rfs.setLocalName(rfsNameNew);
-            } catch (AccessForbiddenException e) {
-                throw new RuntimeException(e);
-            } catch (BadRequestException e) {
-                throw new RuntimeException(e);
-            }
+        logicalComponentRepository.findByDiscoveredName(rfsName).ifPresent(rfs -> {
+            rfs.setDiscoveredName(rfsNameNew);
             rfs.getProperties().put("transactionType", request.getModifyType());
             if (request.getFxOrderId() != null) {
                 rfs.getProperties().put("transactionId", request.getFxOrderId());
@@ -349,7 +324,7 @@ public class ModifySPR implements HttpAction {
             logicalComponentRepository.save(rfs, 2);
         });
 
-        subscription.setLocalName(subscriptionNameNew);
+        subscription.setDiscoveredName(subscriptionNameNew);
     }
 
     private boolean isBroadband(ModifySPRRequest request) {

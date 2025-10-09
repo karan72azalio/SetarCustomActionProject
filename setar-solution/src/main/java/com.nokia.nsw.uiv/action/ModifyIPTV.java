@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.ResourceFacingService;
@@ -41,28 +42,28 @@ public class ModifyIPTV implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action ModifyIPTV execution failed - ";
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private CustomerCustomRepository customerRepository;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepository;
+    private CustomerFacingServiceCustomRepository cfsRepository;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private LogicalDeviceRepository stbApCmDeviceRepository;
+    private LogicalDeviceCustomRepository stbApCmDeviceRepository;
 
     @Autowired
-    private LogicalDeviceRepository logicalDeviceRepository;
+    private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Autowired
-    private LogicalInterfaceRepository logicalInterfaceRepository;
+    private LogicalInterfaceCustomRepository logicalInterfaceRepository;
 
     @Override
     public Class getActionClass() {
@@ -94,16 +95,11 @@ public class ModifyIPTV implements HttpAction {
             String cbmDeviceName = "CBM" + request.getServiceId();
 
             // -------------------- Fetch entities --------------------
-            String subscriberGdn = Validations.getGlobalName(subscriberName);
-            Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberGdn);
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            String productGdn = Validations.getGlobalName(productName);
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
-            String cfsGdn = Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> optCFS = cfsRepository.uivFindByGdn(cfsGdn);
-            String rfsGdn = Validations.getGlobalName(rfsName);
-            Optional<ResourceFacingService> optRFS = rfsRepository.uivFindByGdn(rfsGdn);
+            Optional<Customer> optSubscriber = customerRepository.findByDiscoveredName(subscriberName);
+            Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
+            Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
+            Optional<CustomerFacingService> optCFS = cfsRepository.findByDiscoveredName(cfsName);
+            Optional<ResourceFacingService> optRFS = rfsRepository.findByDiscoveredName(rfsName);
 
             if (optSubscriber.isEmpty() || optSubscription.isEmpty() || optProduct.isEmpty() || optCFS.isEmpty() || optRFS.isEmpty()) {
                 return new ModifyIPTVResponse(
@@ -148,8 +144,7 @@ public class ModifyIPTV implements HttpAction {
 
             // Modify Cable Modem
             if (modifyType.contains("ModfiyCableModem")) {
-                String cbmDeviceGdn = Validations.getGlobalName(cbmDeviceName);
-                Optional<LogicalDevice> optCbM = stbApCmDeviceRepository.uivFindByGdn(cbmDeviceGdn);
+                Optional<LogicalDevice> optCbM = stbApCmDeviceRepository.findByDiscoveredName(cbmDeviceName);
                 LogicalDevice cbmDevice = optCbM.orElse(null);
 
                 if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
@@ -222,9 +217,6 @@ public class ModifyIPTV implements HttpAction {
                     customerRepository.save(subscriber, 2);
                 }
             }
-            String s = subscriber.getName();
-            String sub = subscription.getName();
-
             return new ModifyIPTVResponse(
                     "200",
                     "UIV action ModifyIPTV executed successfully.",

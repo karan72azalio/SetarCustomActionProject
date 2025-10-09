@@ -10,6 +10,7 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.Product;
@@ -43,25 +44,25 @@ public class CreateServiceIPTV implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action CreateServiceIPTV execution failed - ";
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private CustomerCustomRepository customerRepository;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepository;
+    private CustomerFacingServiceCustomRepository cfsRepository;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private LogicalDeviceRepository logicalDeviceRepository;
+    private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Autowired
-    private LogicalInterfaceRepository vlanRepository;
+    private LogicalInterfaceCustomRepository vlanRepository;
 
     @Override
     public Class getActionClass() {
@@ -106,15 +107,15 @@ public class CreateServiceIPTV implements HttpAction {
 
 
             // ------------------- Subscriber -------------------
-            String subscriberGdn = Validations.getGlobalName(subscriberName);
-            Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberGdn);
+            Optional<Customer> optSubscriber = customerRepository.findByDiscoveredName(subscriberName);
             Customer subscriber;
             if (optSubscriber.isPresent()) {
                 subscriber = optSubscriber.get();
                 log.info("Subscriber already exists: {}", subscriberName);
             } else {
                 subscriber = new Customer();
-                subscriber.setLocalName(subscriberName);
+                subscriber.setLocalName(Validations.encryptName(subscriberName));
+                subscriber.setDiscoveredName(subscriberName);
                 subscriber.setKind("SetarSubscriber");
                 subscriber.setContext(Constants.SETAR);
 
@@ -132,15 +133,15 @@ public class CreateServiceIPTV implements HttpAction {
             }
 
             // ------------------- Subscription -------------------
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
             Subscription subscription;
             if (optSubscription.isPresent()) {
                 subscription = optSubscription.get();
                 log.info("Subscription already exists: {}", subscriptionName);
             } else {
                 subscription = new Subscription();
-                subscription.setLocalName(subscriptionName);
+                subscription.setLocalName(Validations.encryptName(subscriptionName));
+                subscription.setDiscoveredName(subscriptionName);
                 subscription.setKind("SetarSubscription");
                 subscription.setContext(Constants.SETAR);
 
@@ -163,15 +164,15 @@ public class CreateServiceIPTV implements HttpAction {
             }
 
             // ------------------- Product -------------------
-            String productGdn = Validations.getGlobalName(productName);
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
+            Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
             Product product;
             if (optProduct.isPresent()) {
                 product = optProduct.get();
                 log.info("Product already exists: {}", productName);
             } else {
                 product = new Product();
-                product.setLocalName(productName);
+                product.setLocalName(Validations.encryptName(productName));
+                product.setDiscoveredName(productName);
                 product.setKind("SetarProduct");
                 product.setContext(Constants.SETAR);
 
@@ -187,15 +188,15 @@ public class CreateServiceIPTV implements HttpAction {
             }
 
             // ------------------- Customer Facing Service (CFS) -------------------
-            String cfsGdn = Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> optCFS = cfsRepository.uivFindByGdn(cfsGdn);
+            Optional<CustomerFacingService> optCFS = cfsRepository.findByDiscoveredName(cfsName);
             CustomerFacingService cfs;
             if (optCFS.isPresent()) {
                 cfs = optCFS.get();
                 log.info("CFS already exists: {}", cfsName);
             } else {
                 cfs = new CustomerFacingService();
-                cfs.setLocalName(cfsName);
+                cfs.setLocalName(Validations.encryptName(cfsName));
+                cfs.setDiscoveredName(cfsName);
                 cfs.setKind("SetarCFS");
                 cfs.setContext(Constants.SETAR);
 
@@ -212,15 +213,15 @@ public class CreateServiceIPTV implements HttpAction {
             }
 
             // ------------------- Resource Facing Service (RFS) -------------------
-            String rfsGdn = Validations.getGlobalName(rfsName);
-            Optional<ResourceFacingService> optRFS = rfsRepository.uivFindByGdn(rfsGdn);
+            Optional<ResourceFacingService> optRFS = rfsRepository.findByDiscoveredName(rfsName);
             ResourceFacingService rfs;
             if (optRFS.isPresent()) {
                 rfs = optRFS.get();
                 log.info("RFS already exists: {}", rfsName);
             } else {
                 rfs = new ResourceFacingService();
-                rfs.setLocalName(rfsName);
+                rfs.setLocalName(Validations.encryptName(rfsName));
+                rfs.setDiscoveredName(rfsName);
                 rfs.setKind("SetarRFS");
                 rfs.setContext(Constants.SETAR);
 
@@ -238,15 +239,15 @@ public class CreateServiceIPTV implements HttpAction {
 
             // ------------------- Logical Devices -------------------
             // OLT Device
-            String oltGdn = Validations.getGlobalName(oltName);
-            Optional<LogicalDevice> optOlt = logicalDeviceRepository.uivFindByGdn(oltGdn);
+            Optional<LogicalDevice> optOlt = logicalDeviceRepository.findByDiscoveredName(oltName);
             LogicalDevice oltDevice;
             if (optOlt.isPresent()) {
                 oltDevice = optOlt.get();
-                log.info("OLT already exists: {}", request.getOltName());
+                log.info("OLT already exists: {}", oltName);
             } else {
                 oltDevice = new LogicalDevice();
-                oltDevice.setLocalName(request.getOltName());
+                oltDevice.setLocalName(Validations.encryptName(oltName));
+                oltDevice.setDiscoveredName(oltName);
                 oltDevice.setKind("OLTDevice");
                 oltDevice.setContext("");
 
@@ -265,15 +266,15 @@ public class CreateServiceIPTV implements HttpAction {
             }
 
             // ONT Device
-            String ontGdn = Validations.getGlobalName(ontName);
-            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
+            Optional<LogicalDevice> optOnt = logicalDeviceRepository.findByDiscoveredName(ontName);
             LogicalDevice ontDevice;
             if (optOnt.isPresent()) {
                 ontDevice = optOnt.get();
                 log.info("ONT already exists: {}", ontName);
             } else {
                 ontDevice = new LogicalDevice();
-                ontDevice.setLocalName(ontName);
+                ontDevice.setLocalName(Validations.encryptName(ontName));
+                ontDevice.setDiscoveredName(ontName);
                 ontDevice.setKind("ONTDevice");
                 ontDevice.setContext(Constants.SETAR);
 
@@ -290,15 +291,15 @@ public class CreateServiceIPTV implements HttpAction {
             }
 
             // VLAN Interface
-            String vlanGdn = Validations.getGlobalName(mgmtVlanName);
-            Optional<LogicalInterface> optVlan = vlanRepository.uivFindByGdn(vlanGdn);
+            Optional<LogicalInterface> optVlan = vlanRepository.findByDiscoveredName(mgmtVlanName);
             LogicalInterface vlanInterface;
             if (optVlan.isPresent()) {
                 vlanInterface = optVlan.get();
                 log.info("VLAN Interface already exists: {}", mgmtVlanName);
             } else {
                 vlanInterface = new LogicalInterface();
-                vlanInterface.setLocalName(mgmtVlanName);
+                vlanInterface.setLocalName(Validations.encryptName(mgmtVlanName));
+                vlanInterface.setDiscoveredName(mgmtVlanName);
                 vlanInterface.setKind("VLANInterface");
                 vlanInterface.setContext(Constants.SETAR);
 

@@ -4,27 +4,16 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
-import com.nokia.nsw.uiv.model.common.party.Customer;
-import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalComponent;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalComponentRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryFlagsRequest;
 import com.nokia.nsw.uiv.response.QueryFlagsResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,28 +32,28 @@ public class QueryFlags implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action QueryFlags execution failed - ";
 
     @Autowired
-    private LogicalDeviceRepository deviceRepository;
+    private LogicalDeviceCustomRepository deviceRepository;
 
     @Autowired
-    private LogicalComponentRepository componentRepository;
+    private LogicalComponentCustomRepository componentRepository;
 
     @Autowired
-    private LogicalInterfaceRepository logicalInterfaceRepository;
+    private LogicalInterfaceCustomRepository logicalInterfaceRepository;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private CustomerCustomRepository customerRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepository;
+    private CustomerFacingServiceCustomRepository cfsRepository;
 
     @Override
     public Class getActionClass() {
@@ -136,8 +125,8 @@ public class QueryFlags implements HttpAction {
                         Iterable<ResourceFacingService> allRfs = rfsRepository.findAll();
 
                         for (ResourceFacingService rfs : allRfs) {
-                            if (rfs.getLocalName() != null &&
-                                    rfs.getLocalName().equalsIgnoreCase(rfsLocalName)) {
+                            if (rfs.getDiscoveredName() != null &&
+                                    rfs.getDiscoveredName().equalsIgnoreCase(rfsLocalName)) {
 
                                 if (rfs.getContainingCfs() != null &&
                                         rfs.getContainingCfs().getContainingProduct() != null &&
@@ -153,8 +142,8 @@ public class QueryFlags implements HttpAction {
                                         Set<Resource> used = rfs.getUsedResource();
                                         if (used != null) {
                                             for (Resource res : used) {
-                                                if (res.getLocalName() != null &&
-                                                        res.getLocalName().contains("ONT")) {
+                                                if (res.getDiscoveredName() != null &&
+                                                        res.getDiscoveredName().contains("ONT")) {
                                                     Object serial = safeProps(res.getProperties())
                                                             .get("serialNo");
                                                     if (serial != null) {
@@ -162,8 +151,8 @@ public class QueryFlags implements HttpAction {
                                                         flags.put("SERVICE_SN", ontSN);
                                                         flags.put("SERVICE_LINK", "ONT");
                                                     }
-                                                } else if (res.getLocalName() != null &&
-                                                        res.getLocalName().contains("CBM")) {
+                                                } else if (res.getDiscoveredName() != null &&
+                                                        res.getDiscoveredName().contains("CBM")) {
                                                     flags.put("SERVICE_LINK", "Cable_Modem");
                                                 }
                                             }
@@ -187,8 +176,8 @@ public class QueryFlags implements HttpAction {
             if (equalsIgnoreCase(productType, "VOIP") && equalsIgnoreCase(actionType, "Configure") && serviceID != null) {
                 log.info("Trace: VOIP Configure flow - checking voip device mapping");
                 String voipDeviceName = subscriber + "_" + serviceID;
-                String voipGdn = Validations.getGlobalName(voipDeviceName);
-                Optional<LogicalDevice> optVoip = deviceRepository.uivFindByGdn(voipGdn);
+                Optional<LogicalDevice> optVoip = deviceRepository.findByDiscoveredName(voipDeviceName);
+
                 if (optVoip.isPresent()) {
                     Map<String, Object> p = safeProps(optVoip.get().getProperties());
                     String pots1 = (String) p.getOrDefault("potsPort1Number", "");
@@ -216,11 +205,12 @@ public class QueryFlags implements HttpAction {
             }
 
             log.info("------------Test Trace # 7---------------");
-            String subscriberGdn = Validations.getGlobalName(subscriber);
-            boolean subscriberExists = customerRepository.uivFindByGdn(subscriberGdn).isPresent();
+            boolean subscriberExists = customerRepository.findByDiscoveredName(subscriber).isPresent();
             List<Subscription> subsForCustomer = new ArrayList<>();
-            for (Subscription s : subscriptionRepository.findAll()) {
-                if (s.getLocalName() != null && s.getLocalName().startsWith(subscriber)) subsForCustomer.add(s);
+            List<Subscription> subs = (List<Subscription>) subscriptionRepository.findAll();
+            for (Subscription s:subs) {
+                if (s.getDiscoveredName() != null && s.getDiscoveredName().startsWith(subscriber))
+                    subsForCustomer.add(s);
             }
             if (Arrays.asList("Unconfigure", "MoveOut", "ChangeTechnology", "AccountTransfer").contains(actionType)) {
                 log.info("Trace: Action in Unconfigure/MoveOut/ChangeTechnology/AccountTransfer");
@@ -239,8 +229,7 @@ public class QueryFlags implements HttpAction {
             } else if (!equalsIgnoreCase(actionType, "Configure") && ontSN != null && ontSN.contains("ALCL")) {
                 log.info("Trace: Configure with ALCL ONT -> check subscriber_ONT existence");
                 String subscriberWithOnt = subscriber + "_" + ontSN;
-                subscriberGdn = Validations.getGlobalName(subscriberWithOnt);
-                boolean exists = customerRepository.uivFindByGdn(subscriberGdn).isPresent();
+                boolean exists = customerRepository.findByDiscoveredName(subscriberWithOnt).isPresent();
                 flags.put("ACCOUNT_EXIST", exists ? "Exist" : "New");
                 flags.put("SERVICE_FLAG", exists ? "Exist" : "New");
             } else if (equalsIgnoreCase(actionType, "Migrate") && ontSN != null && ontSN.contains("ALCL")) {
@@ -248,12 +237,12 @@ public class QueryFlags implements HttpAction {
                 flags.put("ACCOUNT_EXIST", "New");
                 flags.put("SERVICE_FLAG", "New");
                 String finalOntSN1 = ontSN;
-                boolean found = subsForCustomer.stream().anyMatch(s -> s.getLocalName() != null && s.getLocalName().contains(finalOntSN1));
+                boolean found = subsForCustomer.stream().anyMatch(s -> s.getDiscoveredName() != null && s.getDiscoveredName().contains(finalOntSN1));
                 if (found) {
                     flags.put("ACCOUNT_EXIST", "Exist");
                     flags.put("SERVICE_FLAG", "Exist");
                     String finalOntSN = ontSN;
-                    subsForCustomer.stream().filter(s -> s.getLocalName() != null && s.getLocalName().contains(finalOntSN)).findFirst().ifPresent(s -> {
+                    subsForCustomer.stream().filter(s -> s.getDiscoveredName() != null && s.getDiscoveredName().contains(finalOntSN)).findFirst().ifPresent(s -> {
                         Object sima = safeProps(s.getProperties()).get("simaCustomerId");
                         flags.put("SIMA_CUST_ID", sima == null ? "" : sima.toString());
                     });
@@ -273,7 +262,7 @@ public class QueryFlags implements HttpAction {
             if (ontSN != null && !"".equals(ontSN) && equalsIgnoreCase(productSubType, "IPTV") && equalsIgnoreCase(actionType, "Unconfigure")) {
                 log.info("Trace: IPTV Unconfigure path - searching subscription");
                 String subGdn = subscriber + "_" + (serviceID == null ? "" : serviceID);
-                Optional<Subscription> optSub = subscriptionRepository.uivFindByGdn(subGdn);
+                Optional<Subscription> optSub = subscriptionRepository.findByDiscoveredName(subGdn);
                 String ontSNO = "NA";
                 if (optSub.isPresent()) {
                     Subscription s = optSub.get();
@@ -312,7 +301,7 @@ public class QueryFlags implements HttpAction {
                     || (equalsIgnoreCase(productType, "Broadband") && equalsIgnoreCase(productSubType, "Bridged"))) {
                 log.info("Trace: Searching subscriptions for fibernet/bridged related entries");
                 for (Subscription s : subscriptionRepository.findAll()) {
-                    String name = s.getLocalName() == null ? "" : s.getLocalName();
+                    String name = s.getDiscoveredName() == null ? "" : s.getDiscoveredName();
                     if (ontSN != null && ontSN.contains("ALCL")) {
                         if (name.endsWith(ontSN)) {
                             subscount.add(name);
@@ -341,9 +330,8 @@ public class QueryFlags implements HttpAction {
                 } else {
                     subscriptionToSearch = subscriber + "_" + (serviceID == null ? "" : serviceID);
                 }
-                String subscriptionGdnToSearch = Validations.getGlobalName(subscriptionToSearch);
-                log.info("Trace: Searching subscription by GDN: " + subscriptionGdnToSearch);
-                Optional<Subscription> optFound = subscriptionRepository.uivFindByGdn(subscriptionGdnToSearch);
+                log.info("Trace: Searching subscription by DN: " + subscriptionToSearch);
+                Optional<Subscription> optFound = subscriptionRepository.findByDiscoveredName(subscriptionToSearch);
                 if (optFound.isPresent()) {
                     Subscription found = optFound.get();
                     Map<String, Object> p = safeProps(found.getProperties());
@@ -361,8 +349,7 @@ public class QueryFlags implements HttpAction {
 
                     if ("Cable_Modem".equalsIgnoreCase(String.valueOf(link))) {
                         String cbmName = "CBM_" + (sMAC == null ? "" : sMAC.toString());
-                        String cbmGdn = Validations.getGlobalName(cbmName);
-                        Optional<LogicalDevice> optCbm = deviceRepository.uivFindByGdn(cbmGdn);
+                        Optional<LogicalDevice> optCbm = deviceRepository.findByDiscoveredName(cbmName);
                         if (optCbm.isPresent()) {
                             LogicalDevice cbm = optCbm.get();
                             Map<String, Object> cbmProps = safeProps(cbm.getProperties());
@@ -380,8 +367,7 @@ public class QueryFlags implements HttpAction {
                             log.info("Trace: CBM inspected: mac=" + flags.get("CBM_MAC") + " voip1=" + flags.get("SERVICE_VOIP_NUMBER1"));
                         } else {
                             String alt = "CBM" + (serviceID == null ? "" : serviceID);
-                            String altGdn = Validations.getGlobalName(alt);
-                            deviceRepository.uivFindByGdn(altGdn).ifPresent(dev -> {
+                            deviceRepository.findByDiscoveredName(alt).ifPresent(dev -> {
                                 Map<String, Object> dp = safeProps(dev.getProperties());
                                 flags.put("ONT_MODEL", (String) dp.getOrDefault("deviceModel", ""));
                             });
@@ -391,8 +377,7 @@ public class QueryFlags implements HttpAction {
             }
 
             log.info("------------Test Trace # 11---------------");
-            subscriberGdn = Validations.getGlobalName(subscriber);
-            customerRepository.uivFindByGdn(subscriberGdn).ifPresent(cust -> {
+            customerRepository.findByDiscoveredName(subscriber).ifPresent(cust -> {
                 Map<String, Object> cp = safeProps(cust.getProperties());
                 flags.put("FIRST_NAME", (String) cp.getOrDefault("subscriberFirstName", ""));
                 flags.put("LAST_NAME", (String) cp.getOrDefault("subscriberLastName", ""));
@@ -405,7 +390,7 @@ public class QueryFlags implements HttpAction {
                 if (ontGdn.length() > 100) {
                     return new QueryFlagsResponse("400", ERROR_PREFIX + "ONT name too long", getCurrentTimestamp(), Collections.emptyMap());
                 }
-                Optional<LogicalDevice> optOntDev = deviceRepository.uivFindByGdn(ontGdn);
+                Optional<LogicalDevice> optOntDev = deviceRepository.findByDiscoveredName(ontGdn);
                 if (optOntDev.isPresent()) {
                     LogicalDevice ontDev = optOntDev.get();
                     Map<String, Object> ontProps = safeProps(ontDev.getProperties());
@@ -417,7 +402,7 @@ public class QueryFlags implements HttpAction {
                     Object parentOltObj = ontProps.get("parentOlt");
                     if (parentOltObj != null) {
                         String oltGdn = parentOltObj.toString();
-                        deviceRepository.uivFindByGdn(oltGdn).ifPresent(olt -> {
+                        deviceRepository.findByDiscoveredName(oltGdn).ifPresent(olt -> {
                             Map<String, Object> oltProps = safeProps(olt.getProperties());
                             flags.put("OLT_POSITION", (String) oltProps.getOrDefault("position", ""));
                             flags.put("SERVICE_TEMPLATE_ONT", existsString(oltProps.get("ontTemplate")));
@@ -432,14 +417,13 @@ public class QueryFlags implements HttpAction {
 
                     Set<String> vlanSet = new HashSet<>();
                     for (LogicalInterface vif : logicalInterfaceRepository.findAll()) {
-                        String lname = vif.getLocalName();
+                        String lname = vif.getDiscoveredName();
                         if (lname != null && lname.contains(ontSN) && ontPort != null && lname.contains("P" + ontPort)) {
                             vlanSet.add(lname);
                         }
                     }
                     for (String vl : vlanSet) {
-                        String vlGdn = Validations.getGlobalName(vl);
-                        logicalInterfaceRepository.uivFindByGdn(vlGdn).ifPresent(vif -> {
+                        logicalInterfaceRepository.findByDiscoveredName(vl).ifPresent(vif -> {
                             Map<String, Object> vp = safeProps(vif.getProperties());
                             Object tmpl = vp.get("template");
                             if ("4.3B EVPN SINGLETAGGED VLAN v2".equalsIgnoreCase(String.valueOf(tmpl))) {
@@ -486,7 +470,7 @@ public class QueryFlags implements HttpAction {
                             }
                         }
                         String cbmGdn = "CBM_" + cbmMac;
-                        deviceRepository.uivFindByGdn(cbmGdn).ifPresent(cpe -> {
+                        deviceRepository.findByDiscoveredName(cbmGdn).ifPresent(cpe -> {
                             Map<String, Object> cp = safeProps(cpe.getProperties());
                             flags.put("RESOURCE_MAC_MTA_OLD", (String) cp.getOrDefault("macAddressMta", ""));
                             flags.put("RESOURCE_MODEL_MTA_OLD", (String) cp.getOrDefault("deviceModelMta", ""));
@@ -504,7 +488,7 @@ public class QueryFlags implements HttpAction {
                 String oltPos = flags.getOrDefault("OLT_POSITION", "");
                 if (!oltPos.isEmpty()) {
                     String oltPosGdn = Validations.getGlobalName(oltPos);
-                    deviceRepository.uivFindByGdn(oltPosGdn).ifPresent(olt -> {
+                    deviceRepository.findByDiscoveredName(oltPos).ifPresent(olt -> {
                         Map<String, Object> oltProps = safeProps(olt.getProperties());
                         flags.put("SERVICE_PORT2_EXIST", existsString(oltProps.get("port2Template")));
                         flags.put("SERVICE_PORT3_EXIST", existsString(oltProps.get("port3Template")));
@@ -592,7 +576,7 @@ public class QueryFlags implements HttpAction {
                 if (sub == null) continue;
                 Map<String, Object> sp = safeProps(sub.getProperties());
                 if ("Bridged".equalsIgnoreCase((String) sp.getOrDefault("serviceSubType", "")) &&
-                        sub.getLocalName() != null && ontSN != null && sub.getLocalName().contains(ontSN)) {
+                        sub.getDiscoveredName() != null && ontSN != null && sub.getDiscoveredName().contains(ontSN)) {
                     return (String) sp.getOrDefault("serviceID", "NA");
                 }
             } catch (Exception ignore) {

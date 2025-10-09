@@ -25,14 +25,11 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 
 
+import com.nokia.nsw.uiv.model.resource.logical.*;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
-
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.DeleteSPRRequest;
 import com.nokia.nsw.uiv.response.DeleteSPRResponse;
 
@@ -55,13 +52,13 @@ public class DeleteSPR implements HttpAction {
     private static final String ACTION_LABEL = "DeleteSPR";
     private static final String ERROR_PREFIX = "UIV action DeleteSPR execution failed - ";
 
-    @Autowired private CustomerRepository customerRepository;
-    @Autowired private SubscriptionRepository subscriptionRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private CustomerFacingServiceRepository cfsRepository;
-    @Autowired private ResourceFacingServiceRepository rfsRepository;
-    @Autowired private LogicalDeviceRepository logicalDeviceRepository;
-    @Autowired private LogicalInterfaceRepository logicalInterfaceRepository;
+    @Autowired private CustomerCustomRepository customerRepository;
+    @Autowired private SubscriptionCustomRepository subscriptionRepository;
+    @Autowired private ProductCustomRepository productRepository;
+    @Autowired private CustomerFacingServiceCustomRepository cfsRepository;
+    @Autowired private ResourceFacingServiceCustomRepository rfsRepository;
+    @Autowired private LogicalDeviceCustomRepository logicalDeviceRepository;
+    @Autowired private LogicalInterfaceCustomRepository logicalInterfaceRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -117,8 +114,7 @@ public class DeleteSPR implements HttpAction {
             // -----------------------------
             // 3) Retrieve Subscriber & determine "last service"
             // -----------------------------
-            String subscriberGdn = Validations.getGlobalName(subscriberNameWithOnt);
-            Optional<Customer> optSubscriber = customerRepository.uivFindByGdn(subscriberGdn);
+            Optional<Customer> optSubscriber = customerRepository.findByDiscoveredName(subscriberNameWithOnt);
             boolean lastServiceForSubscriber = false;
             if (optSubscriber.isPresent()) {
                 Customer sub = optSubscriber.get();
@@ -135,16 +131,11 @@ public class DeleteSPR implements HttpAction {
             // -----------------------------
             // 4) Retrieve Objects
             // -----------------------------
-            String subscriptionGdn=Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            String productGdn=Validations.getGlobalName(productName);
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
-            String cfsGdn=Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
-            String rfsGdn=Validations.getGlobalName(rfsName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
-            String ontGdn=Validations.getGlobalName(ontName);
-            Optional<LogicalDevice> optOnt = logicalDeviceRepository.uivFindByGdn(ontGdn);
+            Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
+            Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
+            Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
+            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<LogicalDevice> optOnt = logicalDeviceRepository.findByDiscoveredName(ontName);
 
             // From ONT, try to retrieve parent OLT (if your data model links it via "parent" or property)
             Optional<LogicalDevice> optOlt = Optional.empty();
@@ -155,8 +146,7 @@ public class DeleteSPR implements HttpAction {
 
             // Attempt to retrieve a CPE device named "ONT_" + ontSN (optional)
             String optCpeName="ONT" + req.getOntSN();
-            String optCpeGdn=Validations.getGlobalName(optCpeName);
-            Optional<LogicalDevice> optCpe = logicalDeviceRepository.uivFindByGdn(optCpeGdn);
+            Optional<LogicalDevice> optCpe = logicalDeviceRepository.findByDiscoveredName(optCpeName);
 
             // -----------------------------
             // 5) Delete Fibernet/Broadband Services
@@ -179,7 +169,7 @@ public class DeleteSPR implements HttpAction {
                 optOnt.ifPresent(ont -> clearEvpnsOnOntPort(ont, ontPort));
 
                 // If all EVPN port templates on OLT cleared -> clear EVPN card template
-//                optOlt.ifPresent(this::maybeClearOntCardTemplateIfAllPortsEmpty);
+                optOlt.ifPresent(this::maybeClearOntCardTemplateIfAllPortsEmpty);
 
                 // Remove RFS/CFS/Product/Subscription
                 cleanupServiceObjects(optRfs, optCfs, optProduct, optSubscription);
@@ -233,7 +223,7 @@ public class DeleteSPR implements HttpAction {
                     String ontDesc = optOnt.map(LogicalDevice::getDescription).orElse("");
                     String nameToRemove = ontDesc + subVlan;
                     if (!nameToRemove.isEmpty()) {
-                        logicalInterfaceRepository.uivFindByGdn(nameToRemove)
+                        logicalInterfaceRepository.findByDiscoveredName(nameToRemove)
                                 .ifPresent(li -> logicalInterfaceRepository.delete(li));
                     }
                 }
@@ -308,8 +298,6 @@ public class DeleteSPR implements HttpAction {
                 shouldDeleteDevices = true;
             }
             if (shouldDeleteDevices) {
-                // If OLT has no RFS linked (we approximate by checking a flag/property if any; otherwise skip)
-                // Then remove ONT and OLT
                 optOnt.ifPresent(logicalDeviceRepository::delete);
                 optOlt.ifPresent(logicalDeviceRepository::delete);
             }
@@ -362,9 +350,6 @@ public class DeleteSPR implements HttpAction {
         }
     }
 
-    // -----------------------------
-    // Helpers
-    // -----------------------------
     private void validateMandatory(String val, String param) throws BadRequestException {
         if (val == null || val.trim().isEmpty()) {
             throw new BadRequestException(param);
@@ -458,12 +443,9 @@ public class DeleteSPR implements HttpAction {
     }
 
     private Optional<LogicalDevice> getParentOlt(LogicalDevice ont) {
-        // If your model has a relation for parent OLT, use it.
-        // Here we try a heuristic via property "oltPosition" to fetch OLT by name in that position.
         String oltPos = stringProp(ont.getProperties(), "oltPosition");
         if (!isEmpty(oltPos)) {
-            // some tenants prefix OLT by its position; adapt if needed.
-            return logicalDeviceRepository.uivFindByGdn(oltPos);
+            return logicalDeviceRepository.findByDiscoveredName(oltPos);
         }
         return Optional.empty();
     }
@@ -482,10 +464,9 @@ public class DeleteSPR implements HttpAction {
 
     private void removePossibleVlanInterfaces(String ontSN, String ontPort) {
         if (isEmpty(ontSN) || isEmpty(ontPort)) return;
-        // Values "2".."8"
         for (int suffix = 2; suffix <= 8; suffix++) {
             String vlanName = ontSN + "_P" + ontPort + "SINGLETAGGED" + suffix;
-            Optional<LogicalInterface> optVlan = logicalInterfaceRepository.uivFindByGdn(vlanName);
+            Optional<LogicalInterface> optVlan = logicalInterfaceRepository.findByDiscoveredName(vlanName);
             if (optVlan.isPresent()) {
                 logicalInterfaceRepository.delete(optVlan.get());
                 break; // stop after first match as per requirement
@@ -522,36 +503,32 @@ public class DeleteSPR implements HttpAction {
     }
 
     private int countSubscriptionsByCustomer(Customer customer) {
-        // If your SubscriptionRepository exposes a counter method, use it.
-        // Fallback: defensive read via property map "subscriptions" if present, otherwise 0/1 heuristic.
         try {
-            // Example optional API (replace if you have different method)
-            // return subscriptionRepository.countByCustomer(customer);
             Collection<Subscription> subs = (Collection<Subscription>) customer.getProperties().get("subscriptions");
             if (subs != null) return subs.size();
         } catch (Exception ignore) {}
-        return 1; // conservative fallback
+        return 1;
     }
-//    private void maybeClearOntCardTemplateIfAllPortsEmpty(LogicalDevice oltDevice) {
-//        // Fetch all logical interfaces linked to the OLT
-//        var oltInterfaces = logicalInterfaceRepository.findByParent(oltDevice);
-//
-//        boolean allPortsCleared = oltInterfaces.stream()
-//                .filter(intf -> "EVPN_PORT".equalsIgnoreCase(intf.getTemplateName()))
-//                .allMatch(intf -> intf.getProperties() == null
-//                        || intf.getProperties().isEmpty());
-//
-//        if (allPortsCleared) {
-//            // Clear the EVPN card template (reset description/properties, etc.)
-//            oltDevice.setDescription("EVPN card template cleared");
-//
-//            Map<String, Object> props = new HashMap<>();
-//            props.put("AdministrativeState", "Available");
-//            oltDevice.setProperties(props);
-//
-//            logicalDeviceRepository.save(oltDevice, 2);
-//            log.info("Cleared EVPN card template for OLT {}", oltDevice.getLocalName());
-//        }
-//    }
+    private void maybeClearOntCardTemplateIfAllPortsEmpty(LogicalDevice oltDevice) {
+        // Fetch all logical interfaces linked to the OLT
+        Set<LogicalResource> allInterfaces=oltDevice.getContained();
+
+        boolean allPortsCleared = allInterfaces.stream()
+                .filter(intf -> "EVPN_PORT".equalsIgnoreCase((String) intf.getProperties().get("TemplateName")))
+                .allMatch(intf -> intf.getProperties() == null
+                        || intf.getProperties().isEmpty());
+
+        if (allPortsCleared) {
+            // Clear the EVPN card template (reset description/properties, etc.)
+            oltDevice.setDescription("EVPN card template cleared");
+
+            Map<String, Object> props = new HashMap<>();
+            props.put("AdministrativeState", "Available");
+            oltDevice.setProperties(props);
+
+            logicalDeviceRepository.save(oltDevice, 2);
+            log.info("Cleared EVPN card template for OLT {}", oltDevice.getDiscoveredName());
+        }
+    }
 }
 

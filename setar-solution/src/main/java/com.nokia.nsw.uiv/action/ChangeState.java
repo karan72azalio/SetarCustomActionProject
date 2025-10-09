@@ -13,6 +13,10 @@ import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 
+import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
+import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
+import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.ChangeStateRequest;
 import com.nokia.nsw.uiv.response.ChangeStateResponse;
 
@@ -36,16 +40,16 @@ public class ChangeState implements HttpAction {
     private static final String ACTION_LABEL = "ChangeState";
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private LogicalDeviceRepository logicalDeviceRepository;
+    private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private CustomerCustomRepository customerRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -114,22 +118,20 @@ public class ChangeState implements HttpAction {
 
         // 4. Search for subscription, rfs, ontd & cbm device
         try {
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            String rfsGdn = Validations.getGlobalName(rfsName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
+
+            Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
+            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
             Optional<LogicalDevice> optOnt = Optional.empty();
             Optional<LogicalDevice> optCbm = Optional.empty();
 
             if (!isEmpty(ontName)) {
-                optOnt = logicalDeviceRepository.uivFindByGdn(ontName);
+                optOnt = logicalDeviceRepository.findByDiscoveredName(ontName);
             }
 
             if (!isEmpty(req.getCbmMac())) {
                 // attempt find by GDN "CBM" + mac (as per naming in your system)
                 cbmName = "CBM" +"_"+ req.getCbmMac();
-                String cbmGdn = Validations.getGlobalName(cbmName);
-                optCbm = logicalDeviceRepository.uivFindByGdn(cbmGdn);
+                optCbm = logicalDeviceRepository.findByDiscoveredName(cbmName);
             }
 
             if (!optSubscription.isPresent() || !optRfs.isPresent()) {
@@ -170,10 +172,10 @@ public class ChangeState implements HttpAction {
             rfsRepository.save(rfs, 2);
 
             // Also persist ONT/CBM if we located and want to reflect state (optional)
-//            if (optOnt.isPresent()) {
-//                LogicalDevice ont = optOnt.get();
-//                logicalDeviceRepository.save(ont, 2);
-//            }
+            if (optOnt.isPresent()) {
+                LogicalDevice ont = optOnt.get();
+                logicalDeviceRepository.save(ont, 2);
+            }
             if (optCbm.isPresent()) {
                 LogicalDevice cbm = optCbm.get();
                 logicalDeviceRepository.save(cbm, 2);

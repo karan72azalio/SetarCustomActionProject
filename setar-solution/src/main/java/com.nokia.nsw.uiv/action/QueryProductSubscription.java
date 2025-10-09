@@ -6,6 +6,7 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.repository.ProductCustomRepository;
 import com.nokia.nsw.uiv.request.QueryProductSubscriptionRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.response.QueryProductSubscriptionResponse;
@@ -29,7 +30,7 @@ public class QueryProductSubscription implements HttpAction {
     protected static final String ACTION_LABEL = "QueryProductSubscription";
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -66,8 +67,8 @@ public class QueryProductSubscription implements HttpAction {
             }
 
             // ================== Lookup Product ==================
-            String productGdn = Validations.getGlobalName(productName);
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
+
+            Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
 
             if (optProduct.isPresent()) {
                 Product product = optProduct.get();

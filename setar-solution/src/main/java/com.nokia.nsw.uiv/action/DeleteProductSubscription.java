@@ -6,6 +6,8 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.repository.ProductCustomRepository;
+import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
 import com.nokia.nsw.uiv.request.DeleteProductSubscriptionRequest;
 import com.nokia.nsw.uiv.response.DeleteProductSubscriptionResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -31,10 +33,10 @@ public class DeleteProductSubscription implements HttpAction {
     protected static final String ACTION_LABEL = "DeleteProductSubscription";
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -71,8 +73,7 @@ public class DeleteProductSubscription implements HttpAction {
             // ========== RFS Update ==========
             if (request.getFxOrderID() != null && !request.getFxOrderID().isEmpty()) {
                 String rfsName = "RFS_" + request.getSubscriberName() + "_" + request.getServiceID();
-                String rfsGdn = Validations.getGlobalName(rfsName);
-                Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
+                Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
 
                 if (optRfs.isPresent()) {
                     ResourceFacingService rfs = optRfs.get();
@@ -86,8 +87,7 @@ public class DeleteProductSubscription implements HttpAction {
             }
 
             // ========== Delete Product ==========
-            String productGdn = Validations.getGlobalName(productName);
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
+            Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
 
             if (optProduct.isPresent()) {
                 Product product = optProduct.get();

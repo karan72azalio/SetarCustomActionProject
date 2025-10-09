@@ -10,6 +10,9 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
+import com.nokia.nsw.uiv.repository.ProductCustomRepository;
+import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.CreateProductSubscriptionRequest;
 import com.nokia.nsw.uiv.response.CreateProductSubscriptionResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -34,13 +37,13 @@ public class CreateProductSubscription implements HttpAction {
     protected static final String ACTION_LABEL = "CreateProductSubscription";
 
     @Autowired
-    private CustomerRepository subscriberRepository;
+    private CustomerCustomRepository subscriberRepository;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -76,15 +79,15 @@ public class CreateProductSubscription implements HttpAction {
                 throw new BadRequestException("Subscriber name too long");
             }
 
-            String subscriberGdn = Validations.getGlobalName(subscriberName);
-            Optional<Customer> optSubscriber = subscriberRepository.uivFindByGdn(subscriberGdn);
+            Optional<Customer> optSubscriber = subscriberRepository.findByDiscoveredName(subscriberName);
             Customer subscriber;
             if (optSubscriber.isPresent()) {
                 subscriber = optSubscriber.get();
                 log.info("Found existing subscriber: {}", subscriberName);
             } else {
                 subscriber = new Customer();
-                subscriber.setLocalName(subscriberName);
+                subscriber.setLocalName(Validations.encryptName(subscriberName));
+                subscriber.setDiscoveredName(subscriberName);
                 subscriber.setKind("SetarSubscriber");
                 subscriber.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();
@@ -98,19 +101,19 @@ public class CreateProductSubscription implements HttpAction {
 
             // ================== Subscription ==================
             String subscriptionName = subscriberName + "_" + request.getServiceID();
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
             if (subscriptionName.length() > 100) {
                 throw new BadRequestException("Subscription name too long");
             }
 
-            Optional<Subscription> optSubscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
             Subscription subscription;
             if (optSubscription.isPresent()) {
                 subscription = optSubscription.get();
                 log.info("Found existing subscription: {}", subscriptionName);
             } else {
                 subscription = new Subscription();
-                subscription.setLocalName(subscriptionName);
+                subscription.setLocalName(Validations.encryptName(subscriptionName));
+                subscription.setDiscoveredName(subscriptionName);
                 subscription.setKind("SetarSubscription");
                 subscription.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();
@@ -125,19 +128,19 @@ public class CreateProductSubscription implements HttpAction {
 
             // ================== Product ==================
             String productName = request.getServiceID() + "_" + request.getComponentName();
-            String productGdn = Validations.getGlobalName(productName);
             if (productName.length() > 100) {
                 throw new BadRequestException("Product name too long");
             }
 
-            Optional<Product> optProduct = productRepository.uivFindByGdn(productGdn);
+            Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
             Product product;
             if (optProduct.isPresent()) {
                 product = optProduct.get();
                 log.info("Found existing product: {}", productName);
             } else {
                 product = new Product();
-                product.setLocalName(productName);
+                product.setLocalName(Validations.encryptName(productName));
+                product.setDiscoveredName(productName);
                 product.setKind("SetarProduct");
                 product.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();

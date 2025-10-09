@@ -10,6 +10,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
@@ -36,12 +37,12 @@ public class DeleteIPTV implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action DeleteIPTV execution failed - ";
 
-    @Autowired private CustomerRepository customerRepository;
-    @Autowired private SubscriptionRepository subscriptionRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private CustomerFacingServiceRepository cfsRepository;
-    @Autowired private ResourceFacingServiceRepository rfsRepository;
-    @Autowired private LogicalDeviceRepository deviceRepository;
+    @Autowired private CustomerCustomRepository customerRepository;
+    @Autowired private SubscriptionCustomRepository subscriptionRepository;
+    @Autowired private ProductCustomRepository productRepository;
+    @Autowired private CustomerFacingServiceCustomRepository cfsRepository;
+    @Autowired private ResourceFacingServiceCustomRepository rfsRepository;
+    @Autowired private LogicalDeviceCustomRepository deviceRepository;
 
     @Override
     public Class getActionClass() {
@@ -83,18 +84,12 @@ public class DeleteIPTV implements HttpAction {
             }
 
             // Step 3: Retrieve entities
-            String subscriberGdn = Validations.getGlobalName(subscriberName);
-            Optional<Customer> optCust = customerRepository.uivFindByGdn(subscriberGdn);
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> optSub = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            String productGdn = Validations.getGlobalName(productName);
-            Optional<Product> optProd = productRepository.uivFindByGdn(productGdn);
-            String cfsGdn = Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> optCfs = cfsRepository.uivFindByGdn(cfsGdn);
-            String rfsGdn = Validations.getGlobalName(rfsName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
-            String ontGdn = Validations.getGlobalName(ontName);
-            Optional<LogicalDevice> optOnt = deviceRepository.uivFindByGdn(ontGdn);
+            Optional<Customer> optCust = customerRepository.findByDiscoveredName(subscriberName);
+            Optional<Subscription> optSub = subscriptionRepository.findByDiscoveredName(subscriptionName);
+            Optional<Product> optProd = productRepository.findByDiscoveredName(productName);
+            Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
+            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<LogicalDevice> optOnt = deviceRepository.findByDiscoveredName(ontName);
 
             if (optCust.isEmpty() || optSub.isEmpty()) {
                 return successResponse(subscriptionName, ontName, "No entry found for Delete.");
@@ -119,9 +114,9 @@ public class DeleteIPTV implements HttpAction {
             if (optRfs.isPresent()) {
                 ResourceFacingService rfs = optRfs.get();
                 rfs.getUsedResource().forEach(res -> {
-                    if (res.getLocalName().startsWith("STB") || res.getLocalName().startsWith("AP")) {
+                    if (res.getDiscoveredName().startsWith("STB") || res.getDiscoveredName().startsWith("AP")) {
                         try {
-                            deviceRepository.uivFindByGdn(res.getLocalName()).ifPresent(dev -> {
+                            deviceRepository.findByDiscoveredName(res.getDiscoveredName()).ifPresent(dev -> {
                                 dev.getProperties().put("deviceGroupId", "");
                                 dev.getProperties().put("administrativeState", "Available");
                                 deviceRepository.save(dev);
