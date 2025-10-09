@@ -4,6 +4,8 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
+import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.UpdateVOIPServiceRequest;
 import com.nokia.nsw.uiv.response.UpdateVOIPServiceResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -30,8 +32,8 @@ public class UpdateVOIPService implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action UpdateVOIPService execution failed - ";
 
-    @Autowired private CustomerRepository customerRepo;
-    @Autowired private SubscriptionRepository subscriptionRepo;
+    @Autowired private CustomerCustomRepository customerRepo;
+    @Autowired private SubscriptionCustomRepository subscriptionRepo;
 
     @Override
     public Class<?> getActionClass() {
@@ -67,10 +69,8 @@ public class UpdateVOIPService implements HttpAction {
             boolean updatedFlag = false;
 
             // Step 4: Locate existing records
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> subscriptionOpt = subscriptionRepo.uivFindByGdn(subscriptionGdn);
-            String subscriberGdn = Validations.getGlobalName(subscriberNameStr);
-            Optional<Customer> subscriberOpt = customerRepo.uivFindByGdn(subscriberGdn);
+            Optional<Subscription> subscriptionOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
+            Optional<Customer> subscriberOpt = customerRepo.findByDiscoveredName(subscriberNameStr);
 
             if (subscriptionOpt.isEmpty() && subscriberOpt.isEmpty()) {
                 return new UpdateVOIPServiceResponse(

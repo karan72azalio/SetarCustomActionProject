@@ -5,6 +5,7 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceVoIPRequest;
 import com.nokia.nsw.uiv.response.CreateServiceVoIPResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -40,12 +41,12 @@ public class CreateServiceVoIP implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action CreateServiceVoIP execution failed - ";
 
-    @Autowired private CustomerRepository customerRepo;
-    @Autowired private SubscriptionRepository subscriptionRepo;
-    @Autowired private ProductRepository productRepo;
-    @Autowired private CustomerFacingServiceRepository cfsRepo;
-    @Autowired private ResourceFacingServiceRepository rfsRepo;
-    @Autowired private LogicalDeviceRepository logicalDeviceRepo;
+    @Autowired private CustomerCustomRepository customerRepo;
+    @Autowired private SubscriptionCustomRepository subscriptionRepo;
+    @Autowired private ProductCustomRepository productRepo;
+    @Autowired private CustomerFacingServiceCustomRepository cfsRepo;
+    @Autowired private ResourceFacingServiceCustomRepository rfsRepo;
+    @Autowired private LogicalDeviceCustomRepository logicalDeviceRepo;
 
     @Override
     public Class<?> getActionClass() {
@@ -100,13 +101,12 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-            String subscriberNameStrGdn=Validations.getGlobalName(subscriberNameStr);
-            Customer subscriber = customerRepo.uivFindByGdn(subscriberNameStrGdn)
+            Customer subscriber = customerRepo.findByDiscoveredName(subscriberNameStr)
                     .orElseGet(() -> {
                         Customer newSub = new Customer();
                         try {
-                            newSub.setLocalName(subscriberNameStr);
-                            newSub.setName(subscriberNameStr);
+                            newSub.setLocalName(Validations.encryptName(subscriberNameStr));
+                            newSub.setDiscoveredName(subscriberNameStr);
                             newSub.setContext("Setar");
                             newSub.setKind("SetarSubscriber");
                         } catch (Exception e) {
@@ -132,13 +132,12 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-            String subscriptionNameGdn=Validations.getGlobalName(subscriptionName);
-            Subscription subscription = subscriptionRepo.uivFindByGdn(subscriptionNameGdn)
+            Subscription subscription = subscriptionRepo.findByDiscoveredName(subscriptionName)
                     .orElseGet(() -> {
                         Subscription subs = new Subscription();
                         try {
-                            subs.setLocalName(subscriptionName);
-                            subs.setName(subscriptionName);
+                            subs.setLocalName(Validations.encryptName(subscriptionName));
+                            subs.setDiscoveredName(subscriptionName);
                             subs.setContext("Setar");
                             subs.setKind("SetarSubscription");
                         } catch (Exception e) {
@@ -187,13 +186,12 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-            String productNameStrGdn=Validations.getGlobalName(productNameStr);
-            Product product = productRepo.uivFindByGdn(productNameStrGdn)
+            Product product = productRepo.findByDiscoveredName(productNameStr)
                     .orElseGet(() -> {
                         Product prod = new Product();
                         try {
-                            prod.setLocalName(productNameStr);
-                            prod.setName(productNameStr);
+                            prod.setLocalName(Validations.encryptName(productNameStr));
+                            prod.setDiscoveredName(productNameStr);
                             prod.setContext("Setar");
                             prod.setKind("SetarProduct");
                         } catch (Exception e) {
@@ -209,13 +207,12 @@ public class CreateServiceVoIP implements HttpAction {
 
             // Step 8: CFS
             String cfsName = "CFS_" + subscriptionName;
-            String cfsNameGdn=Validations.getGlobalName(cfsName);
-            CustomerFacingService cfs = cfsRepo.uivFindByGdn(cfsNameGdn)
+            CustomerFacingService cfs = cfsRepo.findByDiscoveredName(cfsName)
                     .orElseGet(() -> {
                         CustomerFacingService newCfs = new CustomerFacingService();
                         try {
-                            newCfs.setLocalName(cfsName);
-                            newCfs.setName(cfsName);
+                            newCfs.setLocalName(Validations.encryptName(cfsName));
+                            newCfs.setDiscoveredName(cfsName);
                             newCfs.setContext("Setar");
                             newCfs.setKind("SetarCFS");
                         } catch (Exception e) {
@@ -231,13 +228,12 @@ public class CreateServiceVoIP implements HttpAction {
 
             // Step 9: RFS
             String rfsName = "RFS_" + subscriptionName;
-            String rfsNameGdn=Validations.getGlobalName(rfsName);
-            ResourceFacingService rfs = rfsRepo.uivFindByGdn(rfsNameGdn)
+            ResourceFacingService rfs = rfsRepo.findByDiscoveredName(rfsName)
                     .orElseGet(() -> {
                         ResourceFacingService newRfs = new ResourceFacingService();
                         try {
-                            newRfs.setLocalName(rfsName);
-                            newRfs.setName(rfsName);
+                            newRfs.setLocalName(Validations.encryptName(rfsName));
+                            newRfs.setDiscoveredName(rfsName);
                             newRfs.setContext("Setar");
                             newRfs.setKind("SetarRFS");
                         } catch (Exception e) {
@@ -265,7 +261,7 @@ public class CreateServiceVoIP implements HttpAction {
 
             String oltName=req.getOltName();
             String oltNameGdn=Validations.getGlobalName(oltName);
-            LogicalDevice olt = logicalDeviceRepo.uivFindByGdn(oltNameGdn)
+            LogicalDevice olt = logicalDeviceRepo.findByDiscoveredName(oltName)
                     .orElseGet(() -> {
                         LogicalDevice dev = new LogicalDevice();
                         try {
@@ -286,7 +282,7 @@ public class CreateServiceVoIP implements HttpAction {
                     });
 
             String ontNameGdn=Validations.getGlobalName(ontName);
-            LogicalDevice ont = logicalDeviceRepo.uivFindByGdn(ontNameGdn)
+            LogicalDevice ont = logicalDeviceRepo.findByDiscoveredName(ontName)
                     .orElseGet(() -> {
                         LogicalDevice dev = new LogicalDevice();
                         try {

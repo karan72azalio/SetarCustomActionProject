@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.AssociateResourcesRequest;
 import com.nokia.nsw.uiv.request.ChangeTechnologyRequest;
 import com.nokia.nsw.uiv.response.ChangeTechnologyResponse;
@@ -47,15 +48,33 @@ public class ChangeTechnology implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action ChangeTechnology execution failed - ";
 
-    @Autowired private CustomerRepository customerRepo;
-    @Autowired private SubscriptionRepository subscriptionRepo;
-    @Autowired private ProductRepository productRepo;
-    @Autowired private CustomerFacingServiceRepository cfsRepo;
-    @Autowired private ResourceFacingServiceRepository rfsRepo;
-    @Autowired private LogicalDeviceRepository logicalDeviceRepo;
-    @Autowired private LogicalDeviceRepository cpeRepo;
-    @Autowired private LogicalInterfaceRepository vlanRepo;
-    @Autowired private LogicalDeviceRepository cbmRepo;
+    @Autowired
+    private CustomerCustomRepository customerRepo;
+
+    @Autowired
+    private SubscriptionCustomRepository subscriptionRepo;
+
+    @Autowired
+    private ProductCustomRepository productRepo;
+
+    @Autowired
+    private CustomerFacingServiceCustomRepository cfsRepo;
+
+    @Autowired
+    private ResourceFacingServiceCustomRepository rfsRepo;
+
+    @Autowired
+    private LogicalDeviceCustomRepository logicalDeviceRepo;
+
+    @Autowired
+    private LogicalDeviceCustomRepository cpeRepo;
+
+    @Autowired
+    private LogicalInterfaceCustomRepository vlanRepo;
+
+    @Autowired
+    private LogicalDeviceCustomRepository cbmRepo;
+
 
     @Override
     public Class<?> getActionClass() { return ChangeTechnologyRequest.class; }
@@ -133,12 +152,10 @@ public class ChangeTechnology implements HttpAction {
                     return new ChangeTechnologyResponse("400", ERROR_PREFIX + "Subscriber name too long", Instant.now().toString(),"","");
                 }
                 // Try find CBM-keyed subscriber
-                String gdnCbm = Validations.getGlobalName(subscriberNameCbmKey);
-                Optional<Customer> maybeCbmSubscriber = customerRepo.uivFindByGdn(gdnCbm);
+                Optional<Customer> maybeCbmSubscriber = customerRepo.findByDiscoveredName(subscriberNameCbmKey);
                 if (maybeCbmSubscriber.isPresent()) {
                     Customer cbmSubscriber = maybeCbmSubscriber.get();
-                    cbmSubscriber.setLocalName(subscriberNameFibernet);
-                    cbmSubscriber.setName(subscriberNameFibernet);
+                    cbmSubscriber.setDiscoveredName(subscriberNameFibernet);
                     cbmSubscriber.setContext("Setar");
                     cbmSubscriber.setKind("SetarSubscriber");
                     Map<String, Object> props = cbmSubscriber.getProperties() != null ? cbmSubscriber.getProperties() : new HashMap<>();
@@ -152,8 +169,7 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 5. Update existing subscription (if exists)
-            String subGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> maybeSubscription = subscriptionRepo.uivFindByGdn(subGdn);
+            Optional<Subscription> maybeSubscription = subscriptionRepo.findByDiscoveredName(subscriptionName);
             Subscription subscription = null;
             if (maybeSubscription.isPresent()) {
                 subscription = maybeSubscription.get();
@@ -164,11 +180,10 @@ public class ChangeTechnology implements HttpAction {
                 subProps.put("serviceSubtype", "Broadband");
                 if ("Fibernet".equalsIgnoreCase(productSubtype)) {
                     if (qosProfile != null) subProps.put("veipQosSessionProfile", qosProfile);
-                    subscription.setLocalName(subscriptionName + "_" + ontSN);
-                    subscription.setName(subscriptionName + "_" + ontSN);
+                    subscription.setDiscoveredName(subscriptionName + "_" + ontSN);
                     // link to subscriber updated earlier if present
                     String gdnFibernet = Validations.getGlobalName(subscriberNameFibernet);
-                    Optional<Customer> maybeSub = customerRepo.uivFindByGdn(gdnFibernet);
+                    Optional<Customer> maybeSub = customerRepo.findByDiscoveredName(subscriberNameFibernet);
                     maybeSub.ifPresent(subscription::setCustomer);
                 }
                 subscription.setProperties(subProps);
@@ -176,12 +191,10 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 6. Update existing CFS (if exists)
-            String cfsGdn = Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> maybeCfs = cfsRepo.uivFindByGdn(cfsGdn);
+            Optional<CustomerFacingService> maybeCfs = cfsRepo.findByDiscoveredName(cfsName);
             if (maybeCfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 CustomerFacingService cfs = maybeCfs.get();
-                cfs.setLocalName(cfs.getLocalName() + "_" + ontSN);
-                cfs.setName(cfs.getName() + "_" + ontSN);
+                cfs.setDiscoveredName(cfs.getLocalName() + "_" + ontSN);
                 if (fxOrderId != null) {
                     Map<String, Object> p = cfs.getProperties() != null ? cfs.getProperties() : new HashMap<>();
                     p.put("transactionId", fxOrderId);
@@ -191,23 +204,20 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 7. Update existing RFS (if exists)
-            String rfsGdn = Validations.getGlobalName(rfsName);
-            Optional<ResourceFacingService> maybeRfs = rfsRepo.uivFindByGdn(rfsGdn);
+            Optional<ResourceFacingService> maybeRfs = rfsRepo.findByDiscoveredName(rfsName);
             if (maybeRfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 ResourceFacingService rfs = maybeRfs.get();
-                rfs.setLocalName(rfs.getLocalName() + "_" + ontSN);
-                rfs.setName(rfs.getName() + "_" + ontSN);
+                rfs.setDiscoveredName(rfs.getName() + "_" + ontSN);
                 rfsRepo.save(rfs);
             }
 
             // 8. Prepare OLT device (create if missing)
-            String oltGdn = Validations.getGlobalName(oltName);
-            LogicalDevice olt = logicalDeviceRepo.uivFindByGdn(oltGdn)
+            LogicalDevice olt = logicalDeviceRepo.findByDiscoveredName(oltName)
                     .orElseGet(() -> {
                         LogicalDevice d = new LogicalDevice();
                         try {
-                            d.setLocalName(oltName);
-                            d.setName(oltName);
+                            d.setLocalName(Validations.encryptName(oltName));
+                            d.setDiscoveredName(oltName);
                             d.setContext("Setar");
                             d.setKind("OLTDevice");
                         } catch (AccessForbiddenException e) {
@@ -237,13 +247,12 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 9. Prepare ONT device (create if missing)
-            String ontGdn = Validations.getGlobalName(ontName);
-            LogicalDevice ont = logicalDeviceRepo.uivFindByGdn(ontGdn)
+            LogicalDevice ont = logicalDeviceRepo.findByDiscoveredName(ontName)
                     .orElseGet(() -> {
                         LogicalDevice d = new LogicalDevice();
                         try {
-                            d.setLocalName(ontName);
-                            d.setName(ontName);
+                            d.setLocalName(Validations.encryptName(ontName));
+                            d.setDiscoveredName(ontName);
                             d.setContext("Setar");
                             d.setKind("ONTDevice");
                         } catch (AccessForbiddenException e) {
@@ -271,12 +280,11 @@ public class ChangeTechnology implements HttpAction {
                     });
 
             // 10. Create or retrieve management VLAN interface
-            String vlanGdn = Validations.getGlobalName(mgmtVlanName);
-            vlanRepo.uivFindByGdn(vlanGdn).orElseGet(() -> {
+            vlanRepo.findByDiscoveredName(mgmtVlanName).orElseGet(() -> {
                 LogicalInterface v = new LogicalInterface();
                 try {
-                    v.setLocalName(mgmtVlanName);
-                    v.setName(mgmtVlanName);
+                    v.setLocalName(Validations.encryptName(mgmtVlanName));
+                    v.setDiscoveredName(mgmtVlanName);
                     v.setContext("Setar");
                     v.setKind("VLANInterface");
                 } catch (AccessForbiddenException e) {
@@ -295,8 +303,7 @@ public class ChangeTechnology implements HttpAction {
             });
 
             // 11. Remove CBM device if exists
-            String cbmGdn = Validations.getGlobalName(cbmName);
-            Optional<LogicalDevice> maybeCbm = cbmRepo.uivFindByGdn(cbmGdn);
+            Optional<LogicalDevice> maybeCbm = cbmRepo.findByDiscoveredName(cbmName);
             if (maybeCbm.isPresent()) {
                 LogicalDevice cbmDevice = maybeCbm.get();
                 // clear RFS link and set states
@@ -312,11 +319,9 @@ public class ChangeTechnology implements HttpAction {
             // 12. Reassign CPE devices
             String cpeDeviceName = "ONT_" + ontSN;
             String cpeDeviceOldName = "CBM_" + cbmMac.replace(":", "");
-            String cpeGdnNew = Validations.getGlobalName(cpeDeviceName);
-            String cpeGdnOld = Validations.getGlobalName(cpeDeviceOldName);
 
-            Optional<LogicalDevice> maybeCpeNew = cpeRepo.uivFindByGdn(cpeGdnNew);
-            Optional<LogicalDevice> maybeCpeOld = cpeRepo.uivFindByGdn(cpeGdnOld);
+            Optional<LogicalDevice> maybeCpeNew = cpeRepo.findByDiscoveredName(cpeDeviceName);
+            Optional<LogicalDevice> maybeCpeOld = cpeRepo.findByDiscoveredName(cpeDeviceOldName);
 
             if (maybeCpeNew.isPresent() && maybeCpeOld.isPresent()) {
                 LogicalDevice cpeNew = maybeCpeNew.get();

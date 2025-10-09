@@ -9,6 +9,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryEquipmentRequest;
 import com.nokia.nsw.uiv.response.QueryEquipmentResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -36,22 +37,23 @@ public class QueryEquipment implements HttpAction {
     private static final String CODE_EXCEPTION = "500";
 
     @Autowired
-    private CustomerRepository subscriberRepository;
+    private CustomerCustomRepository subscriberRepository;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepository;
+    private CustomerFacingServiceCustomRepository cfsRepository;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private LogicalDeviceRepository logicalDeviceRepository;
+    private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Autowired
-    private ProductRepository productRepository;  // ✅ Added for product lookup
+    private ProductCustomRepository productRepository;
+
 
     @Override
     public Class<?> getActionClass() {
@@ -86,34 +88,31 @@ public class QueryEquipment implements HttpAction {
 
         try {
             // 3️⃣ Locate entities
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> subscriptionOpt = subscriptionRepository.uivFindByGdn(subscriptionGdn);
+            Optional<Subscription> subscriptionOpt = subscriptionRepository.findByDiscoveredName(subscriptionName);
             if (subscriptionOpt.isEmpty()) {
                 return createErrorResponse(CODE_NO_ENTRY, "Subscription not found for subscriber/service");
             }
 
-            String cfsGdn = Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> cfsOpt = cfsRepository.uivFindByGdn(cfsGdn);
+            Optional<CustomerFacingService> cfsOpt = cfsRepository.findByDiscoveredName(cfsName);
             if (cfsOpt.isEmpty()) {
                 log.warn("CFS not found: {}", cfsName);
             }
 
             String rfsGdn = Validations.getGlobalName(rfsName);
-            ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn).orElse(null);
+            ResourceFacingService rfs = rfsRepository.findByDiscoveredName(rfsName).orElse(null);
             if (rfs == null) {
                 return createErrorResponse(CODE_NO_ENTRY, "No RFS entry found for subscriber/service");
             }
 
-            String productGdn = Validations.getGlobalName(productName);
-            Optional<Product> productOpt = productRepository.uivFindByGdn(productGdn);
+            Optional<Product> productOpt = productRepository.findByDiscoveredName(productName);
             if (productOpt.isEmpty()) {
                 log.warn("Product not found: {}", productName);
             }
 
-            log.info("Subscription GDN: {}", subscriptionGdn);
-            log.info("CFS GDN: {}", cfsGdn);
-            log.info("RFS GDN: {}", rfsGdn);
-            log.info("Product GDN: {}", productGdn);
+            log.info("Subscription Name : {}", subscriptionName);
+            log.info("CFS Name: {}", cfsName);
+            log.info("RFS Name: {}", rfsName);
+            log.info("Product Name: {}", productName);
 
             // 4️⃣ Retrieve linked devices
             Object linkedDevicesObj = null;
@@ -145,9 +144,8 @@ public class QueryEquipment implements HttpAction {
                 for (Object gdnObj : linkedDevicesList) {
                     if (!(gdnObj instanceof String)) continue;
                     String gdn = (String) gdnObj;
-                    String gdnGdn = Validations.getGlobalName(gdn);
 
-                    LogicalDevice device = logicalDeviceRepository.uivFindByGdn(gdnGdn).orElse(null);
+                    LogicalDevice device = logicalDeviceRepository.findByDiscoveredName(gdn).orElse(null);
                     if (device == null) continue;
 
                     String devName = device.getName();

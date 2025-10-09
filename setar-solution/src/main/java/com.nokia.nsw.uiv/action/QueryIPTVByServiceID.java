@@ -4,6 +4,7 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryIPTVByServiceIDRequest;
 import com.nokia.nsw.uiv.response.QueryIPTVByServiceIDResponse;
 import com.setar.uiv.model.product.CustomerFacingService;
@@ -48,11 +49,21 @@ import java.util.*;
 @Slf4j
 public class QueryIPTVByServiceID implements HttpAction {
 
-    @Autowired private CustomerFacingServiceRepository cfsRepo;
-    @Autowired private ResourceFacingServiceRepository rfsRepo;
-    @Autowired private ProductRepository productRepo;
-    @Autowired private SubscriptionRepository subscriptionRepo;
-    @Autowired private LogicalDeviceRepository logicalDeviceRepo;
+    @Autowired
+    private CustomerFacingServiceCustomRepository cfsRepo;
+
+    @Autowired
+    private ResourceFacingServiceCustomRepository rfsRepo;
+
+    @Autowired
+    private ProductCustomRepository productRepo;
+
+    @Autowired
+    private SubscriptionCustomRepository subscriptionRepo;
+
+    @Autowired
+    private LogicalDeviceCustomRepository logicalDeviceRepo;
+
 
     private static final String ERROR_PREFIX = "UIV action QueryIPTVByServiceID execution failed - ";
 
@@ -81,9 +92,6 @@ public class QueryIPTVByServiceID implements HttpAction {
             String serviceId = req.getServiceID();
 
             // 2. Identify target CFS names
-            // We'll iterate all CFS entries and select those matching the criteria:
-            //   - middle portion of its name matches serviceId (substring between first and last underscore)
-            //   - OR the 3rd segment when split by '_' equals serviceId
             Set<String> matchingCfsNames = new TreeSet<>();
 
             Iterable<CustomerFacingService> allCfs = cfsRepo.findAll();
@@ -130,7 +138,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                 // try to load CFS by exact name (global name lookup may be required; using name directly)
                 Optional<CustomerFacingService> optCfs;
                 try {
-                    optCfs = cfsRepo.uivFindByGdn(Validations.getGlobalName(cfsName));
+                    optCfs = cfsRepo.findByDiscoveredName(cfsName);
                 } catch (Exception e) {
                     // fallback to find by iterating (we already have cfsName); try to get from repo.findAll
                     optCfs = findCfsByNameFromAll(cfsName);
@@ -142,7 +150,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                 String rfsName = cfsName.replaceFirst("^CFS", "RFS"); // only first occurrence
                 Optional<ResourceFacingService> optRfs = Optional.empty();
                 try {
-                    optRfs = rfsRepo.uivFindByGdn(Validations.getGlobalName(rfsName));
+                    optRfs = rfsRepo.findByDiscoveredName(rfsName);
                 } catch (Exception e) {
                     // fallback: find by iterating
                     optRfs = findRfsByNameFromAll(rfsName);
@@ -161,8 +169,8 @@ public class QueryIPTVByServiceID implements HttpAction {
                 Customer customer = null;
                 if (product != null) {
                     try {
-                        String productGdn = product.getGlobalName();
-                        product = productRepo.uivFindByGdn(productGdn).get();
+                        String productDiscoveredName = product.getDiscoveredName();
+                        product = productRepo.findByDiscoveredName(productDiscoveredName).get();
                         subscription = product.getSubscription();
                     } catch (Exception e) {
                         subscription = null;
@@ -215,7 +223,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                         Set<Product> prodSet = subscription.getProduct(); // assumed getter (adapt if different)
                         if (prodSet != null && !prodSet.isEmpty()) {
                             for (Product prodItem : prodSet) {
-                                String prodName = prodItem.getName();
+                                String prodName = prodItem.getDiscoveredName();
                                 if (prodName != null && prodName.startsWith(serviceId)) {
                                     String comp = prodName.replaceFirst("^" + serviceId, "");
                                     // remove underscores
@@ -229,7 +237,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                             }
                         } else {
                             // fallback: product (containing product) maybe itself is the one; check product variable
-                            if (product != null && product.getName() != null && product.getName().startsWith(serviceId)) {
+                            if (product != null && product.getDiscoveredName() != null && product.getDiscoveredName().startsWith(serviceId)) {
                                 String comp = product.getName().replaceFirst("^" + serviceId, "").replace("_", "");
                                 String label = "Service_Component_" + serviceComponentCounter;
                                 iptvInfo.put(label, comp);
@@ -272,12 +280,12 @@ public class QueryIPTVByServiceID implements HttpAction {
 
                             if (res instanceof LogicalDevice) {
                                 LogicalDevice ld = (LogicalDevice) res;
-                                resName = ld.getName();
+                                resName = ld.getDiscoveredName();
                                 resProps = ld.getProperties();
                             } else {
                                 // reflectively attempt to read getName/getProperties (best-effort)
                                 try {
-                                    resName = (String) res.getClass().getMethod("getName").invoke(res);
+                                    resName = (String) res.getClass().getMethod("getDiscoveredName").invoke(res);
                                     Object propsObj = res.getClass().getMethod("getProperties").invoke(res);
                                     if (propsObj instanceof Map) resProps = (Map<String, Object>) propsObj;
                                 } catch (Throwable ignored) {}
@@ -457,15 +465,4 @@ public class QueryIPTVByServiceID implements HttpAction {
         return v == null ? null : String.valueOf(v);
     }
 
-    // Convenience: add-if-absent for outputParameterNames (List)
-    private static class ListUtils {
-        static void addIfAbsent(List<String> list, String val) {
-            if (!list.contains(val)) list.add(val);
-        }
-    }
-
-    // Add helper on List via lambda-like call
-    private static void addIfAbsentHelper(List<String> list, String val) {
-        if (!list.contains(val)) list.add(val);
-    }
 }

@@ -12,6 +12,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceCbmVoiceRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -47,25 +48,26 @@ public class CreateServiceCbmVoice implements HttpAction {
     private static final String CODE_EXCEPTION = "500"; // $code1
 
     @Autowired
-    private CustomerRepository subscriberRepository;
+    private CustomerCustomRepository subscriberRepository;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepository;
+    private CustomerFacingServiceCustomRepository cfsRepository;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private LogicalDeviceRepository cbmDeviceRepository;
+    private LogicalDeviceCustomRepository cbmDeviceRepository;
 
     @Autowired
-    private LogicalDeviceRepository cpeDeviceRepository;
+    private LogicalDeviceCustomRepository cpeDeviceRepository;
+
 
     @Override
     public Class<?> getActionClass() {
@@ -124,13 +126,13 @@ public class CreateServiceCbmVoice implements HttpAction {
 
         try {
             // 3. Subscriber logic
-            String subscriberGdn = Validations.getGlobalName(subscriberNameString);
-            Customer subscriber = subscriberRepository.uivFindByGdn(subscriberGdn)
+
+            Customer subscriber = subscriberRepository.findByDiscoveredName(subscriberNameString)
                     .orElseGet(() -> {
                         Customer s = new Customer();
                         try {
-                            s.setLocalName(subscriberNameString);
-                            s.setName(subscriberNameString);
+                            s.setLocalName(Validations.encryptName(subscriberNameString));
+                            s.setDiscoveredName(subscriberNameString);
                             s.setContext(Constants.SETAR);
                             s.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER);
                             s.setDiscoveredName(subscriberNameString);
@@ -167,13 +169,12 @@ public class CreateServiceCbmVoice implements HttpAction {
             }
 
             // 4. Subscription logic
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Subscription subscription = subscriptionRepository.uivFindByGdn(subscriptionGdn)
+            Subscription subscription = subscriptionRepository.findByDiscoveredName(subscriptionName)
                     .orElseGet(() -> {
                         Subscription sub = new Subscription();
                         try {
-                            sub.setLocalName(subscriptionName);
-                            sub.setName(subscriptionName);
+                            sub.setLocalName(Validations.encryptName(subscriptionName));
+                            sub.setDiscoveredName(subscriptionName);
                             sub.setContext(Constants.SETAR);
                             sub.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
@@ -230,13 +231,12 @@ public class CreateServiceCbmVoice implements HttpAction {
             if (productNameStr.length() > 100) {
                 return createErrorResponse(CODE_NAME_TOO_LONG, "Identifier exceeds allowed character length");
             }
-            String productGdn = Validations.getGlobalName(productNameStr);
-            Product product = productRepository.uivFindByGdn(productGdn)
+            Product product = productRepository.findByDiscoveredName(productNameStr)
                     .orElseGet(() -> {
                         Product p = new Product();
                         try {
-                            p.setLocalName(productNameStr);
-                            p.setName(productNameStr);
+                            p.setLocalName(Validations.encryptName(productNameStr));
+                            p.setDiscoveredName(productNameStr);
                             p.setContext(Constants.SETAR);
                             p.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
@@ -255,13 +255,12 @@ public class CreateServiceCbmVoice implements HttpAction {
                     });
 
             // 6. CFS logic
-            String cfsGdn = Validations.getGlobalName(cfsName);
-            CustomerFacingService cfs = cfsRepository.uivFindByGdn(cfsGdn)
+            CustomerFacingService cfs = cfsRepository.findByDiscoveredName(cfsName)
                     .orElseGet(() -> {
                         CustomerFacingService c = new CustomerFacingService();
                         try {
-                            c.setLocalName(cfsName);
-                            c.setName(cfsName);
+                            c.setLocalName(Validations.encryptName(cfsName));
+                            c.setDiscoveredName(cfsName);
                             c.setContext(Constants.SETAR);
                             c.setKind(Constants.SETAR_KIND_SETAR_CFS);
                             c.setCustomer(subscriber);
@@ -280,13 +279,12 @@ public class CreateServiceCbmVoice implements HttpAction {
                     });
 
             // 7. RFS logic
-            String rfsGdn = Validations.getGlobalName(rfsName);
-            ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn)
+            ResourceFacingService rfs = rfsRepository.findByDiscoveredName(rfsName)
                     .orElseGet(() -> {
                         ResourceFacingService r = new ResourceFacingService();
                         try {
-                            r.setLocalName(rfsName);
-                            r.setName(rfsName);
+                            r.setLocalName(Validations.encryptName(rfsName));
+                            r.setDiscoveredName(rfsName);
                             r.setContext(Constants.SETAR);
                             r.setKind(Constants.SETAR_KIND_SETAR_RFS);
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
@@ -303,13 +301,12 @@ public class CreateServiceCbmVoice implements HttpAction {
                     });
 
             // 8. CBM device logic
-            String cbmGdn = Validations.getGlobalName(cbmName);
-            LogicalDevice cbmDevice = cbmDeviceRepository.uivFindByGdn(cbmGdn)
+            LogicalDevice cbmDevice = cbmDeviceRepository.findByDiscoveredName(cbmName)
                     .orElseGet(() -> {
                         LogicalDevice d = new LogicalDevice();
                         try {
-                            d.setLocalName(cbmName);
-                            d.setName(cbmName);
+                            d.setLocalName(Validations.encryptName(cbmName));
+                            d.setDiscoveredName(cbmName);
                             d.setContext(Constants.SETAR);
                             d.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
@@ -332,8 +329,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             // 9. CPE Voice Port Update (only when productSubtype == "Voice")
             if ("Voice".equalsIgnoreCase(request.getProductSubtype())) {
                 String cpeDeviceName = "CBM_" + request.getCbmMac();
-                String cpeGdn = Validations.getGlobalName(cpeDeviceName);
-                Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.uivFindByGdn(cpeGdn);
+                Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.findByDiscoveredName(cpeDeviceName);
                 if (!cpeOpt.isPresent()) {
                     return createErrorResponse(CODE_CPE_NOT_FOUND, "CPE device not found");
                 }
