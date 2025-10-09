@@ -16,6 +16,9 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
+import com.nokia.nsw.uiv.repository.LogicalComponentCustomRepository;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
+import com.nokia.nsw.uiv.repository.LogicalInterfaceCustomRepository;
 import com.nokia.nsw.uiv.request.ImportCPEDeviceRequest;
 import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.response.ImportCPEDeviceResponse;
@@ -36,13 +39,13 @@ public class ImportCPEDevice implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action CreateServiceFibernet execution failed - ";
 
     @Autowired
-    private LogicalDeviceRepository cpeDeviceRepository;
+    private LogicalDeviceCustomRepository cpeDeviceRepository;
 
     @Autowired
-    private LogicalComponentRepository componentRepository;
+    private LogicalComponentCustomRepository componentRepository;
 
     @Autowired
-    private LogicalInterfaceRepository logicalInterfaceRepository;
+    private LogicalInterfaceCustomRepository logicalInterfaceRepository;
 
     @Override
     public Class getActionClass() {
@@ -72,8 +75,7 @@ public class ImportCPEDevice implements HttpAction {
             String devName = request.getCpeType() + "_" + request.getCpeSerialNo();
             log.info("devName :: {}", devName);
 
-            String devGdn = Validations.getGlobalName(devName);
-            Optional<LogicalDevice> optDevice = cpeDeviceRepository.uivFindByGdn(devGdn);
+            Optional<LogicalDevice> optDevice = cpeDeviceRepository.findByDiscoveredName(devName);
             LogicalDevice cpeDevice;
             if (optDevice.isPresent()) {
                 cpeDevice = optDevice.get();
@@ -81,7 +83,8 @@ public class ImportCPEDevice implements HttpAction {
             } else {
                 log.info("Creating new CPE device: {}", devName);
                 cpeDevice = new LogicalDevice();
-                cpeDevice.setLocalName(devName);
+                cpeDevice.setLocalName(Validations.encryptName(devName));
+                cpeDevice.setDiscoveredName(devName);
                 cpeDevice.setKind(Constants.SETAR_KIND_CPE_DEVICE);
                 cpeDevice.setContext(Constants.SETAR);
                 Map<String, Object> properties = new HashMap<>();
@@ -139,13 +142,13 @@ public class ImportCPEDevice implements HttpAction {
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
         log.info("-----------------Create POTS ports-Started------------------");
         String portName = serialNo + "_" + portType;
-        String portGdn = Validations.getGlobalName(portName);
-        Optional<LogicalComponent> optPort = componentRepository.uivFindByGdn(portGdn);
+        Optional<LogicalComponent> optPort = componentRepository.findByDiscoveredName(portName);
 
         if (!optPort.isPresent()) {
             log.info("Creating POTS port: {}", portName);
             LogicalComponent potsPort = new LogicalComponent();
-            potsPort.setLocalName(portName);
+            potsPort.setLocalName(Validations.encryptName(portName));
+            potsPort.setDiscoveredName(portName);
             potsPort.setKind(Constants.SETAR_KIND_CPE_PORT);
             potsPort.setDescription("Voice Port");
             potsPort.setContext(Constants.SETAR);
@@ -171,13 +174,12 @@ public class ImportCPEDevice implements HttpAction {
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
 
         String portName = serialNo + "_" + portType;
-        String portGdn = Validations.getGlobalName(portName);
-        Optional<LogicalComponent> optPort = componentRepository.uivFindByGdn(portGdn);
-
+        Optional<LogicalComponent> optPort = componentRepository.findByDiscoveredName(portName);
         if (!optPort.isPresent()) {
             log.info("Creating Ethernet port: {}", portName);
             LogicalComponent ethPort = new LogicalComponent();
-            ethPort.setLocalName(portName);
+            ethPort.setLocalName(Validations.encryptName(portName));
+            ethPort.setDiscoveredName(portName);
             ethPort.setKind(Constants.SETAR_KIND_CPE_PORT);
             ethPort.setDescription("Data Port");
             ethPort.setContext(Constants.SETAR);
@@ -194,17 +196,15 @@ public class ImportCPEDevice implements HttpAction {
             cpeDeviceRepository.save(cpeDevice, 2);
             log.info("Ethernet port created and associated: {}", portName);
 
-            String vlanContext = portGdn;
             // VLAN interfaces (LogicalInterface)
             for (int vlanIndex = 1; vlanIndex <= 7; vlanIndex++) {
                 String vlanName = portName + "_" + vlanIndex;
-                String vlanGdn = Validations.getGlobalName(vlanName);
-                Optional<LogicalInterface> optVlan = logicalInterfaceRepository.uivFindByGdn(vlanGdn);
-
+                Optional<LogicalInterface> optVlan = logicalInterfaceRepository.findByDiscoveredName(vlanName);
                 if (!optVlan.isPresent()) {
                     log.info("Creating VLAN interface: {}", vlanName);
                     LogicalInterface vlan = new LogicalInterface();
-                    vlan.setLocalName(vlanName);
+                    vlan.setLocalName(Validations.encryptName(vlanName));
+                    vlan.setDiscoveredName(vlanName);
                     vlan.setKind(Constants.SETAR_KIND_VLAN_INTERFACE);
                     vlan.setContext(Constants.SETAR);
                     vlan.setDescription("VLAN Interface for " + portName);
