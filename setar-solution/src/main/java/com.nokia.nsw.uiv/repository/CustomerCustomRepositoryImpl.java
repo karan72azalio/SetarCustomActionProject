@@ -21,21 +21,19 @@ public class CustomerCustomRepositoryImpl implements CustomerCustomRepository {
     }
 
     @Override
-    public Customer findByDiscoveredName(String discoveredName) {
+    public Optional<Customer> findByDiscoveredName(String discoveredName) {
         Iterable<Customer> allCustomers = customerRepository.findAll();
         return StreamSupport.stream(allCustomers.spliterator(), false)
                 .filter(c -> discoveredName.equals(c.getDiscoveredName()))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     @Override
-    public Customer findByProperty(String key, String value) {
+    public Optional<Customer> findByProperty(String key, String value) {
         Iterable<Customer> allCustomers = customerRepository.findAll();
         return StreamSupport.stream(allCustomers.spliterator(), false)
                 .filter(c -> c.getProperties().get(key)!=null?c.getProperties().get(key).equals(value):false)
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     // Delegate all standard CRUD methods

@@ -1,9 +1,16 @@
 package com.nokia.nsw.uiv.repository;
 
-import com.nokia.nsw.uiv.model.service.Subscription;
 import com.setar.uiv.model.product.Product;
+import com.setar.uiv.model.product.ProductRepository;
+import org.springframework.stereotype.Repository;
 
-public interface ProductCustomRepository {
-    Product findByDiscoveredName(String discoveredName);
-    Product findByProperty(String key, String value);
+import java.util.Optional;
+
+@Repository
+public interface ProductCustomRepository extends ProductRepository {
+
+    // Custom finder methods
+    Optional<Product> findByDiscoveredName(String discoveredName);
+
+    Optional<Product> findByProperty(String key, String value);
 }

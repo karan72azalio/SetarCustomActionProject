@@ -22,24 +22,22 @@ public class SubscriptionCustomRepositoryImpl implements SubscriptionCustomRepos
 
 
     @Override
-    public Subscription findByDiscoveredName(String discoveredName) {
+    public Optional<Subscription> findByDiscoveredName(String discoveredName) {
         Iterable<Subscription> subscriptions = subscriptionRepository.findAll();
         return StreamSupport.stream(subscriptions.spliterator(), false)
                 .filter(sub -> discoveredName.equals(sub.getDiscoveredName()))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
 
     @Override
-    public Subscription findByProperty(String key, String value) {
+    public Optional<Subscription> findByProperty(String key, String value) {
         Iterable<Subscription> subscriptions = subscriptionRepository.findAll();
         return StreamSupport.stream(subscriptions.spliterator(), false)
                 .filter(sub -> sub.getCustomer() != null
                         && sub.getCustomer().getProperties() != null
                         && value.equals(sub.getCustomer().getProperties().get(key)))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
 

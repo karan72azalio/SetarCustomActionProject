@@ -3,7 +3,9 @@ package com.nokia.nsw.uiv.repository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 
+import java.util.Optional;
+
 public interface SubscriptionCustomRepository extends SubscriptionRepository {
-    Subscription findByDiscoveredName(String discoveredName);
-    Subscription findByProperty(String key, String value);
+    Optional<Subscription> findByDiscoveredName(String discoveredName);
+    Optional<Subscription> findByProperty(String key, String value);
 }

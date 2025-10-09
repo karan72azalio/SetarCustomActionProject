@@ -6,6 +6,9 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
+import com.nokia.nsw.uiv.repository.LogicalInterfaceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryCPEDeviceRequest;
 import com.nokia.nsw.uiv.response.ChangeStateResponse;
 import com.nokia.nsw.uiv.response.QueryCPEDeviceResponse;
@@ -14,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -22,7 +27,11 @@ import java.util.Optional;
 public class QueryCPEDevice implements HttpAction {
 
     @Autowired
-    private LogicalDeviceRepository cpeDeviceRepository;
+    private LogicalDeviceCustomRepository cpeDeviceRepository;
+
+    @Autowired
+    private LogicalInterfaceCustomRepository lanRepository;
+
     private static final String ERROR_PREFIX = "UIV action QueryDevice execution failed - ";
 
 
@@ -49,9 +58,7 @@ public class QueryCPEDevice implements HttpAction {
         }
 
         String devName = resourceType + "_" + request.getResourceSN();
-        String devGdn = Validations.getGlobalName(devName);
-        Optional<LogicalDevice> deviceOpt = cpeDeviceRepository.uivFindByGdn(devGdn);
-
+        Optional<LogicalDevice> deviceOpt = cpeDeviceRepository.findByDiscoveredName(devName);
         if (!deviceOpt.isPresent()) {
             return new QueryCPEDeviceResponse("404", "CPE Details Not Found", String.valueOf(System.currentTimeMillis()));
         }
@@ -73,12 +80,11 @@ public class QueryCPEDevice implements HttpAction {
         response.setResourceDescription((String) device.getProperties().get("description"));
 
         // Map resourceSN from localName (remove prefix)
-        response.setResourceSN(device.getLocalName().replaceFirst(resourceType + "_", ""));
+        response.setResourceSN(device.getDiscoveredName().replaceFirst(resourceType + "_", ""));
 
         // Map voice ports
         response.setResourceVoicePort1((String) device.getProperties().get("voipPort1"));
         response.setResourceVoicePort2((String) device.getProperties().get("voipPort2"));
-
         // Device type specific adjustments
         if ("CBM".equalsIgnoreCase(resourceType)) {
             response.setResourceMacMTA((String) device.getProperties().get("macAddressMta"));
@@ -86,14 +92,23 @@ public class QueryCPEDevice implements HttpAction {
             response.setResourceModelSubtype("HFC");
         } else if ("ONT".equalsIgnoreCase(resourceType)) {
             response.setResourceModelSubtype("GPON");
+
+            Iterable<LogicalInterface> interfaceIterable = lanRepository.findAll();
+            List<LogicalInterface> interfaceList = new ArrayList<>();
+            interfaceIterable.forEach(interfaceList::add);
+
             for (int portNumber = 1; portNumber <= 5; portNumber++) {
                 String portName = request.getResourceSN() + "_P" + portNumber + "_SINGLETAGGED";
-//                int vlanCount = cpeDeviceRepository.countVlanInterfaces(portName, portNumber);
-//                String dataPortStatus = vlanCount <= 7 ? "Available" : "Allocated";
-//                response.setDataPortStatus(portNumber, dataPortStatus);
-            }
 
+                long vlanCount = interfaceList.stream()
+                        .filter(in -> in.getDiscoveredName().contains(portName))
+                        .count();
+
+                String dataPortStatus = vlanCount <= 7 ? "Available" : "Allocated";
+                response.setDataPortStatus(portNumber, dataPortStatus);
+            }
         }
+
 
         return response;
     }
