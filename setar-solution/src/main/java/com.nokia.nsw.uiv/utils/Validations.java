@@ -3,6 +3,9 @@ package com.nokia.nsw.uiv.utils;
 import com.nokia.nsw.uiv.exception.BadRequestException;
 import org.apache.commons.lang.StringUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 public class Validations {
 
     public static void validateMandatoryParams(String ParamValue, String ParamName) throws BadRequestException {
@@ -36,5 +39,12 @@ public class Validations {
             return "";
         }
         return Constants.SETAR+ Constants.COMMA+localName;
+    }
+
+    public static  String encryptName(String value) {
+        if (value == null) {
+            return null;
+        }
+        return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
     }
 }
