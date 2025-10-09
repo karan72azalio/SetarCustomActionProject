@@ -10,6 +10,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.DetachResourcesRequest;
 import com.nokia.nsw.uiv.response.DetachResourcesResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -34,12 +35,12 @@ public class DetachResources implements HttpAction {
     protected static final String ACTION_LABEL = Constants.DETACH_RESOURCES;
     private static final String ERROR_PREFIX = "UIV action DetachResources execution failed - ";
 
-    @Autowired private CustomerRepository subscriberRepository;
-    @Autowired private SubscriptionRepository subscriptionRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private CustomerFacingServiceRepository cfsRepository;
-    @Autowired private ResourceFacingServiceRepository rfsRepository;
-    @Autowired private LogicalDeviceRepository deviceRepository;
+    @Autowired private CustomerCustomRepository subscriberRepository;
+    @Autowired private SubscriptionCustomRepository subscriptionRepository;
+    @Autowired private ProductCustomRepository productRepository;
+    @Autowired private CustomerFacingServiceCustomRepository cfsRepository;
+    @Autowired private ResourceFacingServiceCustomRepository rfsRepository;
+    @Autowired private LogicalDeviceCustomRepository deviceRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -65,15 +66,11 @@ public class DetachResources implements HttpAction {
             Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
 
             // 2. Fetch entities
-            Optional<Customer> subscriber = subscriberRepository.uivFindByGdn(request.getSubscriberName());
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> subscription = subscriptionRepository.uivFindByGdn(subscriptionGdn);
-            String productGdn = Validations.getGlobalName(productName);
-            Optional<Product> product = productRepository.uivFindByGdn(productGdn);
-            String cfsGdn = Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> cfs = cfsRepository.uivFindByGdn(cfsGdn);
-            String rfsGdn = Validations.getGlobalName(rfsName);
-            Optional<ResourceFacingService> rfs = rfsRepository.uivFindByGdn(rfsGdn);
+            Optional<Customer> subscriber = subscriberRepository.findByDiscoveredName(request.getSubscriberName());
+            Optional<Subscription> subscription = subscriptionRepository.uivFindByGdn(subscriptionName);
+            Optional<Product> product = productRepository.uivFindByGdn(productName);
+            Optional<CustomerFacingService> cfs = cfsRepository.uivFindByGdn(cfsName);
+            Optional<ResourceFacingService> rfs = rfsRepository.uivFindByGdn(rfsName);
 
             if (!subscriber.isPresent() || !subscription.isPresent() || !product.isPresent() || !cfs.isPresent() || !rfs.isPresent()) {
                 return new DetachResourcesResponse("404", ERROR_PREFIX + "No entry found for Delete.",
@@ -131,8 +128,7 @@ public class DetachResources implements HttpAction {
     }
 
     private boolean detachDevice(String devName, ResourceFacingService rfsEntity, boolean isSTB) {
-        String devGdn = Validations.getGlobalName(devName);
-        Optional<LogicalDevice> optDevice = deviceRepository.uivFindByGdn(devGdn);
+        Optional<LogicalDevice> optDevice = deviceRepository.findByDiscoveredName(devName);
         if (optDevice.isPresent()) {
             LogicalDevice device = optDevice.get();
             if (isSTB) {

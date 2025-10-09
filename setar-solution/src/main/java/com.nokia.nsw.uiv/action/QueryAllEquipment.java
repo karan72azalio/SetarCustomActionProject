@@ -4,6 +4,7 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryAllEquipmentRequest;
 import com.nokia.nsw.uiv.response.QueryAllEquipmentResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -30,7 +31,7 @@ public class QueryAllEquipment implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action QueryAllEquipment execution failed - ";
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -62,10 +63,9 @@ public class QueryAllEquipment implements HttpAction {
 
             // Step 2: Build RFS Name
             String rfsName = "RFS_" + request.getSubscriberName() + "_" + request.getServiceId();
-            String rfsGdn=Validations.getGlobalName(rfsName);
 
             // Step 4: Fetch RFS
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
+            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
             if (!optRfs.isPresent()) {
                 return new QueryAllEquipmentResponse(
                         "404",
@@ -93,7 +93,7 @@ public class QueryAllEquipment implements HttpAction {
             for (com.nokia.nsw.uiv.model.resource.Resource res : resources) {
                 if (res instanceof LogicalDevice) {
                     LogicalDevice dev = (LogicalDevice) res;
-                    String name = dev.getLocalName();
+                    String name = dev.getDiscoveredName();
 
                     if (name.startsWith("STB")) {
                         successFlag = true;

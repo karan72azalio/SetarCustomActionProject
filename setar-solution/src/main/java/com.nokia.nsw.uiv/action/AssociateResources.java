@@ -4,6 +4,8 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
+import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
 import com.nokia.nsw.uiv.request.AssociateResourcesRequest;
 import com.nokia.nsw.uiv.response.AssociateResourcesResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -30,10 +34,10 @@ public class AssociateResources implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action AssociateResources execution failed - ";
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private LogicalDeviceRepository deviceRepository;
+    private LogicalDeviceCustomRepository deviceRepository;
 
 
     @Override
@@ -88,9 +92,8 @@ public class AssociateResources implements HttpAction {
             }
 
             // Step 3: Retrieve RFS and Admin State
-            String rfsGdn = Validations.getGlobalName(rfsName);
             System.out.println("----Trace #4: Retrieving RFS and AdminState ----");
-            Optional<ResourceFacingService> optRfs = rfsRepository.uivFindByGdn(rfsGdn);
+            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
             if (!optRfs.isPresent()) {
                 return new AssociateResourcesResponse(
                         "404",
@@ -101,15 +104,15 @@ public class AssociateResources implements HttpAction {
             }
             ResourceFacingService rfs = optRfs.get();
 
-//            AdministrativeState allocatedState = adminStateRepository.findByName("Allocated");
-//            if (allocatedState == null) {
-//                return new AssociateResourcesResponse(
-//                        "404",
-//                        ERROR_PREFIX + "Administrative state 'Allocated' not found",
-//                        Instant.now().toString(),
-//                        ""
-//                );
-//            }
+            String allocatedState = String.valueOf(rfsRepository.findByProperty("AdministrativeState","Allocated"));
+            if (allocatedState == null) {
+                return new AssociateResourcesResponse(
+                        "404",
+                        ERROR_PREFIX + "Administrative state 'Allocated' not found",
+                        Instant.now().toString(),
+                        ""
+                );
+            }
 
             // Step 4: IPTV logic
             boolean deviceUpdated = false;
@@ -142,7 +145,7 @@ public class AssociateResources implements HttpAction {
                     if (sn != null && !"NA".equalsIgnoreCase(sn)) {
                         String devName = "STB_" + sn;
                         System.out.println("----Trace #6: Processing STB device: " + devName + " ----");
-                        Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devName);
+                        Optional<LogicalDevice> optDev = deviceRepository.findByDiscoveredName(devName);
                         if (!optDev.isPresent()) {
                             return new AssociateResourcesResponse(
                                     "404",
@@ -153,13 +156,14 @@ public class AssociateResources implements HttpAction {
                         }
                         LogicalDevice device = optDev.get();
                         device.getProperties().put("deviceGroupId", "GROUP" + (i + 1));
-//                        device.setAdministrativeState("allocatedState");
+                        Map<String,Object>props=new HashMap<>();
+                        props.put("AdministrativeState",allocatedState);
                         if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
                             device.setDescription(request.getServiceId() + "_" + request.getOntSN().replace("ONT", "_"));
                         } else {
                             device.setDescription(request.getServiceId());
                         }
-//                        device.addContained(rfs);
+                        device.setOwningService(rfs);
                         deviceRepository.save(device);
                         deviceUpdated = true;
                     }
@@ -169,8 +173,7 @@ public class AssociateResources implements HttpAction {
                     if (sn != null && !"NA".equalsIgnoreCase(sn)) {
                         String devName = "AP_" + sn;
                         System.out.println("----Trace #7: Processing AP device: " + devName + " ----");
-                        String devGdn = Validations.getGlobalName(devName);
-                        Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devGdn);
+                        Optional<LogicalDevice> optDev = deviceRepository.findByDiscoveredName(devName);
                         if (!optDev.isPresent()) {
                             return new AssociateResourcesResponse(
                                     "404",
@@ -180,9 +183,10 @@ public class AssociateResources implements HttpAction {
                             );
                         }
                         LogicalDevice device = optDev.get();
-//                        device.setAdministrativeState(allocatedState);
+                        Map<String,Object>props=new HashMap<>();
+                        props.put("AdministrativeState",allocatedState);
                         device.setDescription(request.getServiceId());
-//                        device.addManagedResources(rfs);
+                        device.setOwningService(rfs);
                         deviceRepository.save(device);
                         deviceUpdated = true;
                     }
@@ -198,8 +202,7 @@ public class AssociateResources implements HttpAction {
                 }
 
                 if (devName != null) {
-                    String devGdn = Validations.getGlobalName(devName);
-                    Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devGdn);
+                    Optional<LogicalDevice> optDev = deviceRepository.findByDiscoveredName(devName);
                     if (!optDev.isPresent()) {
                         return new AssociateResourcesResponse(
                                 "404",
@@ -209,9 +212,11 @@ public class AssociateResources implements HttpAction {
                         );
                     }
                     LogicalDevice device = optDev.get();
-//                    device.setAdministrativeState(allocatedState);
+                    Map<String,Object>props=new HashMap<>();
+                    props.put("AdministrativeState",allocatedState);
+                    device.setProperties(props);
                     device.setDescription(request.getServiceId());
-//                    device.setResourceFacingService(rfs);
+                    device.setOwningService(rfs);
                     deviceRepository.save(device);
                     deviceUpdated = true;
                 }

@@ -6,6 +6,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryResourceRequest;
 import com.nokia.nsw.uiv.response.QueryResourceResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -26,7 +27,7 @@ public class QueryResource implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action QueryResource execution failed - ";
 
     @Autowired
-    private LogicalDeviceRepository deviceRepository;
+    private LogicalDeviceCustomRepository deviceRepository;
 
     @Override
     public Class getActionClass() {
@@ -53,8 +54,7 @@ public class QueryResource implements HttpAction {
             }
 
             // Step 3: Search Device
-            String devGdn = Validations.getGlobalName(devName);
-            Optional<LogicalDevice> optDev = deviceRepository.uivFindByGdn(devGdn);
+            Optional<LogicalDevice> optDev = deviceRepository.findByDiscoveredName(devName);
             if (optDev.isEmpty()) {
                 return errorResponse("404", ERROR_PREFIX + "Resource not found, SN is: " + resourceSN);
             }
