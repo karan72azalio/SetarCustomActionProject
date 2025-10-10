@@ -57,6 +57,7 @@ public class CreateServiceCBM implements HttpAction {
     @Autowired
     private LogicalDeviceCustomRepository cpeDeviceRepository;
 
+
     @Override
     public Class<?> getActionClass() {
         return CreateServiceCBMRequest.class;
@@ -102,12 +103,10 @@ public class CreateServiceCBM implements HttpAction {
         if (subscriberName.length() > 100) {
             return createErrorResponse("Subscriber name too long", 400);
         }
-
         Customer subscriber = subscriberRepository.findByDiscoveredName(subscriberName)
                 .orElseGet(() -> {
                     Customer s = new Customer();
                     try {
-                        s.setName(subscriberName);
                         s.setLocalName(Validations.encryptName(subscriberName));
                         s.setDiscoveredName(subscriberName);
                     } catch (AccessForbiddenException e) {
@@ -126,26 +125,14 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     s.setType("Regular");
-
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("accountNumber", request.getSubscriberName());
                     prop.put("status", "Active");
                     prop.put("subscriberUserName", request.getUserName());
                     s.setProperties(prop);
-
                     subscriberRepository.save(s, 2);
                     return s;
                 });
-
-// Optional subscriber info
-        if (request.getFirstName() != null) subscriber.getProperties().put("firstName", request.getFirstName());
-        if (request.getLastName() != null) subscriber.getProperties().put("lastName", request.getLastName());
-        if (request.getCompanyName() != null) subscriber.getProperties().put("companyName", request.getCompanyName());
-        if (request.getContactPhone() != null) subscriber.getProperties().put("contactPhone", request.getContactPhone());
-        if (request.getSubsAddress() != null) subscriber.getProperties().put("subsAddress", request.getSubsAddress());
-
-        subscriberRepository.save(subscriber, 2);
-
 
         // Optional subscriber info
         if (request.getFirstName() != null) subscriber.getProperties().get(request.getFirstName());
@@ -207,13 +194,14 @@ public class CreateServiceCBM implements HttpAction {
         if (productName.length() > 100) {
             return createErrorResponse("Product name too long", 400);
         }
+
         Product product = productRepository.findByDiscoveredName(productName)
                 .orElseGet(() -> {
                     Product p = new Product();
+
+                    p.setDiscoveredName(productName);
                     try {
-                        p.setName(productName);
-                        p.setLocalName(productName);
-                        p.setDiscoveredName(productName);
+                        p.setLocalName(Validations.encryptName(productName));
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
@@ -245,14 +233,13 @@ public class CreateServiceCBM implements HttpAction {
                 .orElseGet(() -> {
                     CustomerFacingService c = new CustomerFacingService();
                     try {
-                        c.setName(cfsName);
-                        c.setLocalName(cfsName);
-                        c.setDiscoveredName(cfsName);
+                        c.setLocalName(Validations.encryptName(cfsName));
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
+                    c.setDiscoveredName(cfsName);
                     try {
                         c.setKind(Constants.SETAR_KIND_SETAR_CFS);
                     } catch (ModificationNotAllowedException e) {
@@ -284,14 +271,13 @@ public class CreateServiceCBM implements HttpAction {
                 .orElseGet(() -> {
                     ResourceFacingService r = new ResourceFacingService();
                     try {
-                        r.setName(rfsName);
-                        r.setLocalName(rfsName);
-                        r.setDiscoveredName(rfsName);
+                        r.setLocalName(Validations.encryptName(rfsName));
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
+                    r.setDiscoveredName(rfsName);
                     try {
                         r.setKind(Constants.SETAR_KIND_SETAR_RFS);
                     } catch (ModificationNotAllowedException e) {
@@ -315,14 +301,13 @@ public class CreateServiceCBM implements HttpAction {
                 .orElseGet(() -> {
                     LogicalDevice d = new LogicalDevice();
                     try {
-                        d.setName(cbmName);
-                        d.setLocalName(cbmName);
-                        d.setDiscoveredName(cbmName);
+                        d.setLocalName(Validations.encryptName(cbmName));
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
+                    d.setDiscoveredName(cbmName);
                     try {
                         d.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
                     } catch (ModificationNotAllowedException e) {
