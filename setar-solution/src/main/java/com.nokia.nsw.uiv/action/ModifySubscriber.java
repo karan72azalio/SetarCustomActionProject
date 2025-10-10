@@ -3,6 +3,7 @@ package com.nokia.nsw.uiv.action;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifySubscriberRequest;
 import com.nokia.nsw.uiv.response.ModifySubscriberResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -35,19 +36,19 @@ public class ModifySubscriber implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action ModifySubscriber execution failed - ";
 
     @Autowired
-    private SubscriptionRepository subscriptionRepo;
+    private SubscriptionCustomRepository subscriptionCustomRepo;
 
     @Autowired
-    private ProductRepository productRepo;
+    private ProductCustomRepository productCustomRepo;
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepo;
+    private CustomerFacingServiceCustomRepository cfsRepo;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepo;
+    private ResourceFacingServiceCustomRepository rfsRepo;
 
     @Autowired
-    private CustomerRepository customerRepo;
+    private CustomerCustomRepository customerRepo;
 
     @Override
     public Class<?> getActionClass() {
@@ -100,7 +101,7 @@ public class ModifySubscriber implements HttpAction {
 
                 // Derive RFS name
                 String rfsName = cfsName.replace("CFS", "RFS");
-                Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsName);
+                Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
 
                 // Retrieve product linked (via properties or association)
                 Optional<Product> productOpt = Optional.of(cfs.getContainingProduct()); // adjust to actual association
@@ -114,7 +115,7 @@ public class ModifySubscriber implements HttpAction {
                 }
 
                 // Try to find new subscriber
-                Optional<Customer> newCustOpt = customerRepo.uivFindByGdn(newSubscriberName);
+                Optional<Customer> newCustOpt = customerRepo.findByDiscoveredName(newSubscriberName);
 
                 if (newCustOpt.isPresent()) {
                     Customer newCust = newCustOpt.get();
@@ -124,10 +125,9 @@ public class ModifySubscriber implements HttpAction {
                     if (subsOpt.isPresent()) {
                         Subscription subs = subsOpt.get();
                         String newSubName = subs.getLocalName().replace(oldSubscriberName, newSubscriberName);
-                        subs.setLocalName(newSubName);
-                        subs.setName(newSubName);
+                        subs.setDiscoveredName(newSubName);
                         subs.setCustomer(newCust);
-                        subscriptionRepo.save(subs);
+                        subscriptionCustomRepo.save(subs);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 7--------------- Subscription updated: " + newSubName);
                     }
@@ -139,7 +139,7 @@ public class ModifySubscriber implements HttpAction {
                         prod.setLocalName(newProdName);
                         prod.setName(newProdName);
                         prod.setCustomer(newCust);
-                        productRepo.save(prod);
+                        productCustomRepo.save(prod);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 8--------------- Product updated: " + newProdName);
                     }
@@ -153,7 +153,7 @@ public class ModifySubscriber implements HttpAction {
                         String newSubName = subs.getLocalName().replace(oldSubscriberName, newSubscriberName);
                         subs.setLocalName(newSubName);
                         subs.setName(newSubName);
-                        subscriptionRepo.save(subs);
+                        subscriptionCustomRepo.save(subs);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 10--------------- Subscription renamed (fallback): " + newSubName);
                     }
@@ -182,9 +182,8 @@ public class ModifySubscriber implements HttpAction {
                     if (productOpt.isPresent()) {
                         Product prod = productOpt.get();
                         String newProdName = prod.getLocalName().replace(oldSubscriberName, newSubscriberName);
-                        prod.setLocalName(newProdName);
-                        prod.setName(newProdName);
-                        productRepo.save(prod);
+                        prod.setDiscoveredName(newProdName);
+                        productCustomRepo.save(prod);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 12--------------- Product updated (fallback): " + newProdName);
                     }
@@ -194,8 +193,7 @@ public class ModifySubscriber implements HttpAction {
                 if (rfsOpt.isPresent()) {
                     ResourceFacingService rfs = rfsOpt.get();
                     String newRfsName = rfs.getLocalName().replace(oldSubscriberName, newSubscriberName);
-                    rfs.setLocalName(newRfsName);
-                    rfs.setName(newRfsName);
+                    rfs.setDiscoveredName(newRfsName);
                     rfsRepo.save(rfs);
                     updatesApplied = true;
                     System.out.println("------------Test Trace # 13--------------- RFS updated: " + newRfsName);
@@ -203,8 +201,7 @@ public class ModifySubscriber implements HttpAction {
 
                 // Update CFS
                 String newCfsName = cfs.getLocalName().replace(oldSubscriberName, newSubscriberName);
-                cfs.setLocalName(newCfsName);
-                cfs.setName(newCfsName);
+                cfs.setDiscoveredName(newCfsName);
                 cfsRepo.save(cfs);
                 updatesApplied = true;
                 System.out.println("------------Test Trace # 14--------------- CFS updated: " + newCfsName);
