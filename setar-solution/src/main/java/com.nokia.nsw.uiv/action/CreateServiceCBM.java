@@ -13,6 +13,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceCBMRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
@@ -36,25 +37,25 @@ import java.util.*;
 public class CreateServiceCBM implements HttpAction {
 
     @Autowired
-    private CustomerRepository subscriberRepository;
+    private CustomerCustomRepository subscriberRepository;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepository;
+    private CustomerFacingServiceCustomRepository cfsRepository;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepository;
+    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private LogicalDeviceRepository cbmDeviceRepository;
+    private LogicalDeviceCustomRepository cbmDeviceRepository;
 
     @Autowired
-    private LogicalDeviceRepository cpeDeviceRepository;
+    private LogicalDeviceCustomRepository cpeDeviceRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -83,7 +84,7 @@ public class CreateServiceCBM implements HttpAction {
 
             // Update CPE if exists
             String cpeName = "CBM" + Constants.UNDER_SCORE + request.getCbmMac();
-            Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.uivFindByGdn(cpeName);
+            Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.findByDiscoveredName(cpeName);
             if (cpeOpt.isPresent()) {
                 LogicalDevice cpe = cpeOpt.get();
                 cpe.setAdministrativeState(AdministrativeState.valueOf("Available"));
@@ -101,12 +102,13 @@ public class CreateServiceCBM implements HttpAction {
         if (subscriberName.length() > 100) {
             return createErrorResponse("Subscriber name too long", 400);
         }
-        String subscriberGdn = Validations.getGlobalName(subscriberName);
-        Customer subscriber = subscriberRepository.uivFindByGdn(subscriberGdn)
+
+        Customer subscriber = subscriberRepository.findByDiscoveredName(subscriberName)
                 .orElseGet(() -> {
                     Customer s = new Customer();
                     try {
                         s.setName(subscriberName);
+                        s.setLocalName(Validations.encryptName(subscriberName));
                         s.setDiscoveredName(subscriberName);
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
@@ -124,14 +126,26 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     s.setType("Regular");
+
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("accountNumber", request.getSubscriberName());
                     prop.put("status", "Active");
                     prop.put("subscriberUserName", request.getUserName());
                     s.setProperties(prop);
+
                     subscriberRepository.save(s, 2);
                     return s;
                 });
+
+// Optional subscriber info
+        if (request.getFirstName() != null) subscriber.getProperties().put("firstName", request.getFirstName());
+        if (request.getLastName() != null) subscriber.getProperties().put("lastName", request.getLastName());
+        if (request.getCompanyName() != null) subscriber.getProperties().put("companyName", request.getCompanyName());
+        if (request.getContactPhone() != null) subscriber.getProperties().put("contactPhone", request.getContactPhone());
+        if (request.getSubsAddress() != null) subscriber.getProperties().put("subsAddress", request.getSubsAddress());
+
+        subscriberRepository.save(subscriber, 2);
+
 
         // Optional subscriber info
         if (request.getFirstName() != null) subscriber.getProperties().get(request.getFirstName());
@@ -146,12 +160,12 @@ public class CreateServiceCBM implements HttpAction {
         if (subscriptionName.length() > 100) {
             return createErrorResponse("Subscription name too long", 400);
         }
-        String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-        Subscription subscription = subscriptionRepository.uivFindByGdn(subscriptionGdn)
+        Subscription subscription = subscriptionRepository.findByDiscoveredName(subscriptionName)
                 .orElseGet(() -> {
                     Subscription sub = new Subscription();
                     try {
-                        sub.setLocalName(subscriptionName);
+                        sub.setLocalName(Validations.encryptName(subscriptionName));
+                        sub.setDiscoveredName(subscriptionName);
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
@@ -193,13 +207,13 @@ public class CreateServiceCBM implements HttpAction {
         if (productName.length() > 100) {
             return createErrorResponse("Product name too long", 400);
         }
-
-        String productGdn = Validations.getGlobalName(productName);
-        Product product = productRepository.uivFindByGdn(productGdn)
+        Product product = productRepository.findByDiscoveredName(productName)
                 .orElseGet(() -> {
                     Product p = new Product();
                     try {
                         p.setName(productName);
+                        p.setLocalName(productName);
+                        p.setDiscoveredName(productName);
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
@@ -227,12 +241,13 @@ public class CreateServiceCBM implements HttpAction {
 
         // --- 5. CFS Logic ---
         String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;
-        String cfsGdn = Validations.getGlobalName(cfsName);
-        CustomerFacingService cfs = cfsRepository.uivFindByGdn(cfsGdn)
+        CustomerFacingService cfs = cfsRepository.findByDiscoveredName(cfsName)
                 .orElseGet(() -> {
                     CustomerFacingService c = new CustomerFacingService();
                     try {
                         c.setName(cfsName);
+                        c.setLocalName(cfsName);
+                        c.setDiscoveredName(cfsName);
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
@@ -265,12 +280,13 @@ public class CreateServiceCBM implements HttpAction {
         }
         // --- 6. RFS Logic ---
         String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
-        String rfsGdn = Validations.getGlobalName(rfsName);
-        ResourceFacingService rfs = rfsRepository.uivFindByGdn(rfsGdn)
+        ResourceFacingService rfs = rfsRepository.findByDiscoveredName(rfsName)
                 .orElseGet(() -> {
                     ResourceFacingService r = new ResourceFacingService();
                     try {
                         r.setName(rfsName);
+                        r.setLocalName(rfsName);
+                        r.setDiscoveredName(rfsName);
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
@@ -295,11 +311,13 @@ public class CreateServiceCBM implements HttpAction {
                     return r;
                 });
 
-        LogicalDevice cbmDevice = cbmDeviceRepository.uivFindByGdn(cbmName)
+        LogicalDevice cbmDevice = cbmDeviceRepository.findByDiscoveredName(cbmName)
                 .orElseGet(() -> {
                     LogicalDevice d = new LogicalDevice();
                     try {
                         d.setName(cbmName);
+                        d.setLocalName(cbmName);
+                        d.setDiscoveredName(cbmName);
                     } catch (AccessForbiddenException e) {
                         throw new RuntimeException(e);
                     } catch (BadRequestException e) {
