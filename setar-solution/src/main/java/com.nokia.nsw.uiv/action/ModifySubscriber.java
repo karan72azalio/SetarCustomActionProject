@@ -86,7 +86,7 @@ public class ModifySubscriber implements HttpAction {
             List<CustomerFacingService> cfsList = new ArrayList<>();
             for(CustomerFacingService cfs:cfsList1)
             {
-                if(cfs.getProperties().get("SubscriberName").toString().contains(oldSubscriberName))
+                if(cfs.getDiscoveredName().contains(oldSubscriberName))
                 {
                     cfsList.add(cfs);
                 }
@@ -94,7 +94,7 @@ public class ModifySubscriber implements HttpAction {
             System.out.println("------------Test Trace # 4--------------- CFS candidates found: " + cfsList.size());
 
             for (CustomerFacingService cfs : cfsList) {
-                String cfsName = cfs.getLocalName();
+                String cfsName = cfs.getDiscoveredName();
                 if (!cfsName.contains(oldSubscriberName)) continue;
 
                 System.out.println("------------Test Trace # 5--------------- Processing CFS: " + cfsName);
@@ -109,9 +109,10 @@ public class ModifySubscriber implements HttpAction {
                 Optional<Customer> oldCustOpt = Optional.empty();
 
                 if (productOpt.isPresent()) {
-                    Product prod = productOpt.get();
-                    subsOpt = Optional.of(prod.getSubscription()); // adjust to actual association
-                    oldCustOpt = Optional.of(subsOpt.get().getCustomer()); // adjust to actual association
+                    productOpt = productCustomRepo.findByDiscoveredName(productOpt.get().getDiscoveredName());
+                    subsOpt = subscriptionCustomRepo.findByDiscoveredName(productOpt.get().getSubscription().getDiscoveredName());
+                    // adjust to actual association
+                    oldCustOpt = customerRepo.findByDiscoveredName(subsOpt.get().getCustomer().getDiscoveredName()); // adjust to actual association
                 }
 
                 // Try to find new subscriber
@@ -124,7 +125,7 @@ public class ModifySubscriber implements HttpAction {
                     // Update subscription
                     if (subsOpt.isPresent()) {
                         Subscription subs = subsOpt.get();
-                        String newSubName = subs.getLocalName().replace(oldSubscriberName, newSubscriberName);
+                        String newSubName = subs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         subs.setDiscoveredName(newSubName);
                         subs.setCustomer(newCust);
                         subscriptionCustomRepo.save(subs);
@@ -135,9 +136,8 @@ public class ModifySubscriber implements HttpAction {
                     // Update product
                     if (productOpt.isPresent()) {
                         Product prod = productOpt.get();
-                        String newProdName = prod.getLocalName().replace(oldSubscriberName, newSubscriberName);
-                        prod.setLocalName(newProdName);
-                        prod.setName(newProdName);
+                        String newProdName = prod.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
+                        prod.setDiscoveredName(newProdName);
                         prod.setCustomer(newCust);
                         productCustomRepo.save(prod);
                         updatesApplied = true;
@@ -146,30 +146,16 @@ public class ModifySubscriber implements HttpAction {
 
                 } else {
                     System.out.println("------------Test Trace # 9--------------- New subscriber not found → fallback mode");
-
-                    // Fallback: update subscription, subscriber, product with renaming
-                    if (subsOpt.isPresent()) {
-                        Subscription subs = subsOpt.get();
-                        String newSubName = subs.getLocalName().replace(oldSubscriberName, newSubscriberName);
-                        subs.setLocalName(newSubName);
-                        subs.setName(newSubName);
-                        subscriptionCustomRepo.save(subs);
-                        updatesApplied = true;
-                        System.out.println("------------Test Trace # 10--------------- Subscription renamed (fallback): " + newSubName);
-                    }
-
                     if (oldCustOpt.isPresent()) {
                         Customer oldCust = oldCustOpt.get();
                         String newName;
-                        if (oldCust.getLocalName().contains("_")) {
-                            String[] parts = oldCust.getLocalName().split("_");
+                        if (oldCust.getDiscoveredName().contains("_")) {
+                            String[] parts = oldCust.getDiscoveredName().split("_");
                             newName = newSubscriberName + "_" + parts[1];
                         } else {
-                            newName = oldCust.getLocalName().replace(oldSubscriberName, newSubscriberName);
+                            newName = oldCust.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         }
-                        oldCust.setLocalName(newName);
-                        oldCust.setName(newName);
-
+                        oldCust.setDiscoveredName(newName);
                         Map<String, Object> custProps = oldCust.getProperties() == null ? new HashMap<>() : new HashMap<>(oldCust.getProperties());
                         custProps.put("accountNumber", newSubscriberName);
                         oldCust.setProperties(custProps);
@@ -178,33 +164,45 @@ public class ModifySubscriber implements HttpAction {
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 11--------------- Subscriber updated (fallback): " + newName);
                     }
+                    // Fallback: update subscription, subscriber, product with renaming
+                    if (subsOpt.isPresent()) {
+                        Subscription subs = subscriptionCustomRepo.findByDiscoveredName(subsOpt.get().getDiscoveredName()).get();
+                        String newSubName = subs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
+                        subs.setDiscoveredName(newSubName);
+                        subscriptionCustomRepo.save(subs);
+                        updatesApplied = true;
+                        System.out.println("------------Test Trace # 10--------------- Subscription renamed (fallback): " + newSubName);
+                    }
 
                     if (productOpt.isPresent()) {
-                        Product prod = productOpt.get();
-                        String newProdName = prod.getLocalName().replace(oldSubscriberName, newSubscriberName);
+                        Product prod = productCustomRepo.findByDiscoveredName(productOpt.get().getDiscoveredName()).get();
+                        String newProdName = prod.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         prod.setDiscoveredName(newProdName);
                         productCustomRepo.save(prod);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 12--------------- Product updated (fallback): " + newProdName);
                     }
                 }
+                // Update CFS
+                cfs = cfsRepo.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                String newCfsName = cfs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
+                cfs.setDiscoveredName(newCfsName);
+                cfsRepo.save(cfs);
+                updatesApplied = true;
+                System.out.println("------------Test Trace # 14--------------- CFS updated: " + newCfsName);
 
                 // Update RFS
                 if (rfsOpt.isPresent()) {
                     ResourceFacingService rfs = rfsOpt.get();
-                    String newRfsName = rfs.getLocalName().replace(oldSubscriberName, newSubscriberName);
+                    rfs = rfsRepo.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                    String newRfsName = rfs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                     rfs.setDiscoveredName(newRfsName);
                     rfsRepo.save(rfs);
                     updatesApplied = true;
                     System.out.println("------------Test Trace # 13--------------- RFS updated: " + newRfsName);
                 }
 
-                // Update CFS
-                String newCfsName = cfs.getLocalName().replace(oldSubscriberName, newSubscriberName);
-                cfs.setDiscoveredName(newCfsName);
-                cfsRepo.save(cfs);
-                updatesApplied = true;
-                System.out.println("------------Test Trace # 14--------------- CFS updated: " + newCfsName);
+
             }
 
             // 5. Generate response

@@ -86,7 +86,7 @@ public class CreateServiceFibernet implements HttpAction {
             String subscriberName = request.getSubscriberName() + "_" + request.getOntSN(); // subscriber with ONT suffix as per your conventions
             String subscriptionName = request.getSubscriberName() + "_" + request.getServiceID() + "_" + request.getOntSN();
             String productName = request.getSubscriberName() + "_" + request.getProductSubtype() + "_" + request.getServiceID();
-            String cfsName = "CFS_" + subscriberName;
+            String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
             String ontName = "ONT" + request.getOntSN();
 
