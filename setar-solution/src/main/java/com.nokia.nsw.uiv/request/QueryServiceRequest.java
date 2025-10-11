@@ -1,14 +1,12 @@
 package com.nokia.nsw.uiv.request;
 
+import lombok.Getter;
+import lombok.Setter;
 import javax.validation.constraints.NotNull;
-import lombok.Data;
 
-/**
- * Request DTO for QueryService
- */
-@Data
+@Getter
+@Setter
 public class QueryServiceRequest {
-
     @NotNull
     private String serviceId;
 }

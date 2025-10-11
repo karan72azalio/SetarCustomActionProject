@@ -7,6 +7,8 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
+import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.QueryAccountCPERequest;
 import com.nokia.nsw.uiv.response.QueryAccountCPEResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -32,8 +34,8 @@ public class QueryAccountCPE implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action QueryAccountCPE execution failed - ";
 
-    @Autowired private SubscriptionRepository subscriptionRepo;
-    @Autowired private LogicalDeviceRepository deviceRepo;
+    @Autowired private SubscriptionCustomRepository subscriptionRepo;
+    @Autowired private LogicalDeviceCustomRepository deviceRepo;
 
     @Override
     public Class<?> getActionClass() {
@@ -103,7 +105,7 @@ public class QueryAccountCPE implements HttpAction {
                 if ("IPTV".equalsIgnoreCase(subtype)) {
                     ontSN = safeStr(matchedSub.getProperties().get("serviceSN"));
                 } else {
-                    String[] parts = matchedSub.getLocalName().split("_");
+                    String[] parts = matchedSub.getDiscoveredName().split("_");
                     ontSN = parts[parts.length - 1];
                 }
             } else if ("Cable_Modem".equalsIgnoreCase(serviceLink)) {
@@ -117,7 +119,7 @@ public class QueryAccountCPE implements HttpAction {
             if ("Cable_Modem".equalsIgnoreCase(serviceLink)) cpeName = "CBM_" + cbmMac;
 
             if (!cpeName.isEmpty()) {
-                Optional<LogicalDevice> devOpt = deviceRepo.uivFindByGdn(cpeName);
+                Optional<LogicalDevice> devOpt = deviceRepo.findByDiscoveredName(cpeName);
                 if (devOpt.isPresent()) {
                     LogicalDevice dev = devOpt.get();
                     if (gatewayMac.isEmpty()) {

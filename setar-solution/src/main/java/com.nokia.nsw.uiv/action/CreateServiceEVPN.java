@@ -1,10 +1,12 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceEVPNRequest;
 import com.nokia.nsw.uiv.response.CreateServiceEVPNResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -32,13 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Action class to create an EVPN service.
- * Follows rules:
- *  - mandatory params annotated with @NotNull in request and validated at runtime,
- *  - creation attributes (except localName/name/context) are set in properties map,
- *  - lookups use uivFindByGdn(...)
- */
+
 @Component
 @RestController
 @Action
@@ -47,13 +43,27 @@ public class CreateServiceEVPN implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action CreateServiceEVPN execution failed - ";
 
-    @Autowired private CustomerRepository customerRepo;
-    @Autowired private SubscriptionRepository subscriptionRepo;
-    @Autowired private ProductRepository productRepo;
-    @Autowired private CustomerFacingServiceRepository cfsRepo;
-    @Autowired private ResourceFacingServiceRepository rfsRepo;
-    @Autowired private LogicalDeviceRepository logicalDeviceRepo;
-    @Autowired private LogicalInterfaceRepository vlanRepo;
+    @Autowired
+    private CustomerCustomRepository customerRepo;
+
+    @Autowired
+    private SubscriptionCustomRepository subscriptionRepo;
+
+    @Autowired
+    private ProductCustomRepository productRepo;
+
+    @Autowired
+    private CustomerFacingServiceCustomRepository cfsRepo;
+
+    @Autowired
+    private ResourceFacingServiceCustomRepository rfsRepo;
+
+    @Autowired
+    private LogicalDeviceCustomRepository logicalDeviceRepo;
+
+    @Autowired
+    private LogicalInterfaceCustomRepository vlanRepo;
+
 
     @Override
     public Class<?> getActionClass() {
@@ -148,19 +158,19 @@ public class CreateServiceEVPN implements HttpAction {
                     + ", ont=" + ontName + ", vlan=" + vlanName + ", mgmtVlan=" + mgmtVlanName);
 
             // 3) Subscriber: find or create (properties map)
-            Customer subscriber = customerRepo.uivFindByGdn(subscriberNameStr)
+            Customer subscriber = customerRepo.findByDiscoveredName(subscriberNameStr)
                     .orElseGet(() -> {
                         System.out.println("------------Trace # 8--------------- Creating subscriber: " + subscriberNameStr);
                         Customer newSub = new Customer();
                         try {
-                            newSub.setLocalName(subscriberNameStr);
-                            newSub.setName(subscriberNameStr);
+                            newSub.setLocalName(Validations.encryptName(subscriberNameStr));
+                            newSub.setDiscoveredName(subscriberNameStr);
                             newSub.setContext("Setar");
+                            newSub.setKind("SetarSubscriber");
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> subProps = new HashMap<>();
-                        subProps.put("kind", "SetarSubscriber");
                         subProps.put("status", "Active");
                         subProps.put("type", "Regular");
                         subProps.put("accountNumber", req.getSubscriberName());
@@ -175,19 +185,19 @@ public class CreateServiceEVPN implements HttpAction {
                     });
 
             // 4) Subscription: find or create (properties map)
-            Subscription subscription = subscriptionRepo.uivFindByGdn(subscriptionName)
+            Subscription subscription = subscriptionRepo.findByDiscoveredName(subscriptionName)
                     .orElseGet(() -> {
                         System.out.println("------------Trace # 9--------------- Creating subscription: " + subscriptionName);
                         Subscription subs = new Subscription();
                         try {
-                            subs.setLocalName(subscriptionName);
-                            subs.setName(subscriptionName);
+                            subs.setLocalName(Validations.encryptName(subscriptionName));
+                            subs.setDiscoveredName(subscriptionName);
                             subs.setContext("Setar");
+                            subs.setKind("SetarSubscription");
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> subsProps = new HashMap<>();
-                        subsProps.put("kind", "SetarSubscription");
                         subsProps.put("status", "Active");
                         subsProps.put("serviceSubtype", req.getProductSubtype());
                         if (req.getQosProfile() != null) subsProps.put("evpnQosProfile", req.getQosProfile());
@@ -213,10 +223,10 @@ public class CreateServiceEVPN implements HttpAction {
                         subsProps.put("kenanSubscriberId", req.getKenanUidNo());
                         subsProps.put("subscriberIdCbm", req.getSubscriberId());
                         subs.setProperties(subsProps);
-
+                        subs.setCustomer(subscriber);
                         // association to subscriber (store link name so external process can link)
                         subsProps.put("linkedSubscriber", subscriber.getLocalName());
-                        return subscriptionRepo.save(subs);
+                        return subscriptionRepo.save(subs,2);
                     });
 
             // ensure we keep subscriber-subscription link when we didn't create subs
@@ -226,107 +236,111 @@ public class CreateServiceEVPN implements HttpAction {
             }
 
             // 5) Product: find or create (properties map)
-            Product product = productRepo.uivFindByGdn(productNameStr)
+            Product product = productRepo.findByDiscoveredName(productNameStr)
                     .orElseGet(() -> {
                         System.out.println("------------Trace # 10--------------- Creating product: " + productNameStr);
                         Product prod = new Product();
                         try {
-                            prod.setLocalName(productNameStr);
-                            prod.setName(productNameStr);
+                            prod.setLocalName(Validations.encryptName(productNameStr));
+                            prod.setDiscoveredName(productNameStr);
                             prod.setContext("Setar");
+                            prod.setKind("SetarProduct");
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> prodProps = new HashMap<>();
-                        prodProps.put("kind", "SetarProduct");
                         prodProps.put("type", req.getProductType());
                         prodProps.put("status", "Active");
                         prodProps.put("linkedSubscriber", subscriber.getLocalName());
                         prodProps.put("linkedSubscription", subscription.getLocalName());
                         prod.setProperties(prodProps);
-                        return productRepo.save(prod);
+                        prod.setSubscription(subscription);
+                        return productRepo.save(prod,2);
                     });
 
             // 6) CFS: find or create (properties map)
-            CustomerFacingService cfs = cfsRepo.uivFindByGdn(cfsName)
+            CustomerFacingService cfs = cfsRepo.findByDiscoveredName(cfsName)
                     .orElseGet(() -> {
                         System.out.println("------------Trace # 11--------------- Creating CFS: " + cfsName);
                         CustomerFacingService newCfs = new CustomerFacingService();
                         try {
-                            newCfs.setLocalName(cfsName);
-                            newCfs.setName(cfsName);
+                            newCfs.setLocalName(Validations.encryptName(cfsName));
+                            newCfs.setDiscoveredName(cfsName);
                             newCfs.setContext("Setar");
+                            newCfs.setKind("SetarCFS");
                         }catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> cfsProps = new HashMap<>();
-                        cfsProps.put("kind", "SetarCFS");
                         cfsProps.put("serviceStatus", "Active");
                         cfsProps.put("serviceType", req.getProductType());
                         cfsProps.put("serviceStartDate", Instant.now().toString());
                         if (req.getFxOrderID() != null) cfsProps.put("transactionId", req.getFxOrderID());
                         cfsProps.put("linkedProduct", product.getLocalName());
                         newCfs.setProperties(cfsProps);
-                        return cfsRepo.save(newCfs);
+                        newCfs.setContainingProduct(product);
+                        return cfsRepo.save(newCfs,2);
                     });
 
             // 7) RFS: find or create (properties map)
-            ResourceFacingService rfs = rfsRepo.uivFindByGdn(rfsName)
+            ResourceFacingService rfs = rfsRepo.findByDiscoveredName(rfsName)
                     .orElseGet(() -> {
                         System.out.println("------------Trace # 12--------------- Creating RFS: " + rfsName);
                         ResourceFacingService newRfs = new ResourceFacingService();
                         try {
-                            newRfs.setLocalName(rfsName);
-                            newRfs.setName(rfsName);
+                            newRfs.setLocalName(Validations.encryptName(rfsName));
+                            newRfs.setDiscoveredName(rfsName);
                             newRfs.setContext("Setar");
+                            newRfs.setKind("SetarRFS");
                         }catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> rfsProps = new HashMap<>();
-                        rfsProps.put("kind", "SetarRFS");
                         rfsProps.put("status", "Active");
                         rfsProps.put("type", req.getProductType());
                         rfsProps.put("linkedCFS", cfs.getLocalName());
+                        newRfs.setContainingCfs(cfs);
                         return rfsRepo.save(newRfs);
                     });
 
             // 8) OLT: find or create
-            LogicalDevice olt = logicalDeviceRepo.uivFindByGdn(req.getOltName())
+            LogicalDevice olt = logicalDeviceRepo.findByDiscoveredName(req.getOltName())
                     .orElseGet(() -> {
                         System.out.println("------------Trace # 13--------------- Creating OLT: " + req.getOltName());
                         LogicalDevice dev = new LogicalDevice();
                         try {
-                            dev.setLocalName(req.getOltName());
-                            dev.setName(req.getOltName());
+                            dev.setLocalName(Validations.encryptName(req.getOltName()));
+                            dev.setDiscoveredName(req.getOltName());
                             dev.setContext("Setar");
+                            dev.setKind("OLTDevice");
                         }catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> oltProps = new HashMap<>();
-                        oltProps.put("kind", "OLTDevice");
                         oltProps.put("operationalState", "Active");
                         oltProps.put("oltPosition", req.getOltName());
                         if (req.getTemplateNameOnt() != null) oltProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(oltProps);
                         // link RFS reference if exists
                         dev.getProperties().put("linkedRFS", rfs.getLocalName());
-                        return logicalDeviceRepo.save(dev);
+                        dev.addUsingService(rfs);
+                        return logicalDeviceRepo.save(dev,2);
                     });
 
             // 9) ONT: find or create, manage EVPN counters
-            LogicalDevice ont = logicalDeviceRepo.uivFindByGdn(ontName)
+            LogicalDevice ont = logicalDeviceRepo.findByDiscoveredName(ontName)
                     .orElseGet(() -> {
                         System.out.println("------------Trace # 14--------------- Creating ONT: " + ontName);
                         LogicalDevice dev = new LogicalDevice();
                         try {
                             dev.setLocalName(ontName);
-                            dev.setName(ontName);
+                            dev.setDiscoveredName(ontName);
                             dev.setContext("Setar");
+                            dev.setKind("ONTDevice");
                         }catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> ontProps = new HashMap<>();
-                        ontProps.put("kind", "ONTDevice");
                         ontProps.put("serialNumber", req.getOntSN());
                         ontProps.put("deviceModel", req.getOntModel());
                         ontProps.put("operationalState", "Active");
@@ -359,24 +373,25 @@ public class CreateServiceEVPN implements HttpAction {
 
             // 10) Management VLAN (for non-IPBH)
             if (!"IPBH".equalsIgnoreCase(req.getProductSubtype())) {
-                LogicalInterface mgmtVlan = vlanRepo.uivFindByGdn(mgmtVlanName)
+                LogicalInterface mgmtVlan = vlanRepo.findByDiscoveredName(mgmtVlanName)
                         .orElseGet(() -> {
                             System.out.println("------------Trace # 15--------------- Creating mgmt VLAN: " + mgmtVlanName);
                             LogicalInterface v = new LogicalInterface();
                             try {
-                                v.setLocalName(mgmtVlanName);
-                                v.setName(mgmtVlanName);
+                                v.setLocalName(Validations.encryptName(mgmtVlanName));
+                                v.setDiscoveredName(mgmtVlanName);
                                 v.setContext("Setar");
+                                v.setKind("VlanInterface");
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
                             Map<String,Object> vProps = new HashMap<>();
-                            vProps.put("kind", "VlanInterface");
                             vProps.put("vlanId", req.getMgmntVlanId());
                             if (req.getTemplateNameVlanMgmnt() != null) vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
                             vProps.put("operationalState", "Active");
                             v.setProperties(vProps);
-                            return vlanRepo.save(v);
+                            v.addManagingDevices(ont);
+                            return vlanRepo.save(v,2);
                         });
                 // no direct association required here beyond existence
             }
@@ -397,19 +412,19 @@ public class CreateServiceEVPN implements HttpAction {
             }
 
             if (req.getVlanId() != null) {
-                LogicalInterface serviceVlan = vlanRepo.uivFindByGdn(vlanName)
+                LogicalInterface serviceVlan = vlanRepo.findByDiscoveredName(vlanName)
                         .orElseGet(() -> {
                             System.out.println("------------Trace # 16--------------- Creating service VLAN: " + vlanName);
                             LogicalInterface v = new LogicalInterface();
                             try {
-                                v.setLocalName(vlanName);
-                                v.setName(vlanName);
+                                v.setLocalName(Validations.encryptName(vlanName));
+                                v.setDiscoveredName(vlanName);
                                 v.setContext("Setar");
+                                v.setKind("VlanInterface");
                             }catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
                             Map<String,Object> vProps = new HashMap<>();
-                            vProps.put("kind", "VlanInterface");
                             vProps.put("vlanId", req.getVlanId());
                             vProps.put("operationalState", "Active");
                             if (usedStandardEvpn) {
@@ -427,7 +442,8 @@ public class CreateServiceEVPN implements HttpAction {
                                 vProps.put("vlanTemplate", req.getTemplateNameVlan());
                             }
                             v.setProperties(vProps);
-                            return vlanRepo.save(v);
+                            v.addManagingDevices(ont);
+                            return vlanRepo.save(v,2);
                         });
                 // if created and usedStandardEvpn -> ensure association entry on ONT exists
                 if (usedStandardEvpn) {
@@ -528,7 +544,7 @@ public class CreateServiceEVPN implements HttpAction {
                 // pick index 2..8 -> naive approach: choose 2
                 for (int idx = 2; idx <= 8; idx++) {
                     String singleName = req.getOntSN() + "_P" + selectedPort + "_SINGLETAGGED_" + idx;
-                    if (!vlanRepo.uivFindByGdn(singleName).isPresent()) {
+                    if (!vlanRepo.findByDiscoveredName(singleName).isPresent()) {
                         LogicalInterface singleVlan = new LogicalInterface();
                         singleVlan.setLocalName(singleName);
                         singleVlan.setName(singleName);
@@ -546,7 +562,6 @@ public class CreateServiceEVPN implements HttpAction {
                         svProps.put("linkedOnt", ont.getLocalName());
                         singleVlan.setProperties(svProps);
                         vlanRepo.save(singleVlan);
-                        // stop after first created
                         break;
                     }
                 }

@@ -1,19 +1,28 @@
 package com.nokia.nsw.uiv.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Map;
 
-/**
- * Response DTO for QueryService (flat fields but flexible map for IPTV details)
- */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@Setter
 public class QueryServiceResponse {
     private String status;
     private String message;
     private String timestamp;
-    private Map<String, String> iptvinfo;
+    private boolean success;
+    private Map<String, Object> iptvinfo;
+
+    public QueryServiceResponse() {}
+
+    public QueryServiceResponse(String status, String message, String timestamp, boolean success, Object details) {
+        this.status = status;
+        this.message = message;
+        this.timestamp = timestamp;
+        this.success = success;
+        if (details instanceof Map) {
+            this.iptvinfo = (Map<String, Object>) details;
+        }
+    }
 }
