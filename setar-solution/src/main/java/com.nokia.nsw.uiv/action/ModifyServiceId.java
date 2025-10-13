@@ -4,8 +4,7 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
-import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifyServiceIdRequest;
 import com.nokia.nsw.uiv.response.ModifyServiceIdResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -38,19 +37,19 @@ public class ModifyServiceId implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action ModifyServiceId execution failed - ";
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepo;
+    private CustomerFacingServiceCustomRepository cfsRepo;
 
     @Autowired
     private ResourceFacingServiceCustomRepository rfsRepo;
 
     @Autowired
-    private ProductRepository productRepo;
+    private ProductCustomRepository productRepo;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepo;
+    private SubscriptionCustomRepository subscriptionRepo;
 
     @Autowired
-    private CustomerRepository customerRepo;
+    private CustomerCustomRepository customerRepo;
 
     @Autowired
     private LogicalDeviceCustomRepository logicalDeviceRepository;
@@ -90,7 +89,7 @@ public class ModifyServiceId implements HttpAction {
             List<CustomerFacingService> cfsList = new ArrayList<>();
             for(CustomerFacingService cfs:cfsList1)
             {
-                if(cfs.getProperties().get("ServiceId").toString().contains(oldServiceId))
+                if(cfs.getDiscoveredName().contains(oldServiceId))
                 {
                     cfsList.add(cfs);
                 }
@@ -98,7 +97,7 @@ public class ModifyServiceId implements HttpAction {
             System.out.println("------------Test Trace # 4--------------- Found CFS candidates: " + cfsList.size());
 
             for (CustomerFacingService cfs : cfsList) {
-                String cfsName = cfs.getLocalName();
+                String cfsName = cfs.getDiscoveredName();
 
                 // Matching Rule A/B
                 boolean matches = false;
@@ -126,26 +125,27 @@ public class ModifyServiceId implements HttpAction {
                 Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
 
                 // Retrieve product
-                Optional<Product> productOpt =Optional.of(cfs.getContainingProduct()); // adjust association
+                Optional<Product> productOpt =productRepo.findByDiscoveredName(cfs.getContainingProduct().getDiscoveredName()); // adjust association
                 Optional<Subscription> subsOpt = Optional.empty();
                 Optional<Customer> custOpt = Optional.empty();
 
                 if (productOpt.isPresent()) {
                     Product prod = productOpt.get();
-                    subsOpt = Optional.of(prod.getSubscription()); // adjust association
-                    custOpt = Optional.of(prod.getCustomer()); // adjust association
+                    subsOpt = Optional.of(prod.getSubscription());
+                    subsOpt = subscriptionRepo.findByDiscoveredName(subsOpt.get().getDiscoveredName());
+                            // adjust association
+                    custOpt = Optional.of(subsOpt.get().getCustomer()); // adjust association
                 }
 
                 // Update subscription
                 if (subsOpt.isPresent()) {
-                    Subscription subs = subsOpt.get();
-                    String newName = subs.getLocalName().replace(oldServiceId, newServiceId);
+                    Subscription subs = subscriptionRepo.findByDiscoveredName(subsOpt.get().getDiscoveredName()).get();
+                    String newName = subs.getDiscoveredName().replace(oldServiceId, newServiceId);
                     subs.setDiscoveredName(newName);
 
                     Map<String, Object> props = subs.getProperties() == null ? new HashMap<>() : new HashMap<>(subs.getProperties());
                     props.put("serviceID", newServiceId);
                     subs.setProperties(props);
-
                     subscriptionRepo.save(subs);
                     updatesApplied = true;
                     System.out.println("------------Test Trace # 6--------------- Subscription updated: " + newName);
@@ -153,8 +153,8 @@ public class ModifyServiceId implements HttpAction {
 
                 // Update product
                 if (productOpt.isPresent()) {
-                    Product prod = productOpt.get();
-                    String newName = prod.getLocalName().replace(oldServiceId, newServiceId);
+                    Product prod = productRepo.findByDiscoveredName(productOpt.get().getDiscoveredName()).get();
+                    String newName = prod.getDiscoveredName().replace(oldServiceId, newServiceId);
                     prod.setDiscoveredName(newName);
                     productRepo.save(prod);
                     updatesApplied = true;
@@ -163,8 +163,8 @@ public class ModifyServiceId implements HttpAction {
 
                 // Update subscriber
                 if (custOpt.isPresent()) {
-                    Customer cust = custOpt.get();
-                    String newName = cust.getLocalName().replace(oldServiceId, newServiceId);
+                    Customer cust = customerRepo.findByDiscoveredName(custOpt.get().getDiscoveredName()).get();
+                    String newName = cust.getDiscoveredName().replace(oldServiceId, newServiceId);
                     cust.setDiscoveredName(newName);
 
                     Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
@@ -178,7 +178,7 @@ public class ModifyServiceId implements HttpAction {
 
                 // Update RFS + resources
                 if (rfsOpt.isPresent()) {
-                    ResourceFacingService rfs = rfsOpt.get();
+                    ResourceFacingService rfs = rfsRepo.findByDiscoveredName(rfsOpt.get().getDiscoveredName()).get();
 
                     rfs.getUsedResource().forEach(res -> {
                         if (res instanceof LogicalDevice) {
@@ -191,25 +191,25 @@ public class ModifyServiceId implements HttpAction {
                                 props.put("potsPort1Number",newServiceId);
                             }
                             logicalDeviceRepository.save(ont);
-                            System.out.println("------------Test Trace # 9--------------- ONT updated: " + ont.getLocalName());
+                            System.out.println("------------Test Trace # 9--------------- ONT updated: " + ont.getDiscoveredName());
                         } else if (res instanceof LogicalDevice) {
                             LogicalDevice cbm = (LogicalDevice) res;
-                            String newDevName = cbm.getLocalName().replace(oldServiceId, newServiceId);
+                            String newDevName = cbm.getDiscoveredName().replace(oldServiceId, newServiceId);
                             cbm.setDiscoveredName(newDevName);
-                            System.out.println("------------Test Trace # 10--------------- CBM updated: " + cbm.getLocalName());
+                            System.out.println("------------Test Trace # 10--------------- CBM updated: " + cbm.getDiscoveredName());
                         }
                     });
 
-                    String newRfsName = rfs.getLocalName().replace(oldServiceId, newServiceId);
-                    rfs.setLocalName(newRfsName);
-                    rfs.setName(newRfsName);
+                    String newRfsName = rfs.getDiscoveredName().replace(oldServiceId, newServiceId);
+                    rfs.setDiscoveredName(newRfsName);
                     rfsRepo.save(rfs);
                     updatesApplied = true;
                     System.out.println("------------Test Trace # 11--------------- RFS updated: " + newRfsName);
                 }
 
                 // Update CFS
-                String newCfsName = cfs.getLocalName().replace(oldServiceId, newServiceId);
+                cfs = cfsRepo.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                String newCfsName = cfs.getDiscoveredName().replace(oldServiceId, newServiceId);
                 cfs.setDiscoveredName(newCfsName);
                 cfsRepo.save(cfs);
                 updatesApplied = true;
