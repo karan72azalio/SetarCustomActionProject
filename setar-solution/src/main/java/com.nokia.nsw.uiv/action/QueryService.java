@@ -126,7 +126,6 @@ public class QueryService implements HttpAction {
                 }
 
                 // Step 6: Fetch Devices from RFS
-                // Step 6: Fetch Devices from RFS
                 if (optRfs.isPresent()) {
                     ResourceFacingService rfs = optRfs.get();
 
