@@ -5,6 +5,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryONTPositionRequest;
 import com.nokia.nsw.uiv.response.QueryONTPositionResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RestController
@@ -27,7 +29,7 @@ public class QueryONTPosition implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action QueryONTPosition execution failed - ";
 
     @Autowired
-    private LogicalDeviceRepository ontRepo;
+    private LogicalDeviceCustomRepository ontRepo;
 
     @Override
     public Class<?> getActionClass() {
@@ -71,7 +73,7 @@ public class QueryONTPosition implements HttpAction {
             }
 
             // 3. Locate ONT
-            Optional<LogicalDevice> ontOpt = ontRepo.uivFindByGdn(ontName);
+            Optional<LogicalDevice> ontOpt = ontRepo.findByDiscoveredName(ontName);
             if (!ontOpt.isPresent()) {
                 System.out.println("------------Trace # 6--------------- No ONT found with name=" + ontName);
                 return new QueryONTPositionResponse(
@@ -85,7 +87,8 @@ public class QueryONTPosition implements HttpAction {
             LogicalDevice ont = ontOpt.get();
             System.out.println("------------Trace # 7--------------- ONT found, checking linked OLT");
 
-            LogicalDevice olt = (LogicalDevice) ont.getContained();
+            Set<LogicalDevice> managingDevices =  ont.getManagingDevices();
+            LogicalDevice olt = managingDevices.stream().findFirst().get();
             if (olt == null) {
                 System.out.println("------------Trace # 8--------------- No OLT linked to ONT=" + ontName);
                 return new QueryONTPositionResponse(
@@ -97,7 +100,7 @@ public class QueryONTPosition implements HttpAction {
             }
 
             // 4. Determine OLT Object ID
-            String objectId = olt.getProperties().get("OltPosition").toString();
+            String objectId = olt.getProperties().get("OltPosition")==null?"":olt.getProperties().get("OltPosition").toString();
             if (objectId == null || objectId.isEmpty()) {
                 objectId = olt.getName();
             }

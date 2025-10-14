@@ -6,6 +6,7 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.AdministrativeState;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.ChangeResourceStatusRequest;
 import com.nokia.nsw.uiv.response.ChangeResourceStatusResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -28,7 +29,7 @@ public class ChangeResourceStatus implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action ChangeResourceStatus execution failed - ";
 
     @Autowired
-    private LogicalDeviceRepository stbRepo;
+    private LogicalDeviceCustomRepository stbRepo;
 
     @Override
     public Class<?> getActionClass() {
@@ -63,7 +64,7 @@ public class ChangeResourceStatus implements HttpAction {
             System.out.println("------------Test Trace # 3--------------- Inputs: SN=" + sn + ", Type=" + type + ", TargetStatus=" + targetStatus);
 
             // 2. Resolve states
-            if (!("Available".equalsIgnoreCase(targetStatus) || "Allocated".equalsIgnoreCase(targetStatus))) {
+            if (!("Activated".equalsIgnoreCase(targetStatus) || "Deallocated".equalsIgnoreCase(targetStatus) || "Unknown".equalsIgnoreCase(targetStatus) || "NotApplicabe".equalsIgnoreCase(targetStatus))) {
                 return new ChangeResourceStatusResponse(
                         "400",
                         ERROR_PREFIX + "Invalid resourceStatus: " + targetStatus,
@@ -77,7 +78,7 @@ public class ChangeResourceStatus implements HttpAction {
             System.out.println("------------Test Trace # 4--------------- Derived device name: " + devName);
 
             // 4. Locate device
-            Optional<LogicalDevice> devOpt = stbRepo.uivFindByGdn(devName);
+            Optional<LogicalDevice> devOpt = stbRepo.findByDiscoveredName(devName);
             if (!devOpt.isPresent()) {
                 System.out.println("------------Test Trace # 5--------------- Device not found: " + devName);
                 return new ChangeResourceStatusResponse(
@@ -90,8 +91,8 @@ public class ChangeResourceStatus implements HttpAction {
 
             LogicalDevice device = devOpt.get();
             String currentStatus = String.valueOf(device.getAdministrativeState());
-            String model = device.getProperties().get("Model").toString() == null ? "" : device.getProperties().get("Model").toString();
-            String mac = device.getProperties().get("MacAddress").toString() == null ? "" : device.getProperties().get("MacAddress").toString() ;
+            String model = device.getProperties().get("Model") == null ? "" : device.getProperties().get("Model").toString();
+            String mac = device.getProperties().get("MacAddress") == null ? "" : device.getProperties().get("MacAddress").toString() ;
 
             System.out.println("------------Test Trace # 6--------------- Device found. Current status=" + currentStatus);
 

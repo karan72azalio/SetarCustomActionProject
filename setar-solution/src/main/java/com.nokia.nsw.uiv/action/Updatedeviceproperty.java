@@ -5,6 +5,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.UpdatedevicepropertyRequest;
 import com.nokia.nsw.uiv.response.UpdatedevicepropertyResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -29,7 +30,7 @@ public class Updatedeviceproperty implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action Updatedeviceproperty execution failed - ";
 
     @Autowired
-    private LogicalDeviceRepository stbRepo;
+    private LogicalDeviceCustomRepository stbRepo;
 
     @Override
     public Class<?> getActionClass() {
@@ -65,7 +66,7 @@ public class Updatedeviceproperty implements HttpAction {
             System.out.println("------------Test Trace # 4--------------- Derived device name: " + stbName);
 
             // 3. Locate STB
-            Optional<LogicalDevice> stbOpt = stbRepo.uivFindByGdn(stbName);
+            Optional<LogicalDevice> stbOpt = stbRepo.findByDiscoveredName(stbName);
             if (!stbOpt.isPresent()) {
                 System.out.println("------------Test Trace # 5--------------- STB not found: " + stbName);
                 return new UpdatedevicepropertyResponse(
@@ -78,15 +79,15 @@ public class Updatedeviceproperty implements HttpAction {
             }
 
             LogicalDevice stb = stbOpt.get();
-            String currentState = stb.getProperties().get("AdministrativeState") == null ?  "" : stb.getProperties().get("AdministrativeState").toString();
+            String currentState = stb.getAdministrativeState()==null?"":stb.getAdministrativeState().toString();
             System.out.println("------------Test Trace # 6--------------- STB found. Current state=" + currentState);
 
             // 4. Validate Allocated state
-            if (!"Allocated".equalsIgnoreCase(currentState)) {
+            if (!"Activated".equalsIgnoreCase(currentState)) {
                 System.out.println("------------Test Trace # 7--------------- STB not in Allocated state");
                 return new UpdatedevicepropertyResponse(
                         "404",
-                        ERROR_PREFIX + "Error, No STB found with Allocated state to update.",
+                        ERROR_PREFIX + "Error, No STB found with Activated state to update.",
                         Instant.now().toString(),
                         stbSn,
                         custGroupId
