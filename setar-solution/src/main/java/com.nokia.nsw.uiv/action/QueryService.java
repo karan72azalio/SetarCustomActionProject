@@ -4,6 +4,7 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryServiceRequest;
 import com.nokia.nsw.uiv.response.QueryServiceResponse;
@@ -129,7 +130,8 @@ public class QueryService implements HttpAction {
                 if (optRfs.isPresent()) {
                     ResourceFacingService rfs = optRfs.get();
 
-                    rfs.getUsedResource().forEach(res -> {
+                    Set<Resource> ls = rfs.getUsedResource();
+                    ls.forEach(res -> {
                         if (res instanceof LogicalDevice) {
                             LogicalDevice ont = (LogicalDevice) res;
                             String name = ont.getDiscoveredName();
