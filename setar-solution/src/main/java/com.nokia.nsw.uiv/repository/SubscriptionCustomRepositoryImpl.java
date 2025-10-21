@@ -8,6 +8,7 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @Repository
@@ -204,8 +205,11 @@ public class SubscriptionCustomRepositoryImpl implements SubscriptionCustomRepos
     }
 
     @Override
-    public Iterable<Subscription> findAll(String s) {
-        return null;
+    public Iterable<Subscription> findAll(String discoveredName) {
+        Iterable<Subscription> allSubscriptions = subscriptionRepository.findAll();
+        return StreamSupport.stream(allSubscriptions.spliterator(), false)
+                .filter(s -> discoveredName.equals(s.getDiscoveredName()))
+                .collect(Collectors.toList());
     }
 
     @Override
