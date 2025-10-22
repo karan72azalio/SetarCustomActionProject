@@ -5,6 +5,7 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
+import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.service.Subscription;
@@ -246,7 +247,7 @@ public class QueryServicesInfo implements HttpAction {
                     if (setarSubscription != null) {
                         // if ServiceLink equals ONT (case-insensitive) and ServiceSN present then ontSno override
                         Object slObj = setarSubscription.getProperties() == null ? null : setarSubscription.getProperties().get("serviceLink");
-                        String serviceLink = slObj == null ? (setarSubscription.getProperties().get("ServiceLink") == null ? "" : setarSubscription.getProperties().get("ServiceLink").toString()) : slObj.toString();
+                        String serviceLink = slObj == null ? (setarSubscription.getProperties().get("serviceLink") == null ? "" : setarSubscription.getProperties().get("serviceLink").toString()) : slObj.toString();
                         Object ssn = setarSubscription.getProperties() == null ? null : setarSubscription.getProperties().get("serviceSN");
                         if ((serviceLink != null && serviceLink.equalsIgnoreCase("ONT")) && (ssn != null && !ssn.toString().isEmpty())) {
                             ontSno = ssn.toString();
@@ -294,7 +295,7 @@ public class QueryServicesInfo implements HttpAction {
                     LogicalDevice nameONT = null;
                     LogicalDevice oltDevice = null;
                     if (setarSubscription != null) {
-                        String serviceLink = setarSubscription.getProperties().get("ServiceLink").toString();
+                        String serviceLink = setarSubscription.getProperties().get("serviceLink").toString();
                         if (serviceLink != null && serviceLink.equalsIgnoreCase("ONT")) {
                             // ensure ontSno present
                             if (ontSno == null || ontSno.trim().isEmpty()) {
@@ -309,9 +310,12 @@ public class QueryServicesInfo implements HttpAction {
                                     nameONT = optOnt.get();
                                     // try retrieving the OLT device via containing/managing relationships
                                     // assume nameONT.getManagingDevices() returns list or properties contain oltPosition
-                                    List<LogicalDevice> mng = (List<LogicalDevice>) nameONT.getManagingDevices();
+                                    Set<LogicalDevice> mng =  nameONT.getManagingDevices();
                                     if (mng != null && !mng.isEmpty()) {
-                                        oltDevice = mng.get(0);
+                                        for(LogicalDevice device:mng){
+                                            oltDevice = device;
+                                            break;
+                                        }
                                     } else {
                                         // fallback to property oltPosition on RFS or ONT
                                         Object oltPos = (rfs.getProperties() == null) ? null : rfs.getProperties().get("oltPosition");
@@ -326,9 +330,9 @@ public class QueryServicesInfo implements HttpAction {
                     }
 
                     // 5.3 Read resources attached to this RFS
-                    List<LogicalDevice> resources = logicalDeviceRepository.findByUsingService(rfs);
+                    Set<Resource> resources = rfs.getUsedResource();
                     if (resources != null && !resources.isEmpty()) {
-                        for (LogicalDevice dev : resources) {
+                        for (Resource dev : resources) {
                             String resName = dev.getDiscoveredName() == null ? "" : dev.getDiscoveredName();
                             String serial = (dev.getProperties() == null) ? null : String.valueOf(dev.getProperties().get("serialNo"));
                             if (resName.startsWith("AP")) {
@@ -423,7 +427,7 @@ public class QueryServicesInfo implements HttpAction {
                     }
 
                     // ServiceLink handling
-                    String setarServiceLink = setarSubscription == null ? "" : (setarSubscription.getProperties().get("ServiceLink") == null ? "" : setarSubscription.getProperties().get("ServiceLink").toString());
+                    String setarServiceLink = setarSubscription == null ? "" : (setarSubscription.getProperties().get("serviceLink") == null ? "" : setarSubscription.getProperties().get("serviceLink").toString());
                     if (setarServiceLink != null && setarServiceLink.equalsIgnoreCase("ONT")) {
                         if (oltDevice != null) {
                             allvalues.put(prefix + "OLT_NAME", oltDevice.getDiscoveredName());
@@ -612,9 +616,6 @@ public class QueryServicesInfo implements HttpAction {
             resp.setStructuredObject(allvalues);
             return resp;
 
-        } catch (BadRequestException bre) {
-            log.error("Validation error in QueryServicesInfo", bre);
-            return createErrorResponse("400", ERROR_PREFIX + bre.getMessage());
         } catch (Exception ex) {
             log.error("Unhandled error in QueryServicesInfo", ex);
             return createErrorResponse("500", ERROR_PREFIX + ex.getMessage());

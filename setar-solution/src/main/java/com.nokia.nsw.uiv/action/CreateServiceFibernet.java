@@ -6,6 +6,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
+import com.nokia.nsw.uiv.model.resource.AdministrativeState;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
@@ -268,6 +269,31 @@ public class CreateServiceFibernet implements HttpAction {
                 ontDevice.addManagingDevices(oltDevice);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.info("Created ONT device: {}", ontName);
+            }
+
+            // 8. ONT device: find or create as LogicalDevice with kind=ONT
+            String stbDeviceName = "STB"+"_"+ request.getOntSN();
+            Optional<LogicalDevice> stbOpt = logicalDeviceRepository.findByDiscoveredName(stbDeviceName);
+            LogicalDevice stbDevice;
+            if (stbOpt.isPresent()) {
+                log.info("Found existing ONT: {}", stbDeviceName);
+            } else {
+                stbDevice = new LogicalDevice();
+                stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
+                stbDevice.setDiscoveredName(stbDeviceName);
+                stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
+                stbDevice.setContext(ontContext);
+                Map<String, Object> stbProps = new HashMap<>();
+                stbProps.put("serialNo", request.getOntSN());
+                if (request.getOntModel() != null) stbProps.put("deviceModel", request.getOntModel());
+                if (request.getTemplateNameONT() != null) stbProps.put("ontTemplate", request.getTemplateNameONT());
+                if (request.getMenm() != null) stbProps.put("description", request.getMenm());
+                if (request.getVlanID() != null) stbProps.put("mgmtVlan", request.getVlanID());
+                stbDevice.addUsingService(rfs);
+                stbDevice.addManagingDevices(oltDevice);
+                stbDevice.setAdministrativeState(AdministrativeState.Activated);
+                logicalDeviceRepository.save(stbDevice, 2);
+                log.info("Created ONT device: {}", stbDeviceName);
             }
 
 
