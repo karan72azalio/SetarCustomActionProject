@@ -4,6 +4,7 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
 import com.nokia.nsw.uiv.request.AssociateResourcesRequest;
@@ -24,6 +25,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RestController
@@ -103,8 +105,14 @@ public class AssociateResources implements HttpAction {
                 );
             }
             ResourceFacingService rfs = optRfs.get();
-
-            String allocatedState = String.valueOf(rfsRepository.findByProperty("AdministrativeState","Allocated"));
+            LogicalDevice d = new LogicalDevice();
+            Set<Resource> resources = rfs.getUsedResource();
+            for(Resource r:resources){
+                if(r instanceof LogicalDevice){
+                    d = (LogicalDevice)r;
+                }
+            }
+            String allocatedState = d.getAdministrativeState().toString();
             if (allocatedState == null) {
                 return new AssociateResourcesResponse(
                         "404",
