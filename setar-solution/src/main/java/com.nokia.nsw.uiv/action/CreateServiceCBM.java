@@ -129,6 +129,7 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("accountNumber", request.getSubscriberName());
                     prop.put("status", "Active");
                     prop.put("subscriberUserName", request.getUserName());
+                    prop.put("address", request.getSubsAddress());
                     s.setProperties(prop);
                     subscriberRepository.save(s, 2);
                     return s;
@@ -220,6 +221,7 @@ public class CreateServiceCBM implements HttpAction {
                     p.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
+                    prop.put("productType",request.getProductType());
                     p.setProperties(prop);
                     p.setCustomer(subscriber);
                     p.setSubscription(subscription);
