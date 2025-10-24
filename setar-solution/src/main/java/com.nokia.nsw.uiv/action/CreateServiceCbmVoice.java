@@ -259,7 +259,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                     .orElseGet(() -> {
                         CustomerFacingService c = new CustomerFacingService();
                         try {
-                            c.setLocalName(Validations.encryptName(cfsName));
+                            c.setLocalName(cfsName);
                             c.setDiscoveredName(cfsName);
                             c.setContext(Constants.SETAR);
                             c.setKind(Constants.SETAR_KIND_SETAR_CFS);
@@ -328,7 +328,7 @@ public class CreateServiceCbmVoice implements HttpAction {
 
             // 9. CPE Voice Port Update (only when productSubtype == "Voice")
             if ("Voice".equalsIgnoreCase(request.getProductSubtype())) {
-                String cpeDeviceName = "CBM_" + request.getCbmMac();
+                String cpeDeviceName = "STB_" + request.getCbmMac();
                 Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.findByDiscoveredName(cpeDeviceName);
                 if (!cpeOpt.isPresent()) {
                     return createErrorResponse(CODE_CPE_NOT_FOUND, "CPE device not found");
@@ -355,6 +355,36 @@ public class CreateServiceCbmVoice implements HttpAction {
                     log.error("Persistence error updating CPE device", e);
                     return createErrorResponse(CODE_PERSISTENCE_ERROR, "Persistence error while updating CPE device: " + e.getMessage());
                 }
+            }
+            // 8. ONT device: find or create as LogicalDevice with kind=ONT
+            String stbDeviceName = "STB"+"_"+ request.getCbmSN();
+            Optional<LogicalDevice> stbOpt = cpeDeviceRepository.findByDiscoveredName(stbDeviceName);
+            LogicalDevice stbDevice;
+            if (stbOpt.isPresent()) {
+                log.info("Found existing ONT: {}", stbDeviceName);
+            } else {
+                stbDevice = new LogicalDevice();
+                stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
+                stbDevice.setDiscoveredName(stbDeviceName);
+                stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
+
+                cpeDeviceRepository.save(stbDevice, 2);
+                log.info("Created ONT device: {}", stbDeviceName);
+            }
+
+            String apDeviceName = "AP"+"_"+ request.getCbmSN();
+            Optional<LogicalDevice> apOpt = cpeDeviceRepository.findByDiscoveredName(apDeviceName);
+            LogicalDevice apDevice;
+            if (apOpt.isPresent()) {
+                log.info("Found existing ONT: {}", apDeviceName);
+            } else {
+                apDevice = new LogicalDevice();
+                apDevice.setLocalName(Validations.encryptName(apDeviceName));
+                apDevice.setDiscoveredName(apDeviceName);
+                apDevice.setKind(Constants.SETAR_KIND_AP_CM_DEVICE);
+
+                cpeDeviceRepository.save(apDevice, 2);
+                log.info("Created ONT device: {}", apDeviceName);
             }
 
             // 10. Final success response

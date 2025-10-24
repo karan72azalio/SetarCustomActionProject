@@ -160,7 +160,7 @@ public class CreateProductSubscription implements HttpAction {
             // ================== Success Response ==================
             return new CreateProductSubscriptionResponse(
                     "201",
-                    "Fibernet service created",
+                    "ProductSubscription created",
                     java.time.Instant.now().toString(),
                     subscriptionName,
                     productName

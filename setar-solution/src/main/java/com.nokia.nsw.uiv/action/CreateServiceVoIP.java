@@ -260,7 +260,6 @@ public class CreateServiceVoIP implements HttpAction {
             }
 
             String oltName=req.getOltName();
-            String oltNameGdn=Validations.getGlobalName(oltName);
             LogicalDevice olt = logicalDeviceRepo.findByDiscoveredName(oltName)
                     .orElseGet(() -> {
                         LogicalDevice dev = new LogicalDevice();
@@ -281,7 +280,7 @@ public class CreateServiceVoIP implements HttpAction {
                         return logicalDeviceRepo.save(dev);
                     });
 
-            String ontNameGdn=Validations.getGlobalName(ontName);
+
             LogicalDevice ont = logicalDeviceRepo.findByDiscoveredName(ontName)
                     .orElseGet(() -> {
                         LogicalDevice dev = new LogicalDevice();

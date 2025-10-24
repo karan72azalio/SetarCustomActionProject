@@ -46,6 +46,7 @@ public class Constants {
     public static final String SETAR_KIND_ONT_DEVICE = "ONTDevice";
     public static final String SETAR_KIND_PHYSICAL_DEVICES = "PhysicalDevices";
     public static final String SETAR_KIND_STB_AP_CM_DEVICE = "StbApCmDevice";
+    public static final String SETAR_KIND_AP_CM_DEVICE = "ApCmDevice";
 
     public static final String SETAR_KIND_CPE_PORT = "CPEPort";
 

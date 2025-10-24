@@ -39,25 +39,12 @@ public class AccountTransferByServiceID implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action AccountTransferByServiceID execution failed - ";
 
-    @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepo;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepo;
-
-    @Autowired
-    private SubscriptionCustomRepository subsRepo;
-
-    @Autowired
-    private ProductCustomRepository prodRepo;
-
-    @Autowired
-    private CustomerCustomRepository custRepo;
-
-    @Autowired
-    private LogicalDeviceCustomRepository cbmDeviceRepository;
-
-
+    @Autowired private CustomerFacingServiceCustomRepository cfsRepo;
+    @Autowired private ResourceFacingServiceRepository rfsRepo;
+    @Autowired private SubscriptionCustomRepository subsRepo;
+    @Autowired private ProductCustomRepository prodRepo;
+    @Autowired private CustomerCustomRepository custRepo;
+    @Autowired private LogicalDeviceCustomRepository cbmDeviceRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -86,15 +73,15 @@ public class AccountTransferByServiceID implements HttpAction {
             for(CustomerFacingService cfs:cfsList1)
             {
                 Product p = cfs.getContainingProduct();
-                String productDN = p.getDiscoveredName();
-                p = prodRepo.findByDiscoveredName(productDN).get();
-                if(p.getCustomer().getDiscoveredName().contains(oldSubscriberName))
+                String productGdn = p.getGlobalName();
+                p = prodRepo.findByDiscoveredName(productGdn).get();
+                if(p.getCustomer().getName().contains(oldSubscriberName))
                 {
                     cfsList.add(cfs);
                 }
             }
 
-            cfsList.removeIf(cfs -> !cfs.getDiscoveredName().contains(req.getServiceId()));
+            cfsList.removeIf(cfs -> !cfs.getName().contains(req.getServiceId()));
             if (cfsList.isEmpty()) {
                 return errorResponse("404", "No entry found for update");
             }
@@ -109,25 +96,28 @@ public class AccountTransferByServiceID implements HttpAction {
 
             // Step 3: Iterate matching CFS
             for (CustomerFacingService cfs : cfsList) {
-                String cfsName = cfs.getDiscoveredName();
+                String cfsName = cfs.getName();
                 String rfsName = cfsName.replace("CFS", "RFS");
-                Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
+                String rfsGdn = Validations.getGlobalName(rfsName);
+                Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsGdn,1);
                 Product prod = cfs.getContainingProduct();
-                String productGdn = prod.getDiscoveredName();
-                prod = prodRepo.findByDiscoveredName(productGdn).get();
+                String productGdn = prod.getGlobalName();
+                prod = prodRepo.uivFindByGdn(productGdn).get();
                 Subscription subs = prod.getSubscription();
-                Customer oldCust = custRepo.findByDiscoveredName(oldSubscriberName).orElse(null);
+                String oldSubscriberGdn = Validations.getGlobalName(oldSubscriberName);
+                Customer oldCust = custRepo.uivFindByGdn(oldSubscriberGdn).orElse(null);
+//                Customer oldCust1 = customerCustomRepository.findByDiscoveredName(oldSubscriberName);
 
                 if (subs == null || prod == null || oldCust == null) {
                     continue;
                 }
 
                 // Step 4: Find or fallback new subscriber
-                Customer newCust = custRepo.findByDiscoveredName(req.getSubscriberName()).orElse(null);
+                Customer newCust = custRepo.uivFindByGdn(Validations.getGlobalName(req.getSubscriberName())).orElse(null);
                 if (newCust == null) {
                     newCust = new Customer();
-                    newCust.setDiscoveredName(req.getSubscriberName());
-                    newCust.setLocalName(Validations.encryptName(req.getSubscriberName()));
+                    newCust.setName(req.getSubscriberName());
+                    newCust.setLocalName(req.getSubscriberName());
                     newCust.setContext(Constants.SETAR);
                     Map<String,Object>prop= oldCust.getPropertiesMap();
                     prop.put("AccountNumber",req.getSubscriberName());
@@ -139,7 +129,7 @@ public class AccountTransferByServiceID implements HttpAction {
                     for(Product p : prodSet){
                         if(p.getLocalName().contains(req.getServiceId())){
                             childProd = p;
-                            childProd = prodRepo.findByDiscoveredName(childProd.getDiscoveredName()).get();
+                            childProd = prodRepo.uivFindByGdn(childProd.getGlobalName()).get();
                             childSubs = childProd.getSubscription();
                             Set<CustomerFacingService> cfsSet = childProd.getContainedCfs();
                             for(CustomerFacingService cf:cfsSet){
@@ -167,14 +157,13 @@ public class AccountTransferByServiceID implements HttpAction {
                     custRepo.delete(oldCust);
                 }
                 Customer saveCustomer = new Customer();
-                assert childSubs != null;
-                saveCustomer.setDiscoveredName(childSubs.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                saveCustomer.setLocalName(childSubs.getLocalName().replace(oldSubscriberName,subscriberName));
                 saveCustomer.setContext(Constants.SETAR);
                 saveCustomer.setProperties(childSubs.getProperties());
                 custRepo.save(saveCustomer);
                 // Step 5: Update Subscription
                 Subscription saveSubs = new Subscription();
-                saveSubs.setDiscoveredName(childSubs.getDiscoveredName());
+                saveSubs.setLocalName(childSubs.getLocalName());
                 saveSubs.setName(childSubs.getName());
                 saveSubs.setContext(Constants.SETAR);
                 saveSubs.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
@@ -193,21 +182,23 @@ public class AccountTransferByServiceID implements HttpAction {
                 // Step 6: Update Product
                 Product prodSave = new Product();
                 prodSave.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
-                prodSave.setDiscoveredName(childProd.getDiscoveredName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                prodSave.setName(childProd.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                prodSave.setLocalName(childProd.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
                 prodSave.setSubscription(saveSubs);
                 prodSave.setCustomer(saveCustomer);
                 prodRepo.save(prodSave);
                 System.out.println("------Trace #5: Product updated");
 
                 // Step 7: Update Subscriber if fallback used
-                if (newCust == oldCust) {
-                    custRepo.save(newCust);
-                    System.out.println("------Trace #6: Subscriber renamed");
-                }
+//                if (newCust == oldCust) {
+//                    custRepo.save(newCust);
+//                    System.out.println("------Trace #6: Subscriber renamed");
+//                }
 
                 // Step 8: Update CFS and RFS
                 CustomerFacingService saveCfs = new CustomerFacingService();
-                saveCfs.setDiscoveredName(childCfs.getDiscoveredName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                saveCfs.setLocalName(childCfs.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                saveCfs.setName(childCfs.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
                 saveCfs.setContext(Constants.SETAR);
                 saveCfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
                 saveCfs.setCustomer(saveCustomer);
@@ -217,7 +208,8 @@ public class AccountTransferByServiceID implements HttpAction {
 
                 if (rfsOpt.isPresent()) {
                     ResourceFacingService saveRfs = new ResourceFacingService();
-                    saveRfs.setDiscoveredName(childRfs.getDiscoveredName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                    saveRfs.setLocalName(childRfs.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
+                    saveRfs.setName(childRfs.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
                     saveRfs.setContext(Constants.SETAR);
                     saveRfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
                     saveRfs.setContainingCfs(saveCfs);

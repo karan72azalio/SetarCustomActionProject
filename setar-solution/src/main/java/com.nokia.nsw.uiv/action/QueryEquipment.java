@@ -80,7 +80,7 @@ public class QueryEquipment implements HttpAction {
         String subscriptionName = request.getSubscriberName() + "_" + request.getServiceId();
         String cfsName = "CFS_" + subscriptionName;
         String rfsName = "RFS_" + subscriptionName;
-        String productName = request.getSubscriberName() + "_" + request.getProductSubType() + "_" + request.getServiceId();
+        String productName = request.getSubscriberName() +  request.getProductSubType() + request.getServiceId();
 
         boolean successFlag = false;
         int apCounter = 1;

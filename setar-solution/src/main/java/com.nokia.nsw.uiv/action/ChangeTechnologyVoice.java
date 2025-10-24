@@ -3,6 +3,7 @@ package com.nokia.nsw.uiv.action;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ChangeTechnologyVoiceRequest;
 import com.nokia.nsw.uiv.response.ChangeTechnologyVoiceResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -39,22 +40,22 @@ public class ChangeTechnologyVoice implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action ChangeTechnologyVoice execution failed - ";
 
     @Autowired
-    private CustomerRepository customerRepo;
+    private CustomerCustomRepository customerRepo;
 
     @Autowired
-    private SubscriptionRepository subscriptionRepo;
+    private SubscriptionCustomRepository subscriptionRepo;
 
     @Autowired
-    private ProductRepository productRepo;
+    private ProductCustomRepository productRepo;
 
     @Autowired
-    private CustomerFacingServiceRepository cfsRepo;
+    private CustomerFacingServiceCustomRepository cfsRepo;
 
     @Autowired
-    private ResourceFacingServiceRepository rfsRepo;
+    private ResourceFacingServiceCustomRepository rfsRepo;
 
     @Autowired
-    private LogicalDeviceRepository logicalDeviceRepo;
+    private LogicalDeviceCustomRepository logicalDeviceRepo;
 
     @Override
     public Class<?> getActionClass() {
@@ -118,7 +119,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             // 4. Update Subscription (must exist)
             System.out.println("------------Test Trace # 6--------------- Fetching Subscription by " + subscriptionName);
             String subscriptionGdn = Validations.getGlobalName(subscriptionName);
-            Optional<Subscription> subsOpt = subscriptionRepo.uivFindByGdn(subscriptionGdn);
+            Optional<Subscription> subsOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
             if (subsOpt.isPresent()) {
                 Subscription subs = subsOpt.get();
                 System.out.println("------------Test Trace # 7--------------- Subscription found: " + subs.getLocalName());
@@ -156,7 +157,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 // Rename subscription to include ONT SN per spec
                 String newSubscriptionName = subscriptionName + "_" + req.getOntSN();
                 System.out.println("------------Test Trace # 12--------------- Renaming subscription to: " + newSubscriptionName);
-                subs.setLocalName(newSubscriptionName);
+                subs.setLocalName(subscriptionName);
                 subs.setProperties(props);
                 subs.setName(newSubscriptionName);
 
@@ -169,10 +170,10 @@ public class ChangeTechnologyVoice implements HttpAction {
                 String subscriberCandidate1 = req.getSubscriberName() + "_" + req.getOntSN();
                 String subscriberCandidate2 = req.getSubscriberName();
                 String subscriberCandidata1Gdn = Validations.getGlobalName(subscriberCandidate1);
-                Optional<Customer> custOpt = customerRepo.uivFindByGdn(subscriberCandidata1Gdn);
+                Optional<Customer> custOpt = customerRepo.findByDiscoveredName(subscriberCandidate1);
                 if (!custOpt.isPresent()) {
                     String subscriberCandidate2Gdn=Validations.getGlobalName(subscriberCandidate2);
-                    custOpt = customerRepo.uivFindByGdn(subscriberCandidate2Gdn);
+                    custOpt = customerRepo.findByDiscoveredName(subscriberCandidate2);
                 }
                 if (custOpt.isPresent()) {
                     Customer cust = custOpt.get();
@@ -199,7 +200,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             // 6. Update CFS (if exists)
             System.out.println("------------Test Trace # 18--------------- Checking CFS: " + cfsName);
             String cfsGdn = Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> cfsOpt = cfsRepo.uivFindByGdn(cfsGdn);
+            Optional<CustomerFacingService> cfsOpt = cfsRepo.findByDiscoveredName(cfsName);
             if (cfsOpt.isPresent()) {
                 CustomerFacingService cfs = cfsOpt.get();
                 String newCfsName = cfs.getLocalName() + "_" + req.getOntSN();
@@ -218,7 +219,7 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             // 7. Update RFS (if exists)
             System.out.println("------------Test Trace # 21--------------- Checking RFS: " + rfsName);
-            Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsName);
+            Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
             if (rfsOpt.isPresent()) {
                 ResourceFacingService rfs = rfsOpt.get();
                 String newRfsName = rfs.getLocalName() + "_" + req.getOntSN();
@@ -232,8 +233,8 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             // 8. Update OLT (if exists)
             System.out.println("------------Test Trace # 24--------------- Checking OLT: " + req.getOltName());
-            String oltGdn = Validations.getGlobalName(req.getOltName());
-            Optional<LogicalDevice> oltOpt = logicalDeviceRepo.uivFindByGdn(oltGdn);
+            String oltName = req.getOltName();
+            Optional<LogicalDevice> oltOpt = logicalDeviceRepo.findByDiscoveredName(oltName);
             if (oltOpt.isPresent()) {
                 LogicalDevice olt = oltOpt.get();
                 Map<String, Object> oltProps = olt.getProperties() == null ? new HashMap<>() : new HashMap<>(olt.getProperties());
@@ -257,8 +258,8 @@ public class ChangeTechnologyVoice implements HttpAction {
             System.out.println("------------Test Trace # 27--------------- Looking for CPE devices: " + cpeDeviceName + ", " + cpeDeviceOldName);
             String cpeDeviceGdn = Validations.getGlobalName(cpeDeviceName);
             String cpeDeviceOldGdn = Validations.getGlobalName(cpeDeviceOldName);
-            Optional<LogicalDevice> ontCpeOpt = logicalDeviceRepo.uivFindByGdn(cpeDeviceGdn);
-            Optional<LogicalDevice> cbmCpeOpt = logicalDeviceRepo.uivFindByGdn(cpeDeviceOldGdn);
+            Optional<LogicalDevice> ontCpeOpt = logicalDeviceRepo.findByDiscoveredName(cpeDeviceName);
+            Optional<LogicalDevice> cbmCpeOpt = logicalDeviceRepo.findByDiscoveredName(cpeDeviceOldName);
 
             if (!ontCpeOpt.isPresent() || !cbmCpeOpt.isPresent()) {
                 String missing = !ontCpeOpt.isPresent() ? cpeDeviceName : (!cbmCpeOpt.isPresent() ? cpeDeviceOldName : "");
@@ -289,7 +290,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             // 11. Update ONT device (logical device, ONT object)
             System.out.println("------------Test Trace # 33--------------- Looking for ONT device: " + ontName);
             String ontGdn = Validations.getGlobalName(ontName);
-            Optional<LogicalDevice> ontDeviceOpt = logicalDeviceRepo.uivFindByGdn(ontGdn);
+            Optional<LogicalDevice> ontDeviceOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
             if (ontDeviceOpt.isPresent()) {
                 LogicalDevice ontDevice = ontDeviceOpt.get();
                 Map<String, Object> ontProps = ontDevice.getProperties() == null ? new HashMap<>() : new HashMap<>(ontDevice.getProperties());
@@ -315,7 +316,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             // 12. Remove CBM device (if exists)
             System.out.println("------------Test Trace # 36--------------- Looking up CBM device: " + cbmName);
             String cbmGdn = Validations.getGlobalName(cbmName);
-            Optional<LogicalDevice> cbmDeviceOpt = logicalDeviceRepo.uivFindByGdn(cbmGdn);
+            Optional<LogicalDevice> cbmDeviceOpt = logicalDeviceRepo.findByDiscoveredName(cbmName);
             if (cbmDeviceOpt.isPresent()) {
                 LogicalDevice cbmDevice = cbmDeviceOpt.get();
                 // clear RFS association (store null or remove prop)
