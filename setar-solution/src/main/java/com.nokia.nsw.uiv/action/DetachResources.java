@@ -48,7 +48,7 @@ public class DetachResources implements HttpAction {
     }
 
     @Override
-    public Object doPost(ActionContext actionContext) throws Exception {
+    public Object doPatch(ActionContext actionContext) throws Exception {
         log.info("Executing action: {}", ACTION_LABEL);
 
         DetachResourcesRequest request = (DetachResourcesRequest) actionContext.getObject();

@@ -56,7 +56,7 @@ public class ModifySubscriber implements HttpAction {
     }
 
     @Override
-    public Object doPost(ActionContext actionContext) {
+    public Object doPatch(ActionContext actionContext) {
         System.out.println("------------Test Trace # 1--------------- ModifySubscriber started");
         ModifySubscriberRequest req = (ModifySubscriberRequest) actionContext.getObject();
 

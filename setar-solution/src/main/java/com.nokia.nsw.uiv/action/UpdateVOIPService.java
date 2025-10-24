@@ -41,7 +41,7 @@ public class UpdateVOIPService implements HttpAction {
     }
 
     @Override
-    public Object doPost(ActionContext actionContext) {
+    public Object doPatch(ActionContext actionContext) {
         log.info("Executing UpdateVOIPService...");
         UpdateVOIPServiceRequest req = (UpdateVOIPServiceRequest) actionContext.getObject();
 

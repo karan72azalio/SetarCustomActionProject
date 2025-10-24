@@ -58,7 +58,7 @@ public class ModifySPR implements HttpAction {
     }
 
     @Override
-    public Object doPost(ActionContext actionContext) {
+    public Object doPatch(ActionContext actionContext) {
         log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
 
         ModifySPRRequest request = (ModifySPRRequest) actionContext.getObject();

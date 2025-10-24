@@ -57,7 +57,7 @@ public class ChangeState implements HttpAction {
     }
 
     @Override
-    public Object doPost(ActionContext actionContext) throws Exception {
+    public Object doPatch(ActionContext actionContext) throws Exception {
         log.info("Executing action {}", ACTION_LABEL);
         ChangeStateRequest req = (ChangeStateRequest) actionContext.getObject();
 

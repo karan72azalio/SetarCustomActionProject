@@ -71,7 +71,7 @@ public class ModifyIPTV implements HttpAction {
     }
 
     @Override
-    public Object doPost(ActionContext actionContext) throws Exception {
+    public Object doPatch(ActionContext actionContext) throws Exception {
         ModifyIPTVRequest request = (ModifyIPTVRequest) actionContext.getObject();
 
         try {
