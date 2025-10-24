@@ -317,8 +317,8 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 12. Reassign CPE devices
-            String cpeDeviceName = "ONT_" + ontSN;
-            String cpeDeviceOldName = "CBM_" + cbmMac.replace(":", "");
+            String cpeDeviceName = "ONT" + ontSN;
+            String cpeDeviceOldName = "CBM" + cbmMac;
 
             Optional<LogicalDevice> maybeCpeNew = cpeRepo.findByDiscoveredName(cpeDeviceName);
             Optional<LogicalDevice> maybeCpeOld = cpeRepo.findByDiscoveredName(cpeDeviceOldName);
@@ -350,7 +350,7 @@ public class ChangeTechnology implements HttpAction {
             out.put("subscriptionName", subscriptionName);
             out.put("ontName", ontName);
 
-            return new ChangeTechnologyResponse("200", "ChangeTechnology executed successfully.", Instant.now().toString(), "","");
+            return new ChangeTechnologyResponse("200", "ChangeTechnology executed successfully.", Instant.now().toString(), subscriptionName,ontName);
 
         } catch (Exception ex) {
             log.error("Exception in ChangeTechnology", ex);

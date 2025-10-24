@@ -57,7 +57,7 @@ public class QueryCPEDevice implements HttpAction {
             resourceType = "CBM";
         }
 
-        String devName = resourceType + "_" + request.getResourceSN();
+        String devName = resourceType + "_"+ request.getResourceSN();
         Optional<LogicalDevice> deviceOpt = cpeDeviceRepository.findByDiscoveredName(devName);
         if (!deviceOpt.isPresent()) {
             return new QueryCPEDeviceResponse("404", "CPE Details Not Found", String.valueOf(System.currentTimeMillis()));

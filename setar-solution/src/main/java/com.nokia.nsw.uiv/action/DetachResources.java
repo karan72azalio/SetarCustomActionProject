@@ -55,7 +55,7 @@ public class DetachResources implements HttpAction {
         String subscriptionName = request.getSubscriberName() + "_" + request.getServiceID();
         String cfsName = "CFS_" + subscriptionName;
         String rfsName = "RFS_" + subscriptionName;
-        String productName = request.getSubscriberName()+Constants.UNDER_SCORE + request.getProductSubType()+Constants.UNDER_SCORE + request.getServiceID();
+        String productName = request.getSubscriberName()+ request.getProductSubType()+ request.getServiceID();
 
         try {
             // 1. Mandatory validation
@@ -67,10 +67,10 @@ public class DetachResources implements HttpAction {
 
             // 2. Fetch entities
             Optional<Customer> subscriber = subscriberRepository.findByDiscoveredName(request.getSubscriberName());
-            Optional<Subscription> subscription = subscriptionRepository.uivFindByGdn(subscriptionName);
-            Optional<Product> product = productRepository.uivFindByGdn(productName);
-            Optional<CustomerFacingService> cfs = cfsRepository.uivFindByGdn(cfsName);
-            Optional<ResourceFacingService> rfs = rfsRepository.uivFindByGdn(rfsName);
+            Optional<Subscription> subscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
+            Optional<Product> product = productRepository.findByDiscoveredName(productName);
+            Optional<CustomerFacingService> cfs = cfsRepository.findByDiscoveredName(cfsName);
+            Optional<ResourceFacingService> rfs = rfsRepository.findByDiscoveredName(rfsName);
 
             if (!subscriber.isPresent() || !subscription.isPresent() || !product.isPresent() || !cfs.isPresent() || !rfs.isPresent()) {
                 return new DetachResourcesResponse("404", ERROR_PREFIX + "No entry found for Delete.",
@@ -101,7 +101,7 @@ public class DetachResources implements HttpAction {
             for (String serial : apSerials) {
                 if (serial != null && !serial.equalsIgnoreCase("NA")) {
                     String devName = "AP_" + serial;
-                    deviceUpdated |= detachDevice(devName, rfsEntity, false);
+                    deviceUpdated |= detachDevice(devName, rfsEntity, true);
                 }
             }
 
