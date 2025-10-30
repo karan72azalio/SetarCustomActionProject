@@ -317,7 +317,6 @@ public class CreateServiceFibernet implements HttpAction {
                     vlanProps.put("vlanId", request.getVlanID());
                     vlanProps.put("serviceId", request.getServiceID());
                     vlan.setProperties(vlanProps);
-                    vlan.setContainingLogicalDevice(oltDevice);
                     logicalInterfaceRepository.save(vlan, 2);
                     log.info("Created VLAN interface: {}", vlanName);
                 }
