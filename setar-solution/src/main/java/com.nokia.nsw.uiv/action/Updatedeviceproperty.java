@@ -79,11 +79,11 @@ public class Updatedeviceproperty implements HttpAction {
             }
 
             LogicalDevice stb = stbOpt.get();
-            String currentState = stb.getAdministrativeState()==null?"":stb.getAdministrativeState().toString();
+            String currentState = stb.getProperties().get("administrativeState")!=null?stb.getProperties().get("administrativeState").toString():"";
             System.out.println("------------Test Trace # 6--------------- STB found. Current state=" + currentState);
 
             // 4. Validate Allocated state
-            if (!"Activated".equalsIgnoreCase(currentState)) {
+            if (!"Available".equalsIgnoreCase(currentState)) {
                 System.out.println("------------Test Trace # 7--------------- STB not in Allocated state");
                 return new UpdatedevicepropertyResponse(
                         "404",

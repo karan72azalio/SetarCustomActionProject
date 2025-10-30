@@ -9,8 +9,10 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.AdministrativeState;
+import com.nokia.nsw.uiv.model.resource.OperationalState;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.model.service.ServiceOperationalState;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
@@ -88,7 +90,9 @@ public class CreateServiceCBM implements HttpAction {
             Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.findByDiscoveredName(cpeName);
             if (cpeOpt.isPresent()) {
                 LogicalDevice cpe = cpeOpt.get();
-                cpe.setAdministrativeState(AdministrativeState.valueOf("Available"));
+                Map<String,Object> props = cpe.getProperties();
+                props.put("administrativeState","Available");
+                cpe.setProperties(props);
                 if ("Broadband".equalsIgnoreCase(request.getProductSubtype())) {
                     cpe.setDescription("Internet");
                 }
@@ -252,9 +256,9 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    c.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
+                    prop.put("serviceType", request.getProductType());
                     c.setProperties(prop);
                     c.setStartDate(new Date());
                     c.setTransactionId(request.getFxOrderID());
@@ -291,8 +295,10 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     r.setType(request.getProductType());
+                    r.setState(ServiceOperationalState.active);
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
+                    prop.put("serviceType",request.getProductType());
                     r.setProperties(prop);
                     r.setContainingCfs(cfs);
                     rfsRepository.save(r, 2);

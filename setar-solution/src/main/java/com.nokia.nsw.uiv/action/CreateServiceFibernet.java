@@ -291,7 +291,9 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getVlanID() != null) stbProps.put("mgmtVlan", request.getVlanID());
                 stbDevice.addUsingService(rfs);
                 stbDevice.addManagingDevices(oltDevice);
-                stbDevice.setAdministrativeState(AdministrativeState.Activated);
+                Map<String,Object> props = stbDevice.getProperties();
+                props.put("administrativeState","Available");
+                stbDevice.setProperties(props);
                 logicalDeviceRepository.save(stbDevice, 2);
                 log.info("Created ONT device: {}", stbDeviceName);
             }
