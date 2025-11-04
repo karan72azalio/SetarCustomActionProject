@@ -4,12 +4,15 @@ import com.nokia.nsw.uiv.datatype.Neo4jDomainObject;
 import com.setar.uiv.model.product.ResourceFacingService;
 import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 @Repository
@@ -73,6 +76,11 @@ public class ResourceFacingServiceCustomRepositoryImpl implements ResourceFacing
     @Override
     public void delete(ResourceFacingService entity) {
         resourceFacingServiceRepository.delete(entity);
+    }
+
+    @Override
+    public void deleteAllById(Iterable<? extends String> strings) {
+
     }
 
     @Override
@@ -168,6 +176,16 @@ public class ResourceFacingServiceCustomRepositoryImpl implements ResourceFacing
     public void flushSession() { }
 
     @Override
+    public <S extends ResourceFacingService> S batchSave(S s, int i, String s1) {
+        return null;
+    }
+
+    @Override
+    public <S extends ResourceFacingService> Iterable<S> batchSaveAll(Iterable<S> iterable, int i, String s) {
+        return null;
+    }
+
+    @Override
     public <S extends ResourceFacingService> S save(S s, String s1) { return null; }
 
     @Override
@@ -259,4 +277,39 @@ public class ResourceFacingServiceCustomRepositoryImpl implements ResourceFacing
 
     @Override
     public ResourceFacingService uivFindByTwoEndNode(Map<String, String> map, Map<String, String> map1, String s, String s1) { return null; }
+
+    @Override
+    public <S extends ResourceFacingService> Optional<S> findOne(Example<S> example) {
+        return Optional.empty();
+    }
+
+    @Override
+    public <S extends ResourceFacingService> Iterable<S> findAll(Example<S> example) {
+        return null;
+    }
+
+    @Override
+    public <S extends ResourceFacingService> Iterable<S> findAll(Example<S> example, Sort sort) {
+        return null;
+    }
+
+    @Override
+    public <S extends ResourceFacingService> Page<S> findAll(Example<S> example, Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public <S extends ResourceFacingService> long count(Example<S> example) {
+        return 0;
+    }
+
+    @Override
+    public <S extends ResourceFacingService> boolean exists(Example<S> example) {
+        return false;
+    }
+
+    @Override
+    public <S extends ResourceFacingService, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+        return null;
+    }
 }

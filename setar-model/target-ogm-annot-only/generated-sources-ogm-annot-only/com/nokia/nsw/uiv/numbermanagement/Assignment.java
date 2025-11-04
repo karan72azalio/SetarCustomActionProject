@@ -10,9 +10,8 @@ import com.nokia.nsw.uiv.datatype.Neo4jDomainNodeObject;
 import com.nokia.nsw.uiv.jackson.UivDateDeserializer;
 import com.nokia.nsw.uiv.jackson.UivDateSerializer;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.HashSet;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -32,9 +31,6 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.numbermanagement.Assignment"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.numbermanagement.Assignment"
-)
 public class Assignment extends Neo4jDomainNodeObject {
     @JsonView({
             UivJsonViews.WriteView.class,
@@ -65,8 +61,9 @@ public class Assignment extends Neo4jDomainNodeObject {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.numbermanagement.Identifier",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.numbermanagement.Identifier}"
     )
     protected Identifier identifier;
@@ -76,8 +73,9 @@ public class Assignment extends Neo4jDomainNodeObject {
             type = "IMPLEMENTS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.numbermanagement.Reservation",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.numbermanagement.Reservation}"
     )
     protected Reservation reservation;

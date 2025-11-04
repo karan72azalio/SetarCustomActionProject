@@ -10,13 +10,12 @@ import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.OperatingSystem;
 import com.nokia.nsw.uiv.model.resource.OperatingSystemConverter;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -40,17 +39,15 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
         label = "com.nokia.nsw.uiv.model.resource.infra.InfraDevice"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.infra.InfraDevice"
-)
 public abstract class InfraDevice extends InfraResource {
     @JsonFilter("contained")
     @Relationship(
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.InfraResource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.InfraResource]"
     )
     protected Set<InfraResource> contained = new HashSet<>();
@@ -60,8 +57,9 @@ public abstract class InfraDevice extends InfraResource {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.LogicalDevice",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.LogicalDevice}"
     )
     protected LogicalDevice containingLogicalDevice;
@@ -71,8 +69,9 @@ public abstract class InfraDevice extends InfraResource {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.InfraResource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.InfraResource]"
     )
     protected Set<InfraResource> usedResources = new HashSet<>();
@@ -82,8 +81,9 @@ public abstract class InfraDevice extends InfraResource {
             type = "HOSTS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.LogicalDevice>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.LogicalDevice]"
     )
     protected Set<LogicalDevice> hostedLogicalDevices = new HashSet<>();

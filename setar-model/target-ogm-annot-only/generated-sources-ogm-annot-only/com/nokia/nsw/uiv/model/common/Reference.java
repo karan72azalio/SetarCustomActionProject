@@ -8,17 +8,14 @@ import com.nokia.nsw.uiv.constants.FeatureFlag;
 import com.nokia.nsw.uiv.datatype.SchemaSpecification;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
+import com.nokia.nsw.uiv.framework.repository.annotation.Composite;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import io.swagger.annotations.ApiModelProperty;
-import java.util.HashSet;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
 
 @JsonTypeInfo(
@@ -33,8 +30,10 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.common.Reference"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.common.Reference"
+@Composite(
+        type = Composite.Type.CHILD,
+        otherEnd = "reference",
+        otherEndType = "com.nokia.nsw.uiv.model.common.Entity"
 )
 public class Reference extends Entity {
     @JsonView(UivJsonViews.TmfView.class)
@@ -47,17 +46,6 @@ public class Reference extends Entity {
             UivJsonViews.ReadView.class
     })
     private String url;
-
-    @JsonFilter("entity")
-    @Relationship(
-            type = "OWNS",
-            direction = "INCOMING"
-    )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
-            allowableValues = "{com.nokia.nsw.uiv.model.common.Entity}"
-    )
-    protected Entity entity;
 
     public SchemaSpecification getReferenceSpecification() {
         FeatureFlag featureFlag = UivSpringContextAware.getApplicationContext().getBean(FeatureFlag.class);
@@ -124,24 +112,5 @@ public class Reference extends Entity {
     public String toString() {
         return new ToStringBuilder(this).append("url", this.url)
                 .toString();
-    }
-
-    public Entity getEntity() {
-        return this.entity;
-    }
-
-    public void setEntity(Entity entity) {
-        this.setAssocModified(true);
-        if (null == entity && null != this.entity && null != this.entity.getReference()) {
-            this.entity.getReference().remove(this);
-        }
-        this.entity=entity;
-        if (null != entity && (null == entity.getReference() || !entity.getReference().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == entity.getReference()) {
-                entity.setReference(new HashSet<>());
-            }
-            entity.addReference(this);
-        }
     }
 }

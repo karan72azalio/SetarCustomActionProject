@@ -5,9 +5,11 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.*;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 @Repository
@@ -55,6 +57,11 @@ public class CustomerCustomRepositoryImpl implements CustomerCustomRepository {
     @Override
     public <S extends Customer> Iterable<S> save(Iterable<S> entities, int depth) {
         return customerRepository.save(entities, depth);
+    }
+
+    @Override
+    public <S extends Customer> Iterable<S> batchSaveAll(Iterable<S> entities, int depth, String txnId) {
+        return customerRepository.batchSaveAll(entities, depth, txnId);
     }
 
     @Override
@@ -135,6 +142,11 @@ public class CustomerCustomRepositoryImpl implements CustomerCustomRepository {
     @Override
     public void delete(Customer entity) {
         customerRepository.delete(entity);
+    }
+
+    @Override
+    public void deleteAllById(Iterable<? extends String> strings) {
+
     }
 
 
@@ -284,6 +296,11 @@ public class CustomerCustomRepositoryImpl implements CustomerCustomRepository {
         customerRepository.flushSession();
     }
 
+    @Override
+    public <S extends Customer> S batchSave(S s, int i, String s1) {
+        return null;
+    }
+
     // Leave unsupported methods empty only if really not needed
     @Override
     public Optional<Customer> uivFindByGdn(String s) { return Optional.empty(); }
@@ -312,4 +329,38 @@ public class CustomerCustomRepositoryImpl implements CustomerCustomRepository {
     @Override
     public Customer uivFindByTwoEndNode(Map<String, String> map1, Map<String, String> map2, String s1, String s2) { return null; }
 
+    @Override
+    public <S extends Customer> Optional<S> findOne(Example<S> example) {
+        return Optional.empty();
+    }
+
+    @Override
+    public <S extends Customer> Iterable<S> findAll(Example<S> example) {
+        return null;
+    }
+
+    @Override
+    public <S extends Customer> Iterable<S> findAll(Example<S> example, Sort sort) {
+        return null;
+    }
+
+    @Override
+    public <S extends Customer> Page<S> findAll(Example<S> example, Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public <S extends Customer> long count(Example<S> example) {
+        return 0;
+    }
+
+    @Override
+    public <S extends Customer> boolean exists(Example<S> example) {
+        return false;
+    }
+
+    @Override
+    public <S extends Customer, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+        return null;
+    }
 }

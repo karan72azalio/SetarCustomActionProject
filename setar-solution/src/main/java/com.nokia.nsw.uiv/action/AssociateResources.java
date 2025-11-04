@@ -112,7 +112,7 @@ public class AssociateResources implements HttpAction {
                     d = (LogicalDevice)r;
                 }
             }
-            String allocatedState = d.getProperties().get("administrativeState")!=null?d.getProperties().get("administrativeState").toString():"";
+            String allocatedState = d.getAdministrativeState().toString();
             if (allocatedState == null) {
                 return new AssociateResourcesResponse(
                         "404",

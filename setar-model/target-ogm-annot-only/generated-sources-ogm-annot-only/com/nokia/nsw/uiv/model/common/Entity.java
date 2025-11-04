@@ -14,17 +14,17 @@ import com.nokia.nsw.uiv.datatype.SchemaSpecification;
 import com.nokia.nsw.uiv.datatype.UivHashMap;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
+import com.nokia.nsw.uiv.framework.repository.annotation.Composite;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.policy.Policy;
 import com.nokia.nsw.uiv.numbermanagement.Identifier;
 import com.nokia.nsw.uiv.numbermanagement.Pool;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -93,8 +93,10 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
         label = "com.nokia.nsw.uiv.model.common.Entity"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.common.Entity"
+@Composite(
+        type = Composite.Type.CHILD,
+        otherEnd = "entity",
+        otherEndType = "com.nokia.nsw.uiv.model.common.Group"
 )
 public abstract class Entity extends Neo4jDomainNodeObject {
     @JsonFilter("note")
@@ -102,8 +104,9 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             type = "OWNS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.Note>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.Note]"
     )
     protected Set<Note> note = new HashSet<>();
@@ -113,30 +116,21 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             type = "OWNS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.Reference>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.Reference]"
     )
     protected Set<Reference> reference = new HashSet<>();
-
-    @JsonFilter("group")
-    @Relationship(
-            type = "GROUPS",
-            direction = "INCOMING"
-    )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
-            allowableValues = "[com.nokia.nsw.uiv.model.common.Group]"
-    )
-    protected Set<Group> group = new HashSet<>();
 
     @JsonFilter("hasGroup")
     @Relationship(
             type = "FOR",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.Group>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.Group]"
     )
     protected Set<Group> hasGroup = new HashSet<>();
@@ -146,8 +140,9 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.policy.Policy>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.policy.Policy]"
     )
     protected Set<Policy> usedPolicy = new HashSet<>();
@@ -157,8 +152,9 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             type = "OWNS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.policy.Policy>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.policy.Policy]"
     )
     protected Set<Policy> ownedPolicy = new HashSet<>();
@@ -168,8 +164,9 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.numbermanagement.Pool>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.numbermanagement.Pool]"
     )
     protected Set<Pool> pool = new HashSet<>();
@@ -179,8 +176,9 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.numbermanagement.Identifier>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.numbermanagement.Identifier]"
     )
     protected Set<Identifier> identifier = new HashSet<>();
@@ -206,7 +204,8 @@ public abstract class Entity extends Neo4jDomainNodeObject {
 
     @ClassificationAttribute
     @ReadOnly
-    @Index(
+    @Index
+    @com.nokia.nsw.uiv.framework.repository.annotation.Index(
             unique = false
     )
     private String kind;
@@ -215,7 +214,8 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             UivJsonViews.WriteView.class,
             UivJsonViews.ReadView.class
     })
-    @Index(
+    @Index
+    @com.nokia.nsw.uiv.framework.repository.annotation.Index(
             unique = false
     )
     private String discoveredName;
@@ -224,7 +224,8 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             UivJsonViews.WriteView.class,
             UivJsonViews.ReadView.class
     })
-    @Index(
+    @Index
+    @com.nokia.nsw.uiv.framework.repository.annotation.Index(
             unique = false
     )
     private String discoveredNamePM;
@@ -233,25 +234,32 @@ public abstract class Entity extends Neo4jDomainNodeObject {
             UivJsonViews.WriteView.class,
             UivJsonViews.ReadView.class
     })
-    @Index(
+    @Index
+    @com.nokia.nsw.uiv.framework.repository.annotation.Index(
             unique = false
     )
     private String discoveredNameFM;
 
+    @JsonView({
+            UivJsonViews.WriteView.class,
+            UivJsonViews.ReadView.class
+    })
+    private Boolean hasImpactingAlarms;
+
+    @JsonView({
+            UivJsonViews.WriteView.class,
+            UivJsonViews.ReadView.class
+    })
+    private Long impactingAlarmsCount;
+
     public void addNote(Note element) {
         this.setAssocModified(true);
         this.note.add(element);
-        if (null != element && (null == element.getEntity() || !element.getEntity().equals(this))) {
-            this.set_type(this.get_type());
-            element.setEntity(this);
-        }
     }
 
     public void removeNote(Note element) {
         this.setAssocModified(true);
-        if (null != element && null != this.note  && this.note.remove(element) && null != element.getEntity()) {
-            element.setEntity(null);
-        }
+        this.note.remove(element);
     }
 
     public Set<Note> getNote() {
@@ -260,41 +268,17 @@ public abstract class Entity extends Neo4jDomainNodeObject {
 
     public void setNote(Set<Note> note) {
         this.setAssocModified(true);
-        if (null != this.note) {
-            List<Note> toDelete = new ArrayList<>(this.note);
-            boolean setToNull = null == note || note.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(note);
-            }
-            for (Note each : toDelete) {
-                each.setEntity(null);
-            }
-        }
         this.note=note;
-        if (null != note) {
-            for (Note each: note) {
-                if (null != each && ( null == each.getEntity() || !each.getEntity().equals(this))) {
-                    this.set_type(this.get_type());
-                    each.setEntity(this);
-                }
-            }
-        }
     }
 
     public void addReference(Reference element) {
         this.setAssocModified(true);
         this.reference.add(element);
-        if (null != element && (null == element.getEntity() || !element.getEntity().equals(this))) {
-            this.set_type(this.get_type());
-            element.setEntity(this);
-        }
     }
 
     public void removeReference(Reference element) {
         this.setAssocModified(true);
-        if (null != element && null != this.reference  && this.reference.remove(element) && null != element.getEntity()) {
-            element.setEntity(null);
-        }
+        this.reference.remove(element);
     }
 
     public Set<Reference> getReference() {
@@ -303,76 +287,7 @@ public abstract class Entity extends Neo4jDomainNodeObject {
 
     public void setReference(Set<Reference> reference) {
         this.setAssocModified(true);
-        if (null != this.reference) {
-            List<Reference> toDelete = new ArrayList<>(this.reference);
-            boolean setToNull = null == reference || reference.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(reference);
-            }
-            for (Reference each : toDelete) {
-                each.setEntity(null);
-            }
-        }
         this.reference=reference;
-        if (null != reference) {
-            for (Reference each: reference) {
-                if (null != each && ( null == each.getEntity() || !each.getEntity().equals(this))) {
-                    this.set_type(this.get_type());
-                    each.setEntity(this);
-                }
-            }
-        }
-    }
-
-    public void addGroup(Group element) {
-        this.setAssocModified(true);
-        this.group.add(element);
-        if (null != element && (null == element.getEntity() || !element.getEntity().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == element.getEntity()) {
-                element.setEntity(new HashSet<>());
-            }
-            element.addEntity(this);
-        }
-    }
-
-    public void removeGroup(Group element) {
-        this.setAssocModified(true);
-        if (null != element && null != this.group  && this.group.remove(element) && null != element.getEntity() && element.getEntity().contains(this)) {
-            element.getEntity().remove(this);
-        }
-    }
-
-    public Set<Group> getGroup() {
-        return this.group;
-    }
-
-    public void setGroup(Set<Group> group) {
-        this.setAssocModified(true);
-        if (null != this.group) {
-            List<Group> toDelete = new ArrayList<>(this.group);
-            boolean setToNull = null == group || group.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(group);
-            }
-            for (Group each : toDelete) {
-                if (null != each.getEntity()) {
-                    each.getEntity().remove(this);
-                }
-            }
-        }
-        this.group=group;
-        if (null != group) {
-            for (Group each: group) {
-                if (null != each && (null == each.getEntity() || !each.getEntity().contains(this))) {
-                    this.set_type(this.get_type());
-                    if (null == each.getEntity()) {
-                        each.setEntity(new HashSet<>());
-                    }
-                    each.addEntity(this);
-                }
-            }
-        }
     }
 
     public void addHasGroup(Group element) {
@@ -706,6 +621,28 @@ public abstract class Entity extends Neo4jDomainNodeObject {
         this.discoveredNameFM=discoveredNameFM;
     }
 
+    public Boolean getHasImpactingAlarms() {
+        return this.hasImpactingAlarms;
+    }
+
+    public void setHasImpactingAlarms(Boolean hasImpactingAlarms) {
+        if ((hasImpactingAlarms==null && this.hasImpactingAlarms!=null) || (hasImpactingAlarms != null && !hasImpactingAlarms.equals(this.hasImpactingAlarms))) {
+            this.setModified(true);
+        }
+        this.hasImpactingAlarms=hasImpactingAlarms;
+    }
+
+    public Long getImpactingAlarmsCount() {
+        return this.impactingAlarmsCount;
+    }
+
+    public void setImpactingAlarmsCount(Long impactingAlarmsCount) {
+        if ((impactingAlarmsCount==null && this.impactingAlarmsCount!=null) || (impactingAlarmsCount != null && !impactingAlarmsCount.equals(this.impactingAlarmsCount))) {
+            this.setModified(true);
+        }
+        this.impactingAlarmsCount=impactingAlarmsCount;
+    }
+
     @Override
     public boolean equals(Object otherObj) {
         if (this == otherObj) return true;
@@ -720,6 +657,8 @@ public abstract class Entity extends Neo4jDomainNodeObject {
                 .append(this.discoveredName, other.discoveredName)
                 .append(this.discoveredNamePM, other.discoveredNamePM)
                 .append(this.discoveredNameFM, other.discoveredNameFM)
+                .append(this.hasImpactingAlarms, other.hasImpactingAlarms)
+                .append(this.impactingAlarmsCount, other.impactingAlarmsCount)
                 .isEquals() && super.equals(otherObj);
     }
 
@@ -734,6 +673,8 @@ public abstract class Entity extends Neo4jDomainNodeObject {
                 .append(discoveredName)
                 .append(discoveredNamePM)
                 .append(discoveredNameFM)
+                .append(hasImpactingAlarms)
+                .append(impactingAlarmsCount)
                 .appendSuper(super.hashCode()).toHashCode();
     }
 
@@ -745,6 +686,8 @@ public abstract class Entity extends Neo4jDomainNodeObject {
                 .append("discoveredName", this.discoveredName)
                 .append("discoveredNamePM", this.discoveredNamePM)
                 .append("discoveredNameFM", this.discoveredNameFM)
+                .append("hasImpactingAlarms", this.hasImpactingAlarms)
+                .append("impactingAlarmsCount", this.impactingAlarmsCount)
                 .toString();
     }
 }

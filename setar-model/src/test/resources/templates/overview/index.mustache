@@ -1,0 +1,55 @@
+= {{{appName}}}
+{{#headerAttributes}}
+
+:toc: left
+:numbered:
+:toclevels: 4
+:source-highlighter: highlightjs
+:keywords: openapi, rest, {{appName}}
+:specDir: {{specDir}}
+:snippetDir: {{snippetDir}}
+:generator-template: v1 2019-12-20
+:info-url: {{infoUrl}}
+:app-name: {{appName}}
+{{/headerAttributes}}
+
+{{#useIntroduction}}
+== Overview
+{{appName}}
+
+=== Version information
+Version : {{version}}
+
+=== Contact information
+Contact : {{infoName}}
+Contact Email : {{infoEmail}}
+
+=== License information
+License : {{licenseInfo}}
+License URL : {{licenseUrl}}
+Terms of service : {{termsOfService}}
+
+=== URI scheme
+Host : {{basePath}}
+BasePath : /
+
+=== Tags
+
+{{#apiInfo}}
+{{#apis}}
+{{#operations}}
+[.{{baseName}}]
+* {{baseName}} : {{operationTagDescription}}
+{{/operations}}
+{{/apis}}
+{{/apiInfo}}
+
+{{/useIntroduction}}
+{{^useIntroduction}}
+[abstract]
+.Abstract
+{{/useIntroduction}}
+
+{{{tags}}}
+
+{{#specinclude}}intro.adoc{{/specinclude}}

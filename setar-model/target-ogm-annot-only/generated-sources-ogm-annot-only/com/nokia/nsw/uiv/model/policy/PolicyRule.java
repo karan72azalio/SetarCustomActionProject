@@ -11,12 +11,11 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.common.Entity;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Map;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -39,9 +38,6 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
         label = "com.nokia.nsw.uiv.model.policy.PolicyRule"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.policy.PolicyRule"
-)
 public class PolicyRule extends Entity {
     @JsonView(UivJsonViews.TmfView.class)
     @Transient
@@ -77,8 +73,9 @@ public class PolicyRule extends Entity {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.policy.Policy",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.policy.Policy}"
     )
     protected Policy policy;

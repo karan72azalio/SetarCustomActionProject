@@ -9,7 +9,7 @@ import com.nokia.nsw.uiv.datatype.UivHashMap;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.logical.Pipe;
 import com.nokia.nsw.uiv.model.resource.logical.Trail;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -36,16 +36,18 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
 public class CONSUMES extends Neo4jDomainRelationshipObject {
     @StartNode
     @JsonFilter("trail")
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.Trail",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.Trail}"
     )
     private Trail trail;
 
     @EndNode
     @JsonFilter("pipe")
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.Pipe",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.Pipe}"
     )
     private Pipe pipe;

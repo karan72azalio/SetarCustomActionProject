@@ -10,22 +10,24 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.nokia.nsw.uiv.annotation.Enum;
 import com.nokia.nsw.uiv.constants.FeatureFlag;
 import com.nokia.nsw.uiv.datatype.SchemaSpecification;
+import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivDateDeserializer;
 import com.nokia.nsw.uiv.jackson.UivDateSerializer;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.common.Entity;
+import com.nokia.nsw.uiv.model.common.ProtectionAssociationType;
+import com.nokia.nsw.uiv.model.common.USES_PROTECTED_SERVICE;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.location.Place;
 import com.nokia.nsw.uiv.model.resource.Resource;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -50,17 +52,15 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.service.Service"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.service.Service"
-)
 public class Service extends Entity {
     @JsonFilter("usedService")
     @Relationship(
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> usedService = new HashSet<>();
@@ -70,8 +70,9 @@ public class Service extends Entity {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> usingService = new HashSet<>();
@@ -81,8 +82,9 @@ public class Service extends Entity {
             type = "FOR",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Subscription>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Subscription]"
     )
     protected Set<Subscription> subscription = new HashSet<>();
@@ -92,8 +94,9 @@ public class Service extends Entity {
             type = "PROVIDES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.service.ServiceProvider",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.service.ServiceProvider}"
     )
     protected ServiceProvider serviceProvider;
@@ -103,19 +106,28 @@ public class Service extends Entity {
             type = "CONSUMES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.ServiceConsumer>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.ServiceConsumer]"
     )
     protected Set<ServiceConsumer> serviceConsumer = new HashSet<>();
+
+    @Relationship(
+            type = "USES_PROTECTED",
+            direction = "OUTGOING"
+    )
+    @Schema
+    protected Set<USES_PROTECTED_SERVICE> usedProtectedResource = new HashSet<>();
 
     @JsonFilter("ownedResource")
     @Relationship(
             type = "OWNS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> ownedResource = new HashSet<>();
@@ -125,8 +137,9 @@ public class Service extends Entity {
             type = "CONSUMED_IN",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.location.Place>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.location.Place]"
     )
     protected Set<Place> place = new HashSet<>();
@@ -136,8 +149,9 @@ public class Service extends Entity {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> usedResource = new HashSet<>();
@@ -147,8 +161,9 @@ public class Service extends Entity {
             type = "SUBSCRIBES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.common.party.Customer",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.common.party.Customer}"
     )
     protected Customer customer;
@@ -158,8 +173,9 @@ public class Service extends Entity {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.service.Service",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.service.Service}"
     )
     protected Service containing;
@@ -169,8 +185,9 @@ public class Service extends Entity {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> contained = new HashSet<>();
@@ -180,8 +197,9 @@ public class Service extends Entity {
             type = "CONFIGURES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> configuredResource = new HashSet<>();
@@ -191,8 +209,9 @@ public class Service extends Entity {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.party.Customer>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.party.Customer]"
     )
     protected Set<Customer> usingCustomer = new HashSet<>();
@@ -202,8 +221,9 @@ public class Service extends Entity {
             type = "OWNS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.location.Place>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.location.Place]"
     )
     protected Set<Place> ownedPlace = new HashSet<>();
@@ -217,7 +237,14 @@ public class Service extends Entity {
             UivJsonViews.WriteView.class,
             UivJsonViews.ReadView.class
     })
-    @Enum("[unknown, designed, active, inactive, terminated]")
+    @Enum("[Anyof, OneOf, AllOf]")
+    private ProtectionAssociationType protectionAssociationType;
+
+    @JsonView({
+            UivJsonViews.WriteView.class,
+            UivJsonViews.ReadView.class
+    })
+    @Enum("[unknown, designed, active, inactive, terminated, reserved, feasibilityChecked]")
     private ServiceOperationalState state;
 
     @JsonView({
@@ -499,6 +526,85 @@ public class Service extends Entity {
                         each.setService(new HashSet<>());
                     }
                     each.addService(this);
+                }
+            }
+        }
+    }
+
+    public void addUsedProtectedResource(USES_PROTECTED_SERVICE element) throws
+            BadRequestException {
+        this.setAssocModified(true);
+        if (null != element) {
+            if (null == element.getResource()) {
+                log.error("Rich object of type \"USES_PROTECTED\" should have the other node end (resource) value set");
+                throw new BadRequestException("Rich object of type \"USES_PROTECTED\" should have the other node end (resource) value set");
+            }
+            if (null == element.getService() || !element.getService().equals(this) || !this.usedProtectedResource.contains(element)) {
+                this.set_type(this.get_type());
+                element.setService(this);
+                if (null == this.usedProtectedResource) {
+                    this.usedProtectedResource = new HashSet<>();
+                }
+                this.usedProtectedResource.add(element);
+                if (null == element.getResource().getUsingServiceProtection()) {
+                    element.getResource().setUsingServiceProtection(new HashSet<>());
+                }
+                element.getResource().getUsingServiceProtection().add(element);
+            }
+        }
+    }
+
+    public void removeUsedProtectedResource(USES_PROTECTED_SERVICE element) {
+        this.setAssocModified(true);
+        if (null != element && null != this.usedProtectedResource && this.usedProtectedResource.remove(element) && null != element.getResource()) {
+            element.getResource().removeUsingServiceProtection(element);
+        }
+    }
+
+    public Set<USES_PROTECTED_SERVICE> getUsedProtectedResource() {
+        return this.usedProtectedResource;
+    }
+
+    public void setUsedProtectedResource(Set<USES_PROTECTED_SERVICE> usedProtectedResource) throws
+            BadRequestException {
+        this.setAssocModified(true);
+        if (null != this.usedProtectedResource) {
+            List<USES_PROTECTED_SERVICE> toDelete = new ArrayList<>(this.usedProtectedResource);
+            boolean setToNull = null == usedProtectedResource || usedProtectedResource.isEmpty();
+            if (!setToNull)  {
+                toDelete.removeAll(usedProtectedResource);
+            }
+            for (USES_PROTECTED_SERVICE each : toDelete) {
+                if (null != each.getResource() && null != each.getResource().getUsingServiceProtection()) {
+                    each.getResource().removeUsingServiceProtection(each);
+                }
+            }
+        }
+        if (null != usedProtectedResource) {
+            for (USES_PROTECTED_SERVICE each: usedProtectedResource) {
+                if (null != each) {
+                    if (null == each.getResource()) {
+                        log.error("Rich object of type \"USES_PROTECTED\" should have the other node end (resource) value set");
+                        throw new BadRequestException("Rich object of type \"USES_PROTECTED\" should have the other node end (resource) value set");
+                    }
+                    if (null == each.getService() || !each.getService().equals(this) || !this.usedProtectedResource.contains(each)) {
+                        this.set_type(this.get_type());
+                        each.setService(this);
+                        if (null == this.usedProtectedResource) {
+                            this.usedProtectedResource = new HashSet<>();
+                        }
+                        boolean ispresent = this.usedProtectedResource.stream().anyMatch(o -> o==each);
+                        if (!ispresent) {
+                            this.usedProtectedResource.add(each);
+                        }
+                        if (null == each.getResource().getUsingServiceProtection()) {
+                            each.getResource().setUsingServiceProtection(new HashSet<>());
+                        }
+                        ispresent = each.getResource().getUsingServiceProtection().stream().anyMatch(o -> o==each);
+                        if (!ispresent) {
+                            each.getResource().getUsingServiceProtection().add(each);
+                        }
+                    }
                 }
             }
         }
@@ -904,6 +1010,17 @@ public class Service extends Entity {
         }
     }
 
+    public ProtectionAssociationType getProtectionAssociationType() {
+        return this.protectionAssociationType;
+    }
+
+    public void setProtectionAssociationType(ProtectionAssociationType protectionAssociationType) {
+        if ((protectionAssociationType==null && this.protectionAssociationType!=null) || (protectionAssociationType != null && !protectionAssociationType.equals(this.protectionAssociationType))) {
+            this.setModified(true);
+        }
+        this.protectionAssociationType=protectionAssociationType;
+    }
+
     public ServiceOperationalState getState() {
         return this.state;
     }
@@ -989,7 +1106,8 @@ public class Service extends Entity {
         if (null != this.getUuid() && this.getUuid().equals(other.getUuid())) {
             return true;
         }
-        return new EqualsBuilder().append(this.state, other.state)
+        return new EqualsBuilder().append(this.protectionAssociationType, other.protectionAssociationType)
+                .append(this.state, other.state)
                 .append(this.startDate, other.startDate)
                 .append(this.endDate, other.endDate)
                 .append(this.billable, other.billable)
@@ -1004,7 +1122,8 @@ public class Service extends Entity {
         if (null != this.getUuid()) {
             return new HashCodeBuilder(17, 37).append(this.getUuid()).toHashCode();
         }
-        return new HashCodeBuilder(17,37).append(state)
+        return new HashCodeBuilder(17,37).append(protectionAssociationType)
+                .append(state)
                 .append(startDate)
                 .append(endDate)
                 .append(billable)
@@ -1016,7 +1135,8 @@ public class Service extends Entity {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).append("state", this.state)
+        return new ToStringBuilder(this).append("protectionAssociationType", this.protectionAssociationType)
+                .append("state", this.state)
                 .append("startDate", this.startDate)
                 .append("endDate", this.endDate)
                 .append("billable", this.billable)

@@ -14,13 +14,12 @@ import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.ServiceConsumer;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.setar.uiv.model.product.Product;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -38,17 +37,15 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.common.party.Customer"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.common.party.Customer"
-)
 public class Customer extends PartyRole {
     @JsonFilter("subscription")
     @Relationship(
             type = "HAS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Subscription>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Subscription]"
     )
     protected Set<Subscription> subscription = new HashSet<>();
@@ -58,8 +55,9 @@ public class Customer extends PartyRole {
             type = "SUBSCRIBES_SERVICES_FOR",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.ServiceConsumer>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.ServiceConsumer]"
     )
     protected Set<ServiceConsumer> serviceConsumer = new HashSet<>();
@@ -69,8 +67,9 @@ public class Customer extends PartyRole {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> usedResource = new HashSet<>();
@@ -80,8 +79,9 @@ public class Customer extends PartyRole {
             type = "OWNS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> ownedResource = new HashSet<>();
@@ -91,8 +91,9 @@ public class Customer extends PartyRole {
             type = "SUBSCRIBES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> service = new HashSet<>();
@@ -102,8 +103,9 @@ public class Customer extends PartyRole {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> usedService = new HashSet<>();
@@ -118,8 +120,9 @@ public class Customer extends PartyRole {
             type = "SUBSCRIBES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.setar.uiv.model.product.Product>",
+            implementation = String.class,
             allowableValues = "[com.setar.uiv.model.product.Product]"
     )
     protected Set<Product> product = new HashSet<>();

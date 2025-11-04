@@ -10,9 +10,8 @@ import com.nokia.nsw.uiv.datatype.SchemaSpecification;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -32,9 +31,6 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.location.GeographicSite"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.location.GeographicSite"
-)
 public class GeographicSite extends Place {
     @JsonView(UivJsonViews.TmfView.class)
     @Transient

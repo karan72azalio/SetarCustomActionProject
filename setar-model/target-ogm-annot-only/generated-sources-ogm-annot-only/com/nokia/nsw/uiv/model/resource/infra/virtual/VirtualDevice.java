@@ -10,8 +10,7 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.infra.InfraDevice;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Transient;
@@ -28,9 +27,6 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualDevice"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualDevice"
-)
 public class VirtualDevice extends InfraDevice {
     @JsonView(UivJsonViews.TmfView.class)
     @Transient

@@ -70,7 +70,7 @@ public class DeleteIPTV implements HttpAction {
 
             }catch (BadRequestException bre) {
                 return new DeleteIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        java.time.Instant.now().toString(), "","");
+                        Instant.now().toString(), "","");
             }
             // Step 2: Prepare entity names
             String subscriptionName = subscriberName + "_" + serviceId;

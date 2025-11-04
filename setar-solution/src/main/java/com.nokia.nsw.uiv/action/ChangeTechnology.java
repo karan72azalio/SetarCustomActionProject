@@ -124,7 +124,7 @@ public class ChangeTechnology implements HttpAction {
                 return new ChangeTechnologyResponse(
                         "400",
                         Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        java.time.Instant.now().toString(),
+                        Instant.now().toString(),
                         "",
                         ""
                 );

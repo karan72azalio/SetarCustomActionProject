@@ -7,9 +7,9 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.nokia.nsw.uiv.datatype.Neo4jDomainRelationshipObject;
 import com.nokia.nsw.uiv.datatype.UivHashMap;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Pattern;
 import java.util.Map;
-import javax.validation.constraints.Pattern;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -33,16 +33,18 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
 public class USES_PROTECTED extends Neo4jDomainRelationshipObject {
     @StartNode
     @JsonFilter("resourceStartNode")
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.Resource",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.Resource}"
     )
     private Resource resourceStartNode;
 
     @EndNode
     @JsonFilter("resourceEndNode")
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.Resource",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.Resource}"
     )
     private Resource resourceEndNode;

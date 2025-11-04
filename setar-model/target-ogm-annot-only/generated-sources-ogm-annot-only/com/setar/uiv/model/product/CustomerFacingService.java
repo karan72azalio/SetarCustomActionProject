@@ -6,12 +6,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.service.Service;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -31,9 +30,6 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.setar.uiv.model.product.CustomerFacingService"
 )
 @Slf4j
-@XmlType(
-        name = "com.setar.uiv.model.product.CustomerFacingService"
-)
 public class CustomerFacingService extends Service {
     @JsonView({
             UivJsonViews.WriteView.class,
@@ -64,8 +60,9 @@ public class CustomerFacingService extends Service {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.setar.uiv.model.product.Product",
+            implementation = String.class,
             allowableValues = "{com.setar.uiv.model.product.Product}"
     )
     protected Product containingProduct;
@@ -75,8 +72,9 @@ public class CustomerFacingService extends Service {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.setar.uiv.model.product.ResourceFacingService>",
+            implementation = String.class,
             allowableValues = "[com.setar.uiv.model.product.ResourceFacingService]"
     )
     protected Set<ResourceFacingService> containedRfs = new HashSet<>();

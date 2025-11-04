@@ -1,263 +1,393 @@
 package com.nokia.nsw.uiv.repository;
 
 import com.nokia.nsw.uiv.datatype.Neo4jDomainObject;
-
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 @Repository
 @Primary
 public class CustomerFacingServiceCustomRepositoryImpl implements CustomerFacingServiceCustomRepository {
 
-    private final CustomerFacingServiceRepository customerFacingServiceRepository;
+    private final CustomerFacingServiceRepository repo;
 
-    public CustomerFacingServiceCustomRepositoryImpl(CustomerFacingServiceRepository customerFacingServiceRepository) {
-        this.customerFacingServiceRepository = customerFacingServiceRepository;
+    public CustomerFacingServiceCustomRepositoryImpl(CustomerFacingServiceRepository repo) {
+        this.repo = repo;
     }
 
-    // ✅ Custom finder methods
+    // ********** CUSTOM METHODS **********
+
     @Override
     public Optional<CustomerFacingService> findByDiscoveredName(String discoveredName) {
-        Iterable<CustomerFacingService> allServices = customerFacingServiceRepository.findAll();
-        return StreamSupport.stream(allServices.spliterator(), false)
+        return StreamSupport.stream(repo.findAll().spliterator(), false)
                 .filter(s -> discoveredName.equals(s.getDiscoveredName()))
                 .findFirst();
     }
 
     @Override
     public Optional<CustomerFacingService> findByProperty(String key, String value) {
-        Iterable<CustomerFacingService> allServices = customerFacingServiceRepository.findAll();
-        return StreamSupport.stream(allServices.spliterator(), false)
+        return StreamSupport.stream(repo.findAll().spliterator(), false)
                 .filter(s -> value.equals(s.getProperties().get(key)))
                 .findFirst();
     }
 
-    // ✅ Delegate CRUD operations
+    // ********** BASIC CRUD **********
+
     @Override
     public <S extends CustomerFacingService> S save(S entity) {
-        return customerFacingServiceRepository.save(entity);
+        return repo.save(entity);
     }
 
     @Override
     public <S extends CustomerFacingService> Iterable<S> saveAll(Iterable<S> entities) {
-        return customerFacingServiceRepository.saveAll(entities);
+        return repo.saveAll(entities);
     }
 
     @Override
     public Optional<CustomerFacingService> findById(String id) {
-        return customerFacingServiceRepository.findById(id);
+        return repo.findById(id);
     }
 
     @Override
     public boolean existsById(String id) {
-        return customerFacingServiceRepository.existsById(id);
+        return repo.existsById(id);
     }
 
     @Override
     public long count() {
-        return customerFacingServiceRepository.count();
+        return repo.count();
     }
 
     @Override
     public void deleteById(String id) {
-        customerFacingServiceRepository.deleteById(id);
+        repo.deleteById(id);
     }
 
     @Override
     public void delete(CustomerFacingService entity) {
-        customerFacingServiceRepository.delete(entity);
+        repo.delete(entity);
+    }
+
+    @Override
+    public void deleteAllById(Iterable<? extends String> ids) {
+        repo.deleteAllById(ids);
     }
 
     @Override
     public void deleteAll(Iterable<? extends CustomerFacingService> entities) {
-        customerFacingServiceRepository.deleteAll(entities);
+        repo.deleteAll(entities);
     }
 
     @Override
     public void deleteAll() {
-        customerFacingServiceRepository.deleteAll();
+        repo.deleteAll();
     }
 
     @Override
     public Iterable<CustomerFacingService> findAll() {
-        return customerFacingServiceRepository.findAll();
+        return repo.findAll();
     }
 
     @Override
     public Iterable<CustomerFacingService> findAll(Sort sort) {
-        return customerFacingServiceRepository.findAll(sort);
+        return repo.findAll(sort);
     }
 
     @Override
     public Page<CustomerFacingService> findAll(Pageable pageable) {
-        return customerFacingServiceRepository.findAll(pageable);
-    }
-
-    // ✅ Extended methods (delegate or placeholders)
-    @Override
-    public <S extends CustomerFacingService> S save(S entity, int depth) {
-        return customerFacingServiceRepository.save(entity, depth);
-    }
-
-    @Override
-    public <S extends CustomerFacingService> Iterable<S> save(Iterable<S> entities, int depth) {
-        return null;
-    }
-
-    @Override
-    public Optional<CustomerFacingService> findById(String id, int depth) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Iterable<CustomerFacingService> findAll(int depth) {
-        return null;
+        return repo.findAll(pageable);
     }
 
     @Override
     public Iterable<CustomerFacingService> findAllById(Iterable<String> ids) {
-        return customerFacingServiceRepository.findAllById(ids);
+        return repo.findAllById(ids);
     }
 
     @Override
-    public Iterable<CustomerFacingService> findAllById(Iterable<String> strings, int depth) {
-        return null;
+    public Iterable<CustomerFacingService> findAllById(Iterable<String> ids, Sort sort) {
+        return repo.findAllById(ids, sort);
+    }
+
+    // ********** DEPTH-BASED METHODS **********
+
+    @Override
+    public <S extends CustomerFacingService> S save(S entity, int depth) {
+        return repo.save(entity, depth);
     }
 
     @Override
-    public Iterable<CustomerFacingService> findAllById(Iterable<String> strings, Sort sort) {
-        return null;
+    public <S extends CustomerFacingService> Iterable<S> save(Iterable<S> entities, int depth) {
+        return repo.save(entities, depth);
     }
 
     @Override
-    public Iterable<CustomerFacingService> findAllById(Iterable<String> strings, Sort sort, int depth) {
-        return null;
+    public Optional<CustomerFacingService> findById(String id, int depth) {
+        return repo.findById(id, depth);
+    }
+
+    @Override
+    public Iterable<CustomerFacingService> findAll(int depth) {
+        return repo.findAll(depth);
+    }
+
+    @Override
+    public Iterable<CustomerFacingService> findAllById(Iterable<String> ids, int depth) {
+        return repo.findAllById(ids, depth);
+    }
+
+    @Override
+    public Iterable<CustomerFacingService> findAllById(Iterable<String> ids, Sort sort, int depth) {
+        return repo.findAllById(ids, sort, depth);
     }
 
     @Override
     public Iterable<CustomerFacingService> findAll(Sort sort, int depth) {
-        return null;
+        return repo.findAll(sort, depth);
     }
 
     @Override
     public Page<CustomerFacingService> findAll(Pageable pageable, int depth) {
-        return null;
+        return repo.findAll(pageable, depth);
     }
 
-    // ✅ Placeholder implementations (unused but required)
-    @Override
-    public Optional<CustomerFacingService> uivFindByGdn(String s) { return Optional.empty(); }
+    // ********** STRING-CONTEXT METHODS (UIV CUSTOM) **********
 
     @Override
-    public Optional<CustomerFacingService> uivFindByGdn(String s, int i) { return Optional.empty(); }
+    public <S extends CustomerFacingService> S save(S entity, String ctx) {
+        return repo.save(entity, ctx);
+    }
 
     @Override
-    public void uivUpdateAssociationProperties(Neo4jDomainObject from, Neo4jDomainObject to, String rel, Map<String, Object> props) { }
+    public <S extends CustomerFacingService> Iterable<S> saveAll(Iterable<S> entities, String ctx) {
+        return repo.saveAll(entities, ctx);
+    }
 
     @Override
-    public void updateLdn(String s, String s2, String s1) { }
+    public Optional<CustomerFacingService> findById(String id, String ctx) {
+        return repo.findById(id, ctx);
+    }
 
     @Override
-    public void flushSession() { }
+    public boolean existsById(String id, String ctx) {
+        return repo.existsById(id, ctx);
+    }
 
     @Override
-    public <S extends CustomerFacingService> S save(S s, String s1) { return null; }
+    public long count(String ctx) {
+        return repo.count(ctx);
+    }
 
     @Override
-    public <S extends CustomerFacingService> Iterable<S> saveAll(Iterable<S> iterable, String s) { return null; }
+    public void deleteById(String id, String ctx) {
+        repo.deleteById(id, ctx);
+    }
 
     @Override
-    public Optional<CustomerFacingService> findById(String s, String s2) { return Optional.empty(); }
+    public void delete(CustomerFacingService entity, String ctx) {
+        repo.delete(entity, ctx);
+    }
 
     @Override
-    public boolean existsById(String s, String s2) { return false; }
+    public void deleteAll(Iterable<? extends CustomerFacingService> entities, String ctx) {
+        repo.deleteAll(entities, ctx);
+    }
 
     @Override
-    public long count(String s) { return 0; }
+    public void deleteAll(String ctx) {
+        repo.deleteAll(ctx);
+    }
 
     @Override
-    public void deleteById(String s, String s2) { }
+    public <S extends CustomerFacingService> S save(S entity, int depth, String ctx) {
+        return repo.save(entity, depth, ctx);
+    }
 
     @Override
-    public void delete(CustomerFacingService customerFacingService, String s) { }
+    public <S extends CustomerFacingService> Iterable<S> save(Iterable<S> entities, int depth, String ctx) {
+        return repo.save(entities, depth, ctx);
+    }
 
     @Override
-    public void deleteAll(Iterable<? extends CustomerFacingService> iterable, String s) { }
+    public Optional<CustomerFacingService> findById(String id, int depth, String ctx) {
+        return repo.findById(id, depth, ctx);
+    }
 
     @Override
-    public void deleteAll(String s) { }
+    public Iterable<CustomerFacingService> findAll(String ctx) {
+        return repo.findAll(ctx);
+    }
 
     @Override
-    public <S extends CustomerFacingService> S save(S s, int i, String s1) { return null; }
+    public Iterable<CustomerFacingService> findAll(int depth, String ctx) {
+        return repo.findAll(depth, ctx);
+    }
 
     @Override
-    public <S extends CustomerFacingService> Iterable<S> save(Iterable<S> iterable, int i, String s) { return null; }
+    public Iterable<CustomerFacingService> findAllById(Iterable<String> ids, String ctx) {
+        return repo.findAllById(ids, ctx);
+    }
 
     @Override
-    public Optional<CustomerFacingService> findById(String s, int i, String s2) { return Optional.empty(); }
+    public Iterable<CustomerFacingService> findAllById(Iterable<String> ids, int depth, String ctx) {
+        return repo.findAllById(ids, depth, ctx);
+    }
 
     @Override
-    public Iterable<CustomerFacingService> findAll(String s) { return null; }
+    public Iterable<CustomerFacingService> findAll(Sort sort, String ctx) {
+        return repo.findAll(sort, ctx);
+    }
 
     @Override
-    public Iterable<CustomerFacingService> findAll(int i, String s) { return null; }
+    public Iterable<CustomerFacingService> findAll(Sort sort, int depth, String ctx) {
+        return repo.findAll(sort, depth, ctx);
+    }
 
     @Override
-    public Iterable<CustomerFacingService> findAllById(Iterable<String> iterable, String s) { return null; }
+    public Iterable<CustomerFacingService> findAllById(Iterable<String> ids, Sort sort, String ctx) {
+        return repo.findAllById(ids, sort, ctx);
+    }
 
     @Override
-    public Iterable<CustomerFacingService> findAllById(Iterable<String> iterable, int i, String s) { return null; }
+    public Iterable<CustomerFacingService> findAllById(Iterable<String> ids, Sort sort, int depth, String ctx) {
+        return repo.findAllById(ids, sort, depth, ctx);
+    }
 
     @Override
-    public Iterable<CustomerFacingService> findAll(Sort sort, String s) { return null; }
+    public Page<CustomerFacingService> findAll(Pageable pageable, String ctx) {
+        return repo.findAll(pageable, ctx);
+    }
 
     @Override
-    public Iterable<CustomerFacingService> findAll(Sort sort, int i, String s) { return null; }
+    public Page<CustomerFacingService> findAll(Pageable pageable, int depth, String ctx) {
+        return repo.findAll(pageable, depth, ctx);
+    }
 
     @Override
-    public Iterable<CustomerFacingService> findAllById(Iterable<String> iterable, Sort sort, String s) { return null; }
+    public Optional<CustomerFacingService> uivFindByGdn(String gdn, String ctx) {
+        return repo.uivFindByGdn(gdn, ctx);
+    }
 
     @Override
-    public Iterable<CustomerFacingService> findAllById(Iterable<String> iterable, Sort sort, int i, String s) { return null; }
+    public Optional<CustomerFacingService> uivFindByGdn(String gdn, int depth, String ctx) {
+        return repo.uivFindByGdn(gdn, depth, ctx);
+    }
 
     @Override
-    public Page<CustomerFacingService> findAll(Pageable pageable, String s) { return null; }
+    public Optional<CustomerFacingService> uivFindByGdn(String gdn) {
+        return repo.uivFindByGdn(gdn);
+    }
 
     @Override
-    public Page<CustomerFacingService> findAll(Pageable pageable, int i, String s) { return null; }
+    public Optional<CustomerFacingService> uivFindByGdn(String gdn, int depth) {
+        return repo.uivFindByGdn(gdn, depth);
+    }
+
+    // ********** UIV GRAPH OPS **********
 
     @Override
-    public Optional<CustomerFacingService> uivFindByGdn(String s, String s1) { return Optional.empty(); }
+    public void uivUpdateAssociationProperties(Neo4jDomainObject from, Neo4jDomainObject to, String rel, Map<String, Object> props) {
+        repo.uivUpdateAssociationProperties(from, to, rel, props);
+    }
 
     @Override
-    public Optional<CustomerFacingService> uivFindByGdn(String s, int i, String s1) { return Optional.empty(); }
+    public void updateLdn(String old, String newVal, String ctx) {
+        repo.updateLdn(old, newVal, ctx);
+    }
 
     @Override
-    public boolean uivFindById(String s) { return false; }
+    public void updateLdn(String old, String newVal, String ctx, String mode) {
+        repo.updateLdn(old, newVal, ctx, mode);
+    }
 
     @Override
-    public boolean uivFindById(String s, String s1, String s2, boolean b, String s3) { return false; }
+    public List<String> uivFindRelationExists(String a, String b, String c, String d, String e, String f) {
+        return repo.uivFindRelationExists(a, b, c, d, e, f);
+    }
 
     @Override
-    public void updateLdn(String s, String s2, String s1, String s3) { }
+    public void refactor(Object a, String b, String c, String d, boolean e) {
+        repo.refactor(a, b, c, d, e);
+    }
 
     @Override
-    public List<String> uivFindRelationExists(String s, String s1, String s2, String s3, String s4, String s5) { return List.of(); }
+    public void refactor(Object a, String b, String c, String d, String e, boolean f) {
+        repo.refactor(a, b, c, d, e, f);
+    }
 
     @Override
-    public void refactor(Object o, String s, String s2, String s1, boolean b) { }
+    public void flushSession() {
+        repo.flushSession();
+    }
 
     @Override
-    public void refactor(Object o, String s, String s2, String s1, String s3, boolean b) { }
+    public boolean uivFindById(String id) {
+        return repo.uivFindById(id);
+    }
 
     @Override
-    public CustomerFacingService uivFindByTwoEndNode(Map<String, String> map, Map<String, String> map1, String s, String s1) { return null; }
+    public boolean uivFindById(String a, String b, String c, boolean d, String e) {
+        return repo.uivFindById(a, b, c, d, e);
+    }
+
+    @Override
+    public CustomerFacingService uivFindByTwoEndNode(Map<String, String> a, Map<String, String> b, String r, String ctx) {
+        return repo.uivFindByTwoEndNode(a, b, r, ctx);
+    }
+
+    @Override
+    public <S extends CustomerFacingService> S batchSave(S s, int d, String ctx) {
+        return repo.batchSave(s, d, ctx);
+    }
+
+    @Override
+    public <S extends CustomerFacingService> Iterable<S> batchSaveAll(Iterable<S> it, int d, String ctx) {
+        return repo.batchSaveAll(it, d, ctx);
+    }
+
+    // ********** SPRING DATA EXAMPLE API **********
+
+    @Override
+    public <S extends CustomerFacingService> Optional<S> findOne(Example<S> example) {
+        return repo.findOne(example);
+    }
+
+    @Override
+    public <S extends CustomerFacingService> Iterable<S> findAll(Example<S> example) {
+        return repo.findAll(example);
+    }
+
+    @Override
+    public <S extends CustomerFacingService> Iterable<S> findAll(Example<S> example, Sort sort) {
+        return repo.findAll(example, sort);
+    }
+
+    @Override
+    public <S extends CustomerFacingService> Page<S> findAll(Example<S> example, Pageable pageable) {
+        return repo.findAll(example, pageable);
+    }
+
+    @Override
+    public <S extends CustomerFacingService> long count(Example<S> example) {
+        return repo.count(example);
+    }
+
+    @Override
+    public <S extends CustomerFacingService> boolean exists(Example<S> example) {
+        return repo.exists(example);
+    }
+
+    @Override
+    public <S extends CustomerFacingService, R> R findBy(
+            Example<S> example,
+            Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction
+    ) {
+        return repo.findBy(example, queryFunction);
+    }
 }

@@ -4,17 +4,14 @@ package com.nokia.nsw.uiv.model.location;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.nokia.nsw.uiv.framework.repository.annotation.Composite;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.neo4j.ogm.annotation.Relationship;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -28,8 +25,10 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.location.GeographicPoint"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.location.GeographicPoint"
+@Composite(
+        type = Composite.Type.CHILD,
+        otherEnd = "geographicPoint",
+        otherEndType = "com.nokia.nsw.uiv.model.location.Polygon"
 )
 public class GeographicPoint extends Geometry {
     @JsonView({
@@ -57,17 +56,6 @@ public class GeographicPoint extends Geometry {
             UivJsonViews.ReadView.class
     })
     private Double z;
-
-    @JsonFilter("polygon")
-    @Relationship(
-            type = "CONTAINS",
-            direction = "INCOMING"
-    )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
-            allowableValues = "{com.nokia.nsw.uiv.model.location.Polygon}"
-    )
-    protected Polygon polygon;
 
     public String getCrs() {
         return this.crs;
@@ -147,24 +135,5 @@ public class GeographicPoint extends Geometry {
                 .append("y", this.y)
                 .append("z", this.z)
                 .toString();
-    }
-
-    public Polygon getPolygon() {
-        return this.polygon;
-    }
-
-    public void setPolygon(Polygon polygon) {
-        this.setAssocModified(true);
-        if (null == polygon && null != this.polygon && null != this.polygon.getGeographicPoint()) {
-            this.polygon.getGeographicPoint().remove(this);
-        }
-        this.polygon=polygon;
-        if (null != polygon && (null == polygon.getGeographicPoint() || !polygon.getGeographicPoint().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == polygon.getGeographicPoint()) {
-                polygon.setGeographicPoint(new ArrayList<>());
-            }
-            polygon.addGeographicPoint(this);
-        }
     }
 }

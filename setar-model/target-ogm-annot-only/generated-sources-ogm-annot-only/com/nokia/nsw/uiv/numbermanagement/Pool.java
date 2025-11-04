@@ -9,13 +9,12 @@ import com.nokia.nsw.uiv.datatype.Neo4jDomainNodeObject;
 import com.nokia.nsw.uiv.datatype.UivHashMap;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.common.Entity;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -38,9 +37,6 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
         label = "com.nokia.nsw.uiv.numbermanagement.Pool"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.numbermanagement.Pool"
-)
 public class Pool extends Neo4jDomainNodeObject {
     @JsonView({
             UivJsonViews.WriteView.class,
@@ -53,7 +49,8 @@ public class Pool extends Neo4jDomainNodeObject {
             UivJsonViews.WriteView.class,
             UivJsonViews.ReadView.class
     })
-    @Index(
+    @Index
+    @com.nokia.nsw.uiv.framework.repository.annotation.Index(
             unique = false
     )
     private String kind;
@@ -92,7 +89,8 @@ public class Pool extends Neo4jDomainNodeObject {
             UivJsonViews.WriteView.class,
             UivJsonViews.ReadView.class
     })
-    @Index(
+    @Index
+    @com.nokia.nsw.uiv.framework.repository.annotation.Index(
             unique = false
     )
     private Integer priority;
@@ -110,8 +108,9 @@ public class Pool extends Neo4jDomainNodeObject {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.numbermanagement.Identifier>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.numbermanagement.Identifier]"
     )
     protected Set<Identifier> identifier = new HashSet<>();
@@ -121,8 +120,9 @@ public class Pool extends Neo4jDomainNodeObject {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.numbermanagement.Pool>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.numbermanagement.Pool]"
     )
     protected Set<Pool> childPool = new HashSet<>();
@@ -132,8 +132,9 @@ public class Pool extends Neo4jDomainNodeObject {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.numbermanagement.Pool",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.numbermanagement.Pool}"
     )
     protected Pool parentPool;
@@ -143,8 +144,9 @@ public class Pool extends Neo4jDomainNodeObject {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.Entity>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.Entity]"
     )
     protected Set<Entity> entity = new HashSet<>();

@@ -5,11 +5,9 @@ import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.nokia.nsw.uiv.datatype.Neo4jDomainNodeObject;
-import io.swagger.annotations.ApiModelProperty;
-import javax.xml.bind.annotation.XmlType;
+import com.nokia.nsw.uiv.framework.repository.annotation.Composite;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.neo4j.ogm.annotation.Relationship;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -27,35 +25,10 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.location.Geometry"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.location.Geometry"
+@Composite(
+        type = Composite.Type.CHILD,
+        otherEnd = "geometry",
+        otherEndType = "com.nokia.nsw.uiv.model.location.Place"
 )
 public abstract class Geometry extends Neo4jDomainNodeObject {
-    @JsonFilter("place")
-    @Relationship(
-            type = "CONTAINS",
-            direction = "INCOMING"
-    )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
-            allowableValues = "{com.nokia.nsw.uiv.model.location.Place}"
-    )
-    protected Place place;
-
-    public Place getPlace() {
-        return this.place;
-    }
-
-    public void setPlace(Place place) {
-        this.setAssocModified(true);
-        Place previous = this.place;
-        this.place=place;
-        if (null == place  && null != previous) {
-            previous.setGeometry(null);
-        }
-        if (null != place && (null == place.getGeometry() || !place.getGeometry().equals(this))) {
-            this.set_type(this.get_type());
-            place.setGeometry(this);
-        }
-    }
 }

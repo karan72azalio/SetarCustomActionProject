@@ -79,7 +79,7 @@ public class QueryServicesInfo implements HttpAction {
             if (accno != null && !accno.trim().isEmpty()) {
                 isAccno = true;
                 log.debug("Searching RFS by subscriber/account number '{}'", accno);
-                java.util.List<ResourceFacingService> resourceFacingServices = (List<ResourceFacingService>) rfsRepository.findAll();
+                List<ResourceFacingService> resourceFacingServices = (List<ResourceFacingService>) rfsRepository.findAll();
                 if(!resourceFacingServices.isEmpty()){
                     for(ResourceFacingService rfs:resourceFacingServices)
                     {
@@ -94,7 +94,7 @@ public class QueryServicesInfo implements HttpAction {
                 // ontSN branch
                 log.debug("Searching RFS by ontSN '{}'", ontSN);
                 List<ResourceFacingService> rfsByOnt = new ArrayList<>();
-                java.util.List<ResourceFacingService> resourceFacingServicesONT = (List<ResourceFacingService>) rfsRepository.findAll();
+                List<ResourceFacingService> resourceFacingServicesONT = (List<ResourceFacingService>) rfsRepository.findAll();
                 if(!resourceFacingServicesONT.isEmpty()){
                     for(ResourceFacingService rfs:resourceFacingServicesONT)
                     {
@@ -114,7 +114,7 @@ public class QueryServicesInfo implements HttpAction {
                             if (parts.length >= 2) {
                                 String anchorAccNo = parts[1];
                                 List<ResourceFacingService> candidates = new ArrayList<>();
-                                java.util.List<ResourceFacingService> resourceFacingServicesCand = (List<ResourceFacingService>) rfsRepository.findAll();
+                                List<ResourceFacingService> resourceFacingServicesCand = (List<ResourceFacingService>) rfsRepository.findAll();
                                 if(!resourceFacingServicesCand.isEmpty()){
                                     for(ResourceFacingService rfs:resourceFacingServicesCand)
                                     {

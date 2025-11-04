@@ -5,9 +5,11 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.*;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -139,6 +141,11 @@ public class SubscriptionCustomRepositoryImpl implements SubscriptionCustomRepos
     @Override
     public void delete(Subscription entity) {
         subscriptionRepository.delete(entity);
+    }
+
+    @Override
+    public void deleteAllById(Iterable<? extends String> strings) {
+
     }
 
     @Override
@@ -294,6 +301,16 @@ public class SubscriptionCustomRepositoryImpl implements SubscriptionCustomRepos
     }
 
     @Override
+    public <S extends Subscription> S batchSave(S s, int i, String s1) {
+        return null;
+    }
+
+    @Override
+    public <S extends Subscription> Iterable<S> batchSaveAll(Iterable<S> iterable, int i, String s) {
+        return null;
+    }
+
+    @Override
     public void uivUpdateAssociationProperties(Neo4jDomainObject from, Neo4jDomainObject to, String rel, Map<String, Object> props) { }
 
     @Override
@@ -315,6 +332,41 @@ public class SubscriptionCustomRepositoryImpl implements SubscriptionCustomRepos
 
     @Override
     public Subscription uivFindByTwoEndNode(Map<String, String> map1, Map<String, String> map2, String s1, String s2) {
+        return null;
+    }
+
+    @Override
+    public <S extends Subscription> Optional<S> findOne(Example<S> example) {
+        return Optional.empty();
+    }
+
+    @Override
+    public <S extends Subscription> Iterable<S> findAll(Example<S> example) {
+        return null;
+    }
+
+    @Override
+    public <S extends Subscription> Iterable<S> findAll(Example<S> example, Sort sort) {
+        return null;
+    }
+
+    @Override
+    public <S extends Subscription> Page<S> findAll(Example<S> example, Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public <S extends Subscription> long count(Example<S> example) {
+        return 0;
+    }
+
+    @Override
+    public <S extends Subscription> boolean exists(Example<S> example) {
+        return false;
+    }
+
+    @Override
+    public <S extends Subscription, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
         return null;
     }
 }

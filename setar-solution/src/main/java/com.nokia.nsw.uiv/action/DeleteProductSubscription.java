@@ -58,7 +58,7 @@ public class DeleteProductSubscription implements HttpAction {
                 Validations.validateMandatoryParams(request.getComponentName(), "componentName");
             }catch (BadRequestException bre) {
                 return new DeleteProductSubscriptionResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        java.time.Instant.now().toString(), "");
+                        Instant.now().toString(), "");
             }
             log.info("Mandatory parameter validation completed");
 

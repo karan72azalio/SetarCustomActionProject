@@ -9,7 +9,7 @@ import com.nokia.nsw.uiv.datatype.UivHashMap;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalResource;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -42,16 +42,18 @@ public class UTILIZES_RESOURCE extends Neo4jDomainRelationshipObject {
 
     @StartNode
     @JsonFilter("logicalResource")
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.LogicalResource",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.LogicalResource}"
     )
     private LogicalResource logicalResource;
 
     @EndNode
     @JsonFilter("resource")
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.Resource",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.Resource}"
     )
     private Resource resource;

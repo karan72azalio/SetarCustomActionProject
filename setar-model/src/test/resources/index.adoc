@@ -1,4 +1,4 @@
-include::{generated}/overview.adoc[]
-include::{generated}/paths.adoc[]
-include::{generated}/security.adoc[]
-include::{generated}/definitions.adoc[]
+include::{generated}/overview/index.adoc[]
+include::{generated}/paths/index.adoc[]
+include::{generated}/security/index.adoc[]
+include::{generated}/definitions/index.adoc[]

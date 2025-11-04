@@ -3,10 +3,9 @@ package com.nokia.nsw.uiv.model.location;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -23,17 +22,15 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.location.Polygon"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.location.Polygon"
-)
 public class Polygon extends Geometry {
     @JsonFilter("geographicPoint")
     @Relationship(
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.List<com.nokia.nsw.uiv.model.location.GeographicPoint>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.location.GeographicPoint]"
     )
     protected List<GeographicPoint> geographicPoint = new ArrayList<>();
@@ -41,17 +38,11 @@ public class Polygon extends Geometry {
     public void addGeographicPoint(GeographicPoint element) {
         this.setAssocModified(true);
         this.geographicPoint.add(element);
-        if (null != element && (null == element.getPolygon() || !element.getPolygon().equals(this))) {
-            this.set_type(this.get_type());
-            element.setPolygon(this);
-        }
     }
 
     public void removeGeographicPoint(GeographicPoint element) {
         this.setAssocModified(true);
-        if (null != element && null != this.geographicPoint  && this.geographicPoint.remove(element) && null != element.getPolygon()) {
-            element.setPolygon(null);
-        }
+        this.geographicPoint.remove(element);
     }
 
     public List<GeographicPoint> getGeographicPoint() {
@@ -60,24 +51,6 @@ public class Polygon extends Geometry {
 
     public void setGeographicPoint(List<GeographicPoint> geographicPoint) {
         this.setAssocModified(true);
-        if (null != this.geographicPoint) {
-            List<GeographicPoint> toDelete = new ArrayList<>(this.geographicPoint);
-            boolean setToNull = null == geographicPoint || geographicPoint.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(geographicPoint);
-            }
-            for (GeographicPoint each : toDelete) {
-                each.setPolygon(null);
-            }
-        }
         this.geographicPoint=geographicPoint;
-        if (null != geographicPoint) {
-            for (GeographicPoint each: geographicPoint) {
-                if (null != each && ( null == each.getPolygon() || !each.getPolygon().equals(this))) {
-                    this.set_type(this.get_type());
-                    each.setPolygon(this);
-                }
-            }
-        }
     }
 }

@@ -79,7 +79,7 @@ public class CreateServiceFibernet implements HttpAction {
                 Validations.validateMandatory(request.getProductSubtype(), "productSubtype");
             }catch (BadRequestException bre) {
                 return new CreateServiceFibernetResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        java.time.Instant.now().toString(), "","");
+                        Instant.now().toString(), "","");
             }
             // optional: template names etc.
 
@@ -291,9 +291,7 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getVlanID() != null) stbProps.put("mgmtVlan", request.getVlanID());
                 stbDevice.addUsingService(rfs);
                 stbDevice.addManagingDevices(oltDevice);
-                Map<String,Object> props = stbDevice.getProperties();
-                props.put("administrativeState","Available");
-                stbDevice.setProperties(props);
+                stbDevice.setAdministrativeState(AdministrativeState.Activated);
                 logicalDeviceRepository.save(stbDevice, 2);
                 log.info("Created ONT device: {}", stbDeviceName);
             }
@@ -319,6 +317,7 @@ public class CreateServiceFibernet implements HttpAction {
                     vlanProps.put("vlanId", request.getVlanID());
                     vlanProps.put("serviceId", request.getServiceID());
                     vlan.setProperties(vlanProps);
+                    vlan.setContainingLogicalDevice(oltDevice);
                     logicalInterfaceRepository.save(vlan, 2);
                     log.info("Created VLAN interface: {}", vlanName);
                 }

@@ -4,7 +4,6 @@ package com.nokia.nsw.uiv.model.resource.infra;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 
@@ -26,8 +25,5 @@ import org.neo4j.ogm.annotation.NodeEntity;
         label = "com.nokia.nsw.uiv.model.resource.infra.InfraComponent"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.infra.InfraComponent"
-)
 public abstract class InfraComponent extends InfraResource {
 }

@@ -8,14 +8,14 @@ import com.nokia.nsw.uiv.constants.FeatureFlag;
 import com.nokia.nsw.uiv.datatype.SchemaSpecification;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
+import com.nokia.nsw.uiv.framework.repository.annotation.Composite;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -33,8 +33,10 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.resource.logical.Configuration"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.logical.Configuration"
+@Composite(
+        type = Composite.Type.CHILD,
+        otherEnd = "associatedConfiguration",
+        otherEndType = "com.nokia.nsw.uiv.model.resource.logical.Configuration"
 )
 public class Configuration extends LogicalResource {
     @JsonView(UivJsonViews.TmfView.class)
@@ -47,8 +49,9 @@ public class Configuration extends LogicalResource {
             type = "HAS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.LogicalResource",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.LogicalResource}"
     )
     protected LogicalResource logicalResource;
@@ -58,8 +61,9 @@ public class Configuration extends LogicalResource {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.Configuration",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.Configuration}"
     )
     protected Configuration containing;
@@ -69,8 +73,9 @@ public class Configuration extends LogicalResource {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.Configuration>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.Configuration]"
     )
     protected Set<Configuration> contained = new HashSet<>();
@@ -80,30 +85,21 @@ public class Configuration extends LogicalResource {
             type = "ASSOCIATES_TO",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.Configuration>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.Configuration]"
     )
     protected Set<Configuration> associatedConfiguration = new HashSet<>();
-
-    @JsonFilter("associatingConfiguration")
-    @Relationship(
-            type = "ASSOCIATES_TO",
-            direction = "INCOMING"
-    )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
-            allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.Configuration]"
-    )
-    protected Set<Configuration> associatingConfiguration = new HashSet<>();
 
     @JsonFilter("templatedLogicalResource")
     @Relationship(
             type = "HAS_TEMPLATE",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.LogicalResource",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.LogicalResource}"
     )
     protected LogicalResource templatedLogicalResource;
@@ -221,20 +217,11 @@ public class Configuration extends LogicalResource {
     public void addAssociatedConfiguration(Configuration element) {
         this.setAssocModified(true);
         this.associatedConfiguration.add(element);
-        if (null != element && (null == element.getAssociatingConfiguration() || !element.getAssociatingConfiguration().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == element.getAssociatingConfiguration()) {
-                element.setAssociatingConfiguration(new HashSet<>());
-            }
-            element.addAssociatingConfiguration(this);
-        }
     }
 
     public void removeAssociatedConfiguration(Configuration element) {
         this.setAssocModified(true);
-        if (null != element && null != this.associatedConfiguration  && this.associatedConfiguration.remove(element) && null != element.getAssociatingConfiguration() && element.getAssociatingConfiguration().contains(this)) {
-            element.getAssociatingConfiguration().remove(this);
-        }
+        this.associatedConfiguration.remove(element);
     }
 
     public Set<Configuration> getAssociatedConfiguration() {
@@ -243,81 +230,7 @@ public class Configuration extends LogicalResource {
 
     public void setAssociatedConfiguration(Set<Configuration> associatedConfiguration) {
         this.setAssocModified(true);
-        if (null != this.associatedConfiguration) {
-            List<Configuration> toDelete = new ArrayList<>(this.associatedConfiguration);
-            boolean setToNull = null == associatedConfiguration || associatedConfiguration.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(associatedConfiguration);
-            }
-            for (Configuration each : toDelete) {
-                if (null != each.getAssociatingConfiguration()) {
-                    each.getAssociatingConfiguration().remove(this);
-                }
-            }
-        }
         this.associatedConfiguration=associatedConfiguration;
-        if (null != associatedConfiguration) {
-            for (Configuration each: associatedConfiguration) {
-                if (null != each && (null == each.getAssociatingConfiguration() || !each.getAssociatingConfiguration().contains(this))) {
-                    this.set_type(this.get_type());
-                    if (null == each.getAssociatingConfiguration()) {
-                        each.setAssociatingConfiguration(new HashSet<>());
-                    }
-                    each.addAssociatingConfiguration(this);
-                }
-            }
-        }
-    }
-
-    public void addAssociatingConfiguration(Configuration element) {
-        this.setAssocModified(true);
-        this.associatingConfiguration.add(element);
-        if (null != element && (null == element.getAssociatedConfiguration() || !element.getAssociatedConfiguration().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == element.getAssociatedConfiguration()) {
-                element.setAssociatedConfiguration(new HashSet<>());
-            }
-            element.addAssociatedConfiguration(this);
-        }
-    }
-
-    public void removeAssociatingConfiguration(Configuration element) {
-        this.setAssocModified(true);
-        if (null != element && null != this.associatingConfiguration  && this.associatingConfiguration.remove(element) && null != element.getAssociatedConfiguration() && element.getAssociatedConfiguration().contains(this)) {
-            element.getAssociatedConfiguration().remove(this);
-        }
-    }
-
-    public Set<Configuration> getAssociatingConfiguration() {
-        return this.associatingConfiguration;
-    }
-
-    public void setAssociatingConfiguration(Set<Configuration> associatingConfiguration) {
-        this.setAssocModified(true);
-        if (null != this.associatingConfiguration) {
-            List<Configuration> toDelete = new ArrayList<>(this.associatingConfiguration);
-            boolean setToNull = null == associatingConfiguration || associatingConfiguration.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(associatingConfiguration);
-            }
-            for (Configuration each : toDelete) {
-                if (null != each.getAssociatedConfiguration()) {
-                    each.getAssociatedConfiguration().remove(this);
-                }
-            }
-        }
-        this.associatingConfiguration=associatingConfiguration;
-        if (null != associatingConfiguration) {
-            for (Configuration each: associatingConfiguration) {
-                if (null != each && (null == each.getAssociatedConfiguration() || !each.getAssociatedConfiguration().contains(this))) {
-                    this.set_type(this.get_type());
-                    if (null == each.getAssociatedConfiguration()) {
-                        each.setAssociatedConfiguration(new HashSet<>());
-                    }
-                    each.addAssociatedConfiguration(this);
-                }
-            }
-        }
     }
 
     public LogicalResource getTemplatedLogicalResource() {

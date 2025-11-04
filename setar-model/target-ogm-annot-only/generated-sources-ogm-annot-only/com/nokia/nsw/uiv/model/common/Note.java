@@ -7,19 +7,16 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.nokia.nsw.uiv.datatype.Neo4jDomainNodeObject;
+import com.nokia.nsw.uiv.framework.repository.annotation.Composite;
 import com.nokia.nsw.uiv.jackson.UivDateDeserializer;
 import com.nokia.nsw.uiv.jackson.UivDateSerializer;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import io.swagger.annotations.ApiModelProperty;
-import java.util.HashSet;
-import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.neo4j.ogm.annotation.Relationship;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -33,8 +30,10 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.common.Note"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.common.Note"
+@Composite(
+        type = Composite.Type.CHILD,
+        otherEnd = "note",
+        otherEndType = "com.nokia.nsw.uiv.model.common.Entity"
 )
 public class Note extends Neo4jDomainNodeObject {
     @JsonView({
@@ -61,17 +60,6 @@ public class Note extends Neo4jDomainNodeObject {
     })
     @NotNull
     private String text;
-
-    @JsonFilter("entity")
-    @Relationship(
-            type = "OWNS",
-            direction = "INCOMING"
-    )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
-            allowableValues = "{com.nokia.nsw.uiv.model.common.Entity}"
-    )
-    protected Entity entity;
 
     public java.util.Date getDate() {
         return this.date;
@@ -137,24 +125,5 @@ public class Note extends Neo4jDomainNodeObject {
                 .append("author", this.author)
                 .append("text", this.text)
                 .toString();
-    }
-
-    public Entity getEntity() {
-        return this.entity;
-    }
-
-    public void setEntity(Entity entity) {
-        this.setAssocModified(true);
-        if (null == entity && null != this.entity && null != this.entity.getNote()) {
-            this.entity.getNote().remove(this);
-        }
-        this.entity=entity;
-        if (null != entity && (null == entity.getNote() || !entity.getNote().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == entity.getNote()) {
-                entity.setNote(new HashSet<>());
-            }
-            entity.addNote(this);
-        }
     }
 }

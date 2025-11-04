@@ -5,12 +5,11 @@ import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.nokia.nsw.uiv.model.common.Entity;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -31,17 +30,15 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.common.party.Party"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.common.party.Party"
-)
 public abstract class Party extends Entity {
     @JsonFilter("organization")
     @Relationship(
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.common.party.Organization",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.common.party.Organization}"
     )
     protected Organization organization;
@@ -51,8 +48,9 @@ public abstract class Party extends Entity {
             type = "HAS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.party.PartyRole>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.party.PartyRole]"
     )
     protected Set<PartyRole> partyRole = new HashSet<>();

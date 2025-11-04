@@ -12,13 +12,12 @@ import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.infra.InfraComponent;
 import com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalComponent;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -37,17 +36,15 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualComponent"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualComponent"
-)
 public class VirtualComponent extends InfraComponent {
     @JsonFilter("containing")
     @Relationship(
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualComponent",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualComponent}"
     )
     protected VirtualComponent containing;
@@ -57,8 +54,9 @@ public class VirtualComponent extends InfraComponent {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualComponent>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualComponent]"
     )
     protected Set<VirtualComponent> contained = new HashSet<>();
@@ -68,8 +66,9 @@ public class VirtualComponent extends InfraComponent {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalComponent>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalComponent]"
     )
     protected Set<PhysicalComponent> physicalComponentUSES = new HashSet<>();

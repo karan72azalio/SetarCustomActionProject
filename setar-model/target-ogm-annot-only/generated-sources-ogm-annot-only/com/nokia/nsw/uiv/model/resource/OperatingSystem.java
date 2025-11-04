@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.nokia.nsw.uiv.datatype.UivDatatypeObject;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

@@ -8,18 +8,14 @@ import com.nokia.nsw.uiv.constants.FeatureFlag;
 import com.nokia.nsw.uiv.datatype.SchemaSpecification;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
+import com.nokia.nsw.uiv.framework.repository.annotation.Composite;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualPort;
-import io.swagger.annotations.ApiModelProperty;
-import java.util.HashSet;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
 
 @JsonTypeInfo(
@@ -34,32 +30,17 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.resource.logical.Protocol"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.logical.Protocol"
+@Composite(
+        type = Composite.Type.CHILD,
+        otherEnd = "protocol",
+        otherEndType = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualPort"
+)
+@Composite(
+        type = Composite.Type.CHILD,
+        otherEnd = "protocol",
+        otherEndType = "com.nokia.nsw.uiv.model.resource.logical.LogicalInterface"
 )
 public class Protocol extends LogicalResource {
-    @JsonFilter("virtualPort")
-    @Relationship(
-            type = "IMPLEMENTS",
-            direction = "INCOMING"
-    )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
-            allowableValues = "{com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualPort}"
-    )
-    protected VirtualPort virtualPort;
-
-    @JsonFilter("logicalInterface")
-    @Relationship(
-            type = "IMPLEMENTS",
-            direction = "INCOMING"
-    )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
-            allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.LogicalInterface}"
-    )
-    protected LogicalInterface logicalInterface;
-
     @JsonView(UivJsonViews.TmfView.class)
     @Transient
     @Valid
@@ -70,44 +51,6 @@ public class Protocol extends LogicalResource {
             UivJsonViews.ReadView.class
     })
     private Integer processId;
-
-    public VirtualPort getVirtualPort() {
-        return this.virtualPort;
-    }
-
-    public void setVirtualPort(VirtualPort virtualPort) {
-        this.setAssocModified(true);
-        if (null == virtualPort && null != this.virtualPort && null != this.virtualPort.getProtocol()) {
-            this.virtualPort.getProtocol().remove(this);
-        }
-        this.virtualPort=virtualPort;
-        if (null != virtualPort && (null == virtualPort.getProtocol() || !virtualPort.getProtocol().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == virtualPort.getProtocol()) {
-                virtualPort.setProtocol(new HashSet<>());
-            }
-            virtualPort.addProtocol(this);
-        }
-    }
-
-    public LogicalInterface getLogicalInterface() {
-        return this.logicalInterface;
-    }
-
-    public void setLogicalInterface(LogicalInterface logicalInterface) {
-        this.setAssocModified(true);
-        if (null == logicalInterface && null != this.logicalInterface && null != this.logicalInterface.getProtocol()) {
-            this.logicalInterface.getProtocol().remove(this);
-        }
-        this.logicalInterface=logicalInterface;
-        if (null != logicalInterface && (null == logicalInterface.getProtocol() || !logicalInterface.getProtocol().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == logicalInterface.getProtocol()) {
-                logicalInterface.setProtocol(new HashSet<>());
-            }
-            logicalInterface.addProtocol(this);
-        }
-    }
 
     public SchemaSpecification getProtocolSpecification() {
         FeatureFlag featureFlag = UivSpringContextAware.getApplicationContext().getBean(FeatureFlag.class);

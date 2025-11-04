@@ -13,6 +13,7 @@ import com.nokia.nsw.uiv.jackson.UivDateDeserializer;
 import com.nokia.nsw.uiv.jackson.UivDateSerializer;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.common.Entity;
+import com.nokia.nsw.uiv.model.common.USES_PROTECTED_SERVICE;
 import com.nokia.nsw.uiv.model.common.UTILIZES_RESOURCE;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.location.Place;
@@ -20,12 +21,11 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalResource;
 import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.ServiceConsumer;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -67,17 +67,15 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.resource.Resource"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.Resource"
-)
 public abstract class Resource extends Entity {
     @JsonFilter("usingServiceConsumer")
     @Relationship(
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.ServiceConsumer>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.ServiceConsumer]"
     )
     protected Set<ServiceConsumer> usingServiceConsumer = new HashSet<>();
@@ -87,8 +85,9 @@ public abstract class Resource extends Entity {
             type = "OWNS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.service.ServiceConsumer",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.service.ServiceConsumer}"
     )
     protected ServiceConsumer owningServiceConsumer;
@@ -98,8 +97,9 @@ public abstract class Resource extends Entity {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.party.Customer>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.party.Customer]"
     )
     protected Set<Customer> usingCustomer = new HashSet<>();
@@ -108,16 +108,24 @@ public abstract class Resource extends Entity {
             type = "UTILIZES_RESOURCE",
             direction = "INCOMING"
     )
-    @ApiModelProperty
+    @Schema
     protected Set<UTILIZES_RESOURCE> utilizingLogicalResource = new HashSet<>();
+
+    @Relationship(
+            type = "USES_PROTECTED",
+            direction = "INCOMING"
+    )
+    @Schema
+    protected Set<USES_PROTECTED_SERVICE> usingServiceProtection = new HashSet<>();
 
     @JsonFilter("place")
     @Relationship(
             type = "LOCATES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.location.Place",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.location.Place}"
     )
     protected Place place;
@@ -127,8 +135,9 @@ public abstract class Resource extends Entity {
             type = "OWNS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.service.Service",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.service.Service}"
     )
     protected Service owningService;
@@ -138,8 +147,9 @@ public abstract class Resource extends Entity {
             type = "OWNS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.common.party.Customer",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.common.party.Customer}"
     )
     protected Customer owningCustomer;
@@ -149,8 +159,9 @@ public abstract class Resource extends Entity {
             type = "COVERS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.location.Place>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.location.Place]"
     )
     protected Set<Place> coveredPlace = new HashSet<>();
@@ -160,8 +171,9 @@ public abstract class Resource extends Entity {
             type = "LOCATED_AT",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.location.Place",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.location.Place}"
     )
     protected Place locatingPlace;
@@ -171,8 +183,9 @@ public abstract class Resource extends Entity {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.LogicalResource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.LogicalResource]"
     )
     protected Set<LogicalResource> usingLogicalResource = new HashSet<>();
@@ -182,8 +195,9 @@ public abstract class Resource extends Entity {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> usingService = new HashSet<>();
@@ -193,8 +207,9 @@ public abstract class Resource extends Entity {
             type = "CONFIGURES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> configuringService = new HashSet<>();
@@ -204,8 +219,9 @@ public abstract class Resource extends Entity {
             type = "MANAGES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.LogicalDevice>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.LogicalDevice]"
     )
     protected Set<LogicalDevice> managingDevices = new HashSet<>();
@@ -214,14 +230,14 @@ public abstract class Resource extends Entity {
             type = "USES_PROTECTED",
             direction = "OUTGOING"
     )
-    @ApiModelProperty
+    @Schema
     protected Set<USES_PROTECTED> usedProtectedResource = new HashSet<>();
 
     @Relationship(
             type = "USES_PROTECTED",
             direction = "INCOMING"
     )
-    @ApiModelProperty
+    @Schema
     protected Set<USES_PROTECTED> usingResource = new HashSet<>();
 
     @JsonView({
@@ -482,6 +498,85 @@ public abstract class Resource extends Entity {
                         ispresent = each.getLogicalResource().getUtilizedResource().stream().anyMatch(o -> o==each);
                         if (!ispresent) {
                             each.getLogicalResource().getUtilizedResource().add(each);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void addUsingServiceProtection(USES_PROTECTED_SERVICE element) throws
+            BadRequestException {
+        this.setAssocModified(true);
+        if (null != element) {
+            if (null == element.getService()) {
+                log.error("Rich object of type \"USES_PROTECTED\" should have the other node end (service) value set");
+                throw new BadRequestException("Rich object of type \"USES_PROTECTED\" should have the other node end (service) value set");
+            }
+            if (null == element.getResource() || !element.getResource().equals(this) || !this.usingServiceProtection.contains(element)) {
+                this.set_type(this.get_type());
+                element.setResource(this);
+                if (null == this.usingServiceProtection) {
+                    this.usingServiceProtection = new HashSet<>();
+                }
+                this.usingServiceProtection.add(element);
+                if (null == element.getService().getUsedProtectedResource()) {
+                    element.getService().setUsedProtectedResource(new HashSet<>());
+                }
+                element.getService().getUsedProtectedResource().add(element);
+            }
+        }
+    }
+
+    public void removeUsingServiceProtection(USES_PROTECTED_SERVICE element) {
+        this.setAssocModified(true);
+        if (null != element && null != this.usingServiceProtection && this.usingServiceProtection.remove(element) && null != element.getService()) {
+            element.getService().removeUsedProtectedResource(element);
+        }
+    }
+
+    public Set<USES_PROTECTED_SERVICE> getUsingServiceProtection() {
+        return this.usingServiceProtection;
+    }
+
+    public void setUsingServiceProtection(Set<USES_PROTECTED_SERVICE> usingServiceProtection) throws
+            BadRequestException {
+        this.setAssocModified(true);
+        if (null != this.usingServiceProtection) {
+            List<USES_PROTECTED_SERVICE> toDelete = new ArrayList<>(this.usingServiceProtection);
+            boolean setToNull = null == usingServiceProtection || usingServiceProtection.isEmpty();
+            if (!setToNull)  {
+                toDelete.removeAll(usingServiceProtection);
+            }
+            for (USES_PROTECTED_SERVICE each : toDelete) {
+                if (null != each.getService() && null != each.getService().getUsedProtectedResource()) {
+                    each.getService().removeUsedProtectedResource(each);
+                }
+            }
+        }
+        if (null != usingServiceProtection) {
+            for (USES_PROTECTED_SERVICE each: usingServiceProtection) {
+                if (null != each) {
+                    if (null == each.getService()) {
+                        log.error("Rich object of type \"USES_PROTECTED\" should have the other node end (service) value set");
+                        throw new BadRequestException("Rich object of type \"USES_PROTECTED\" should have the other node end (service) value set");
+                    }
+                    if (null == each.getResource() || !each.getResource().equals(this) || !this.usingServiceProtection.contains(each)) {
+                        this.set_type(this.get_type());
+                        each.setResource(this);
+                        if (null == this.usingServiceProtection) {
+                            this.usingServiceProtection = new HashSet<>();
+                        }
+                        boolean ispresent = this.usingServiceProtection.stream().anyMatch(o -> o==each);
+                        if (!ispresent) {
+                            this.usingServiceProtection.add(each);
+                        }
+                        if (null == each.getService().getUsedProtectedResource()) {
+                            each.getService().setUsedProtectedResource(new HashSet<>());
+                        }
+                        ispresent = each.getService().getUsedProtectedResource().stream().anyMatch(o -> o==each);
+                        if (!ispresent) {
+                            each.getService().getUsedProtectedResource().add(each);
                         }
                     }
                 }

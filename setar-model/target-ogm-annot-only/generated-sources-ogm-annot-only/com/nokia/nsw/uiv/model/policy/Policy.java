@@ -11,14 +11,13 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.common.Entity;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -41,9 +40,6 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
         label = "com.nokia.nsw.uiv.model.policy.Policy"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.policy.Policy"
-)
 public class Policy extends Entity {
     @JsonView(UivJsonViews.TmfView.class)
     @Transient
@@ -69,8 +65,9 @@ public class Policy extends Entity {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.Entity>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.Entity]"
     )
     protected Set<Entity> usingEntity = new HashSet<>();
@@ -80,8 +77,9 @@ public class Policy extends Entity {
             type = "OWNS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.common.Entity",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.common.Entity}"
     )
     protected Entity owningEntity;
@@ -91,8 +89,9 @@ public class Policy extends Entity {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.policy.Policy",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.policy.Policy}"
     )
     protected Policy containing;
@@ -102,8 +101,9 @@ public class Policy extends Entity {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.policy.Policy>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.policy.Policy]"
     )
     protected Set<Policy> contained = new HashSet<>();
@@ -113,8 +113,9 @@ public class Policy extends Entity {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.policy.Policy>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.policy.Policy]"
     )
     protected Set<Policy> using = new HashSet<>();
@@ -124,8 +125,9 @@ public class Policy extends Entity {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.policy.Policy>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.policy.Policy]"
     )
     protected Set<Policy> used = new HashSet<>();
@@ -135,8 +137,9 @@ public class Policy extends Entity {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.policy.PolicyRule>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.policy.PolicyRule]"
     )
     protected Set<PolicyRule> policyRule = new HashSet<>();

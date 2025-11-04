@@ -1,316 +1,135 @@
 package com.nokia.nsw.uiv.repository;
 
 import com.nokia.nsw.uiv.datatype.Neo4jDomainObject;
-import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 @Repository
 @Primary
 public class LogicalDeviceCustomRepositoryImpl implements LogicalDeviceCustomRepository {
 
-    private final LogicalDeviceRepository logicalDeviceRepository;
+    private final LogicalDeviceRepository repo;
 
-    public LogicalDeviceCustomRepositoryImpl(LogicalDeviceRepository logicalDeviceRepository) {
-        this.logicalDeviceRepository = logicalDeviceRepository;
+    public LogicalDeviceCustomRepositoryImpl(LogicalDeviceRepository repo) {
+        this.repo = repo;
     }
 
-    // ✅ Custom finder 1
+    // ✅ CUSTOM METHODS
     @Override
     public Optional<LogicalDevice> findByDiscoveredName(String discoveredName) {
-        Iterable<LogicalDevice> allDevices = logicalDeviceRepository.findAll();
-        return StreamSupport.stream(allDevices.spliterator(), false)
-                .filter(c -> discoveredName.equals(c.getDiscoveredName()))
+        return StreamSupport.stream(repo.findAll().spliterator(), false)
+                .filter(d -> discoveredName.equals(d.getDiscoveredName()))
                 .findFirst();
     }
 
     @Override
     public Optional<LogicalDevice> findByProperty(String key, String value) {
-        Iterable<LogicalDevice> allCustomers = logicalDeviceRepository.findAll();
-        return StreamSupport.stream(allCustomers.spliterator(), false)
-                .filter(c -> value.equals(c.getProperties().get(key)))
+        return StreamSupport.stream(repo.findAll().spliterator(), false)
+                .filter(d -> value.equals(d.getProperties().get(key)))
                 .findFirst();
     }
 
+    // ✅ BASIC CRUD
+    @Override public <S extends LogicalDevice> S save(S entity) { return repo.save(entity); }
+    @Override public <S extends LogicalDevice> Iterable<S> saveAll(Iterable<S> entities) { return repo.saveAll(entities); }
+    @Override public Optional<LogicalDevice> findById(String id) { return repo.findById(id); }
+    @Override public boolean existsById(String id) { return repo.existsById(id); }
+    @Override public long count() { return repo.count(); }
+    @Override public void deleteById(String id) { repo.deleteById(id); }
+    @Override public void delete(LogicalDevice entity) { repo.delete(entity); }
+    @Override public void deleteAllById(Iterable<? extends String> ids) { repo.deleteAllById(ids); }
+    @Override public void deleteAll(Iterable<? extends LogicalDevice> entities) { repo.deleteAll(entities); }
+    @Override public void deleteAll() { repo.deleteAll(); }
 
+    @Override public Iterable<LogicalDevice> findAll() { return repo.findAll(); }
+    @Override public Iterable<LogicalDevice> findAll(Sort sort) { return repo.findAll(sort); }
+    @Override public Page<LogicalDevice> findAll(Pageable pageable) { return repo.findAll(pageable); }
+    @Override public Iterable<LogicalDevice> findAllById(Iterable<String> ids) { return repo.findAllById(ids); }
+    @Override public Iterable<LogicalDevice> findAllById(Iterable<String> ids, Sort sort) { return repo.findAllById(ids, sort); }
 
-    // ✅ Delegate CRUD operations to logicalDeviceRepository
-    @Override
-    public <S extends LogicalDevice> S save(S entity) {
-        return logicalDeviceRepository.save(entity);
+    // ✅ DEPTH-BASED METHODS
+    @Override public <S extends LogicalDevice> S save(S entity, int depth) { return repo.save(entity, depth); }
+    @Override public <S extends LogicalDevice> Iterable<S> save(Iterable<S> entities, int depth) { return repo.save(entities, depth); }
+    @Override public Optional<LogicalDevice> findById(String id, int depth) { return repo.findById(id, depth); }
+    @Override public Iterable<LogicalDevice> findAll(int depth) { return repo.findAll(depth); }
+    @Override public Iterable<LogicalDevice> findAllById(Iterable<String> ids, int depth) { return repo.findAllById(ids, depth); }
+    @Override public Iterable<LogicalDevice> findAllById(Iterable<String> ids, Sort sort, int depth) { return repo.findAllById(ids, sort, depth); }
+    @Override public Iterable<LogicalDevice> findAll(Sort sort, int depth) { return repo.findAll(sort, depth); }
+    @Override public Page<LogicalDevice> findAll(Pageable pageable, int depth) { return repo.findAll(pageable, depth); }
+
+    // ✅ CONTEXT (ctx)
+    @Override public <S extends LogicalDevice> S save(S entity, String ctx) { return repo.save(entity, ctx); }
+    @Override public <S extends LogicalDevice> Iterable<S> saveAll(Iterable<S> entities, String ctx) { return repo.saveAll(entities, ctx); }
+    @Override public Optional<LogicalDevice> findById(String id, String ctx) { return repo.findById(id, ctx); }
+    @Override public Optional<LogicalDevice> findById(String id, int depth, String ctx) { return repo.findById(id, depth, ctx); }
+    @Override public boolean existsById(String id, String ctx) { return repo.existsById(id, ctx); }
+    @Override public long count(String ctx) { return repo.count(ctx); }
+    @Override public void deleteById(String id, String ctx) { repo.deleteById(id, ctx); }
+    @Override public void delete(LogicalDevice entity, String ctx) { repo.delete(entity, ctx); }
+    @Override public void deleteAll(Iterable<? extends LogicalDevice> entities, String ctx) { repo.deleteAll(entities, ctx); }
+    @Override public void deleteAll(String ctx) { repo.deleteAll(ctx); }
+
+    @Override public <S extends LogicalDevice> S save(S entity, int depth, String ctx) { return repo.save(entity, depth, ctx); }
+    @Override public <S extends LogicalDevice> Iterable<S> save(Iterable<S> entities, int depth, String ctx) { return repo.save(entities, depth, ctx); }
+
+    @Override public Iterable<LogicalDevice> findAll(String ctx) { return repo.findAll(ctx); }
+    @Override public Iterable<LogicalDevice> findAll(int depth, String ctx) { return repo.findAll(depth, ctx); }
+    @Override public Iterable<LogicalDevice> findAllById(Iterable<String> ids, String ctx) { return repo.findAllById(ids, ctx); }
+    @Override public Iterable<LogicalDevice> findAllById(Iterable<String> ids, int depth, String ctx) { return repo.findAllById(ids, depth, ctx); }
+    @Override public Iterable<LogicalDevice> findAll(Sort sort, String ctx) { return repo.findAll(sort, ctx); }
+    @Override public Iterable<LogicalDevice> findAll(Sort sort, int depth, String ctx) { return repo.findAll(sort, depth, ctx); }
+    @Override public Iterable<LogicalDevice> findAllById(Iterable<String> ids, Sort sort, String ctx) { return repo.findAllById(ids, sort, ctx); }
+    @Override public Iterable<LogicalDevice> findAllById(Iterable<String> ids, Sort sort, int depth, String ctx) { return repo.findAllById(ids, sort, depth, ctx); }
+    @Override public Page<LogicalDevice> findAll(Pageable pageable, String ctx) { return repo.findAll(pageable, ctx); }
+    @Override public Page<LogicalDevice> findAll(Pageable pageable, int depth, String ctx) { return repo.findAll(pageable, depth, ctx); }
+
+    // ✅ GDN
+    @Override public Optional<LogicalDevice> uivFindByGdn(String gdn) { return repo.uivFindByGdn(gdn); }
+    @Override public Optional<LogicalDevice> uivFindByGdn(String gdn, int depth) { return repo.uivFindByGdn(gdn, depth); }
+    @Override public Optional<LogicalDevice> uivFindByGdn(String gdn, String ctx) { return repo.uivFindByGdn(gdn, ctx); }
+    @Override public Optional<LogicalDevice> uivFindByGdn(String gdn, int depth, String ctx) { return repo.uivFindByGdn(gdn, depth, ctx); }
+
+    // ✅ Graph Ops
+    @Override public void uivUpdateAssociationProperties(Neo4jDomainObject from, Neo4jDomainObject to, String rel, Map<String, Object> props) {
+        repo.uivUpdateAssociationProperties(from, to, rel, props);
     }
 
-    @Override
-    public <S extends LogicalDevice> Iterable<S> saveAll(Iterable<S> entities) {
-        return logicalDeviceRepository.saveAll(entities);
+    @Override public void updateLdn(String old, String newValue, String ctx) { repo.updateLdn(old, newValue, ctx); }
+    @Override public void updateLdn(String old, String newValue, String ctx, String mode) { repo.updateLdn(old, newValue, ctx, mode); }
+
+    @Override public List<String> uivFindRelationExists(String a, String b, String c, String d, String e, String f) {
+        return repo.uivFindRelationExists(a, b, c, d, e, f);
     }
 
-    @Override
-    public Optional<LogicalDevice> findById(String id) {
-        return logicalDeviceRepository.findById(id);
+    @Override public void refactor(Object a, String b, String c, String d, boolean e) { repo.refactor(a, b, c, d, e); }
+    @Override public void refactor(Object a, String b, String c, String d, String e, boolean f) { repo.refactor(a, b, c, d, e, f); }
+
+    @Override public LogicalDevice uivFindByTwoEndNode(Map<String, String> a, Map<String, String> b, String r, String ctx) {
+        return repo.uivFindByTwoEndNode(a, b, r, ctx);
     }
 
-    @Override
-    public boolean existsById(String id) {
-        return logicalDeviceRepository.existsById(id);
-    }
+    @Override public void flushSession() { repo.flushSession(); }
+    @Override public boolean uivFindById(String id) { return repo.uivFindById(id); }
+    @Override public boolean uivFindById(String a, String b, String c, boolean d, String e) { return repo.uivFindById(a, b, c, d, e); }
 
-    @Override
-    public <S extends LogicalDevice> S save(S s, int depth) {
-        return  logicalDeviceRepository.save(s,depth);
-    }
+    // ✅ Batch Save
+    @Override public <S extends LogicalDevice> S batchSave(S s, int d, String ctx) { return repo.batchSave(s, d, ctx); }
+    @Override public <S extends LogicalDevice> Iterable<S> batchSaveAll(Iterable<S> it, int d, String ctx) { return repo.batchSaveAll(it, d, ctx); }
 
-    @Override
-    public <S extends LogicalDevice> Iterable<S> save(Iterable<S> entities, int depth) {
-        return null;
-    }
-
-    @Override
-    public Optional<LogicalDevice> findById(String s, int depth) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAll() {
-        return logicalDeviceRepository.findAll();
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAll(int depth) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAllById(Iterable<String> ids) {
-        return logicalDeviceRepository.findAllById(ids);
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAllById(Iterable<String> strings, int depth) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAllById(Iterable<String> strings, Sort sort) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAllById(Iterable<String> strings, Sort sort, int depth) {
-        return null;
-    }
-
-    @Override
-    public long count() {
-        return logicalDeviceRepository.count();
-    }
-
-    @Override
-    public void deleteById(String id) {
-        logicalDeviceRepository.deleteById(id);
-    }
-
-    @Override
-    public void delete(LogicalDevice entity) {
-        logicalDeviceRepository.delete(entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<? extends LogicalDevice> entities) {
-        logicalDeviceRepository.deleteAll(entities);
-    }
-
-    @Override
-    public void deleteAll() {
-        logicalDeviceRepository.deleteAll();
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAll(Sort sort) {
-        return logicalDeviceRepository.findAll(sort);
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAll(Sort sort, int depth) {
-        return null;
-    }
-
-    @Override
-    public Page<LogicalDevice> findAll(Pageable pageable) {
-        return logicalDeviceRepository.findAll(pageable);
-    }
-
-    @Override
-    public Page<LogicalDevice> findAll(Pageable pageable, int depth) {
-        return null;
-    }
-
-    // ✅ Methods specific to your interface but not used — keep placeholders
-    @Override
-    public Optional<LogicalDevice> uivFindByGdn(String s) { return Optional.empty(); }
-
-    @Override
-    public Optional<LogicalDevice> uivFindByGdn(String s, int i) { return Optional.empty(); }
-
-    @Override
-    public void uivUpdateAssociationProperties(Neo4jDomainObject from, Neo4jDomainObject to, String rel, Map<String, Object> props) { }
-
-    @Override
-    public void updateLdn(String s, String s2, String s1) { }
-
-    @Override
-    public void flushSession() { }
-
-    @Override
-    public <S extends LogicalDevice> S save(S s, String s1) {
-        return null;
-    }
-
-    @Override
-    public <S extends LogicalDevice> Iterable<S> saveAll(Iterable<S> iterable, String s) {
-        return null;
-    }
-
-    @Override
-    public Optional<LogicalDevice> findById(String s, String s2) {
-        return Optional.empty();
-    }
-
-    @Override
-    public boolean existsById(String s, String s2) {
-        return false;
-    }
-
-    @Override
-    public long count(String s) {
-        return 0;
-    }
-
-    @Override
-    public void deleteById(String s, String s2) {
-
-    }
-
-    @Override
-    public void delete(LogicalDevice logicalDevice, String s) {
-
-    }
-
-    @Override
-    public void deleteAll(Iterable<? extends LogicalDevice> iterable, String s) {
-
-    }
-
-    @Override
-    public void deleteAll(String s) {
-
-    }
-
-    @Override
-    public <S extends LogicalDevice> S save(S s, int i, String s1) {
-        return null;
-    }
-
-    @Override
-    public <S extends LogicalDevice> Iterable<S> save(Iterable<S> iterable, int i, String s) {
-        return null;
-    }
-
-    @Override
-    public Optional<LogicalDevice> findById(String s, int i, String s2) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAll(String s) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAll(int i, String s) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAllById(Iterable<String> iterable, String s) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAllById(Iterable<String> iterable, int i, String s) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAll(Sort sort, String s) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAll(Sort sort, int i, String s) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAllById(Iterable<String> iterable, Sort sort, String s) {
-        return null;
-    }
-
-    @Override
-    public Iterable<LogicalDevice> findAllById(Iterable<String> iterable, Sort sort, int i, String s) {
-        return null;
-    }
-
-    @Override
-    public Page<LogicalDevice> findAll(Pageable pageable, String s) {
-        return null;
-    }
-
-    @Override
-    public Page<LogicalDevice> findAll(Pageable pageable, int i, String s) {
-        return null;
-    }
-
-    @Override
-    public Optional<LogicalDevice> uivFindByGdn(String s, String s1) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<LogicalDevice> uivFindByGdn(String s, int i, String s1) {
-        return Optional.empty();
-    }
-
-    @Override
-    public boolean uivFindById(String s) { return false; }
-
-    @Override
-    public boolean uivFindById(String s, String s1, String s2, boolean b, String s3) { return false; }
-
-    @Override
-    public void updateLdn(String s, String s2, String s1, String s3) { }
-
-    @Override
-    public List<String> uivFindRelationExists(String s, String s1, String s2, String s3, String s4, String s5) {
-        return List.of();
-    }
-
-    @Override
-    public void refactor(Object o, String s, String s2, String s1, boolean b) { }
-
-    @Override
-    public void refactor(Object o, String s, String s2, String s1, String s3, boolean b) { }
-
-    @Override
-    public LogicalDevice uivFindByTwoEndNode(Map<String, String> map, Map<String, String> map1, String s, String s1) {
-        return null;
-    }
+    // ✅ SPRING Example API
+    @Override public <S extends LogicalDevice> Optional<S> findOne(Example<S> example) { return repo.findOne(example); }
+    @Override public <S extends LogicalDevice> Iterable<S> findAll(Example<S> example) { return repo.findAll(example); }
+    @Override public <S extends LogicalDevice> Iterable<S> findAll(Example<S> example, Sort sort) { return repo.findAll(example, sort); }
+    @Override public <S extends LogicalDevice> Page<S> findAll(Example<S> example, Pageable pageable) { return repo.findAll(example, pageable); }
+    @Override public <S extends LogicalDevice> long count(Example<S> example) { return repo.count(example); }
+    @Override public <S extends LogicalDevice> boolean exists(Example<S> example) { return repo.exists(example); }
+    @Override public <S extends LogicalDevice, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> func) { return repo.findBy(example, func); }
 }

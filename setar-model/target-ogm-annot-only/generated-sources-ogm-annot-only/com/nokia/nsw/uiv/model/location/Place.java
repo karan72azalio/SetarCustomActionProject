@@ -12,13 +12,12 @@ import com.nokia.nsw.uiv.model.common.Entity;
 import com.nokia.nsw.uiv.model.common.party.PartyRole;
 import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.service.Service;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -46,17 +45,15 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
         label = "com.nokia.nsw.uiv.model.location.Place"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.location.Place"
-)
 public abstract class Place extends Entity {
     @JsonFilter("geometry")
     @Relationship(
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.location.Geometry",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.location.Geometry}"
     )
     protected Geometry geometry;
@@ -66,8 +63,9 @@ public abstract class Place extends Entity {
             type = "LOCATED_AT",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.party.PartyRole>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.party.PartyRole]"
     )
     protected Set<PartyRole> partyRole = new HashSet<>();
@@ -77,8 +75,9 @@ public abstract class Place extends Entity {
             type = "LOCATES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> resource = new HashSet<>();
@@ -88,8 +87,9 @@ public abstract class Place extends Entity {
             type = "COVERS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> coveringResource = new HashSet<>();
@@ -99,8 +99,9 @@ public abstract class Place extends Entity {
             type = "LOCATED_AT",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> locatedResource = new HashSet<>();
@@ -110,8 +111,9 @@ public abstract class Place extends Entity {
             type = "CONSUMED_IN",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> service = new HashSet<>();
@@ -121,8 +123,9 @@ public abstract class Place extends Entity {
             type = "OWNS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.service.Service",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.service.Service}"
     )
     protected Service owningService;
@@ -132,8 +135,9 @@ public abstract class Place extends Entity {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.location.Place",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.location.Place}"
     )
     protected Place containing;
@@ -143,8 +147,9 @@ public abstract class Place extends Entity {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.location.Place>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.location.Place]"
     )
     protected Set<Place> contained = new HashSet<>();
@@ -201,15 +206,7 @@ public abstract class Place extends Entity {
 
     public void setGeometry(Geometry geometry) {
         this.setAssocModified(true);
-        Geometry previous = this.geometry;
         this.geometry=geometry;
-        if (null == geometry  && null != previous) {
-            previous.setPlace(null);
-        }
-        if (null != geometry && (null == geometry.getPlace() || !geometry.getPlace().equals(this))) {
-            this.set_type(this.get_type());
-            geometry.setPlace(this);
-        }
     }
 
     public void addPartyRole(PartyRole element) {

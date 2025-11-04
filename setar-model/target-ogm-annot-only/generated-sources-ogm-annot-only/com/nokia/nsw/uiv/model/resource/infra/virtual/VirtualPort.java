@@ -4,12 +4,11 @@ package com.nokia.nsw.uiv.model.resource.infra.virtual;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.nokia.nsw.uiv.model.resource.logical.Protocol;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -26,17 +25,15 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualPort"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualPort"
-)
 public class VirtualPort extends VirtualComponent {
     @JsonFilter("protocol")
     @Relationship(
             type = "IMPLEMENTS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.Protocol>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.Protocol]"
     )
     protected Set<Protocol> protocol = new HashSet<>();
@@ -46,8 +43,9 @@ public class VirtualPort extends VirtualComponent {
             type = "CONNECTS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualLink>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualLink]"
     )
     protected Set<VirtualLink> virtualLink = new HashSet<>();
@@ -55,17 +53,11 @@ public class VirtualPort extends VirtualComponent {
     public void addProtocol(Protocol element) {
         this.setAssocModified(true);
         this.protocol.add(element);
-        if (null != element && (null == element.getVirtualPort() || !element.getVirtualPort().equals(this))) {
-            this.set_type(this.get_type());
-            element.setVirtualPort(this);
-        }
     }
 
     public void removeProtocol(Protocol element) {
         this.setAssocModified(true);
-        if (null != element && null != this.protocol  && this.protocol.remove(element) && null != element.getVirtualPort()) {
-            element.setVirtualPort(null);
-        }
+        this.protocol.remove(element);
     }
 
     public Set<Protocol> getProtocol() {
@@ -74,25 +66,7 @@ public class VirtualPort extends VirtualComponent {
 
     public void setProtocol(Set<Protocol> protocol) {
         this.setAssocModified(true);
-        if (null != this.protocol) {
-            List<Protocol> toDelete = new ArrayList<>(this.protocol);
-            boolean setToNull = null == protocol || protocol.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(protocol);
-            }
-            for (Protocol each : toDelete) {
-                each.setVirtualPort(null);
-            }
-        }
         this.protocol=protocol;
-        if (null != protocol) {
-            for (Protocol each: protocol) {
-                if (null != each && ( null == each.getVirtualPort() || !each.getVirtualPort().equals(this))) {
-                    this.set_type(this.get_type());
-                    each.setVirtualPort(this);
-                }
-            }
-        }
     }
 
     public void addVirtualLink(VirtualLink element) {

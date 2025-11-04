@@ -11,13 +11,12 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.CONSUMES;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -35,17 +34,15 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.resource.logical.Trail"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.logical.Trail"
-)
 public class Trail extends Pipe {
     @JsonFilter("pipeUTILIZES")
     @Relationship(
             type = "UTILIZES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.Pipe>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.Pipe]"
     )
     protected Set<Pipe> pipeUTILIZES = new HashSet<>();
@@ -54,7 +51,7 @@ public class Trail extends Pipe {
             type = "CONSUMES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty
+    @Schema
     protected Set<CONSUMES> consumedPipe = new HashSet<>();
 
     @JsonView(UivJsonViews.TmfView.class)

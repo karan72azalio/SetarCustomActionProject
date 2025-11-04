@@ -12,13 +12,12 @@ import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.infra.InfraResource;
 import com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualLink;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -39,17 +38,15 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink"
-)
 public class PhysicalLink extends InfraResource {
     @JsonFilter("containing")
     @Relationship(
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink}"
     )
     protected PhysicalLink containing;
@@ -59,8 +56,9 @@ public class PhysicalLink extends InfraResource {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink]"
     )
     protected Set<PhysicalLink> contained = new HashSet<>();
@@ -70,8 +68,9 @@ public class PhysicalLink extends InfraResource {
             type = "CONNECTS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalPort>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalPort]"
     )
     protected Set<PhysicalPort> physicalPortCONNECTS = new HashSet<>();
@@ -81,8 +80,9 @@ public class PhysicalLink extends InfraResource {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualLink>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualLink]"
     )
     protected Set<VirtualLink> virtualLinkUSES = new HashSet<>();

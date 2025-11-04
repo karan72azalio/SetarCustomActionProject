@@ -16,14 +16,13 @@ import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.common.Entity;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -44,9 +43,6 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.setar.uiv.model.product.Product"
 )
 @Slf4j
-@XmlType(
-        name = "com.setar.uiv.model.product.Product"
-)
 public class Product extends Entity {
     @JsonView(UivJsonViews.TmfView.class)
     @Transient
@@ -154,8 +150,9 @@ public class Product extends Entity {
             type = "FOR",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.service.Subscription",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.service.Subscription}"
     )
     protected Subscription subscription;
@@ -165,8 +162,9 @@ public class Product extends Entity {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.setar.uiv.model.product.CustomerFacingService>",
+            implementation = String.class,
             allowableValues = "[com.setar.uiv.model.product.CustomerFacingService]"
     )
     protected Set<CustomerFacingService> containedCfs = new HashSet<>();
@@ -176,8 +174,9 @@ public class Product extends Entity {
             type = "SUBSCRIBES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.common.party.Customer",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.common.party.Customer}"
     )
     protected Customer customer;

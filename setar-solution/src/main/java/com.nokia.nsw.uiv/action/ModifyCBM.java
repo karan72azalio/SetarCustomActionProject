@@ -155,7 +155,8 @@ public class ModifyCBM implements HttpAction {
 
                 // subscriberWithMAC variant (subscriberName + resourceSN sanitized)
                 String subscriberWithMAC = input.getSubscriberName() + sanitizeForName(input.getResourceSN());
-                Optional<Customer> subscriberWithMac = customerCustomRepository.findByDiscoveredName(subscriberWithMAC);
+                Optional<Customer> optSubscriberWithMac = customerCustomRepository.findByDiscoveredName(subscriberWithMAC);
+                Optional<Customer> subscriberWithMac = optSubscriberWithMac;
 
                 // CBM for modifyParam1 if present
                 LogicalDevice cbmForParam1 = null;
@@ -378,14 +379,14 @@ public class ModifyCBM implements HttpAction {
                             String cbmDeviceNameNew = "CBM_" + newServiceId;
 
                             // rename subscription
-                            subscription.setDiscoveredName(subscriptionNameNew);
+                            subscription.setLocalName(Validations.encryptName(subscriptionNameNew));
                             subscriptionRepository.save(subscription);
 
                             // rename product if exists
                             Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
                             if (optProduct.isPresent()) {
                                 Product prod = optProduct.get();
-                                prod.setDiscoveredName(productNameNew);
+                                prod.setLocalName(Validations.encryptName(productNameNew));
                                 Map<String, Object> pProps = Optional.ofNullable(prod.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 pProps.put("name", productNameNew);
                                 prod.setProperties(pProps);
@@ -394,8 +395,7 @@ public class ModifyCBM implements HttpAction {
 
                             // rename CFS
                             if (cfs != null) {
-                                cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
-                                cfs.setDiscoveredName(cfsNameNew);
+                                cfs.setLocalName(Validations.encryptName(cfsNameNew));
                                 Map<String, Object> cfsProps = Optional.ofNullable(cfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 cfsProps.put("name", cfsNameNew);
                                 cfs.setProperties(cfsProps);
@@ -404,8 +404,7 @@ public class ModifyCBM implements HttpAction {
 
                             // rename RFS
                             if (rfs != null) {
-                                rfs = rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
-                                rfs.setDiscoveredName(rfsNameNew);
+                                rfs.setLocalName(Validations.encryptName(rfsNameNew));
                                 Map<String, Object> rfsProps = Optional.ofNullable(rfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 rfsProps.put("name", rfsNameNew);
                                 if (fxOrderId != null) rfsProps.put("transactionId", fxOrderId);
@@ -417,7 +416,7 @@ public class ModifyCBM implements HttpAction {
                             Optional<LogicalDevice> optOldCbmDevice = logicalDeviceRepository.findByDiscoveredName(cbmDeviceName);
                             if (optOldCbmDevice.isPresent()) {
                                 LogicalDevice oldCbmDevice = optOldCbmDevice.get();
-                                oldCbmDevice.setDiscoveredName(cbmDeviceNameNew);
+                                oldCbmDevice.setLocalName(Validations.encryptName(cbmDeviceNameNew));
                                 Map<String, Object> cbmProps = Optional.ofNullable(oldCbmDevice.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 cbmProps.put("name", cbmDeviceNameNew);
                                 oldCbmDevice.setProperties(cbmProps);

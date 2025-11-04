@@ -13,14 +13,14 @@ import com.nokia.nsw.uiv.jackson.UivDateDeserializer;
 import com.nokia.nsw.uiv.jackson.UivDateSerializer;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.common.Entity;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.HashSet;
 import java.util.Map;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Properties;
 import org.neo4j.ogm.annotation.Relationship;
@@ -38,14 +38,15 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
         label = "com.nokia.nsw.uiv.numbermanagement.Identifier"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.numbermanagement.Identifier"
-)
 public abstract class Identifier extends Neo4jDomainNodeObject {
     @JsonView({
             UivJsonViews.WriteView.class,
             UivJsonViews.ReadView.class
     })
+    @Index
+    @com.nokia.nsw.uiv.framework.repository.annotation.Index(
+            unique = false
+    )
     @Enum("[FREE, RESERVED, ASSIGNED, QUARANTINED, DISABLED]")
     private IdentifierState state;
 
@@ -122,8 +123,9 @@ public abstract class Identifier extends Neo4jDomainNodeObject {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.numbermanagement.Assignment",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.numbermanagement.Assignment}"
     )
     protected Assignment assignment;
@@ -133,8 +135,9 @@ public abstract class Identifier extends Neo4jDomainNodeObject {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.numbermanagement.Reservation",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.numbermanagement.Reservation}"
     )
     protected Reservation reservation;
@@ -144,8 +147,9 @@ public abstract class Identifier extends Neo4jDomainNodeObject {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.numbermanagement.Pool",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.numbermanagement.Pool}"
     )
     protected Pool pool;
@@ -155,8 +159,9 @@ public abstract class Identifier extends Neo4jDomainNodeObject {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.common.Entity",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.common.Entity}"
     )
     protected Entity entity;

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -91,7 +90,7 @@ public class ChangeResourceStatus implements HttpAction {
             }
 
             LogicalDevice device = devOpt.get();
-            String currentStatus = device.getProperties().get("administrativeState")!=null?device.getProperties().get("administrativeState").toString():"";
+            String currentStatus = String.valueOf(device.getAdministrativeState());
             String model = device.getProperties().get("Model") == null ? "" : device.getProperties().get("Model").toString();
             String mac = device.getProperties().get("MacAddress") == null ? "" : device.getProperties().get("MacAddress").toString() ;
 
@@ -107,9 +106,8 @@ public class ChangeResourceStatus implements HttpAction {
                         sn, mac, currentStatus, model, type
                 );
             }
-            Map<String,Object> props = device.getProperties();
-            props.put("administrativeState",targetStatus);
-            device.setProperties(props);
+
+            device.setAdministrativeState(AdministrativeState.valueOf(targetStatus));
             stbRepo.save(device);
 
             System.out.println("------------Test Trace # 8--------------- Device status updated to " + targetStatus);

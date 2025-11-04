@@ -3,12 +3,9 @@ package com.nokia.nsw.uiv.model.resource.logical;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -25,17 +22,15 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.resource.logical.LogicalInterface"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.logical.LogicalInterface"
-)
 public class LogicalInterface extends LogicalComponent {
     @JsonFilter("owningPipe")
     @Relationship(
             type = "OWNS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.Pipe",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.Pipe}"
     )
     protected Pipe owningPipe;
@@ -45,8 +40,9 @@ public class LogicalInterface extends LogicalComponent {
             type = "IMPLEMENTS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.Protocol>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.Protocol]"
     )
     protected Set<Protocol> protocol = new HashSet<>();
@@ -73,17 +69,11 @@ public class LogicalInterface extends LogicalComponent {
     public void addProtocol(Protocol element) {
         this.setAssocModified(true);
         this.protocol.add(element);
-        if (null != element && (null == element.getLogicalInterface() || !element.getLogicalInterface().equals(this))) {
-            this.set_type(this.get_type());
-            element.setLogicalInterface(this);
-        }
     }
 
     public void removeProtocol(Protocol element) {
         this.setAssocModified(true);
-        if (null != element && null != this.protocol  && this.protocol.remove(element) && null != element.getLogicalInterface()) {
-            element.setLogicalInterface(null);
-        }
+        this.protocol.remove(element);
     }
 
     public Set<Protocol> getProtocol() {
@@ -92,24 +82,6 @@ public class LogicalInterface extends LogicalComponent {
 
     public void setProtocol(Set<Protocol> protocol) {
         this.setAssocModified(true);
-        if (null != this.protocol) {
-            List<Protocol> toDelete = new ArrayList<>(this.protocol);
-            boolean setToNull = null == protocol || protocol.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(protocol);
-            }
-            for (Protocol each : toDelete) {
-                each.setLogicalInterface(null);
-            }
-        }
         this.protocol=protocol;
-        if (null != protocol) {
-            for (Protocol each: protocol) {
-                if (null != each && ( null == each.getLogicalInterface() || !each.getLogicalInterface().equals(this))) {
-                    this.set_type(this.get_type());
-                    each.setLogicalInterface(this);
-                }
-            }
-        }
     }
 }

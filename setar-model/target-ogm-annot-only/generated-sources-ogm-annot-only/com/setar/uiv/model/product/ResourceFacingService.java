@@ -10,10 +10,9 @@ import com.nokia.nsw.uiv.jackson.UivDateDeserializer;
 import com.nokia.nsw.uiv.jackson.UivDateSerializer;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.service.Service;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
 import java.util.HashSet;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -33,9 +32,6 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.setar.uiv.model.product.ResourceFacingService"
 )
 @Slf4j
-@XmlType(
-        name = "com.setar.uiv.model.product.ResourceFacingService"
-)
 public class ResourceFacingService extends Service {
     @JsonView({
             UivJsonViews.WriteView.class,
@@ -78,8 +74,9 @@ public class ResourceFacingService extends Service {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.setar.uiv.model.product.CustomerFacingService",
+            implementation = String.class,
             allowableValues = "{com.setar.uiv.model.product.CustomerFacingService}"
     )
     protected CustomerFacingService containingCfs;

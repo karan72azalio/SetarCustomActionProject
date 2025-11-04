@@ -1,0 +1,92 @@
+== Resources
+
+{{#apiInfo}}
+{{#apis}}
+{{#operations}}
+
+[.{{baseName}}]
+=== {{baseName}}
+
+{{operationTagDescription}}
+
+{{#operation}}
+
+[.{{nickname}}]
+{{#useMethodAndPath}}
+==== {{httpMethod}} {{path}}
+
+Operation Id:: {{nickname}}
+
+{{/useMethodAndPath}}
+{{^useMethodAndPath}}
+
+==== {{summary}}
+
+|===
+| `{{httpMethod}} {{path}}`
+|===
+{{/useMethodAndPath}}
+
+
+
+{{#specinclude}}{{path}}/{{httpMethod}}/spec.adoc{{/specinclude}}
+
+
+{{> params}}
+
+===== Return Type
+
+{{#hasReference}}
+{{^returnSimpleType}}{{returnContainer}}[{{/returnSimpleType}}<<{{returnBaseType}}>>{{^returnSimpleType}}]{{/returnSimpleType}}
+{{/hasReference}}
+
+{{^hasReference}}
+{{#returnType}}<<{{.}}>>{{/returnType}}
+{{^returnType}}-{{/returnType}}
+{{/hasReference}}
+
+{{#hasProduces}}
+===== Content Type
+
+{{#produces}}
+* {{{mediaType}}}
+{{/produces}}
+{{/hasProduces}}
+
+===== Responses
+
+.HTTP Response Codes
+[cols="2,3,3,2"]
+|===
+| Code | Message | Datatype | Headers
+
+{{#responses}}
+
+| {{code}}
+| {{message}}
+| {{#containerType}}{{dataType}}[<<{{baseType}}>>]{{/containerType}} {{^containerType}}<<{{dataType}}>>{{/containerType}}
+|
+{{^responseHeaders.isEmpty}}
+
+  {{#responseHeaders}}
+    {{baseName}} - {{description}}
+
+  {{/responseHeaders}}
+
+{{/responseHeaders.isEmpty}}
+
+{{/responses}}
+|===
+
+
+
+ifdef::internal-generation[]
+===== Implementation
+{{#specinclude}}{{path}}/{{httpMethod}}/implementation.adoc{{/specinclude}}
+
+endif::internal-generation[]
+
+{{/operation}}
+{{/operations}}
+{{/apis}}
+{{/apiInfo}}

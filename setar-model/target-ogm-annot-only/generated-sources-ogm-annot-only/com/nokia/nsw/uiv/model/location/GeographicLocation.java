@@ -4,7 +4,6 @@ package com.nokia.nsw.uiv.model.location;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 
@@ -25,8 +24,5 @@ import org.neo4j.ogm.annotation.NodeEntity;
         label = "com.nokia.nsw.uiv.model.location.GeographicLocation"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.location.GeographicLocation"
-)
 public abstract class GeographicLocation extends Place {
 }

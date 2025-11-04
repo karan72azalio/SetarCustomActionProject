@@ -8,12 +8,11 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.nokia.nsw.uiv.annotation.Enum;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.Resource;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -45,17 +44,15 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.resource.infra.InfraResource"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.infra.InfraResource"
-)
 public abstract class InfraResource extends Resource {
     @JsonFilter("containingDevice")
     @Relationship(
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.infra.InfraDevice",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.infra.InfraDevice}"
     )
     protected InfraDevice containingDevice;
@@ -65,8 +62,9 @@ public abstract class InfraResource extends Resource {
             type = "USES",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.InfraDevice>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.InfraDevice]"
     )
     protected Set<InfraDevice> usingDevices = new HashSet<>();

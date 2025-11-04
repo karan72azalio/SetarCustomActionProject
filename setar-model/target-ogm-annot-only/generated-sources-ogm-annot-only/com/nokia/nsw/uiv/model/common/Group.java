@@ -9,13 +9,12 @@ import com.nokia.nsw.uiv.datatype.SchemaSpecification;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -33,9 +32,6 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.common.Group"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.common.Group"
-)
 public class Group extends Entity {
     @JsonView(UivJsonViews.TmfView.class)
     @Transient
@@ -47,8 +43,9 @@ public class Group extends Entity {
             type = "GROUPS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.Entity>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.Entity]"
     )
     protected Set<Entity> entity = new HashSet<>();
@@ -58,8 +55,9 @@ public class Group extends Entity {
             type = "FOR",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.common.Entity>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.common.Entity]"
     )
     protected Set<Entity> forEntity = new HashSet<>();
@@ -96,20 +94,11 @@ public class Group extends Entity {
     public void addEntity(Entity element) {
         this.setAssocModified(true);
         this.entity.add(element);
-        if (null != element && (null == element.getGroup() || !element.getGroup().contains(this))) {
-            this.set_type(this.get_type());
-            if (null == element.getGroup()) {
-                element.setGroup(new HashSet<>());
-            }
-            element.addGroup(this);
-        }
     }
 
     public void removeEntity(Entity element) {
         this.setAssocModified(true);
-        if (null != element && null != this.entity  && this.entity.remove(element) && null != element.getGroup() && element.getGroup().contains(this)) {
-            element.getGroup().remove(this);
-        }
+        this.entity.remove(element);
     }
 
     public Set<Entity> getEntity() {
@@ -118,30 +107,7 @@ public class Group extends Entity {
 
     public void setEntity(Set<Entity> entity) {
         this.setAssocModified(true);
-        if (null != this.entity) {
-            List<Entity> toDelete = new ArrayList<>(this.entity);
-            boolean setToNull = null == entity || entity.isEmpty();
-            if (!setToNull)  {
-                toDelete.removeAll(entity);
-            }
-            for (Entity each : toDelete) {
-                if (null != each.getGroup()) {
-                    each.getGroup().remove(this);
-                }
-            }
-        }
         this.entity=entity;
-        if (null != entity) {
-            for (Entity each: entity) {
-                if (null != each && (null == each.getGroup() || !each.getGroup().contains(this))) {
-                    this.set_type(this.get_type());
-                    if (null == each.getGroup()) {
-                        each.setGroup(new HashSet<>());
-                    }
-                    each.addGroup(this);
-                }
-            }
-        }
     }
 
     public void addForEntity(Entity element) {

@@ -54,12 +54,12 @@ public class Swagger2MarkupTest {
 
     @Test
     public void createSpringfoxSwaggerJson() throws Exception {
-        String outputDir = System.getProperty("io.springfox.staticdocs.outputDir");
+        String outputDir = System.getProperty("springdoc.outputDir");
         if (outputDir == null || outputDir.isEmpty()) {
-            log.warn("io.springfox.staticdocs.outputDir property empty: Skipping test");
+            log.warn("springdoc.outputDir property empty: Skipping test");
             return;
         }
-        MvcResult mvcResult = this.mockMvc.perform(get("/v2/api-docs?group=Action API")
+        MvcResult mvcResult = this.mockMvc.perform(get("/v3/api-docs/Action API")
                 .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
 

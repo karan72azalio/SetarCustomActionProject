@@ -3,262 +3,384 @@ package com.nokia.nsw.uiv.repository;
 import com.nokia.nsw.uiv.datatype.Neo4jDomainObject;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponent;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponentRepository;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 @Repository
 @Primary
 public class LogicalComponentCustomRepositoryImpl implements LogicalComponentCustomRepository {
 
-    private final LogicalComponentRepository logicalComponentRepository;
+    private final LogicalComponentRepository repo;
 
-    public LogicalComponentCustomRepositoryImpl(LogicalComponentRepository logicalComponentRepository) {
-        this.logicalComponentRepository = logicalComponentRepository;
+    public LogicalComponentCustomRepositoryImpl(LogicalComponentRepository repo) {
+        this.repo = repo;
     }
 
-    // ✅ Custom finder methods
+    // ✅ CUSTOM METHODS
     @Override
     public Optional<LogicalComponent> findByDiscoveredName(String discoveredName) {
-        Iterable<LogicalComponent> allComponents = logicalComponentRepository.findAll();
-        return StreamSupport.stream(allComponents.spliterator(), false)
+        return StreamSupport.stream(repo.findAll().spliterator(), false)
                 .filter(c -> discoveredName.equals(c.getDiscoveredName()))
                 .findFirst();
     }
 
-
     @Override
     public Optional<LogicalComponent> findByProperty(String key, String value) {
-        Iterable<LogicalComponent> allComponents = logicalComponentRepository.findAll();
-        return StreamSupport.stream(allComponents.spliterator(), false)
+        return StreamSupport.stream(repo.findAll().spliterator(), false)
                 .filter(c -> value.equals(c.getProperties().get(key)))
                 .findFirst();
     }
 
-    // ✅ Delegate CRUD operations
+    // ✅ SIMPLE CRUD DELEGATION
     @Override
     public <S extends LogicalComponent> S save(S entity) {
-        return logicalComponentRepository.save(entity);
+        return repo.save(entity);
     }
 
     @Override
     public <S extends LogicalComponent> Iterable<S> saveAll(Iterable<S> entities) {
-        return logicalComponentRepository.saveAll(entities);
+        return repo.saveAll(entities);
     }
 
     @Override
     public Optional<LogicalComponent> findById(String id) {
-        return logicalComponentRepository.findById(id);
+        return repo.findById(id);
     }
 
     @Override
     public boolean existsById(String id) {
-        return logicalComponentRepository.existsById(id);
+        return repo.existsById(id);
     }
 
     @Override
     public long count() {
-        return logicalComponentRepository.count();
+        return repo.count();
     }
 
     @Override
     public void deleteById(String id) {
-        logicalComponentRepository.deleteById(id);
+        repo.deleteById(id);
     }
 
     @Override
     public void delete(LogicalComponent entity) {
-        logicalComponentRepository.delete(entity);
+        repo.delete(entity);
+    }
+
+    @Override
+    public void deleteAllById(Iterable<? extends String> ids) {
+        repo.deleteAllById(ids);
     }
 
     @Override
     public void deleteAll(Iterable<? extends LogicalComponent> entities) {
-        logicalComponentRepository.deleteAll(entities);
+        repo.deleteAll(entities);
     }
 
     @Override
     public void deleteAll() {
-        logicalComponentRepository.deleteAll();
+        repo.deleteAll();
     }
 
     @Override
     public Iterable<LogicalComponent> findAll() {
-        return logicalComponentRepository.findAll();
+        return repo.findAll();
     }
 
     @Override
     public Iterable<LogicalComponent> findAll(Sort sort) {
-        return logicalComponentRepository.findAll(sort);
+        return repo.findAll(sort);
     }
 
     @Override
     public Page<LogicalComponent> findAll(Pageable pageable) {
-        return logicalComponentRepository.findAll(pageable);
-    }
-
-    // ✅ Extended methods (delegate or placeholders)
-    @Override
-    public <S extends LogicalComponent> S save(S entity, int depth) {
-        return logicalComponentRepository.save(entity, depth);
-    }
-
-    @Override
-    public <S extends LogicalComponent> Iterable<S> save(Iterable<S> entities, int depth) {
-        return null;
-    }
-
-    @Override
-    public Optional<LogicalComponent> findById(String id, int depth) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Iterable<LogicalComponent> findAll(int depth) {
-        return null;
+        return repo.findAll(pageable);
     }
 
     @Override
     public Iterable<LogicalComponent> findAllById(Iterable<String> ids) {
-        return logicalComponentRepository.findAllById(ids);
+        return repo.findAllById(ids);
     }
 
     @Override
-    public Iterable<LogicalComponent> findAllById(Iterable<String> strings, int depth) {
-        return null;
+    public Iterable<LogicalComponent> findAllById(Iterable<String> ids, Sort sort) {
+        return repo.findAllById(ids, sort);
+    }
+
+    // ✅ DEPTH-BASED METHODS
+    @Override
+    public <S extends LogicalComponent> S save(S entity, int depth) {
+        return repo.save(entity, depth);
     }
 
     @Override
-    public Iterable<LogicalComponent> findAllById(Iterable<String> strings, Sort sort) {
-        return null;
+    public <S extends LogicalComponent> Iterable<S> save(Iterable<S> entities, int depth) {
+        return repo.save(entities, depth);
     }
 
     @Override
-    public Iterable<LogicalComponent> findAllById(Iterable<String> strings, Sort sort, int depth) {
-        return null;
+    public Optional<LogicalComponent> findById(String id, int depth) {
+        return repo.findById(id, depth);
+    }
+
+    @Override
+    public Iterable<LogicalComponent> findAll(int depth) {
+        return repo.findAll(depth);
+    }
+
+    @Override
+    public Iterable<LogicalComponent> findAllById(Iterable<String> ids, int depth) {
+        return repo.findAllById(ids, depth);
+    }
+
+    @Override
+    public Iterable<LogicalComponent> findAllById(Iterable<String> ids, Sort sort, int depth) {
+        return repo.findAllById(ids, sort, depth);
     }
 
     @Override
     public Iterable<LogicalComponent> findAll(Sort sort, int depth) {
-        return null;
+        return repo.findAll(sort, depth);
     }
 
     @Override
     public Page<LogicalComponent> findAll(Pageable pageable, int depth) {
-        return null;
+        return repo.findAll(pageable, depth);
     }
 
-    // ✅ Placeholder implementations (unused but required)
+    // ✅ CONTEXT METHODS (ctx)
     @Override
-    public Optional<LogicalComponent> uivFindByGdn(String s) { return Optional.empty(); }
+    public <S extends LogicalComponent> S save(S entity, String ctx) {
+        return repo.save(entity, ctx);
+    }
 
     @Override
-    public Optional<LogicalComponent> uivFindByGdn(String s, int i) { return Optional.empty(); }
+    public <S extends LogicalComponent> Iterable<S> saveAll(Iterable<S> entities, String ctx) {
+        return repo.saveAll(entities, ctx);
+    }
 
     @Override
-    public void uivUpdateAssociationProperties(Neo4jDomainObject from, Neo4jDomainObject to, String rel, Map<String, Object> props) { }
+    public Optional<LogicalComponent> findById(String id, String ctx) {
+        return repo.findById(id, ctx);
+    }
 
     @Override
-    public void updateLdn(String s, String s2, String s1) { }
+    public boolean existsById(String id, String ctx) {
+        return repo.existsById(id, ctx);
+    }
 
     @Override
-    public void flushSession() { }
+    public long count(String ctx) {
+        return repo.count(ctx);
+    }
 
     @Override
-    public <S extends LogicalComponent> S save(S s, String s1) { return null; }
+    public void deleteById(String id, String ctx) {
+        repo.deleteById(id, ctx);
+    }
 
     @Override
-    public <S extends LogicalComponent> Iterable<S> saveAll(Iterable<S> iterable, String s) { return null; }
+    public void delete(LogicalComponent entity, String ctx) {
+        repo.delete(entity, ctx);
+    }
 
     @Override
-    public Optional<LogicalComponent> findById(String s, String s2) { return Optional.empty(); }
+    public void deleteAll(Iterable<? extends LogicalComponent> entities, String ctx) {
+        repo.deleteAll(entities, ctx);
+    }
 
     @Override
-    public boolean existsById(String s, String s2) { return false; }
+    public void deleteAll(String ctx) {
+        repo.deleteAll(ctx);
+    }
 
     @Override
-    public long count(String s) { return 0; }
+    public <S extends LogicalComponent> S save(S entity, int depth, String ctx) {
+        return repo.save(entity, depth, ctx);
+    }
 
     @Override
-    public void deleteById(String s, String s2) { }
+    public <S extends LogicalComponent> Iterable<S> save(Iterable<S> entities, int depth, String ctx) {
+        return repo.save(entities, depth, ctx);
+    }
 
     @Override
-    public void delete(LogicalComponent logicalComponent, String s) { }
+    public Optional<LogicalComponent> findById(String id, int depth, String ctx) {
+        return repo.findById(id, depth, ctx);
+    }
 
     @Override
-    public void deleteAll(Iterable<? extends LogicalComponent> iterable, String s) { }
+    public Iterable<LogicalComponent> findAll(String ctx) {
+        return repo.findAll(ctx);
+    }
 
     @Override
-    public void deleteAll(String s) { }
+    public Iterable<LogicalComponent> findAll(int depth, String ctx) {
+        return repo.findAll(depth, ctx);
+    }
 
     @Override
-    public <S extends LogicalComponent> S save(S s, int i, String s1) { return null; }
+    public Iterable<LogicalComponent> findAllById(Iterable<String> ids, String ctx) {
+        return repo.findAllById(ids, ctx);
+    }
 
     @Override
-    public <S extends LogicalComponent> Iterable<S> save(Iterable<S> iterable, int i, String s) { return null; }
+    public Iterable<LogicalComponent> findAllById(Iterable<String> ids, int depth, String ctx) {
+        return repo.findAllById(ids, depth, ctx);
+    }
 
     @Override
-    public Optional<LogicalComponent> findById(String s, int i, String s2) { return Optional.empty(); }
+    public Iterable<LogicalComponent> findAll(Sort sort, String ctx) {
+        return repo.findAll(sort, ctx);
+    }
 
     @Override
-    public Iterable<LogicalComponent> findAll(String s) { return null; }
+    public Iterable<LogicalComponent> findAll(Sort sort, int depth, String ctx) {
+        return repo.findAll(sort, depth, ctx);
+    }
 
     @Override
-    public Iterable<LogicalComponent> findAll(int i, String s) { return null; }
+    public Iterable<LogicalComponent> findAllById(Iterable<String> ids, Sort sort, String ctx) {
+        return repo.findAllById(ids, sort, ctx);
+    }
 
     @Override
-    public Iterable<LogicalComponent> findAllById(Iterable<String> iterable, String s) { return null; }
+    public Iterable<LogicalComponent> findAllById(Iterable<String> ids, Sort sort, int depth, String ctx) {
+        return repo.findAllById(ids, sort, depth, ctx);
+    }
 
     @Override
-    public Iterable<LogicalComponent> findAllById(Iterable<String> iterable, int i, String s) { return null; }
+    public Page<LogicalComponent> findAll(Pageable pageable, String ctx) {
+        return repo.findAll(pageable, ctx);
+    }
 
     @Override
-    public Iterable<LogicalComponent> findAll(Sort sort, String s) { return null; }
+    public Page<LogicalComponent> findAll(Pageable pageable, int depth, String ctx) {
+        return repo.findAll(pageable, depth, ctx);
+    }
+
+    // ✅ GDN queries
+    @Override
+    public Optional<LogicalComponent> uivFindByGdn(String gdn) {
+        return repo.uivFindByGdn(gdn);
+    }
 
     @Override
-    public Iterable<LogicalComponent> findAll(Sort sort, int i, String s) { return null; }
+    public Optional<LogicalComponent> uivFindByGdn(String gdn, int depth) {
+        return repo.uivFindByGdn(gdn, depth);
+    }
 
     @Override
-    public Iterable<LogicalComponent> findAllById(Iterable<String> iterable, Sort sort, String s) { return null; }
+    public Optional<LogicalComponent> uivFindByGdn(String gdn, String ctx) {
+        return repo.uivFindByGdn(gdn, ctx);
+    }
 
     @Override
-    public Iterable<LogicalComponent> findAllById(Iterable<String> iterable, Sort sort, int i, String s) { return null; }
+    public Optional<LogicalComponent> uivFindByGdn(String gdn, int depth, String ctx) {
+        return repo.uivFindByGdn(gdn, depth, ctx);
+    }
+
+    // ✅ Graph operations
+    @Override
+    public void uivUpdateAssociationProperties(Neo4jDomainObject from, Neo4jDomainObject to, String rel, Map<String, Object> props) {
+        repo.uivUpdateAssociationProperties(from, to, rel, props);
+    }
 
     @Override
-    public Page<LogicalComponent> findAll(Pageable pageable, String s) { return null; }
+    public void updateLdn(String old, String newValue, String ctx) {
+        repo.updateLdn(old, newValue, ctx);
+    }
 
     @Override
-    public Page<LogicalComponent> findAll(Pageable pageable, int i, String s) { return null; }
+    public void updateLdn(String old, String newValue, String ctx, String mode) {
+        repo.updateLdn(old, newValue, ctx, mode);
+    }
 
     @Override
-    public Optional<LogicalComponent> uivFindByGdn(String s, String s1) { return Optional.empty(); }
+    public List<String> uivFindRelationExists(String a, String b, String c, String d, String e, String f) {
+        return repo.uivFindRelationExists(a, b, c, d, e, f);
+    }
 
     @Override
-    public Optional<LogicalComponent> uivFindByGdn(String s, int i, String s1) { return Optional.empty(); }
+    public void refactor(Object a, String b, String c, String d, boolean e) {
+        repo.refactor(a, b, c, d, e);
+    }
 
     @Override
-    public boolean uivFindById(String s) { return false; }
+    public void refactor(Object a, String b, String c, String d, String e, boolean f) {
+        repo.refactor(a, b, c, d, e, f);
+    }
 
     @Override
-    public boolean uivFindById(String s, String s1, String s2, boolean b, String s3) { return false; }
+    public LogicalComponent uivFindByTwoEndNode(Map<String, String> a, Map<String, String> b, String r, String ctx) {
+        return repo.uivFindByTwoEndNode(a, b, r, ctx);
+    }
 
     @Override
-    public void updateLdn(String s, String s2, String s1, String s3) { }
+    public void flushSession() {
+        repo.flushSession();
+    }
 
     @Override
-    public List<String> uivFindRelationExists(String s, String s1, String s2, String s3, String s4, String s5) { return List.of(); }
+    public boolean uivFindById(String id) {
+        return repo.uivFindById(id);
+    }
 
     @Override
-    public void refactor(Object o, String s, String s2, String s1, boolean b) { }
+    public boolean uivFindById(String a, String b, String c, boolean d, String e) {
+        return repo.uivFindById(a, b, c, d, e);
+    }
+
+    // ✅ Batch Save
+    @Override
+    public <S extends LogicalComponent> S batchSave(S s, int d, String ctx) {
+        return repo.batchSave(s, d, ctx);
+    }
 
     @Override
-    public void refactor(Object o, String s, String s2, String s1, String s3, boolean b) { }
+    public <S extends LogicalComponent> Iterable<S> batchSaveAll(Iterable<S> it, int d, String ctx) {
+        return repo.batchSaveAll(it, d, ctx);
+    }
+
+    // ✅ Spring Example API
+    @Override
+    public <S extends LogicalComponent> Optional<S> findOne(Example<S> example) {
+        return repo.findOne(example);
+    }
 
     @Override
-    public LogicalComponent uivFindByTwoEndNode(Map<String, String> map, Map<String, String> map1, String s, String s1) { return null; }
+    public <S extends LogicalComponent> Iterable<S> findAll(Example<S> example) {
+        return repo.findAll(example);
+    }
+
+    @Override
+    public <S extends LogicalComponent> Iterable<S> findAll(Example<S> example, Sort sort) {
+        return repo.findAll(example, sort);
+    }
+
+    @Override
+    public <S extends LogicalComponent> Page<S> findAll(Example<S> example, Pageable pageable) {
+        return repo.findAll(example, pageable);
+    }
+
+    @Override
+    public <S extends LogicalComponent> long count(Example<S> example) {
+        return repo.count(example);
+    }
+
+    @Override
+    public <S extends LogicalComponent> boolean exists(Example<S> example) {
+        return repo.exists(example);
+    }
+
+    @Override
+    public <S extends LogicalComponent, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> func) {
+        return repo.findBy(example, func);
+    }
 }

@@ -16,13 +16,12 @@ import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.common.Entity;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.setar.uiv.model.product.Product;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -43,17 +42,15 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.service.Subscription"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.service.Subscription"
-)
 public class Subscription extends Entity {
     @JsonFilter("customer")
     @Relationship(
             type = "HAS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.common.party.Customer",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.common.party.Customer}"
     )
     protected Customer customer;
@@ -63,8 +60,9 @@ public class Subscription extends Entity {
             type = "FOR",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.service.Service>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.service.Service]"
     )
     protected Set<Service> service = new HashSet<>();
@@ -103,8 +101,9 @@ public class Subscription extends Entity {
             type = "FOR",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.setar.uiv.model.product.Product>",
+            implementation = String.class,
             allowableValues = "[com.setar.uiv.model.product.Product]"
     )
     protected Set<Product> product = new HashSet<>();

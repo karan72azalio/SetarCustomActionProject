@@ -7,12 +7,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.model.common.UTILIZES_RESOURCE;
 import com.nokia.nsw.uiv.model.resource.Resource;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -39,15 +38,12 @@ import org.neo4j.ogm.annotation.Relationship;
         label = "com.nokia.nsw.uiv.model.resource.logical.LogicalResource"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.logical.LogicalResource"
-)
 public abstract class LogicalResource extends Resource {
     @Relationship(
             type = "UTILIZES_RESOURCE",
             direction = "OUTGOING"
     )
-    @ApiModelProperty
+    @Schema
     protected Set<UTILIZES_RESOURCE> utilizedResource = new HashSet<>();
 
     @JsonFilter("usedResource")
@@ -55,8 +51,9 @@ public abstract class LogicalResource extends Resource {
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.Resource>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.Resource]"
     )
     protected Set<Resource> usedResource = new HashSet<>();
@@ -66,8 +63,9 @@ public abstract class LogicalResource extends Resource {
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.LogicalDevice",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.LogicalDevice}"
     )
     protected LogicalDevice containingLogicalDevice;
@@ -77,8 +75,9 @@ public abstract class LogicalResource extends Resource {
             type = "HAS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.Configuration>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.Configuration]"
     )
     protected Set<Configuration> configuration = new HashSet<>();
@@ -88,8 +87,9 @@ public abstract class LogicalResource extends Resource {
             type = "HAS_TEMPLATE",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.Configuration>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.Configuration]"
     )
     protected Set<Configuration> templateConfiguration = new HashSet<>();

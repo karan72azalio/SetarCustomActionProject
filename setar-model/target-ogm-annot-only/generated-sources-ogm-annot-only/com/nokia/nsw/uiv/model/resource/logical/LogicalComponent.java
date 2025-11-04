@@ -13,13 +13,12 @@ import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.Software;
 import com.nokia.nsw.uiv.model.resource.SoftwareConverter;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -41,17 +40,15 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
         label = "com.nokia.nsw.uiv.model.resource.logical.LogicalComponent"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.logical.LogicalComponent"
-)
 public class LogicalComponent extends LogicalResource {
     @JsonFilter("containing")
     @Relationship(
             type = "CONTAINS",
             direction = "INCOMING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "com.nokia.nsw.uiv.model.resource.logical.LogicalComponent",
+            implementation = String.class,
             allowableValues = "{com.nokia.nsw.uiv.model.resource.logical.LogicalComponent}"
     )
     protected LogicalComponent containing;
@@ -61,8 +58,9 @@ public class LogicalComponent extends LogicalResource {
             type = "CONTAINS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.logical.LogicalComponent>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.logical.LogicalComponent]"
     )
     protected Set<LogicalComponent> contained = new HashSet<>();

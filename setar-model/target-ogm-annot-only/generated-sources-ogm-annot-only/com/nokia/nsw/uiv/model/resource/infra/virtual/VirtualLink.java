@@ -11,13 +11,12 @@ import com.nokia.nsw.uiv.framework.context.UivSpringContextAware;
 import com.nokia.nsw.uiv.jackson.UivJsonViews;
 import com.nokia.nsw.uiv.model.resource.infra.InfraResource;
 import com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.validation.Valid;
-import javax.xml.bind.annotation.XmlType;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
@@ -35,17 +34,15 @@ import org.neo4j.ogm.annotation.Transient;
         label = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualLink"
 )
 @Slf4j
-@XmlType(
-        name = "com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualLink"
-)
 public class VirtualLink extends InfraResource {
     @JsonFilter("physicalLinkUSES")
     @Relationship(
             type = "USES",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.physical.PhysicalLink]"
     )
     protected Set<PhysicalLink> physicalLinkUSES = new HashSet<>();
@@ -55,8 +52,9 @@ public class VirtualLink extends InfraResource {
             type = "CONNECTS",
             direction = "OUTGOING"
     )
-    @ApiModelProperty(
-            dataType = "java.lang.String",
+    @Schema(
+            type = "java.util.Set<com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualPort>",
+            implementation = String.class,
             allowableValues = "[com.nokia.nsw.uiv.model.resource.infra.virtual.VirtualPort]"
     )
     protected Set<VirtualPort> virtualPort = new HashSet<>();
