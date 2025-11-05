@@ -161,6 +161,12 @@ public class CreateServiceVoIP implements HttpAction {
             if (req.getCompanyName() != null) subProps.put("companyName", req.getCompanyName());
             if (req.getContactPhone() != null) subProps.put("contactPhone", req.getContactPhone());
             if (req.getSubsAddress() != null) subProps.put("subsAddress", req.getSubsAddress());
+            Object existingSimaCustId = subProps.get("simaCustId");
+
+            if ((existingSimaCustId == null || existingSimaCustId.toString().isEmpty())
+                    && req.getSimaCustID() != null && !req.getSimaCustID().isEmpty()) {
+                subProps.put("simaCustId", req.getSimaCustID());
+            }
             subscriber.setProperties(subProps);
 
             Map<String, Object> subsProps = subscription.getProperties();
@@ -176,7 +182,7 @@ public class CreateServiceVoIP implements HttpAction {
             subscriptionRepo.save(subscription);
 
             // Step 7: Product
-            String productNameStr = req.getSubscriberName() + req.getProductSubtype() + req.getServiceId();
+            String productNameStr = req.getSubscriberName() +"_"+ req.getProductSubtype() +"_"+ req.getServiceId();
             if (productNameStr.length() > 100) {
                 return new CreateServiceVoIPResponse(
                         "400",
@@ -316,8 +322,8 @@ public class CreateServiceVoIP implements HttpAction {
             }
             oltProps.put("voipServiceTemplate", req.getVoipServiceTemplate());
 
-            ont.setProperties(ontProps);
-            olt.setProperties(oltProps);
+            ont.setProperties(oltProps);
+
 
             logicalDeviceRepo.save(ont);
             logicalDeviceRepo.save(olt);
