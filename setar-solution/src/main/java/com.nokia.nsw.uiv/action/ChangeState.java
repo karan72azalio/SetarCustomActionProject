@@ -133,7 +133,7 @@ public class ChangeState implements HttpAction {
                 cbmName = "CBM" + req.getCbmMac();
                 optCbm = logicalDeviceRepository.findByDiscoveredName(cbmName);
             }
-            if (!optSubscription.isPresent() || !optRfs.isPresent() || !optCbm.isPresent() || !optOnt.isPresent()) {
+            if (!optSubscription.isPresent() || !optRfs.isPresent()) {
                 return new ChangeStateResponse("500", Constants.ERROR_PREFIX + "No entry found for Suspend/Resume",
                         java.time.Instant.now().toString(), (cbmName == null ? "" : cbmName),
                         (ontName == null ? "" : ontName), subscriptionName);
