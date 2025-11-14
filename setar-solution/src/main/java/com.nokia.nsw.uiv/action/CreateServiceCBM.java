@@ -334,7 +334,23 @@ public class CreateServiceCBM implements HttpAction {
                     return d;
                 });
 
-
+        String stbDeviceName = "STB_DummyDevice"+"_"+ request.getCbmSN();
+        Optional<LogicalDevice> stbOpt = cbmDeviceRepository.findByDiscoveredName(stbDeviceName);
+        LogicalDevice stbDevice;
+        if (stbOpt.isPresent()) {
+            log.info("Found existing ONT: {}", stbDeviceName);
+        } else {
+            stbDevice = new LogicalDevice();
+            stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
+            stbDevice.setDiscoveredName(stbDeviceName);
+            stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
+            stbDevice.setContext(Constants.SETAR);
+            Map<String, Object> stbProps = new HashMap<>();
+            stbDevice.addUsingService(rfs);
+            stbDevice.setAdministrativeState(AdministrativeState.Activated);
+            cbmDeviceRepository.save(stbDevice, 2);
+            log.info("Created ONT device: {}", stbDeviceName);
+        }
 
         // --- 8. Final Response ---
         CreateServiceCBMResponse response = new CreateServiceCBMResponse();
