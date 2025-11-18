@@ -98,7 +98,7 @@ public class ModifySubscriber implements HttpAction {
                 if (!cfsName.contains(oldSubscriberName)) continue;
 
                 System.out.println("------------Test Trace # 5--------------- Processing CFS: " + cfsName);
-
+                log.error("CFS found with old subscriber name: "+cfsName);
                 // Derive RFS name
                 String rfsName = cfsName.replace("CFS", "RFS");
                 Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
@@ -121,6 +121,7 @@ public class ModifySubscriber implements HttpAction {
                 if (newCustOpt.isPresent()) {
                     Customer newCust = newCustOpt.get();
                     System.out.println("------------Test Trace # 6--------------- New subscriber found: " + newCust.getLocalName());
+                    log.error("subscriber found with new subscriber name: "+newSubscriberName);
 
                     // Update subscription
                     if (subsOpt.isPresent()) {
@@ -195,6 +196,7 @@ public class ModifySubscriber implements HttpAction {
                 log.error("CFS updated successfully with the updated name: "+newCfsName);
                 cfsRepo.save(cfs);
                 updatesApplied = true;
+                log.error("update applied successfully");
                 System.out.println("------------Test Trace # 14--------------- CFS updated: " + newCfsName);
 
                 // Update RFS
