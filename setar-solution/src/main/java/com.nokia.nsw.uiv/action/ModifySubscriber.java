@@ -128,6 +128,7 @@ public class ModifySubscriber implements HttpAction {
                         String newSubName = subs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         subs.setDiscoveredName(newSubName);
                         subs.setCustomer(newCust);
+                        log.error("subscription updated successfully with the updated name: "+newSubName);
                         subscriptionCustomRepo.save(subs);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 7--------------- Subscription updated: " + newSubName);
@@ -139,6 +140,7 @@ public class ModifySubscriber implements HttpAction {
                         String newProdName = prod.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         prod.setDiscoveredName(newProdName);
                         prod.setCustomer(newCust);
+                        log.error("product updated successfully with the updated name: "+newProdName);
                         productCustomRepo.save(prod);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 8--------------- Product updated: " + newProdName);
@@ -155,6 +157,7 @@ public class ModifySubscriber implements HttpAction {
                         } else {
                             newName = oldCust.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         }
+                        log.error("subscriber updated successfully with the updated name: "+newName);
                         oldCust.setDiscoveredName(newName);
                         Map<String, Object> custProps = oldCust.getProperties() == null ? new HashMap<>() : new HashMap<>(oldCust.getProperties());
                         custProps.put("accountNumber", newSubscriberName);
@@ -169,6 +172,7 @@ public class ModifySubscriber implements HttpAction {
                         Subscription subs = subscriptionCustomRepo.findByDiscoveredName(subsOpt.get().getDiscoveredName()).get();
                         String newSubName = subs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         subs.setDiscoveredName(newSubName);
+                        log.error("subscription updated successfully with the updated name: "+newSubName);
                         subscriptionCustomRepo.save(subs);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 10--------------- Subscription renamed (fallback): " + newSubName);
@@ -178,6 +182,7 @@ public class ModifySubscriber implements HttpAction {
                         Product prod = productCustomRepo.findByDiscoveredName(productOpt.get().getDiscoveredName()).get();
                         String newProdName = prod.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         prod.setDiscoveredName(newProdName);
+                        log.error("product updated successfully with the updated name: "+newProdName);
                         productCustomRepo.save(prod);
                         updatesApplied = true;
                         System.out.println("------------Test Trace # 12--------------- Product updated (fallback): " + newProdName);
@@ -187,6 +192,7 @@ public class ModifySubscriber implements HttpAction {
                 cfs = cfsRepo.findByDiscoveredName(cfs.getDiscoveredName()).get();
                 String newCfsName = cfs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                 cfs.setDiscoveredName(newCfsName);
+                log.error("CFS updated successfully with the updated name: "+newCfsName);
                 cfsRepo.save(cfs);
                 updatesApplied = true;
                 System.out.println("------------Test Trace # 14--------------- CFS updated: " + newCfsName);
@@ -197,6 +203,7 @@ public class ModifySubscriber implements HttpAction {
                     rfs = rfsRepo.findByDiscoveredName(rfs.getDiscoveredName()).get();
                     String newRfsName = rfs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                     rfs.setDiscoveredName(newRfsName);
+                    log.error("RFS updated successfully with the updated name: "+newRfsName);
                     rfsRepo.save(rfs);
                     updatesApplied = true;
                     System.out.println("------------Test Trace # 13--------------- RFS updated: " + newRfsName);
