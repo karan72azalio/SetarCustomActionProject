@@ -119,16 +119,16 @@ public class QueryAddrByServiceID implements HttpAction {
             String productName = null;
             try {
                 // Try product.getProductType().getName() if productType object exists
-                if (product.getProperties().get("productType") != null) {
-                    productName = product.getProperties().get("productType").toString();
+                if (product.getProperties().get("type") != null) {
+                    productName = product.getProperties().get("type").toString();
                 }
             } catch (Exception e) {
                 log.debug("product.getProductType() access failed, will try properties map");
             }
             if (productName == null || productName.trim().isEmpty()) {
                 Map<String, Object> prodProps = product.getProperties();
-                if (prodProps != null && prodProps.get("productType") != null) {
-                    productName = prodProps.get("productType").toString();
+                if (prodProps != null && prodProps.get("type") != null) {
+                    productName = prodProps.get("type").toString();
                 }
             }
 

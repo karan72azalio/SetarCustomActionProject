@@ -242,9 +242,9 @@ public class CreateServiceCbmVoice implements HttpAction {
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                             throw new RuntimeException(e);
                         }
-                        p.setType(request.getProductType());
                         Map<String, Object> prodProps = new HashMap<>();
                         prodProps.put("status", "Active");
+                        prodProps.put("type",request.getProductType());
                         p.setProperties(prodProps);
                         p.setCustomer(subscriber);
                         p.setSubscription(subscription);

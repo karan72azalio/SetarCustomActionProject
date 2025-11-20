@@ -177,11 +177,11 @@ public class ChangeTechnologyVoice implements HttpAction {
                 if (custOpt.isPresent()) {
                     Customer cust = custOpt.get();
                     System.out.println("------------Test Trace # 14--------------- Subscriber found: " + cust.getLocalName());
-                    cust.setType("Regular");
                     // accountNumber mapping stored in properties map - preserve or set
                     Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
                     custProps.put("accountNumber", req.getSubscriberName());
                     custProps.put("Status", "Active");
+                    custProps.put("type","Regular");
                     if (req.getHhid() != null) custProps.put("HouseholdId", req.getHhid());
                     if (req.getSimaCustId() != null) custProps.put("simaCustId", req.getSimaCustId());
                     cust.setProperties(custProps);

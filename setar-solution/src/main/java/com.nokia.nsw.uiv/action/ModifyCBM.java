@@ -47,7 +47,7 @@ public class ModifyCBM implements HttpAction {
     }
 
     @Override
-    public Object doPatch(ActionContext actionContext) {
+    public Object doPost(ActionContext actionContext) {
         log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         ModifyCBMRequest input = (ModifyCBMRequest) actionContext.getObject();
 

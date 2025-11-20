@@ -124,12 +124,12 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    s.setType("Regular");
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("accountNumber", request.getSubscriberName());
                     prop.put("status", "Active");
                     prop.put("subscriberUserName", request.getUserName());
                     prop.put("address", request.getSubsAddress());
+                    prop.put("type","Regular");
                     s.setProperties(prop);
                     subscriberRepository.save(s, 2);
                     return s;
@@ -218,10 +218,9 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    p.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
-                    prop.put("productType",request.getProductType());
+                    prop.put("type",request.getProductType());
                     p.setProperties(prop);
                     p.setCustomer(subscriber);
                     p.setSubscription(subscription);
@@ -252,9 +251,9 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    c.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
+                    prop.put("type",request.getProductType());
                     c.setProperties(prop);
                     c.setStartDate(new Date());
                     c.setTransactionId(request.getFxOrderID());
@@ -290,9 +289,9 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    r.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
+                    prop.put("type",request.getProductType());
                     r.setProperties(prop);
                     r.setContainingCfs(cfs);
                     rfsRepository.save(r, 2);
@@ -333,25 +332,6 @@ public class CreateServiceCBM implements HttpAction {
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });
-
-        String stbDeviceName = "STB_DummyDevice"+"_"+ request.getCbmSN();
-        Optional<LogicalDevice> stbOpt = cbmDeviceRepository.findByDiscoveredName(stbDeviceName);
-        LogicalDevice stbDevice;
-        if (stbOpt.isPresent()) {
-            log.info("Found existing ONT: {}", stbDeviceName);
-        } else {
-            stbDevice = new LogicalDevice();
-            stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
-            stbDevice.setDiscoveredName(stbDeviceName);
-            stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
-            stbDevice.setContext(Constants.SETAR);
-            Map<String, Object> stbProps = new HashMap<>();
-            stbDevice.addUsingService(rfs);
-            stbDevice.setAdministrativeState(AdministrativeState.Activated);
-            cbmDeviceRepository.save(stbDevice, 2);
-            log.info("Created ONT device: {}", stbDeviceName);
-        }
-
         // --- 8. Final Response ---
         CreateServiceCBMResponse response = new CreateServiceCBMResponse();
         response.setStatus("201");
