@@ -103,9 +103,6 @@ public class ModifyCBM implements HttpAction {
                     // Check "Status" property
                     Object statusValue = customer.getProperties().get("status");
                     if (statusValue != null && "Active".equalsIgnoreCase(statusValue.toString())) {
-
-                        // Modify discovered name
-                        customer.setDiscoveredName(subscriptionName + "_Modified");
                         customerCustomRepository.save(customer);
                         subscriber = Optional.of(customer);
                     } else {
@@ -154,7 +151,7 @@ public class ModifyCBM implements HttpAction {
                     && containsAny(input.getModifyType(), "ModfiyCableModem", "Cable_Modem", "ModifyCableModem")) {
 
                 // subscriberWithMAC variant (subscriberName + resourceSN sanitized)
-                String subscriberWithMAC = input.getSubscriberName() + sanitizeForName(input.getResourceSN());
+                String subscriberWithMAC = input.getSubscriberName()+ Constants.UNDER_SCORE + sanitizeForName(input.getResourceSN());
                 Optional<Customer> optSubscriberWithMac = customerCustomRepository.findByDiscoveredName(subscriberWithMAC);
                 Optional<Customer> subscriberWithMac = optSubscriberWithMac;
 
@@ -167,17 +164,16 @@ public class ModifyCBM implements HttpAction {
                 }
 
                 try {
-                    Map<String, Object> subProps = Optional.ofNullable(subscription.getProperties()).map(HashMap::new).orElse(new HashMap<>());
-                    String svcMac = (String) subProps.getOrDefault("serviceMAC", "");
+                    Map<String, Object> subProps =subscription.getProperties()==null?new HashMap<>():subscription.getProperties();
+                    String svcMac = subProps.get("macAddress")!=null?subProps.get("macAddress").toString():"";
 
                     // when serviceMAC equals input.resourceSN -> update the "current" CBM
                     if (svcMac != null && svcMac.equalsIgnoreCase(input.getResourceSN())) {
-
-                        String subType = (String) subProps.getOrDefault("subType", "");
+                        String subType = subProps.get("serviceSubType")!=null?subProps.get("serviceSubType").toString():"";
                         if ("IPTV".equalsIgnoreCase(subType)) {
                             // IPTV special-case
                             if (modifyParam1 != null && !modifyParam1.isEmpty()) {
-                                subProps.put("serviceMAC", modifyParam1);
+                                subProps.put("macAddress", modifyParam1);
                                 cbmDevice.getProperties().put("macAddress", modifyParam1);
                                 if (cbmModelInput != null) cbmDevice.getProperties().put("deviceModel", cbmModelInput);
                             }
@@ -188,15 +184,17 @@ public class ModifyCBM implements HttpAction {
                             subscription.setProperties(subProps);
                             subscriptionRepository.save(subscription);
                         } else {
+                            Map<String, Object> dProps =cbmDevice.getProperties()==null?new HashMap<>():subscription.getProperties();
+                            Map<String, Object> sbProps =subscriber.get().getProperties()==null?new HashMap<>():subscription.getProperties();
                             // generic update on current CBM
                             if (modifyParam1 != null && !modifyParam1.isEmpty()) {
-                                subProps.put("serviceMAC", modifyParam1);
-                                safePutDeviceProperty(cbmDevice, "macAddress", modifyParam1);
-                                if (cbmModelInput != null) safePutDeviceProperty(cbmDevice, "deviceModel", cbmModelInput);
+                                subProps.put("macAddress", modifyParam1);
+                                dProps.put("macAddress", modifyParam1);
+                                if (cbmModelInput != null) dProps.put("deviceModel", cbmModelInput);
                             }
                             if (modifyParam2 != null && !modifyParam2.isEmpty()) {
                                 subProps.put("gatewayMAC", modifyParam2);
-                                safePutDeviceProperty(cbmDevice, "gatewayMAC", modifyParam2);
+                                dProps.put("gatewayMAC", modifyParam2);
                             }
 
                             // Voice subtype special-case: update serviceSN
@@ -207,20 +205,21 @@ public class ModifyCBM implements HttpAction {
 
                             subscription.setProperties(subProps);
                             subscriptionRepository.save(subscription);
+                            cbmDevice = logicalDeviceRepository.findByDiscoveredName(cbmDeviceName).get();
+                            cbmDevice.setProperties(dProps);
                             logicalDeviceRepository.save(cbmDevice);
 
                             // Replace resourceSN with modifyParam1 in subscriber name if needed
                             if (modifyParam1 != null && !modifyParam1.isEmpty() && subscriber.isPresent()) {
                                 Customer customer = subscriber.get();
                                 String newSubscriberName = input.getSubscriberName() + "_" + removeColons(modifyParam1);
-                                String oldSubscriberLocal = customer.getLocalName();
-
-                                customer.setLocalName(Validations.encryptName(newSubscriberName));
-                                Map<String, Object> custProps = Optional.ofNullable(customer.getProperties()).map(HashMap::new).orElse(new HashMap<>());
+                                Customer subscriberObj = customerCustomRepository.findByDiscoveredName(customer.getDiscoveredName()).get();
+                                subscriberObj.setDiscoveredName(newSubscriberName);
+                                Map<String, Object> custProps = Optional.ofNullable(subscriberObj.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 custProps.put("name", newSubscriberName);
-                                customer.setProperties(custProps);
-                                customerCustomRepository.save(customer);
-                                log.info("Subscriber name changed from '{}' to '{}'", oldSubscriberLocal, newSubscriberName);
+                                subscriberObj.setProperties(custProps);
+                                customerCustomRepository.save(subscriberObj);
+                                log.info("Subscriber name changed from '{}' to '{}'", customer.getDiscoveredName(), newSubscriberName);
                             }
                         }
                     } else {
@@ -228,17 +227,18 @@ public class ModifyCBM implements HttpAction {
                         String serviceID = (String) subscription.getProperties().getOrDefault("serviceID", "");
                         String newCBMName = "CBM_" + serviceID;
                         Optional<LogicalDevice> optNewCbm = logicalDeviceRepository.findByDiscoveredName(newCBMName);
+                        Map<String, Object> dProps = Optional.ofNullable(subscription.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                         if (optNewCbm.isPresent()) {
                             LogicalDevice newCBM = optNewCbm.get();
                             Map<String, Object> sProps = Optional.ofNullable(subscription.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                             if (modifyParam1 != null && !modifyParam1.isEmpty()) {
-                                sProps.put("serviceMAC", modifyParam1);
-                                safePutDeviceProperty(newCBM, "macAddress", modifyParam1);
-                                if (cbmModelInput != null) safePutDeviceProperty(newCBM, "deviceModel", cbmModelInput);
+                                sProps.put("macAddress", modifyParam1);
+                                dProps.put("macAddress", modifyParam1);
+                                if (cbmModelInput != null) dProps.put("deviceModel", cbmModelInput);
                             }
                             if (modifyParam2 != null && !modifyParam2.isEmpty()) {
                                 sProps.put("gatewayMAC", modifyParam2);
-                                safePutDeviceProperty(newCBM, "gatewayMAC", modifyParam2);
+                                dProps.put("gatewayMAC", modifyParam2);
                             }
                             // Voice subtype handling
                             String sType = (String) sProps.getOrDefault("subType", "");
@@ -247,17 +247,20 @@ public class ModifyCBM implements HttpAction {
                             }
                             subscription.setProperties(sProps);
                             subscriptionRepository.save(subscription);
+                            newCBM = logicalDeviceRepository.findByDiscoveredName(cbmDeviceName).get();
+                            newCBM.setProperties(dProps);
                             logicalDeviceRepository.save(newCBM);
 
                             // update subscriber name replace resourceSN with modifyParam1
                             if (modifyParam1 != null && !modifyParam1.isEmpty() && subscriber.isPresent()) {
                                 Customer customer = subscriber.get();
+                                Customer subscriberObj = customerCustomRepository.findByDiscoveredName(customer.getDiscoveredName()).get();
                                 String newSubscriberName = input.getSubscriberName() + "_" + removeColons(modifyParam1);
-                                customer.setLocalName(Validations.encryptName(newSubscriberName));
-                                Map<String, Object> custProps = Optional.ofNullable(customer.getProperties()).map(HashMap::new).orElse(new HashMap<>());
+                                subscriberObj.setDiscoveredName(newSubscriberName);
+                                Map<String, Object> custProps = Optional.ofNullable(subscriberObj.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 custProps.put("name", newSubscriberName);
-                                customer.setProperties(custProps);
-                                customerCustomRepository.save(customer);
+                                subscriberObj.setProperties(custProps);
+                                customerCustomRepository.save(subscriberObj);
                             }
                         } else {
                             // no matching CBM found by serviceID - nothing to change
@@ -319,6 +322,7 @@ public class ModifyCBM implements HttpAction {
             // 8️⃣ Modify Profile, Package, or Components
             if (containsAny(input.getModifyType(), "Package", "Components", "Products", "Contracts")) {
                 try {
+                    subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                     Map<String, Object> sProps = Optional.ofNullable(subscription.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                     if (modifyParam1 != null && !modifyParam1.isEmpty()) {
                         sProps.put("veipQosSessionProfile", modifyParam1);
@@ -362,6 +366,7 @@ public class ModifyCBM implements HttpAction {
             // 10️⃣ Modify Service ID and VOIP Number and Rename entities if serviceID changed
             if (input.getModifyType() != null && input.getModifyType().contains("Modify_Number")) {
                 try {
+                    subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                     String newServiceId = modifyParam1;
                     if (newServiceId != null && !newServiceId.trim().isEmpty()) {
                         // Update subscription fields: serviceID, voipNumber1
@@ -379,14 +384,14 @@ public class ModifyCBM implements HttpAction {
                             String cbmDeviceNameNew = "CBM_" + newServiceId;
 
                             // rename subscription
-                            subscription.setLocalName(Validations.encryptName(subscriptionNameNew));
+                            subscription.setDiscoveredName(subscriptionNameNew);
                             subscriptionRepository.save(subscription);
 
                             // rename product if exists
                             Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
                             if (optProduct.isPresent()) {
                                 Product prod = optProduct.get();
-                                prod.setLocalName(Validations.encryptName(productNameNew));
+                                prod.setDiscoveredName(productNameNew);
                                 Map<String, Object> pProps = Optional.ofNullable(prod.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 pProps.put("name", productNameNew);
                                 prod.setProperties(pProps);
@@ -395,7 +400,8 @@ public class ModifyCBM implements HttpAction {
 
                             // rename CFS
                             if (cfs != null) {
-                                cfs.setLocalName(Validations.encryptName(cfsNameNew));
+                                cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                                cfs.setDiscoveredName(cfsNameNew);
                                 Map<String, Object> cfsProps = Optional.ofNullable(cfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 cfsProps.put("name", cfsNameNew);
                                 cfs.setProperties(cfsProps);
@@ -404,7 +410,8 @@ public class ModifyCBM implements HttpAction {
 
                             // rename RFS
                             if (rfs != null) {
-                                rfs.setLocalName(Validations.encryptName(rfsNameNew));
+                                rfs = rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                                rfs.setDiscoveredName(rfsNameNew);
                                 Map<String, Object> rfsProps = Optional.ofNullable(rfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 rfsProps.put("name", rfsNameNew);
                                 if (fxOrderId != null) rfsProps.put("transactionId", fxOrderId);
@@ -416,7 +423,7 @@ public class ModifyCBM implements HttpAction {
                             Optional<LogicalDevice> optOldCbmDevice = logicalDeviceRepository.findByDiscoveredName(cbmDeviceName);
                             if (optOldCbmDevice.isPresent()) {
                                 LogicalDevice oldCbmDevice = optOldCbmDevice.get();
-                                oldCbmDevice.setLocalName(Validations.encryptName(cbmDeviceNameNew));
+                                oldCbmDevice.setDiscoveredName(cbmDeviceNameNew);
                                 Map<String, Object> cbmProps = Optional.ofNullable(oldCbmDevice.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                 cbmProps.put("name", cbmDeviceNameNew);
                                 oldCbmDevice.setProperties(cbmProps);
@@ -494,12 +501,5 @@ public class ModifyCBM implements HttpAction {
 
     private String trimOrNull(String s) {
         return (s == null) ? null : (s.trim().isEmpty() ? null : s.trim());
-    }
-
-    private void safePutDeviceProperty(LogicalDevice device, String key, Object value) {
-        if (device == null) return;
-        Map<String, Object> props = Optional.ofNullable(device.getProperties()).map(HashMap::new).orElse(new HashMap<>());
-        props.put(key, value);
-        device.setProperties(props);
     }
 }

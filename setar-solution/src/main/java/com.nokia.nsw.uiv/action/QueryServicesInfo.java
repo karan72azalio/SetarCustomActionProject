@@ -446,7 +446,7 @@ public class QueryServicesInfo implements HttpAction {
                         allvalues.put(prefix + "TEMPLATE_NAME_ONT", ontTemplate == null ? "" : ontTemplate);
                     } else {
                         // not ONT -> use ServiceMAC from subscription (CBM)
-                        Object mac = (setarSubscription == null) ? null : (setarSubscription.getProperties() == null ? null : setarSubscription.getProperties().get("serviceMAC"));
+                        Object mac = (setarSubscription == null) ? null : (setarSubscription.getProperties() == null ? null : setarSubscription.getProperties().get("macAddress"));
                         allvalues.put(prefix + "CBM_MAC", mac == null ? "" : String.valueOf(mac));
                     }
 
