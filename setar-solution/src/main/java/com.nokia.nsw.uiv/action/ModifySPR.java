@@ -295,13 +295,13 @@ public class ModifySPR implements HttpAction {
     private void updateSubscriptionAndChildren(ModifySPRRequest request,
                                                Subscription subscription,
                                                String newServiceId) throws BadRequestException, AccessForbiddenException {
-        String oldSubscriptionName = request.getSubscriberName() + request.getServiceId() + request.getOntSN();
-        String productName = request.getSubscriberName() + request.getProductSubtype() + request.getServiceId();
+        String oldSubscriptionName = request.getSubscriberName() +Constants.UNDER_SCORE + request.getServiceId() +Constants.UNDER_SCORE+ request.getOntSN();
+        String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
         String cfsName = "CFS_" + oldSubscriptionName;
         String rfsName = "RFS_" + oldSubscriptionName;
 
-        String subscriptionNameNew = request.getSubscriberName() + newServiceId + request.getOntSN();
-        String productNameNew = request.getSubscriberName() + request.getProductSubtype() + newServiceId;
+        String subscriptionNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + newServiceId + Constants.UNDER_SCORE + request.getOntSN();
+        String productNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + request.getProductSubtype()+Constants.UNDER_SCORE + newServiceId;
         String cfsNameNew = "CFS_" + subscriptionNameNew;
         String rfsNameNew = "RFS_" + subscriptionNameNew;
 
