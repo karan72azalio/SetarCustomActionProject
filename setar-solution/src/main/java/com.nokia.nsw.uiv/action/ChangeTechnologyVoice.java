@@ -126,7 +126,7 @@ public class ChangeTechnologyVoice implements HttpAction {
 
                 // Update core subscription fields
                 Map<String, Object> props = new HashMap<>();
-                props.put("serviceLink", "ONT");
+                props.put("ServiceLink", "ONT");
                 props.put("ServiceMac", req.getOntMacAddr());
                 props.put("ServiceSN", req.getOntSN());
                 props.put("ServiceSubtype", "Voice");
@@ -157,9 +157,8 @@ public class ChangeTechnologyVoice implements HttpAction {
                 // Rename subscription to include ONT SN per spec
                 String newSubscriptionName = subscriptionName + "_" + req.getOntSN();
                 System.out.println("------------Test Trace # 12--------------- Renaming subscription to: " + newSubscriptionName);
-                subs.setLocalName(subscriptionName);
+                subs.setDiscoveredName(subscriptionName);
                 subs.setProperties(props);
-                subs.setName(newSubscriptionName);
 
                 // Persist subscription updates
                 subscriptionRepo.save(subs);
@@ -178,11 +177,11 @@ public class ChangeTechnologyVoice implements HttpAction {
                 if (custOpt.isPresent()) {
                     Customer cust = custOpt.get();
                     System.out.println("------------Test Trace # 14--------------- Subscriber found: " + cust.getLocalName());
-                    cust.setType("Regular");
                     // accountNumber mapping stored in properties map - preserve or set
                     Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
                     custProps.put("accountNumber", req.getSubscriberName());
                     custProps.put("Status", "Active");
+                    custProps.put("type","Regular");
                     if (req.getHhid() != null) custProps.put("HouseholdId", req.getHhid());
                     if (req.getSimaCustId() != null) custProps.put("simaCustId", req.getSimaCustId());
                     cust.setProperties(custProps);
@@ -204,8 +203,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             if (cfsOpt.isPresent()) {
                 CustomerFacingService cfs = cfsOpt.get();
                 String newCfsName = cfs.getLocalName() + "_" + req.getOntSN();
-                cfs.setLocalName(newCfsName);
-                cfs.setName(newCfsName);
+                cfs.setDiscoveredName(newCfsName);
                 if (req.getFxOrderId() != null && !req.getFxOrderId().trim().isEmpty()) {
                     Map<String, Object> cfsProps = cfs.getProperties() == null ? new HashMap<>() : new HashMap<>(cfs.getProperties());
                     cfsProps.put("transactionId", req.getFxOrderId());
@@ -223,8 +221,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             if (rfsOpt.isPresent()) {
                 ResourceFacingService rfs = rfsOpt.get();
                 String newRfsName = rfs.getLocalName() + "_" + req.getOntSN();
-                rfs.setLocalName(newRfsName);
-                rfs.setName(newRfsName);
+                rfs.setDiscoveredName(newRfsName);
                 rfsRepo.save(rfs);
                 System.out.println("------------Test Trace # 22--------------- RFS renamed/saved: " + newRfsName);
             } else {

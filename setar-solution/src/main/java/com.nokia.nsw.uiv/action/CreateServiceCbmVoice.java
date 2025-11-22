@@ -14,6 +14,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceCbmVoiceRequest;
+import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -128,6 +129,10 @@ public class CreateServiceCbmVoice implements HttpAction {
             // 3. Subscriber logic
 
             Customer subscriber = subscriberRepository.findByDiscoveredName(subscriberNameString)
+                    .map(existing -> {
+                        Customer s = new Customer();
+                        return s;
+                    })
                     .orElseGet(() -> {
                         Customer s = new Customer();
                         try {
@@ -152,6 +157,10 @@ public class CreateServiceCbmVoice implements HttpAction {
                         subscriberRepository.save(s, 2);
                         return s;
                     });
+
+            if(subscriber.getDiscoveredName()==null){
+                return new CreateServiceCbmVoiceResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameString,"CBM"+ request.getCbmSN());
+            }
 
             // update optional subscriber fields properly
             try {
@@ -186,7 +195,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         props.put("serviceSubType", request.getProductSubtype());
                         props.put("serviceLink", "Cable_Modem");
                         props.put("serviceSN", request.getCbmSN());
-                        props.put("serviceMAC", request.getCbmMac());
+                        props.put("macAddress", request.getCbmMac());
                         props.put("serviceID", request.getServiceId());
                         if (request.getQosProfile() != null) props.put("qosProfile", request.getQosProfile());
                         props.put("householdId", request.getHhid());
@@ -242,9 +251,9 @@ public class CreateServiceCbmVoice implements HttpAction {
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                             throw new RuntimeException(e);
                         }
-                        p.setType(request.getProductType());
                         Map<String, Object> prodProps = new HashMap<>();
                         prodProps.put("status", "Active");
+                        prodProps.put("type",request.getProductType());
                         p.setProperties(prodProps);
                         p.setCustomer(subscriber);
                         p.setSubscription(subscription);

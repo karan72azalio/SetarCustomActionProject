@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import co.elastic.clients.elasticsearch._types.analysis.IcuCollationStrength;
 import com.nokia.nsw.uiv.exception.AccessForbiddenException;
 import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.*;
 
 @Component
@@ -105,44 +107,58 @@ public class CreateServiceCBM implements HttpAction {
             return createErrorResponse("Subscriber name too long", 400);
         }
         Customer subscriber = subscriberRepository.findByDiscoveredName(subscriberName)
+                .map(existing -> {
+                    Customer s = new Customer();
+                    return s;
+                })
                 .orElseGet(() -> {
                     Customer s = new Customer();
                     try {
                         s.setLocalName(Validations.encryptName(subscriberName));
                         s.setDiscoveredName(subscriberName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
+                    } catch (AccessForbiddenException | BadRequestException e) {
                         throw new RuntimeException(e);
                     }
+
                     try {
                         s.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER);
                     } catch (ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
+
                     try {
                         s.setContext(Constants.SETAR);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    s.setType("Regular");
+
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("accountNumber", request.getSubscriberName());
                     prop.put("status", "Active");
                     prop.put("subscriberUserName", request.getUserName());
                     prop.put("address", request.getSubsAddress());
+                    prop.put("type", "Regular");
                     s.setProperties(prop);
+
                     subscriberRepository.save(s, 2);
                     return s;
                 });
-
-        // Optional subscriber info
-        if (request.getFirstName() != null) subscriber.getProperties().get(request.getFirstName());
-        if (request.getLastName() != null) subscriber.getProperties().get(request.getLastName());
-        if (request.getCompanyName() != null) subscriber.getProperties().get(request.getCompanyName());
-        if (request.getContactPhone() != null) subscriber.getProperties().get(request.getContactPhone());
-        if (request.getSubsAddress() != null) subscriber.getProperties().get(request.getSubsAddress());
-        subscriberRepository.save(subscriber, 2);
+        if(subscriber.getDiscoveredName()==null){
+            return new CreateServiceCBMResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,"CBM"+ request.getCbmSN());
+        }
+        try {
+            Map<String, Object> sp = subscriber.getProperties() == null ? new HashMap<>() : subscriber.getProperties();
+            if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) sp.put("firstName", request.getFirstName());
+            if (request.getLastName() != null && !request.getLastName().trim().isEmpty()) sp.put("lastName", request.getLastName());
+            if (request.getCompanyName() != null && !request.getCompanyName().trim().isEmpty()) sp.put("companyName", request.getCompanyName());
+            if (request.getContactPhone() != null && !request.getContactPhone().trim().isEmpty()) sp.put("contactPhone", request.getContactPhone());
+            if (request.getSubsAddress() != null && !request.getSubsAddress().trim().isEmpty()) sp.put("subsAddress", request.getSubsAddress());
+            subscriber.setProperties(sp);
+            subscriberRepository.save(subscriber, 2);
+        } catch (Exception e) {
+            log.error("Persistence error updating subscriber properties", e);
+            return createErrorResponse("Persistence error while updating subscriber: " + e.getMessage(),400);
+        }
 
         // --- 3. Subscription Logic ---
         String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getServiceId();
@@ -219,10 +235,9 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    p.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
-                    prop.put("productType",request.getProductType());
+                    prop.put("type",request.getProductType());
                     p.setProperties(prop);
                     p.setCustomer(subscriber);
                     p.setSubscription(subscription);
@@ -253,9 +268,9 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    c.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
+                    prop.put("type",request.getProductType());
                     c.setProperties(prop);
                     c.setStartDate(new Date());
                     c.setTransactionId(request.getFxOrderID());
@@ -291,9 +306,9 @@ public class CreateServiceCBM implements HttpAction {
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
-                    r.setType(request.getProductType());
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("status", "Active");
+                    prop.put("type",request.getProductType());
                     r.setProperties(prop);
                     r.setContainingCfs(cfs);
                     rfsRepository.save(r, 2);
@@ -334,9 +349,6 @@ public class CreateServiceCBM implements HttpAction {
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });
-
-
-
         // --- 8. Final Response ---
         CreateServiceCBMResponse response = new CreateServiceCBMResponse();
         response.setStatus("201");

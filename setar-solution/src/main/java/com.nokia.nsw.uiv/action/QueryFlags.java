@@ -272,7 +272,7 @@ public class QueryFlags implements HttpAction {
                         if ("ONT".equalsIgnoreCase(serviceLink) || "SRX".equalsIgnoreCase(serviceLink)) {
                             ontSNO = sSN.toString();
                         } else if ("Cable_Modem".equalsIgnoreCase(serviceLink)) {
-                            ontSNO = p.getOrDefault("serviceMAC", "").toString();
+                            ontSNO = p.getOrDefault("macAddress", "").toString();
                         }
                     } else {
                         ontSNO = ontSN;
@@ -285,7 +285,7 @@ public class QueryFlags implements HttpAction {
                     for (Subscription s : subscriptionRepository.findAll()) {
                         Map<String, Object> p = safeProps(s.getProperties());
                         if ("IPTV".equalsIgnoreCase((String) p.getOrDefault("serviceSubType", ""))) {
-                            if (ontSNO.equals(p.getOrDefault("serviceSN", "")) || ontSNO.equals(p.getOrDefault("serviceMAC", ""))) {
+                            if (ontSNO.equals(p.getOrDefault("serviceSN", "")) || ontSNO.equals(p.getOrDefault("macAddress", ""))) {
                                 iptvCount++;
                             }
                         }
@@ -337,7 +337,7 @@ public class QueryFlags implements HttpAction {
                     Map<String, Object> p = safeProps(found.getProperties());
                     Object link = p.get("serviceLink");
                     Object sSN = p.get("serviceSN");
-                    Object sMAC = p.get("serviceMAC");
+                    Object sMAC = p.get("macAddress");
                     Object qos = p.get("veipQosSessionProfile");
                     Object kenan = p.get("kenanSubscriberId");
 
@@ -464,7 +464,7 @@ public class QueryFlags implements HttpAction {
                     if (cbmMac != null && !cbmMac.isEmpty()) {
                         for (Subscription s : subscriptionRepository.findAll()) {
                             Map<String, Object> p = safeProps(s.getProperties());
-                            if ("IPTV".equalsIgnoreCase((String) p.getOrDefault("serviceSubType", "")) && cbmMac.equals(p.getOrDefault("serviceMAC", ""))) {
+                            if ("IPTV".equalsIgnoreCase((String) p.getOrDefault("serviceSubType", "")) && cbmMac.equals(p.getOrDefault("macAddress", ""))) {
                                 Object sid = p.get("serviceID");
                                 if (sid != null) iptvIds.add(sid.toString());
                             }

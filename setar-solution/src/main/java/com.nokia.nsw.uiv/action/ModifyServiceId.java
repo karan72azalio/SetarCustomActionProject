@@ -118,6 +118,7 @@ public class ModifyServiceId implements HttpAction {
                 }
 
                 if (!matches) continue;
+                log.error("Customer Facing Service match found: "+cfsName);
                 System.out.println("------------Test Trace # 5--------------- Processing CFS: " + cfsName);
 
                 // Locate RFS
@@ -146,6 +147,7 @@ public class ModifyServiceId implements HttpAction {
                     Map<String, Object> props = subs.getProperties() == null ? new HashMap<>() : new HashMap<>(subs.getProperties());
                     props.put("serviceID", newServiceId);
                     subs.setProperties(props);
+                    log.error("Subscription updated successfully with the updated name: "+newName);
                     subscriptionRepo.save(subs);
                     updatesApplied = true;
                     System.out.println("------------Test Trace # 6--------------- Subscription updated: " + newName);
@@ -156,6 +158,7 @@ public class ModifyServiceId implements HttpAction {
                     Product prod = productRepo.findByDiscoveredName(productOpt.get().getDiscoveredName()).get();
                     String newName = prod.getDiscoveredName().replace(oldServiceId, newServiceId);
                     prod.setDiscoveredName(newName);
+                    log.error("Product updated successfully with the updated name: "+newName);
                     productRepo.save(prod);
                     updatesApplied = true;
                     System.out.println("------------Test Trace # 7--------------- Product updated: " + newName);
@@ -170,7 +173,7 @@ public class ModifyServiceId implements HttpAction {
                     Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
                     custProps.put("accountNumber", newServiceId);
                     cust.setProperties(custProps);
-
+                    log.error("Subscriber updated successfully with the updated name: "+newName);
                     customerRepo.save(cust);
                     updatesApplied = true;
                     System.out.println("------------Test Trace # 8--------------- Subscriber updated: " + newName);
@@ -184,19 +187,25 @@ public class ModifyServiceId implements HttpAction {
                         if (res instanceof LogicalDevice) {
                             LogicalDevice ont = (LogicalDevice) res;
                             Map<String,Object> props = ont.getProperties();
-                            if (oldServiceId.equals(props.get("potsPort1Number")!=null?props.get("potsPort1Number").toString():null)) {
-                                props.put("potsPort1Number",newServiceId);
+                            if(ont.getDiscoveredName().contains("ONT")){
+                                if ((props.get("potsPort1Number")!=null?props.get("potsPort1Number").toString():"").contains(oldServiceId)) {
+                                    log.error("OntDevice updated successfully for the property potsPort1Number: "+ont.getDiscoveredName());
+                                    props.put("potsPort1Number",newServiceId);
+                                }
+                                if ((props.get("potsPort2Number")!=null?props.get("potsPort2Number").toString():"").contains(oldServiceId)) {
+                                    log.error("OntDevice updated successfully for the property potsPort2Number: "+ont.getDiscoveredName());
+                                    props.put("potsPort2Number",newServiceId);
+                                }
+
+                                logicalDeviceRepository.save(ont);
+                                System.out.println("------------Test Trace # 9--------------- ONT updated: " + ont.getDiscoveredName());
+                            }else if(ont.getDiscoveredName().contains("CBM")){
+                                LogicalDevice cbm = (LogicalDevice) res;
+                                String newDevName = cbm.getDiscoveredName().replace(oldServiceId, newServiceId);
+                                log.error("CBM Device updated successfully with the updated name: "+newDevName);
+                                cbm.setDiscoveredName(newDevName);
+                                System.out.println("------------Test Trace # 10--------------- CBM updated: " + cbm.getDiscoveredName());
                             }
-                            if (oldServiceId.equals(props.get("potsPort1Number")!=null?props.get("potsPort1Number").toString():null)) {
-                                props.put("potsPort1Number",newServiceId);
-                            }
-                            logicalDeviceRepository.save(ont);
-                            System.out.println("------------Test Trace # 9--------------- ONT updated: " + ont.getDiscoveredName());
-                        } else if (res instanceof LogicalDevice) {
-                            LogicalDevice cbm = (LogicalDevice) res;
-                            String newDevName = cbm.getDiscoveredName().replace(oldServiceId, newServiceId);
-                            cbm.setDiscoveredName(newDevName);
-                            System.out.println("------------Test Trace # 10--------------- CBM updated: " + cbm.getDiscoveredName());
                         }
                     });
 
@@ -211,6 +220,7 @@ public class ModifyServiceId implements HttpAction {
                 cfs = cfsRepo.findByDiscoveredName(cfs.getDiscoveredName()).get();
                 String newCfsName = cfs.getDiscoveredName().replace(oldServiceId, newServiceId);
                 cfs.setDiscoveredName(newCfsName);
+                log.error("CFS updated successfully with the updated name: "+newCfsName);
                 cfsRepo.save(cfs);
                 updatesApplied = true;
                 System.out.println("------------Test Trace # 12--------------- CFS updated: " + newCfsName);

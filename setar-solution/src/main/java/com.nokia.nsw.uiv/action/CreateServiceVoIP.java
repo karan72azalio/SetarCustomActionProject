@@ -7,6 +7,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceVoIPRequest;
+import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.response.CreateServiceVoIPResponse;
 import com.nokia.nsw.uiv.utils.Validations;
 
@@ -102,6 +103,10 @@ public class CreateServiceVoIP implements HttpAction {
                 );
             }
             Customer subscriber = customerRepo.findByDiscoveredName(subscriberNameStr)
+                    .map(existing -> {
+                        Customer s = new Customer();
+                        return s;
+                    })
                     .orElseGet(() -> {
                         Customer newSub = new Customer();
                         try {
@@ -120,6 +125,9 @@ public class CreateServiceVoIP implements HttpAction {
                         newSub.setProperties(subProps);
                         return customerRepo.save(newSub);
                     });
+            if(subscriber.getDiscoveredName()==null){
+                return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN(),"ONT" + req.getOntSN());
+            }
 
             // Step 4: Subscription
             String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN();

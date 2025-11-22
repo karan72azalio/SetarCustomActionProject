@@ -15,6 +15,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceFibernetRequest;
+import com.nokia.nsw.uiv.response.CreateServiceEVPNResponse;
 import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -115,6 +116,7 @@ public class CreateServiceFibernet implements HttpAction {
             if (optCustomer.isPresent()) {
                 subscriber = optCustomer.get();
                 log.info("Found existing subscriber: {}", subscriberName);
+                return new CreateServiceFibernetResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,ontName);
             } else {
                 subscriber = new Customer();
                 subscriber.setDiscoveredName(subscriberName);
