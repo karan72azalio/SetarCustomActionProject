@@ -145,6 +145,19 @@ public class CreateServiceCBM implements HttpAction {
         if(subscriber.getDiscoveredName()==null){
             return new CreateServiceCBMResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,"CBM"+ request.getCbmSN());
         }
+        try {
+            Map<String, Object> sp = subscriber.getProperties() == null ? new HashMap<>() : subscriber.getProperties();
+            if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) sp.put("firstName", request.getFirstName());
+            if (request.getLastName() != null && !request.getLastName().trim().isEmpty()) sp.put("lastName", request.getLastName());
+            if (request.getCompanyName() != null && !request.getCompanyName().trim().isEmpty()) sp.put("companyName", request.getCompanyName());
+            if (request.getContactPhone() != null && !request.getContactPhone().trim().isEmpty()) sp.put("contactPhone", request.getContactPhone());
+            if (request.getSubsAddress() != null && !request.getSubsAddress().trim().isEmpty()) sp.put("subsAddress", request.getSubsAddress());
+            subscriber.setProperties(sp);
+            subscriberRepository.save(subscriber, 2);
+        } catch (Exception e) {
+            log.error("Persistence error updating subscriber properties", e);
+            return createErrorResponse("Persistence error while updating subscriber: " + e.getMessage(),400);
+        }
 
         // --- 3. Subscription Logic ---
         String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getServiceId();

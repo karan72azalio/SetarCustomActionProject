@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceEVPNRequest;
+import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.response.CreateServiceEVPNResponse;
 import com.nokia.nsw.uiv.utils.Validations;
 
@@ -159,6 +160,10 @@ public class CreateServiceEVPN implements HttpAction {
 
             // 3) Subscriber: find or create (properties map)
             Customer subscriber = customerRepo.findByDiscoveredName(subscriberNameStr)
+                    .map(existing -> {
+                        Customer s = new Customer();
+                        return s;
+                    })
                     .orElseGet(() -> {
                         System.out.println("------------Trace # 8--------------- Creating subscriber: " + subscriberNameStr);
                         Customer newSub = new Customer();
@@ -183,7 +188,9 @@ public class CreateServiceEVPN implements HttpAction {
                         newSub.setProperties(subProps);
                         return customerRepo.save(newSub);
                     });
-
+            if(subscriber.getDiscoveredName()==null){
+                return new CreateServiceEVPNResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameStr,ontName);
+            }
             // 4) Subscription: find or create (properties map)
             Subscription subscription = subscriptionRepo.findByDiscoveredName(subscriptionName)
                     .orElseGet(() -> {

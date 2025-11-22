@@ -11,6 +11,7 @@ import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
+import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.Product;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -112,6 +114,7 @@ public class CreateServiceIPTV implements HttpAction {
             if (optSubscriber.isPresent()) {
                 subscriber = optSubscriber.get();
                 log.info("Subscriber already exists: {}", subscriberName);
+                return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry", Instant.now().toString(),subscriberName,ontName);
             } else {
                 subscriber = new Customer();
                 subscriber.setLocalName(Validations.encryptName(subscriberName));
