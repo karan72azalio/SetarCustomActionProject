@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import co.elastic.clients.elasticsearch._types.analysis.IcuCollationStrength;
 import com.nokia.nsw.uiv.exception.AccessForbiddenException;
 import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.*;
 
 @Component
@@ -104,44 +106,45 @@ public class CreateServiceCBM implements HttpAction {
             return createErrorResponse("Subscriber name too long", 400);
         }
         Customer subscriber = subscriberRepository.findByDiscoveredName(subscriberName)
+                .map(existing -> {
+                    Customer s = new Customer();
+                    return s;
+                })
                 .orElseGet(() -> {
                     Customer s = new Customer();
                     try {
                         s.setLocalName(Validations.encryptName(subscriberName));
                         s.setDiscoveredName(subscriberName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
+                    } catch (AccessForbiddenException | BadRequestException e) {
                         throw new RuntimeException(e);
                     }
+
                     try {
                         s.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER);
                     } catch (ModificationNotAllowedException e) {
                         throw new RuntimeException(e);
                     }
+
                     try {
                         s.setContext(Constants.SETAR);
                     } catch (BadRequestException e) {
                         throw new RuntimeException(e);
                     }
+
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("accountNumber", request.getSubscriberName());
                     prop.put("status", "Active");
                     prop.put("subscriberUserName", request.getUserName());
                     prop.put("address", request.getSubsAddress());
-                    prop.put("type","Regular");
+                    prop.put("type", "Regular");
                     s.setProperties(prop);
+
                     subscriberRepository.save(s, 2);
                     return s;
                 });
-
-        // Optional subscriber info
-        if (request.getFirstName() != null) subscriber.getProperties().get(request.getFirstName());
-        if (request.getLastName() != null) subscriber.getProperties().get(request.getLastName());
-        if (request.getCompanyName() != null) subscriber.getProperties().get(request.getCompanyName());
-        if (request.getContactPhone() != null) subscriber.getProperties().get(request.getContactPhone());
-        if (request.getSubsAddress() != null) subscriber.getProperties().get(request.getSubsAddress());
-        subscriberRepository.save(subscriber, 2);
+        if(subscriber.getDiscoveredName()==null){
+            return new CreateServiceCBMResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,"CBM"+ request.getCbmSN());
+        }
 
         // --- 3. Subscription Logic ---
         String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getServiceId();
