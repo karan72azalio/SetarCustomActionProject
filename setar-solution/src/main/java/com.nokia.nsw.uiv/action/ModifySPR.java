@@ -139,13 +139,14 @@ public class ModifySPR implements HttpAction {
 
             Map<String, Object> subrProps = subscriber.getProperties();
             subrProps.put("email_username", request.getModifyParam2());
-            subscriber.setProperties(subrProps);
 
             if (!request.getServiceId().equals(request.getModifyParam3())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam3());
             }
 
             subscriptionRepository.save(subscription, 2);
+            subscriber = customerRepository.findByDiscoveredName(subscriber.getDiscoveredName()).get();
+            subscriber.setProperties(subrProps);
             customerRepository.save(subscriber, 2);
             return true;
 
