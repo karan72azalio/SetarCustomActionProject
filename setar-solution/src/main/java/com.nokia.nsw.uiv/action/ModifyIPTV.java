@@ -155,7 +155,7 @@ public class ModifyIPTV implements HttpAction {
                     subscriptionRepository.save(subscription, 2);
 
                     if (cbmDevice != null) {
-                        Map<String, Object> cbmProps = cbmDevice.getProperties();
+                        Map<String, Object> cbmProps = stbApCmDeviceRepository.findByDiscoveredName(cbmDevice.getDiscoveredName()).get().getProperties();
                         if (cbmProps == null) cbmProps = new HashMap<>();
                         cbmProps.put("macAddress", request.getModifyParam1());
                         cbmDevice.setProperties(cbmProps);

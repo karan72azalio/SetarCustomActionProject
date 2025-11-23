@@ -60,7 +60,7 @@ public class ModifyServiceId implements HttpAction {
     }
 
     @Override
-    public Object doPatch(ActionContext actionContext) {
+    public Object doPost(ActionContext actionContext) {
         System.out.println("------------Test Trace # 1--------------- ModifyServiceId started");
         ModifyServiceIdRequest req = (ModifyServiceIdRequest) actionContext.getObject();
 
