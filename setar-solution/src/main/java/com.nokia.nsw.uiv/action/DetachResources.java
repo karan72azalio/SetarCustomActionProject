@@ -56,7 +56,7 @@ public class DetachResources implements HttpAction {
         String subscriptionName = request.getSubscriberName() + "_" + request.getServiceID();
         String cfsName = "CFS_" + subscriptionName;
         String rfsName = "RFS_" + subscriptionName;
-        String productName = request.getSubscriberName()+Constants.UNDER_SCORE+ request.getProductSubType()+Constants.UNDER_SCORE+ request.getServiceID();
+        String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubType() + Constants.UNDER_SCORE+ request.getServiceID();
 
         try {
             // 1. Mandatory validation
