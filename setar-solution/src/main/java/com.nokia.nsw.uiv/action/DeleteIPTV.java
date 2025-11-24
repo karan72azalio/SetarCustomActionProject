@@ -95,11 +95,11 @@ public class DeleteIPTV implements HttpAction {
                 return successResponse(subscriptionName, ontName, "No entry found for Delete.");
             }
 
-            LogicalDevice olt = null;
-            if (optOnt.isPresent()) {
-                LogicalDevice ont = optOnt.get();
-                olt = (LogicalDevice) ont.getContainingLogicalDevice();
-            }
+
+            LogicalDevice olt = optOnt
+                    .map(ont -> ont.getManagingDevices().stream().findFirst().orElse(null))
+                    .orElse(null);
+
 
             // Step 4: Update OLT template values
             if (olt != null) {
