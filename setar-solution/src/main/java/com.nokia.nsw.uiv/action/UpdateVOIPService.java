@@ -41,7 +41,7 @@ public class UpdateVOIPService implements HttpAction {
     }
 
     @Override
-    public Object doPatch(ActionContext actionContext) {
+    public Object doPost(ActionContext actionContext) {
         log.info("Executing UpdateVOIPService...");
         UpdateVOIPServiceRequest req = (UpdateVOIPServiceRequest) actionContext.getObject();
 
@@ -104,6 +104,7 @@ public class UpdateVOIPService implements HttpAction {
 
             // Step 6: Update Subscription
             if (subscriptionOpt.isPresent()) {
+                subscriptionOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
                 Subscription subs = subscriptionOpt.get();
                 Map<String, Object> props = subs.getProperties();
 

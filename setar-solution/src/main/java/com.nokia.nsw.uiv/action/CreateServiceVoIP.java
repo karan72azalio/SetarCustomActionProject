@@ -278,8 +278,8 @@ public class CreateServiceVoIP implements HttpAction {
                     .orElseGet(() -> {
                         LogicalDevice dev = new LogicalDevice();
                         try {
-                            dev.setLocalName(req.getOltName());
-                            dev.setName(req.getOltName());
+                            dev.setLocalName(Validations.encryptName(req.getOltName()));
+                            dev.setDiscoveredName(req.getOltName());
                             dev.setContext("Setar");
                             dev.setKind("OLTDevice");
                         } catch (Exception e) {
@@ -299,8 +299,8 @@ public class CreateServiceVoIP implements HttpAction {
                     .orElseGet(() -> {
                         LogicalDevice dev = new LogicalDevice();
                         try {
-                            dev.setLocalName(ontName);
-                            dev.setName(ontName);
+                            dev.setLocalName(Validations.encryptName(ontName));
+                            dev.setDiscoveredName(ontName);
                             dev.setContext("Setar");
                             dev.setKind("ONTDevice");
                         } catch (Exception e) {
