@@ -128,93 +128,95 @@ public class ModifyIPTV implements HttpAction {
             // -------------------- Modify based on type --------------------
             String modifyType = request.getModifyType();
 
-            // Modify ONT MAC
-            if (modifyType.contains("ModifyONT")) {
-                if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
-                    Map<String, Object> subProps = subscription.getProperties();
-                    if (subProps == null) subProps = new HashMap<>();
-                    subProps.put("macAddress", request.getModifyParam1());
-                    if (request.getGatewayMac() != null && !request.getGatewayMac().equalsIgnoreCase("NA")) {
-                        subProps.put("gatewayMacAddress", request.getGatewayMac());
+            if(request.getProductType().equalsIgnoreCase("IPTV")){
+                // Modify ONT MAC
+                if (modifyType.contains("ModifyONT")) {
+                    if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                        Map<String, Object> subProps = subscription.getProperties();
+                        if (subProps == null) subProps = new HashMap<>();
+                        subProps.put("macAddress", request.getModifyParam1());
+                        if (request.getGatewayMac() != null && !request.getGatewayMac().equalsIgnoreCase("NA")) {
+                            subProps.put("gatewayMacAddress", request.getGatewayMac());
+                        }
+                        subscription.setProperties(subProps);
+                        subscriptionRepository.save(subscription, 2);
                     }
-                    subscription.setProperties(subProps);
-                    subscriptionRepository.save(subscription, 2);
                 }
-            }
 
-            // Modify Cable Modem
-            if (modifyType.contains("ModfiyCableModem")) {
-                Optional<LogicalDevice> optCbM = stbApCmDeviceRepository.findByDiscoveredName(cbmDeviceName);
-                LogicalDevice cbmDevice = optCbM.orElse(null);
+                // Modify Cable Modem
+                if (modifyType.contains("ModifyCableModem")) {
+                    Optional<LogicalDevice> optCbM = stbApCmDeviceRepository.findByDiscoveredName(cbmDeviceName);
+                    LogicalDevice cbmDevice = optCbM.orElse(null);
 
-                if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
-                    Map<String, Object> subProps = subscription.getProperties();
-                    if (subProps == null) subProps = new HashMap<>();
-                    subProps.put("macAddress", request.getModifyParam1());
-                    subscription.setProperties(subProps);
-                    subscriptionRepository.save(subscription, 2);
+                    if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                        Map<String, Object> subProps = subscription.getProperties();
+                        if (subProps == null) subProps = new HashMap<>();
+                        subProps.put("macAddress", request.getModifyParam1());
+                        subscription.setProperties(subProps);
+                        subscriptionRepository.save(subscription, 2);
 
-                    if (cbmDevice != null) {
-                        Map<String, Object> cbmProps = stbApCmDeviceRepository.findByDiscoveredName(cbmDevice.getDiscoveredName()).get().getProperties();
+                        if (cbmDevice != null) {
+                            Map<String, Object> cbmProps = stbApCmDeviceRepository.findByDiscoveredName(cbmDevice.getDiscoveredName()).get().getProperties();
+                            if (cbmProps == null) cbmProps = new HashMap<>();
+                            cbmProps.put("macAddress", request.getModifyParam1());
+                            cbmDevice.setProperties(cbmProps);
+                            stbApCmDeviceRepository.save(cbmDevice, 2);
+                        }
+                    }
+
+                    if (request.getModifyParam2() != null && !request.getModifyParam2().equalsIgnoreCase("NA") && cbmDevice != null) {
+                        Map<String, Object> cbmProps = cbmDevice.getProperties();
                         if (cbmProps == null) cbmProps = new HashMap<>();
-                        cbmProps.put("macAddress", request.getModifyParam1());
+                        cbmProps.put("gatewayMacAddress", request.getModifyParam2());
                         cbmDevice.setProperties(cbmProps);
                         stbApCmDeviceRepository.save(cbmDevice, 2);
                     }
                 }
 
-                if (request.getModifyParam2() != null && !request.getModifyParam2().equalsIgnoreCase("NA") && cbmDevice != null) {
-                    Map<String, Object> cbmProps = cbmDevice.getProperties();
-                    if (cbmProps == null) cbmProps = new HashMap<>();
-                    cbmProps.put("gatewayMacAddress", request.getModifyParam2());
-                    cbmDevice.setProperties(cbmProps);
-                    stbApCmDeviceRepository.save(cbmDevice, 2);
+                // Modify Customer Group
+                if (modifyType.contains("ModifyCustomerGroup")) {
+                    if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                        Map<String, Object> subProps = subscription.getProperties();
+                        if (subProps == null) subProps = new HashMap<>();
+                        subProps.put("customerGroupId", request.getModifyParam1());
+                        subscription.setProperties(subProps);
+                        subscriptionRepository.save(subscription, 2);
+                    }
                 }
-            }
 
-            // Modify Customer Group
-            if (modifyType.contains("ModifyCustomerGroup")) {
-                if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
-                    Map<String, Object> subProps = subscription.getProperties();
-                    if (subProps == null) subProps = new HashMap<>();
-                    subProps.put("customerGroupId", request.getModifyParam1());
-                    subscription.setProperties(subProps);
-                    subscriptionRepository.save(subscription, 2);
-                }
-            }
-
-            // Create User
-            if (modifyType.contains("CreateUser")) {
-                Map<String, Object> subProps = subscriber.getProperties();
-                if (subProps == null) subProps = new HashMap<>();
-                if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
-                    subProps.put("miSetarUserName", request.getModifyParam1());
-                }
-                if (request.getModifyParam2() != null && !request.getModifyParam2().equalsIgnoreCase("NA")) {
-                    subProps.put("miSetarPassword", request.getModifyParam2());
-                }
-                subscriber.setProperties(subProps);
-                customerRepository.save(subscriber, 2);
-            }
-
-            // Delete User
-            if (modifyType.contains("DeleteUser")) {
-                Map<String, Object> subProps = subscriber.getProperties();
-                if (subProps == null) subProps = new HashMap<>();
-                subProps.put("miSetarUserName", "");
-                subProps.put("miSetarPassword", "");
-                subscriber.setProperties(subProps);
-                customerRepository.save(subscriber, 2);
-            }
-
-            // Reset Password
-            if (modifyType.contains("ResetPassword")) {
-                if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                // Create User
+                if (modifyType.contains("CreateUser")) {
                     Map<String, Object> subProps = subscriber.getProperties();
                     if (subProps == null) subProps = new HashMap<>();
-                    subProps.put("miSetarPassword", request.getModifyParam1());
+                    if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                        subProps.put("miSetarUserName", request.getModifyParam1());
+                    }
+                    if (request.getModifyParam2() != null && !request.getModifyParam2().equalsIgnoreCase("NA")) {
+                        subProps.put("miSetarPassword", request.getModifyParam2());
+                    }
                     subscriber.setProperties(subProps);
                     customerRepository.save(subscriber, 2);
+                }
+
+                // Delete User
+                if (modifyType.contains("DeleteUser")) {
+                    Map<String, Object> subProps = subscriber.getProperties();
+                    if (subProps == null) subProps = new HashMap<>();
+                    subProps.put("miSetarUserName", "");
+                    subProps.put("miSetarPassword", "");
+                    subscriber.setProperties(subProps);
+                    customerRepository.save(subscriber, 2);
+                }
+
+                // Reset Password
+                if (modifyType.contains("ResetPassword")) {
+                    if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                        Map<String, Object> subProps = subscriber.getProperties();
+                        if (subProps == null) subProps = new HashMap<>();
+                        subProps.put("miSetarPassword", request.getModifyParam1());
+                        subscriber.setProperties(subProps);
+                        customerRepository.save(subscriber, 2);
+                    }
                 }
             }
             return new ModifyIPTVResponse(

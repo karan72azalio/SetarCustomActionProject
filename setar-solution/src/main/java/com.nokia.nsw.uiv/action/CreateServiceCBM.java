@@ -77,9 +77,6 @@ public class CreateServiceCBM implements HttpAction {
                     java.time.Instant.now().toString(), "","");
         }
 
-
-        String x = "Karan Ji";
-
         // --- 2. Subscriber Logic ---
         String subscriberName;
         if ("Broadband".equalsIgnoreCase(request.getProductSubtype())

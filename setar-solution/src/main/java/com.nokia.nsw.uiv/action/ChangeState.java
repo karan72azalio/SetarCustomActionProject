@@ -171,14 +171,14 @@ public class ChangeState implements HttpAction {
             rfsRepository.save(rfs, 2);
 
             // Also persist ONT/CBM if we located and want to reflect state (optional)
-            if (optOnt.isPresent()) {
-                LogicalDevice ont = optOnt.get();
-                logicalDeviceRepository.save(ont, 2);
-            }
-            if (optCbm.isPresent()) {
-                LogicalDevice cbm = optCbm.get();
-                logicalDeviceRepository.save(cbm, 2);
-            }
+//            if (optOnt.isPresent()) {
+//                LogicalDevice ont = optOnt.get();
+//                logicalDeviceRepository.save(ont, 2);
+//            }
+//            if (optCbm.isPresent()) {
+//                LogicalDevice cbm = optCbm.get();
+//                logicalDeviceRepository.save(cbm, 2);
+//            }
 
             // 7. Final response
             return new ChangeStateResponse("200",

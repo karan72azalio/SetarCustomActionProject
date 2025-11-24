@@ -85,7 +85,7 @@ public class CreateServiceFibernet implements HttpAction {
             // optional: template names etc.
 
             // Build canonical names
-            String subscriberName = request.getSubscriberName() + "_" + request.getOntSN(); // subscriber with ONT suffix as per your conventions
+            String subscriberName = request.getSubscriberName() + "_" + request.getOntSN();
             String subscriptionName = request.getSubscriberName() + "_" + request.getServiceID() + "_" + request.getOntSN();
             String productName = request.getSubscriberName() + "_" + request.getProductSubtype() + "_" + request.getServiceID();
             String cfsName = "CFS_" + subscriptionName;
@@ -274,29 +274,29 @@ public class CreateServiceFibernet implements HttpAction {
             }
 
             // 8. ONT device: find or create as LogicalDevice with kind=ONT
-            String stbDeviceName = "STB"+"_"+ request.getOntSN();
-            Optional<LogicalDevice> stbOpt = logicalDeviceRepository.findByDiscoveredName(stbDeviceName);
-            LogicalDevice stbDevice;
-            if (stbOpt.isPresent()) {
-                log.info("Found existing ONT: {}", stbDeviceName);
-            } else {
-                stbDevice = new LogicalDevice();
-                stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
-                stbDevice.setDiscoveredName(stbDeviceName);
-                stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
-                stbDevice.setContext(ontContext);
-                Map<String, Object> stbProps = new HashMap<>();
-                stbProps.put("serialNo", request.getOntSN());
-                if (request.getOntModel() != null) stbProps.put("deviceModel", request.getOntModel());
-                if (request.getTemplateNameONT() != null) stbProps.put("ontTemplate", request.getTemplateNameONT());
-                if (request.getMenm() != null) stbProps.put("description", request.getMenm());
-                if (request.getVlanID() != null) stbProps.put("mgmtVlan", request.getVlanID());
-                stbDevice.addUsingService(rfs);
-                stbDevice.addManagingDevices(oltDevice);
-                stbDevice.setAdministrativeState(AdministrativeState.Activated);
-                logicalDeviceRepository.save(stbDevice, 2);
-                log.info("Created ONT device: {}", stbDeviceName);
-            }
+//            String stbDeviceName = "STB"+"_"+ request.getOntSN();
+//            Optional<LogicalDevice> stbOpt = logicalDeviceRepository.findByDiscoveredName(stbDeviceName);
+//            LogicalDevice stbDevice;
+//            if (stbOpt.isPresent()) {
+//                log.info("Found existing ONT: {}", stbDeviceName);
+//            } else {
+//                stbDevice = new LogicalDevice();
+//                stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
+//                stbDevice.setDiscoveredName(stbDeviceName);
+//                stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
+//                stbDevice.setContext(ontContext);
+//                Map<String, Object> stbProps = new HashMap<>();
+//                stbProps.put("serialNo", request.getOntSN());
+//                if (request.getOntModel() != null) stbProps.put("deviceModel", request.getOntModel());
+//                if (request.getTemplateNameONT() != null) stbProps.put("ontTemplate", request.getTemplateNameONT());
+//                if (request.getMenm() != null) stbProps.put("description", request.getMenm());
+//                if (request.getVlanID() != null) stbProps.put("mgmtVlan", request.getVlanID());
+//                stbDevice.addUsingService(rfs);
+//                stbDevice.addManagingDevices(oltDevice);
+//                stbDevice.setAdministrativeState(AdministrativeState.Activated);
+//                logicalDeviceRepository.save(stbDevice, 2);
+//                log.info("Created ONT device: {}", stbDeviceName);
+//            }
 
 
             if(oltDevice!=null && ontDevice!=null){
