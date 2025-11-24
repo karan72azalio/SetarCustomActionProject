@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -64,7 +66,7 @@ public class ChangeResourceStatus implements HttpAction {
             System.out.println("------------Test Trace # 3--------------- Inputs: SN=" + sn + ", Type=" + type + ", TargetStatus=" + targetStatus);
 
             // 2. Resolve states
-            if (!("Activated".equalsIgnoreCase(targetStatus) || "Deallocated".equalsIgnoreCase(targetStatus) || "Unknown".equalsIgnoreCase(targetStatus) || "NotApplicabe".equalsIgnoreCase(targetStatus))) {
+            if (!("Available".equalsIgnoreCase(targetStatus) || "Deallocated".equalsIgnoreCase(targetStatus) || "Unknown".equalsIgnoreCase(targetStatus) || "NotApplicabe".equalsIgnoreCase(targetStatus))) {
                 return new ChangeResourceStatusResponse(
                         "400",
                         ERROR_PREFIX + "Invalid resourceStatus: " + targetStatus,
@@ -90,7 +92,7 @@ public class ChangeResourceStatus implements HttpAction {
             }
 
             LogicalDevice device = devOpt.get();
-            String currentStatus = String.valueOf(device.getAdministrativeState());
+            String currentStatus = device.getProperties().get("administrativeState")!=null?device.getProperties().get("administrativeState").toString():null;
             String model = device.getProperties().get("Model") == null ? "" : device.getProperties().get("Model").toString();
             String mac = device.getProperties().get("MacAddress") == null ? "" : device.getProperties().get("MacAddress").toString() ;
 
@@ -107,7 +109,10 @@ public class ChangeResourceStatus implements HttpAction {
                 );
             }
 
+            Map<String, Object> deviceProps = device.getProperties();
             device.setAdministrativeState(AdministrativeState.valueOf(targetStatus));
+            deviceProps.put("administrativeStatus",targetStatus);
+            device.setProperties(deviceProps);
             stbRepo.save(device);
 
             System.out.println("------------Test Trace # 8--------------- Device status updated to " + targetStatus);

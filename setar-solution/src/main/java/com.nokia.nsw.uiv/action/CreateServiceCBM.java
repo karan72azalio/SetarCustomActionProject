@@ -27,6 +27,7 @@ import com.setar.uiv.model.product.ProductRepository;
 import com.setar.uiv.model.product.ResourceFacingService;
 import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.jcodings.util.Hash;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -88,7 +89,9 @@ public class CreateServiceCBM implements HttpAction {
             Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.findByDiscoveredName(cpeName);
             if (cpeOpt.isPresent()) {
                 LogicalDevice cpe = cpeOpt.get();
-                cpe.setAdministrativeState(AdministrativeState.valueOf("Available"));
+                Map<String,Object> cpeProps = cpe.getProperties();
+                cpeProps.put("administrativeState","Available");
+                cpe.setProperties(cpeProps);
                 if ("Broadband".equalsIgnoreCase(request.getProductSubtype())) {
                     cpe.setDescription("Internet");
                 }
