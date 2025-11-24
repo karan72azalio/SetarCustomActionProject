@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -48,14 +49,14 @@ public class DetachResources implements HttpAction {
     }
 
     @Override
-    public Object doPatch(ActionContext actionContext) throws Exception {
+    public Object doPost(ActionContext actionContext) throws Exception {
         log.info("Executing action: {}", ACTION_LABEL);
 
         DetachResourcesRequest request = (DetachResourcesRequest) actionContext.getObject();
         String subscriptionName = request.getSubscriberName() + "_" + request.getServiceID();
         String cfsName = "CFS_" + subscriptionName;
         String rfsName = "RFS_" + subscriptionName;
-        String productName = request.getSubscriberName()+ request.getProductSubType()+ request.getServiceID();
+        String productName = request.getSubscriberName()+Constants.UNDER_SCORE+ request.getProductSubType()+Constants.UNDER_SCORE+ request.getServiceID();
 
         try {
             // 1. Mandatory validation
@@ -78,11 +79,6 @@ public class DetachResources implements HttpAction {
             }
 
             ResourceFacingService rfsEntity = rfs.get();
-            if (request.getFxOrderId() != null) {
-                rfsEntity.getProperties().put("transactionId", request.getFxOrderId());
-            }
-            rfsEntity.getProperties().put("transactionType", "DetachResources");
-
             boolean deviceUpdated = false;
 
             // 3. Handle devices
@@ -106,7 +102,10 @@ public class DetachResources implements HttpAction {
             }
 
             if (deviceUpdated) {
-                rfsRepository.save(rfsEntity, 2);
+                rfsEntity = rfsRepository.findByDiscoveredName(rfsEntity.getDiscoveredName()).get();
+                Map<String,Object> rfsProps = rfsEntity.getProperties();
+                rfsProps.put("transactionId",request.getFxOrderId());
+                rfsRepository.save(rfsEntity,2);
                 return new DetachResourcesResponse("200",
                         "UIV action DetachResources executed successfully.",
                         getCurrentTimestamp(),

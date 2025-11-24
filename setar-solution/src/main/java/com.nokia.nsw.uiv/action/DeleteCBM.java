@@ -216,7 +216,7 @@ public class DeleteCBM implements HttpAction {
                             if (cbmDevice.getProperties() == null) {
                                 cbmDevice.setProperties(new HashMap<>());
                             }
-                            cbmDevice.getProperties().put("AdministrativeState", "Available");
+                            cbmDevice.getProperties().put("administrativeState", "Available");
                         }
                     } catch (Exception e) {
                         log.warn("Error while evaluating voip ports for broadband CBM {}", cbmName, e);
@@ -258,7 +258,7 @@ public class DeleteCBM implements HttpAction {
                                 Map<String, Object> props = resource.getProperties() != null
                                         ? new HashMap<>(resource.getProperties())
                                         : new HashMap<>();
-                                props.put("AdministrativeState", "Available");
+                                props.put("administrativeState", "Available");
 
                                 if (isSTB) {
                                     // clear deviceGroupId for STB

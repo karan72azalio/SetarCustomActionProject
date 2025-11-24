@@ -105,23 +105,6 @@ public class AssociateResources implements HttpAction {
                 );
             }
             ResourceFacingService rfs = optRfs.get();
-            LogicalDevice d = new LogicalDevice();
-            Set<Resource> resources = rfs.getUsedResource();
-            for(Resource r:resources){
-                if(r instanceof LogicalDevice){
-                    d = (LogicalDevice)r;
-                }
-            }
-            String allocatedState = d.getProperties().get("administrativeState")!=null?d.getProperties().get("administrativeState").toString():null;
-            if (allocatedState == null) {
-                return new AssociateResourcesResponse(
-                        "404",
-                        ERROR_PREFIX + "Administrative state 'Allocated' not found",
-                        Instant.now().toString(),
-                        ""
-                );
-            }
-
             // Step 4: IPTV logic
             boolean deviceUpdated = false;
             if ("IPTV".equalsIgnoreCase(request.getProductSubType())) {
@@ -150,7 +133,7 @@ public class AssociateResources implements HttpAction {
 
                 for (int i = 0; i < stbSerials.length; i++) {
                     String sn = stbSerials[i];
-                    if (sn != null && !"NA".equalsIgnoreCase(sn)) {
+                    if (sn != null && !"NA".equalsIgnoreCase(sn) && !sn.isEmpty()) {
                         String devName = "STB_" + sn;
                         System.out.println("----Trace #6: Processing STB device: " + devName + " ----");
                         Optional<LogicalDevice> optDev = deviceRepository.findByDiscoveredName(devName);
@@ -165,20 +148,20 @@ public class AssociateResources implements HttpAction {
                         LogicalDevice device = optDev.get();
                         device.getProperties().put("deviceGroupId", "GROUP" + (i + 1));
                         Map<String,Object>props=new HashMap<>();
-                        props.put("AdministrativeState",allocatedState);
+                        props.put("administrativeState","Allocated");
                         if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
                             device.setDescription(request.getServiceId() + "_" + request.getOntSN().replace("ONT", "_"));
                         } else {
                             device.setDescription(request.getServiceId());
                         }
-                        device.setOwningService(rfs);
+                        device.addUsingService(rfs);
                         deviceRepository.save(device);
                         deviceUpdated = true;
                     }
                 }
 
                 for (String sn : apSerials) {
-                    if (sn != null && !"NA".equalsIgnoreCase(sn)) {
+                    if (sn != null && !"NA".equalsIgnoreCase(sn) && !sn.isEmpty()) {
                         String devName = "AP_" + sn;
                         System.out.println("----Trace #7: Processing AP device: " + devName + " ----");
                         Optional<LogicalDevice> optDev = deviceRepository.findByDiscoveredName(devName);
@@ -192,9 +175,9 @@ public class AssociateResources implements HttpAction {
                         }
                         LogicalDevice device = optDev.get();
                         Map<String,Object>props=new HashMap<>();
-                        props.put("AdministrativeState",allocatedState);
+                        props.put("administrativeState","Allocated");
                         device.setDescription(request.getServiceId());
-                        device.setOwningService(rfs);
+                        device.addUsingService(rfs);
                         deviceRepository.save(device);
                         deviceUpdated = true;
                     }
@@ -221,7 +204,7 @@ public class AssociateResources implements HttpAction {
                     }
                     LogicalDevice device = optDev.get();
                     Map<String,Object>props=new HashMap<>();
-                    props.put("AdministrativeState",allocatedState);
+                    props.put("administrativeState","Allocated");
                     device.setProperties(props);
                     device.setDescription(request.getServiceId());
                     device.setOwningService(rfs);
@@ -232,8 +215,11 @@ public class AssociateResources implements HttpAction {
 
             // Step 7: Persist RFS changes
             if (deviceUpdated) {
+                rfs = rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                Map<String,Object> rfsProps = rfs.getProperties();
+                rfsProps.put("transactionId",request.getFxOrderID());
+                rfsRepository.save(rfs,2);
                 System.out.println("----Trace #9: Saving RFS changes ----");
-                rfsRepository.save(rfs);
                 return new AssociateResourcesResponse(
                         "200",
                         "UIV action AssociateResources executed successfully.",

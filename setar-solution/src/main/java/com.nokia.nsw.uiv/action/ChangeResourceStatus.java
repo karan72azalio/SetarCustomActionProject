@@ -39,7 +39,7 @@ public class ChangeResourceStatus implements HttpAction {
     }
 
     @Override
-    public Object doPatch(ActionContext actionContext) {
+    public Object doPost(ActionContext actionContext) {
         System.out.println("------------Test Trace # 1--------------- ChangeResourceStatus started");
         ChangeResourceStatusRequest req = (ChangeResourceStatusRequest) actionContext.getObject();
 
