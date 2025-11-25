@@ -38,7 +38,7 @@ public class Updatedeviceproperty implements HttpAction {
     }
 
     @Override
-    public Object doPatch(ActionContext actionContext) {
+    public Object doPost(ActionContext actionContext) {
         System.out.println("------------Test Trace # 1--------------- Updatedeviceproperty started");
         UpdatedevicepropertyRequest req = (UpdatedevicepropertyRequest) actionContext.getObject();
 

@@ -110,7 +110,6 @@ public class ChangeResourceStatus implements HttpAction {
             }
 
             Map<String, Object> deviceProps = device.getProperties();
-            device.setAdministrativeState(AdministrativeState.valueOf(targetStatus));
             deviceProps.put("administrativeStatus",targetStatus);
             device.setProperties(deviceProps);
             stbRepo.save(device);

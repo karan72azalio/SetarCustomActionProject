@@ -40,7 +40,7 @@ public class AccountTransferByServiceID implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action AccountTransferByServiceID execution failed - ";
 
     @Autowired private CustomerFacingServiceCustomRepository cfsRepo;
-    @Autowired private ResourceFacingServiceRepository rfsRepo;
+    @Autowired private ResourceFacingServiceCustomRepository rfsRepo;
     @Autowired private SubscriptionCustomRepository subsRepo;
     @Autowired private ProductCustomRepository prodRepo;
     @Autowired private CustomerCustomRepository custRepo;
@@ -73,15 +73,15 @@ public class AccountTransferByServiceID implements HttpAction {
             for(CustomerFacingService cfs:cfsList1)
             {
                 Product p = cfs.getContainingProduct();
-                String productGdn = p.getGlobalName();
-                p = prodRepo.findByDiscoveredName(productGdn).get();
-                if(p.getCustomer().getName().contains(oldSubscriberName))
+                p = prodRepo.findByDiscoveredName(p.getDiscoveredName()).get();
+                if(p.getCustomer().getDiscoveredName().contains(oldSubscriberName))
                 {
+                    log.error("Cfs found containing oldSuscriberName: "+cfs.getDiscoveredName());
                     cfsList.add(cfs);
                 }
             }
 
-            cfsList.removeIf(cfs -> !cfs.getName().contains(req.getServiceId()));
+            cfsList.removeIf(cfs -> !cfs.getDiscoveredName().contains(req.getServiceId()));
             if (cfsList.isEmpty()) {
                 return errorResponse("404", "No entry found for update");
             }
@@ -96,134 +96,97 @@ public class AccountTransferByServiceID implements HttpAction {
 
             // Step 3: Iterate matching CFS
             for (CustomerFacingService cfs : cfsList) {
-                String cfsName = cfs.getName();
+                String cfsName = cfs.getDiscoveredName();
                 String rfsName = cfsName.replace("CFS", "RFS");
-                String rfsGdn = Validations.getGlobalName(rfsName);
-                Optional<ResourceFacingService> rfsOpt = rfsRepo.uivFindByGdn(rfsGdn,1);
+                Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
+                ResourceFacingService rfs = rfsOpt.get();
                 Product prod = cfs.getContainingProduct();
-                String productGdn = prod.getGlobalName();
-                prod = prodRepo.uivFindByGdn(productGdn).get();
+                prod = prodRepo.uivFindByGdn(prod.getDiscoveredName()).get();
                 Subscription subs = prod.getSubscription();
-                String oldSubscriberGdn = Validations.getGlobalName(oldSubscriberName);
-                Customer oldCust = custRepo.uivFindByGdn(oldSubscriberGdn).orElse(null);
+                Customer oldCust = custRepo.uivFindByGdn(oldSubscriberName).orElse(null);
 //                Customer oldCust1 = customerCustomRepository.findByDiscoveredName(oldSubscriberName);
 
                 if (subs == null || prod == null || oldCust == null) {
                     continue;
                 }
-
-                // Step 4: Find or fallback new subscriber
-                Customer newCust = custRepo.uivFindByGdn(Validations.getGlobalName(req.getSubscriberName())).orElse(null);
-                if (newCust == null) {
-                    newCust = new Customer();
-                    newCust.setName(req.getSubscriberName());
-                    newCust.setLocalName(req.getSubscriberName());
-                    newCust.setContext(Constants.SETAR);
-                    Map<String,Object>prop= oldCust.getPropertiesMap();
-                    prop.put("AccountNumber",req.getSubscriberName());
-                    newCust.setProperties(prop);
-                    newCust.setSubscription(oldCust.getSubscription());
-                    newCust.setProduct(oldCust.getProduct());
-                    Set<Subscription> subs1 = oldCust.getSubscription();
-                    Set<Product> prodSet = oldCust.getProduct();
-                    for(Product p : prodSet){
-                        if(p.getLocalName().contains(req.getServiceId())){
-                            childProd = p;
-                            childProd = prodRepo.uivFindByGdn(childProd.getGlobalName()).get();
-                            childSubs = childProd.getSubscription();
-                            Set<CustomerFacingService> cfsSet = childProd.getContainedCfs();
-                            for(CustomerFacingService cf:cfsSet){
-                                if(cf.getLocalName().contains(req.getServiceId())){
-                                    childCfs = cfs;
-                                    childCfs = cfsRepo.uivFindByGdn(childCfs.getGlobalName()).get();
-                                    childRfs = rfsRepo.uivFindByGdn(childCfs.getGlobalName().replace("CFS","RFS")).get();
-                                    break;
-                                }
-                            }
-                            if(childRfs!=null){
-                                break;
-                            }
+                try{
+                    if(subs!=null){
+                        subs.setDiscoveredName(oldCust.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                        Map<String, Object> subsProps = subs.getProperties();
+                        String serviceSubType = subsProps.get("serviceSubType")!=null?subsProps.get("serviceSubType").toString():"";
+                        if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("Broadband")){
+                            subsProps.put("kenanSubscriberId",req.getKenanUidNo());
+                        }else if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("IPTV")){
+                            subsProps.put("subscriberId_cableModem",subscriberName);
                         }
+                        subs.setProperties(subsProps);
+                        log.error("Subscription updated: "+subs.getDiscoveredName());
+                        subsRepo.save(subs,2);
                     }
-                    Set<Resource> usedResource = childRfs.getUsedResource();
-                    for (Resource r : usedResource) {
-                        if (r instanceof LogicalDevice) {
-                            childDevice = (LogicalDevice)r;
-                            cbmDeviceRepository.delete((LogicalDevice) r);
+                    if(prod!=null){
+                        prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
+                        prod.setDiscoveredName(prod.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                        log.error("Product updated: "+prod.getDiscoveredName());
+                        prodRepo.save(prod,2);
+                    }
+                    if(oldCust!=null){
+                        oldCust = custRepo.findByDiscoveredName(oldCust.getDiscoveredName()).get();
+                        oldCust.setDiscoveredName(oldCust.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                        log.error("Subscriber updated: "+oldCust.getDiscoveredName());
+                        custRepo.save(oldCust,2);
+                    }
+
+                }catch (Exception e){
+                    if(subs!=null){
+                        subs.setDiscoveredName(oldCust.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                        Map<String, Object> subsProps = subs.getProperties();
+                        String serviceSubType = subsProps.get("serviceSubType")!=null?subsProps.get("serviceSubType").toString():"";
+                        if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("Broadband")){
+                            subsProps.put("kenanSubscriberId",req.getKenanUidNo());
+                        }else if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("IPTV")){
+                            subsProps.put("subscriberId_cableModem",subscriberName);
                         }
+                        log.error("Subscription updated: "+subs.getDiscoveredName());
+                        subs.setProperties(subsProps);
+                        subsRepo.save(subs,2);
                     }
-                    rfsRepo.delete(childRfs);
-                    cfsRepo.delete(childCfs);
-                    custRepo.delete(oldCust);
+                    if(oldCust != null){
+                        if(oldCust.getDiscoveredName().contains(Constants.UNDER_SCORE)){
+
+                            String[] subscriberNameArray = oldCust.getDiscoveredName().split(Constants.UNDER_SCORE);
+                            if(subscriberNameArray.length>1){
+                                String	ontSerial=subscriberNameArray[1];
+                                oldCust.setDiscoveredName(subscriberName+Constants.UNDER_SCORE + ontSerial);
+                            }
+                        }else{
+                            oldCust.setDiscoveredName(oldCust.getDiscoveredName().replace(oldSubscriberName, subscriberName));
+                        }
+                        Map<String,Object> oldCustProps = oldCust.getProperties();
+                        oldCustProps.put("accountNumber",subscriberName);
+                        log.error("Subscriber updated: "+oldCust.getDiscoveredName());
+                        oldCust.setProperties(oldCustProps);
+                        custRepo.save(oldCust,2);
+                    }
+
+                    if(prod != null){
+                        prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
+                        prod.setDiscoveredName(prod.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                        log.error("Product updated: "+prod.getDiscoveredName());
+                        prodRepo.save(prod,2);
+                    }
                 }
-                Customer saveCustomer = new Customer();
-                saveCustomer.setLocalName(childSubs.getLocalName().replace(oldSubscriberName,subscriberName));
-                saveCustomer.setContext(Constants.SETAR);
-                saveCustomer.setProperties(childSubs.getProperties());
-                custRepo.save(saveCustomer);
-                // Step 5: Update Subscription
-                Subscription saveSubs = new Subscription();
-                saveSubs.setLocalName(childSubs.getLocalName());
-                saveSubs.setName(childSubs.getName());
-                saveSubs.setContext(Constants.SETAR);
-                saveSubs.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
-                saveSubs.setProperties(childSubs.getProperties());
-                saveSubs.setCustomer(saveCustomer);
-                String subtype = saveSubs.getProperties().get("serviceSubType").toString();
-                if ("Broadband".equalsIgnoreCase(subtype) && req.getKenanUidNo() != null) {
-                    saveSubs.getProperties().put("kenanUidNo", req.getKenanUidNo());
+                if(cfs!=null){
+                    cfs = cfsRepo.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                    cfs.setDiscoveredName(cfs.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                    log.error("CFS updated: "+cfs.getDiscoveredName());
+                    cfsRepo.save(cfs,2);
                 }
-                if ("IPTV".equalsIgnoreCase(subtype)) {
-                    saveSubs.getProperties().put("cbmSubscriberId", req.getSubscriberName());
+                if(rfs!=null){
+                    rfs = rfsRepo.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                    rfs.setDiscoveredName(rfs.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                    log.error("RFS updated: "+rfs.getDiscoveredName());
+                    rfsRepo.save(rfs,2);
                 }
-                subsRepo.save(saveSubs);
-                System.out.println("------Trace #4: Subscription updated");
-
-                // Step 6: Update Product
-                Product prodSave = new Product();
-                prodSave.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
-                prodSave.setName(childProd.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                prodSave.setLocalName(childProd.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                prodSave.setSubscription(saveSubs);
-                prodSave.setCustomer(saveCustomer);
-                prodRepo.save(prodSave);
-                System.out.println("------Trace #5: Product updated");
-
-                // Step 7: Update Subscriber if fallback used
-//                if (newCust == oldCust) {
-//                    custRepo.save(newCust);
-//                    System.out.println("------Trace #6: Subscriber renamed");
-//                }
-
-                // Step 8: Update CFS and RFS
-                CustomerFacingService saveCfs = new CustomerFacingService();
-                saveCfs.setLocalName(childCfs.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                saveCfs.setName(childCfs.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                saveCfs.setContext(Constants.SETAR);
-                saveCfs.setKind(Constants.SETAR_KIND_SETAR_CFS);
-                saveCfs.setCustomer(saveCustomer);
-                saveCfs.setContainingProduct(prodSave);
-                cfsRepo.save(saveCfs);
-                System.out.println("------Trace #7: CFS updated");
-
-                if (rfsOpt.isPresent()) {
-                    ResourceFacingService saveRfs = new ResourceFacingService();
-                    saveRfs.setLocalName(childRfs.getLocalName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                    saveRfs.setName(childRfs.getName().replace(req.getSubscriberNameOld(), req.getSubscriberName()));
-                    saveRfs.setContext(Constants.SETAR);
-                    saveRfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
-                    saveRfs.setContainingCfs(saveCfs);
-                    rfsRepo.save(saveRfs);
-                    System.out.println("------Trace #8: RFS updated");
-                    LogicalDevice saveDevice = new LogicalDevice();
-                    saveDevice.setLocalName(childDevice.getLocalName());
-                    saveDevice.setName(childDevice.getName());
-                    saveDevice.setContext(Constants.SETAR);
-                    saveDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
-                    saveDevice.addUsingService(saveRfs);
-                    cbmDeviceRepository.save(saveDevice);
-                }
-
                 updated = true;
             }
 
