@@ -101,7 +101,7 @@ public class ModifyCBM implements HttpAction {
                     Customer customer = optSub.get();  // unwrap the Optional
 
                     // Check "Status" property
-                    Object statusValue = customer.getProperties().get("status");
+                    Object statusValue = customer.getProperties().get("custStatus");
                     if (statusValue != null && "Active".equalsIgnoreCase(statusValue.toString())) {
                         customerCustomRepository.save(customer);
                         subscriber = Optional.of(customer);
