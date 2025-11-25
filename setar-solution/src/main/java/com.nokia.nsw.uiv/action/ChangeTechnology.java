@@ -159,7 +159,7 @@ public class ChangeTechnology implements HttpAction {
                     cbmSubscriber.setContext("Setar");
                     cbmSubscriber.setKind("SetarSubscriber");
                     Map<String, Object> props = cbmSubscriber.getProperties() != null ? cbmSubscriber.getProperties() : new HashMap<>();
-                    props.put("status", "Active");
+                    props.put("custStatus", "Active");
                     props.put("type", "Regular");
                     props.put("accountNumber", subscriberName);
                     if (hhid != null) props.put("householdId", hhid);
@@ -228,7 +228,7 @@ public class ChangeTechnology implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> p = new HashMap<>();
-                        p.put("status", "Active");
+                        p.put("deviceStatus", "Active");
                         p.put("oltPosition", oltName);
                         if (templateNameOnt != null) p.put("ontTemplate", templateNameOnt);
                         if (templateNameVeip != null) p.put("veipServiceTemplate", templateNameVeip);
@@ -263,7 +263,7 @@ public class ChangeTechnology implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> p = new HashMap<>();
-                        p.put("status", "Active");
+                        p.put("deviceStatus", "Active");
                         p.put("serialNo", ontSN);
                         p.put("deviceModel",ontModel );
                         p.put("description", menm);
@@ -297,7 +297,7 @@ public class ChangeTechnology implements HttpAction {
 
                 Map<String, Object> p = new HashMap<>();
                 p.put("vlanId", vlanId);
-                p.put("status", "Active");
+                p.put("vlanStatus", "Active");
                 v.setProperties(p);
                 return vlanRepo.save(v);
             });

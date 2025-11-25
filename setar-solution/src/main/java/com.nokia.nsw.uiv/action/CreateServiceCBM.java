@@ -134,7 +134,7 @@ public class CreateServiceCBM implements HttpAction {
 
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("accountNumber", request.getSubscriberName());
-                    prop.put("status", "Active");
+                    prop.put("custStatus", "Active");
                     prop.put("subscriberUserName", request.getUserName());
                     prop.put("address", request.getSubsAddress());
                     prop.put("type", "Regular");
@@ -236,7 +236,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> prop = new HashMap<>();
-                    prop.put("status", "Active");
+                    prop.put("prodStatus", "Active");
                     prop.put("type",request.getProductType());
                     p.setProperties(prop);
                     p.setCustomer(subscriber);
@@ -269,7 +269,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> prop = new HashMap<>();
-                    prop.put("status", "Active");
+                    prop.put("cfsStatus", "Active");
                     prop.put("type",request.getProductType());
                     c.setProperties(prop);
                     c.setStartDate(new Date());
@@ -307,7 +307,7 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> prop = new HashMap<>();
-                    prop.put("status", "Active");
+                    prop.put("rfsStatus", "Active");
                     prop.put("type",request.getProductType());
                     r.setProperties(prop);
                     r.setContainingCfs(cfs);

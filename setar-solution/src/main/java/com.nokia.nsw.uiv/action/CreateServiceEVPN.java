@@ -176,7 +176,7 @@ public class CreateServiceEVPN implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> subProps = new HashMap<>();
-                        subProps.put("status", "Active");
+                        subProps.put("custStatus", "Active");
                         subProps.put("type", "Regular");
                         subProps.put("accountNumber", req.getSubscriberName());
                         subProps.put("householdId", req.getHhid());
@@ -205,7 +205,7 @@ public class CreateServiceEVPN implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> subsProps = new HashMap<>();
-                        subsProps.put("status", "Active");
+                        subsProps.put("subsStatus", "Active");
                         subsProps.put("serviceSubtype", req.getProductSubtype());
                         if (req.getQosProfile() != null) subsProps.put("evpnQosProfile", req.getQosProfile());
                         if (req.getOntPort() != null) subsProps.put("evpnPort", req.getOntPort());
@@ -257,7 +257,7 @@ public class CreateServiceEVPN implements HttpAction {
                         }
                         Map<String,Object> prodProps = new HashMap<>();
                         prodProps.put("type", req.getProductType());
-                        prodProps.put("status", "Active");
+                        prodProps.put("prodStatus", "Active");
                         prodProps.put("linkedSubscriber", subscriber.getLocalName());
                         prodProps.put("linkedSubscription", subscription.getLocalName());
                         prod.setProperties(prodProps);
@@ -303,7 +303,7 @@ public class CreateServiceEVPN implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> rfsProps = new HashMap<>();
-                        rfsProps.put("status", "Active");
+                        rfsProps.put("rfsStatus", "Active");
                         rfsProps.put("type", req.getProductType());
                         rfsProps.put("linkedCFS", cfs.getLocalName());
                         newRfs.setContainingCfs(cfs);

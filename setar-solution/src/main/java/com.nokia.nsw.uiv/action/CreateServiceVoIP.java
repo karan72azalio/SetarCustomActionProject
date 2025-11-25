@@ -118,7 +118,7 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> subProps = new HashMap<>();
-                        subProps.put("status", "Active");
+                        subProps.put("subsStatus", "Active");
                         subProps.put("type", "Regular");
                         subProps.put("accountNumber", req.getSubscriberName());
                         subProps.put("householdId", req.getHhid());
@@ -152,7 +152,7 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> subProps = new HashMap<>();
-                        subProps.put("status", "Active");
+                        subProps.put("subsStatus", "Active");
                         subProps.put("serviceSubtype", req.getProductSubtype());
                         subProps.put("serviceID", req.getServiceId());
                         subProps.put("oltPosition", req.getOltName());
@@ -212,7 +212,7 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> prodProps = new HashMap<>();
-                        prodProps.put("status", "Active");
+                        prodProps.put("prodStatus", "Active");
                         prodProps.put("type", req.getProductType());
                         prod.setProperties(prodProps);
                         prod.setSubscription(subscription);
@@ -233,7 +233,7 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> cfsProps = new HashMap<>();
-                        cfsProps.put("status", "Active");
+                        cfsProps.put("cfsStatus", "Active");
                         cfsProps.put("type", req.getProductType());
                         newCfs.setProperties(cfsProps);
                         newCfs.setContainingProduct(product);
@@ -254,7 +254,7 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> rfsProps = new HashMap<>();
-                        rfsProps.put("status", "Active");
+                        rfsProps.put("rfsStatus", "Active");
                         rfsProps.put("type", req.getProductType());
                         newRfs.setProperties(rfsProps);
                         newRfs.setContainingCfs(cfs);
@@ -286,7 +286,7 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> oltProps = new HashMap<>();
-                        oltProps.put("status", "Active");
+                        oltProps.put("deviceStatus", "Active");
                         oltProps.put("oltPosition", req.getOltName());
                         oltProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(oltProps);
@@ -307,7 +307,7 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> ontProps = new HashMap<>();
-                        ontProps.put("status", "Active");
+                        ontProps.put("deviceStatus", "Active");
                         ontProps.put("serialNo", req.getOntSN());
                         ontProps.put("deviceModel", req.getOntModel());
                         ontProps.put("oltPosition", req.getOltName());

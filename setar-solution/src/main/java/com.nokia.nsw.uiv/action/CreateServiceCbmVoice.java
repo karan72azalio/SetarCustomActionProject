@@ -145,7 +145,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> subProps = new HashMap<>();
-                        subProps.put("status", "Active");
+                        subProps.put("custStatus", "Active");
                         subProps.put("type", "Regular");
                         subProps.put("accountNumber", request.getSubscriberName());
                         subProps.put("householdId", request.getHhid());
@@ -191,7 +191,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         }
 
                         Map<String, Object> props = new HashMap<>();
-                        props.put("status", "Active");
+                        props.put("subsStatus", "Active");
                         props.put("serviceSubType", request.getProductSubtype());
                         props.put("serviceLink", "Cable_Modem");
                         props.put("serviceSN", request.getCbmSN());
@@ -252,7 +252,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> prodProps = new HashMap<>();
-                        prodProps.put("status", "Active");
+                        prodProps.put("prodStatus", "Active");
                         prodProps.put("type",request.getProductType());
                         p.setProperties(prodProps);
                         p.setCustomer(subscriber);
