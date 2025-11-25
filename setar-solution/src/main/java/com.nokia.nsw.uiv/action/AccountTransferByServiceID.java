@@ -101,9 +101,9 @@ public class AccountTransferByServiceID implements HttpAction {
                 Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
                 ResourceFacingService rfs = rfsOpt.get();
                 Product prod = cfs.getContainingProduct();
-                prod = prodRepo.uivFindByGdn(prod.getDiscoveredName()).get();
+                prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
                 Subscription subs = prod.getSubscription();
-                Customer oldCust = custRepo.uivFindByGdn(oldSubscriberName).orElse(null);
+                Customer oldCust = custRepo.findByDiscoveredName(oldSubscriberName).orElse(null);
 //                Customer oldCust1 = customerCustomRepository.findByDiscoveredName(oldSubscriberName);
 
                 if (subs == null || prod == null || oldCust == null) {

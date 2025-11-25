@@ -144,7 +144,7 @@ public class DeleteSPR implements HttpAction {
                 optOlt = getParentOlt(ont);
             }
 
-            // Attempt to retrieve a CPE device named "ONT_" + ontSN (optional)
+            // Attempt to retrieve a CPE device named "ONT" + ontSN (optional)
             String optCpeName="ONT" + req.getOntSN();
             Optional<LogicalDevice> optCpe = logicalDeviceRepository.findByDiscoveredName(optCpeName);
 

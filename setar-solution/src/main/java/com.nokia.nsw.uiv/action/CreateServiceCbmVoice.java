@@ -236,7 +236,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             }
 
             // 5. Product logic
-            String productNameStr = request.getSubscriberName() + request.getProductSubtype() + request.getServiceId();
+            String productNameStr = request.getSubscriberName() +Constants.UNDER_SCORE+ request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
             if (productNameStr.length() > 100) {
                 return createErrorResponse(CODE_NAME_TOO_LONG, "Identifier exceeds allowed character length");
             }
@@ -337,7 +337,7 @@ public class CreateServiceCbmVoice implements HttpAction {
 
             // 9. CPE Voice Port Update (only when productSubtype == "Voice")
             if ("Voice".equalsIgnoreCase(request.getProductSubtype())) {
-                String cpeDeviceName = "STB_" + request.getCbmMac();
+                String cpeDeviceName = "CBM_" + request.getCbmMac();
                 Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.findByDiscoveredName(cpeDeviceName);
                 if (!cpeOpt.isPresent()) {
                     return createErrorResponse(CODE_CPE_NOT_FOUND, "CPE device not found");
@@ -365,22 +365,25 @@ public class CreateServiceCbmVoice implements HttpAction {
                     return createErrorResponse(CODE_PERSISTENCE_ERROR, "Persistence error while updating CPE device: " + e.getMessage());
                 }
             }
-            // 8. ONT device: find or create as LogicalDevice with kind=ONT
+            //STB is created for local testing, this shouldn't be in the step.
             String stbDeviceName = "STB"+"_"+ request.getCbmSN();
             Optional<LogicalDevice> stbOpt = cpeDeviceRepository.findByDiscoveredName(stbDeviceName);
             LogicalDevice stbDevice;
             if (stbOpt.isPresent()) {
                 log.info("Found existing ONT: {}", stbDeviceName);
             } else {
+                Map<String,Object> stbProps = new HashMap<>();
+                stbProps.put("administrativeState","Available");
                 stbDevice = new LogicalDevice();
+                stbDevice.setProperties(stbProps);
                 stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
                 stbDevice.setDiscoveredName(stbDeviceName);
                 stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
-
+                stbDevice.addUsingService(rfs);
                 cpeDeviceRepository.save(stbDevice, 2);
                 log.info("Created ONT device: {}", stbDeviceName);
             }
-
+           //AP is created for local testing, this shouldn't be in the step.
             String apDeviceName = "AP"+"_"+ request.getCbmSN();
             Optional<LogicalDevice> apOpt = cpeDeviceRepository.findByDiscoveredName(apDeviceName);
             LogicalDevice apDevice;
@@ -391,6 +394,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                 apDevice.setLocalName(Validations.encryptName(apDeviceName));
                 apDevice.setDiscoveredName(apDeviceName);
                 apDevice.setKind(Constants.SETAR_KIND_AP_CM_DEVICE);
+                apDevice.addUsingService(rfs);
 
                 cpeDeviceRepository.save(apDevice, 2);
                 log.info("Created ONT device: {}", apDeviceName);

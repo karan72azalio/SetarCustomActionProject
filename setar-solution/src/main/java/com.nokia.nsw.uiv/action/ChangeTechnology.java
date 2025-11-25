@@ -313,7 +313,7 @@ public class ChangeTechnology implements HttpAction {
                 cbmProps.put("operationalState", "Available");
                 cbmDevice.setProperties(cbmProps);
                 // remove from inventory
-                cbmRepo.delete(cbmDevice);
+                cbmRepo.save(cbmDevice,2);
             }
 
             // 12. Reassign CPE devices

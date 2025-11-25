@@ -4,6 +4,7 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryAllServicesByCPERequest;
 import com.nokia.nsw.uiv.response.QueryAllServicesByCPEResponse;
@@ -14,8 +15,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RestController
@@ -69,7 +72,14 @@ public class QueryAllServicesByCPE implements HttpAction {
             log.info("ONT located: {}", ontName);
 
             // Collect linked RFS entries
-            List<ResourceFacingService> linkedRfsList = (List<ResourceFacingService>) ont.getOwningService();
+            Set<Service> linkedServiceList = ont.getUsingService();
+            List<ResourceFacingService> linkedRfsList = new ArrayList<>();
+            for(Service s: linkedServiceList){
+                if(s instanceof ResourceFacingService){
+                    linkedRfsList.add((ResourceFacingService) s);
+                }
+            }
+
             if (linkedRfsList.isEmpty()) {
                 return errorResponse("404", "No services linked to CPE");
             }

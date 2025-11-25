@@ -187,7 +187,7 @@ public class AssociateResources implements HttpAction {
                 System.out.println("----Trace #8: Executing Non-IPTV device association ----");
                 String devName = null;
                 if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
-                    devName = "ONT_" + request.getOntSN();
+                    devName = "ONT" + request.getOntSN();
                 } else if (request.getCbmSN() != null && !"NA".equalsIgnoreCase(request.getCbmSN())) {
                     devName = "CBM" + request.getCbmSN();
                 }
@@ -207,7 +207,7 @@ public class AssociateResources implements HttpAction {
                     props.put("administrativeState","Allocated");
                     device.setProperties(props);
                     device.setDescription(request.getServiceId());
-                    device.setOwningService(rfs);
+                    device.addUsingService(rfs);
                     deviceRepository.save(device);
                     deviceUpdated = true;
                 }

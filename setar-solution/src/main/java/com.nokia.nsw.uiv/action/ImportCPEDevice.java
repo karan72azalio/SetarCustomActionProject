@@ -72,7 +72,7 @@ public class ImportCPEDevice implements HttpAction {
 
             log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
-            String devName = request.getCpeType() + "_" + request.getCpeSerialNo();
+            String devName = request.getCpeType() + request.getCpeSerialNo();
             log.info("devName :: {}", devName);
 
             Optional<LogicalDevice> optDevice = cpeDeviceRepository.findByDiscoveredName(devName);

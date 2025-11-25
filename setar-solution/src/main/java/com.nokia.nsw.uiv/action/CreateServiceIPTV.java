@@ -104,7 +104,7 @@ public class CreateServiceIPTV implements HttpAction {
             String productName = subscriberName + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE+ request.getServiceID();
             String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
-            String ontName = "ONT_" + request.getOntSN();
+            String ontName = "ONT" + request.getOntSN();
             String mgmtVlanName = request.getMenm() + "_" + request.getVlanID();
 
 
@@ -233,7 +233,7 @@ public class CreateServiceIPTV implements HttpAction {
                 rfsProps.put("serviceType", request.getProductType());
 
                 rfs.setProperties(rfsProps);
-                rfs.addContained(cfs);
+                rfs.setContainingCfs(cfs);
                 rfsRepository.save(rfs, 2);
                 log.info("Created RFS: {}", rfsName);
             }

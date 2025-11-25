@@ -78,7 +78,7 @@ public class ModifySPR implements HttpAction {
             // 2. Name Construction
             String subscriberName = request.getSubscriberName() + "_" + request.getOntSN();
             String subscriptionName = request.getSubscriberName() + "_" + request.getServiceId() + "_" + request.getOntSN();
-            String ontName = "ONT_" + request.getOntSN();
+            String ontName = "ONT" + request.getOntSN();
 
             if (ontName.length() > 100) {
                 throw new BadRequestException("ONT name too long");
@@ -225,7 +225,7 @@ public class ModifySPR implements HttpAction {
                 subProps.put("serviceID", request.getModifyParam1());
                 subscription.setProperties(subProps);
 
-                LogicalDevice ont = logicalDeviceRepository.uivFindByGdn(ontName)
+                LogicalDevice ont = logicalDeviceRepository.findByDiscoveredName(ontName)
                         .orElseThrow(() -> new BadRequestException("ONT not found"));
 
                 Map<String, Object> ontProps = ont.getProperties();
@@ -247,7 +247,7 @@ public class ModifySPR implements HttpAction {
     }
 
     private boolean handleModifyONT(ModifySPRRequest request, String ontName) throws BadRequestException, AccessForbiddenException {
-        LogicalDevice ont = logicalDeviceRepository.uivFindByGdn(ontName)
+        LogicalDevice ont = logicalDeviceRepository.findByDiscoveredName(ontName)
                 .orElseThrow(() -> new BadRequestException("ONT not found"));
 
         // update subscriptions linked by simaCustomerId

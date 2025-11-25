@@ -77,7 +77,7 @@ public class DeleteIPTV implements HttpAction {
             String productName = subscriberName+ Constants.UNDER_SCORE + productSubType+Constants.UNDER_SCORE + serviceId;
             String cfsName = "CFS_" + subscriptionName;
             String rfsName = "RFS_" + subscriptionName;
-            String ontName = "ONT_" + ontSN;
+            String ontName = "ONT" + ontSN;
 
             if (ontName.length() > 100) {
                 return errorResponse("400", ERROR_PREFIX + "ONT name too long");

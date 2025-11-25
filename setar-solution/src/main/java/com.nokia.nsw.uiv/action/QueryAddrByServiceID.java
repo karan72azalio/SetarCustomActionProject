@@ -96,7 +96,7 @@ public class QueryAddrByServiceID implements HttpAction {
             }
 
             // 3) Resolve related data: product <- cfs <- rfs ; subscription <- product ; subscriber <- subscription
-            CustomerFacingService cfs = matchedRfs.getContainingCfs(); // assume this getter exists (as used in CreateServiceFibernet)
+            CustomerFacingService cfs = cfsRepository.findByDiscoveredName(matchedRfs.getDiscoveredName().replace("RFS","CFS")).get(); // assume this getter exists (as used in CreateServiceFibernet)
             if(cfs!=null){
                 cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();  
             }

@@ -12,6 +12,7 @@ import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryEquipmentRequest;
 import com.nokia.nsw.uiv.response.QueryEquipmentResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
@@ -80,7 +81,7 @@ public class QueryEquipment implements HttpAction {
         String subscriptionName = request.getSubscriberName() + "_" + request.getServiceId();
         String cfsName = "CFS_" + subscriptionName;
         String rfsName = "RFS_" + subscriptionName;
-        String productName = request.getSubscriberName() +  request.getProductSubType() + request.getServiceId();
+        String productName = request.getSubscriberName() + Constants.UNDER_SCORE+  request.getProductSubType() + Constants.UNDER_SCORE + request.getServiceId();
 
         boolean successFlag = false;
         int apCounter = 1;

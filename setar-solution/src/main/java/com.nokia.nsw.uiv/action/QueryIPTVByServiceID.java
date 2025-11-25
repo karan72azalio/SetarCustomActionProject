@@ -96,7 +96,7 @@ public class QueryIPTVByServiceID implements HttpAction {
 
             Iterable<CustomerFacingService> allCfs = cfsRepo.findAll();
             for (CustomerFacingService cfs : allCfs) {
-                String cfsName = cfs.getName();
+                String cfsName = cfs.getDiscoveredName();
                 if (cfsName == null) continue;
                 // Middle portion (text between first '_' and last '_'), if present
                 int firstUnd = cfsName.indexOf('_');

@@ -114,7 +114,7 @@ public class QueryAccountCPE implements HttpAction {
 
             // Step 5: Enrich from CPE Device
             String cpeName = "";
-            if ("ONT".equalsIgnoreCase(serviceLink)) cpeName = "ONT_" + ontSN;
+            if ("ONT".equalsIgnoreCase(serviceLink)) cpeName = "ONT" + ontSN;
             if ("SRX".equalsIgnoreCase(serviceLink)) cpeName = "SRX_" + ontSN;
             if ("Cable_Modem".equalsIgnoreCase(serviceLink)) cpeName = "CBM_" + cbmMac;
 
