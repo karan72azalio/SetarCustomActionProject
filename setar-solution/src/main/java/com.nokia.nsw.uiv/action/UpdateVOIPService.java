@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
 import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.UpdateVOIPServiceRequest;
 import com.nokia.nsw.uiv.response.UpdateVOIPServiceResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 import com.nokia.nsw.uiv.model.common.party.Customer;
@@ -63,8 +64,8 @@ public class UpdateVOIPService implements HttpAction {
             }
 
             // Step 2: Construct Names
-            String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN();
-            String subscriberNameStr = req.getSubscriberName() + "_" + req.getOntSN();
+            String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
+            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
 
             boolean updatedFlag = false;
 
