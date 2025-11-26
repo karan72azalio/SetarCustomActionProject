@@ -6,6 +6,7 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifySubscriberRequest;
 import com.nokia.nsw.uiv.response.ModifySubscriberResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 import com.nokia.nsw.uiv.model.service.Subscription;
@@ -152,9 +153,9 @@ public class ModifySubscriber implements HttpAction {
                     if (oldCustOpt.isPresent()) {
                         Customer oldCust = oldCustOpt.get();
                         String newName;
-                        if (oldCust.getDiscoveredName().contains("_")) {
-                            String[] parts = oldCust.getDiscoveredName().split("_");
-                            newName = newSubscriberName + "_" + parts[1];
+                        if (oldCust.getDiscoveredName().contains(Constants.UNDER_SCORE )) {
+                            String[] parts = oldCust.getDiscoveredName().split(Constants.UNDER_SCORE );
+                            newName = newSubscriberName + Constants.UNDER_SCORE  + parts[1];
                         } else {
                             newName = oldCust.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                         }

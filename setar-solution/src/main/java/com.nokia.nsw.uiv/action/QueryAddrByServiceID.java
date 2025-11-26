@@ -9,6 +9,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryAddrByServiceIDRequest;
 import com.nokia.nsw.uiv.response.QueryAddrByServiceIDResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.Product;
@@ -82,7 +83,7 @@ public class QueryAddrByServiceID implements HttpAction {
             ResourceFacingService matchedRfs = null;
             for (ResourceFacingService rfs : rfsList) {
                 String name = rfs.getDiscoveredName() == null ? "" : rfs.getDiscoveredName();
-                String[] tokens = name.split("_", -1);
+                String[] tokens = name.split(Constants.UNDER_SCORE , -1);
                 if (tokens.length >= 3 && serviceId.equals(tokens[2])) {
                     matchedRfs = rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
                     log.info("Matched RFS by token check: {}", name);

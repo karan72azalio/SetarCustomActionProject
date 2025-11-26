@@ -64,15 +64,15 @@ public class DeleteProductSubscription implements HttpAction {
 
             // ========== Construct Product Name ==========
             String subscriberName = request.getSubscriberName();
-            String subscriptionName = subscriberName + "_" + request.getServiceID();
-            String productName = request.getServiceID() + "_" + request.getComponentName();
+            String subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceID();
+            String productName = request.getServiceID() + Constants.UNDER_SCORE  + request.getComponentName();
             if (productName.length() > 100) {
                 throw new BadRequestException("Product Name String exceeds 100 characters");
             }
 
             // ========== RFS Update ==========
             if (request.getFxOrderID() != null && !request.getFxOrderID().isEmpty()) {
-                String rfsName = "RFS_" + request.getSubscriberName() + "_" + request.getServiceID();
+                String rfsName = "RFS" + Constants.UNDER_SCORE + request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceID();
                 Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
 
                 if (optRfs.isPresent()) {

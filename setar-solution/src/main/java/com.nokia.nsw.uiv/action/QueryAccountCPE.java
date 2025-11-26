@@ -11,6 +11,7 @@ import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.QueryAccountCPERequest;
 import com.nokia.nsw.uiv.response.QueryAccountCPEResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 
@@ -66,7 +67,7 @@ public class QueryAccountCPE implements HttpAction {
             Subscription matchedSub = null;
 
             // Step 2: Find candidate subscriptions (Name CONTAINS pattern)
-            String pattern = accountNumber + "_" + serviceId;
+            String pattern = accountNumber + Constants.UNDER_SCORE  + serviceId;
             Iterable<Subscription> subscriptionList = subscriptionRepo.findAll(pattern);
 
             // Step 3: Select matching subscription
@@ -90,7 +91,7 @@ public class QueryAccountCPE implements HttpAction {
             String serviceLink = safeStr(matchedSub.getProperties().get("serviceLink"));
             String gatewayMac = safeStr(matchedSub.getProperties().get("gatewayMacAddress"));
             String serviceId1 = safeStr(matchedSub.getProperties().get("serviceID"));
-            String accountNumber1 = matchedSub.getLocalName().split("_")[0];
+            String accountNumber1 = matchedSub.getLocalName().split(Constants.UNDER_SCORE )[0];
 
             String ontSN = "";
             String cbmMac = "";
@@ -105,7 +106,7 @@ public class QueryAccountCPE implements HttpAction {
                 if ("IPTV".equalsIgnoreCase(subtype)) {
                     ontSN = safeStr(matchedSub.getProperties().get("serviceSN"));
                 } else {
-                    String[] parts = matchedSub.getDiscoveredName().split("_");
+                    String[] parts = matchedSub.getDiscoveredName().split(Constants.UNDER_SCORE );
                     ontSN = parts[parts.length - 1];
                 }
             } else if ("Cable_Modem".equalsIgnoreCase(serviceLink)) {
@@ -114,9 +115,9 @@ public class QueryAccountCPE implements HttpAction {
 
             // Step 5: Enrich from CPE Device
             String cpeName = "";
-            if ("ONT".equalsIgnoreCase(serviceLink)) cpeName = "ONT" + ontSN;
-            if ("SRX".equalsIgnoreCase(serviceLink)) cpeName = "SRX_" + ontSN;
-            if ("Cable_Modem".equalsIgnoreCase(serviceLink)) cpeName = "CBM_" + cbmMac;
+            if ("ONT".equalsIgnoreCase(serviceLink)) cpeName ="ONT" + Constants.UNDER_SCORE + ontSN;
+            if ("SRX".equalsIgnoreCase(serviceLink)) cpeName = "SRX" + Constants.UNDER_SCORE + ontSN;
+            if ("Cable_Modem".equalsIgnoreCase(serviceLink)) cpeName = "CBM" + Constants.UNDER_SCORE +cbmMac;
 
             if (!cpeName.isEmpty()) {
                 Optional<LogicalDevice> devOpt = deviceRepo.findByDiscoveredName(cpeName);

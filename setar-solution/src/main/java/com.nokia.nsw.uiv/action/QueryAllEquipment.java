@@ -62,7 +62,7 @@ public class QueryAllEquipment implements HttpAction {
             }
 
             // Step 2: Build RFS Name
-            String rfsName = "RFS_" + request.getSubscriberName() + "_" + request.getServiceId();
+            String rfsName = "RFS" + Constants.UNDER_SCORE + request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId();
 
             // Step 4: Fetch RFS
             Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);

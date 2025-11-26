@@ -100,12 +100,12 @@ public class CreateServiceIPTV implements HttpAction {
 
             // Construct entity names
             String subscriberName = request.getSubscriberName();
-            String subscriptionName = subscriberName + "_" + request.getServiceID();
+            String subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceID();
             String productName = subscriberName + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE+ request.getServiceID();
-            String cfsName = "CFS_" + subscriptionName;
-            String rfsName = "RFS_" + subscriptionName;
-            String ontName = "ONT" + request.getOntSN();
-            String mgmtVlanName = request.getMenm() + "_" + request.getVlanID();
+            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+            String ontName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
+            String mgmtVlanName = request.getMenm() + Constants.UNDER_SCORE  + request.getVlanID();
 
 
             // ------------------- Subscriber -------------------

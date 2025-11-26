@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryServiceRequest;
 import com.nokia.nsw.uiv.response.QueryServiceResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.*;
 import com.nokia.nsw.uiv.model.common.party.Customer;
@@ -67,7 +68,7 @@ public class QueryService implements HttpAction {
                 if(cfs.getDiscoveredName().contains(serviceId)) {
                     String cfsName = cfs.getDiscoveredName();
                     if (cfsName == null) continue;
-                    String[] parts = cfsName.split("_");
+                    String[] parts = cfsName.split(Constants.UNDER_SCORE );
                     if (parts.length > 2 && parts[2].equalsIgnoreCase(serviceId)) {
                         cfsNameSet.add(cfsName);
                     }

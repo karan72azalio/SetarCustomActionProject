@@ -100,7 +100,7 @@ public class CreateProductSubscription implements HttpAction {
             }
 
             // ================== Subscription ==================
-            String subscriptionName = subscriberName + "_" + request.getServiceID();
+            String subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceID();
             if (subscriptionName.length() > 100) {
                 throw new BadRequestException("Subscription name too long");
             }
@@ -127,7 +127,7 @@ public class CreateProductSubscription implements HttpAction {
             }
 
             // ================== Product ==================
-            String productName = request.getServiceID() + "_" + request.getComponentName();
+            String productName = request.getServiceID() + Constants.UNDER_SCORE  + request.getComponentName();
             if (productName.length() > 100) {
                 throw new BadRequestException("Product name too long");
             }

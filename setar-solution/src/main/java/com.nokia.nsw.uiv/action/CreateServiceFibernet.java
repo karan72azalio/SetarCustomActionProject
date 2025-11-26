@@ -85,12 +85,12 @@ public class CreateServiceFibernet implements HttpAction {
             // optional: template names etc.
 
             // Build canonical names
-            String subscriberName = request.getSubscriberName() + "_" + request.getOntSN();
-            String subscriptionName = request.getSubscriberName() + "_" + request.getServiceID() + "_" + request.getOntSN();
-            String productName = request.getSubscriberName() + "_" + request.getProductSubtype() + "_" + request.getServiceID();
-            String cfsName = "CFS_" + subscriptionName;
-            String rfsName = "RFS_" + subscriptionName;
-            String ontName = "ONT" + request.getOntSN();
+            String subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getOntSN();
+            String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceID() + Constants.UNDER_SCORE  + request.getOntSN();
+            String productName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getProductSubtype() + Constants.UNDER_SCORE  + request.getServiceID();
+            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+            String ontName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
 
 
 
@@ -274,7 +274,7 @@ public class CreateServiceFibernet implements HttpAction {
             }
 
             // 8. ONT device: find or create as LogicalDevice with kind=ONT
-            String stbDeviceName = "STB"+"_"+ request.getOntSN();
+            String stbDeviceName = "STB"+Constants.UNDER_SCORE + request.getOntSN();
             Optional<LogicalDevice> stbOpt = logicalDeviceRepository.findByDiscoveredName(stbDeviceName);
             LogicalDevice stbDevice;
             if (stbOpt.isPresent()) {
@@ -301,7 +301,7 @@ public class CreateServiceFibernet implements HttpAction {
 
             // 9. VLAN interface (LogicalInterface) creation if needed
             if (request.getMenm() != null && request.getVlanID() != null) {
-                String vlanName = request.getMenm() + "_" + request.getVlanID();
+                String vlanName = request.getMenm() + Constants.UNDER_SCORE  + request.getVlanID();
                 String vlanContext=Constants.SETAR;
                 Optional<LogicalInterface> optVlan = logicalInterfaceRepository.findByDiscoveredName(vlanName);
                 if (!optVlan.isPresent()) {

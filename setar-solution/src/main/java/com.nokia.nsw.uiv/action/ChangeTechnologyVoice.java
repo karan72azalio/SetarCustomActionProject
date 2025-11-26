@@ -6,6 +6,7 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ChangeTechnologyVoiceRequest;
 import com.nokia.nsw.uiv.response.ChangeTechnologyVoiceResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 import com.nokia.nsw.uiv.model.common.party.Customer;
@@ -94,13 +95,13 @@ public class ChangeTechnologyVoice implements HttpAction {
             System.out.println("------------Test Trace # 3--------------- Validations OK");
 
             // 2. Prepare names
-            String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId();
-            String cfsName = "CFS_" + subscriptionName;
-            String rfsName = "RFS_" + subscriptionName;
-            String cbmName = "CBM" + req.getCbmSn();
-            String ontName = "ONT" + req.getOntSN(); // per spec: ONT + SN (no underscore)
-            String cpeDeviceName = "ONT" + req.getOntSN(); // CPE device convention used elsewhere
-            String cpeDeviceOldName = "CBM_" + req.getCbmMac(); // CBM CPE
+            String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId();
+            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+            String cbmName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn();
+            String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN(); // per spec: ONT + SN (no underscore)
+            String cpeDeviceName ="ONT" + Constants.UNDER_SCORE + req.getOntSN(); // CPE device convention used elsewhere
+            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmMac(); // CBM CPE
 
             System.out.println("------------Test Trace # 4--------------- Names prepared:"
                     + " subscriptionName=" + subscriptionName
@@ -155,7 +156,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 }
 
                 // Rename subscription to include ONT SN per spec
-                String newSubscriptionName = subscriptionName + "_" + req.getOntSN();
+                String newSubscriptionName = subscriptionName + Constants.UNDER_SCORE  + req.getOntSN();
                 System.out.println("------------Test Trace # 12--------------- Renaming subscription to: " + newSubscriptionName);
                 subs.setDiscoveredName(subscriptionName);
                 subs.setProperties(props);
@@ -166,7 +167,7 @@ public class ChangeTechnologyVoice implements HttpAction {
 
                 // 5. Update Subscriber if linked via subscription
                 // Try to find linked subscriber — attempt several common patterns
-                String subscriberCandidate1 = req.getSubscriberName() + "_" + req.getOntSN();
+                String subscriberCandidate1 = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
                 String subscriberCandidate2 = req.getSubscriberName();
                 String subscriberCandidata1Gdn = Validations.getGlobalName(subscriberCandidate1);
                 Optional<Customer> custOpt = customerRepo.findByDiscoveredName(subscriberCandidate1);
@@ -202,7 +203,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             Optional<CustomerFacingService> cfsOpt = cfsRepo.findByDiscoveredName(cfsName);
             if (cfsOpt.isPresent()) {
                 CustomerFacingService cfs = cfsOpt.get();
-                String newCfsName = cfs.getLocalName() + "_" + req.getOntSN();
+                String newCfsName = cfs.getLocalName() + Constants.UNDER_SCORE  + req.getOntSN();
                 cfs.setDiscoveredName(newCfsName);
                 if (req.getFxOrderId() != null && !req.getFxOrderId().trim().isEmpty()) {
                     Map<String, Object> cfsProps = cfs.getProperties() == null ? new HashMap<>() : new HashMap<>(cfs.getProperties());
@@ -220,7 +221,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
             if (rfsOpt.isPresent()) {
                 ResourceFacingService rfs = rfsOpt.get();
-                String newRfsName = rfs.getLocalName() + "_" + req.getOntSN();
+                String newRfsName = rfs.getLocalName() + Constants.UNDER_SCORE  + req.getOntSN();
                 rfs.setDiscoveredName(newRfsName);
                 rfsRepo.save(rfs);
                 System.out.println("------------Test Trace # 22--------------- RFS renamed/saved: " + newRfsName);

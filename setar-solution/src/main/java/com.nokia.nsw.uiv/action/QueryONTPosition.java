@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryONTPositionRequest;
 import com.nokia.nsw.uiv.response.QueryONTPositionResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 
@@ -59,7 +60,7 @@ public class QueryONTPosition implements HttpAction {
             System.out.println("------------Trace # 3--------------- Input ontSn=" + ontSn);
 
             // 2. Build ONT Name and length check
-            String ontName = "ONT" + ontSn;
+            String ontName ="ONT" + Constants.UNDER_SCORE + ontSn;
             System.out.println("------------Trace # 4--------------- Constructed ONT name: " + ontName);
 
             if (ontName.length() > 100) {

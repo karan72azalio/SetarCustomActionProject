@@ -13,6 +13,7 @@ import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.QueryVoipNumberRequest;
 import com.nokia.nsw.uiv.response.QueryVoipNumberResponse;
 import com.nokia.nsw.uiv.response.UpdateVOIPServiceResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,7 @@ public class QueryVoipNumber implements HttpAction {
             // Step 2: Service link
             String linkType = (req.getServiceLink() != null && "CBM".equalsIgnoreCase(req.getServiceLink()))
                     ? "CBM" : "ONT";
-            String ontName = "ONT" + req.getOntSN();
+            String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
 
             // Step 3: Prepare empty fields
             String voipNumber1 = "";
@@ -92,8 +93,8 @@ public class QueryVoipNumber implements HttpAction {
             // Step 5: Exact subscription lookup
             if (req.getSubscriberName() != null && req.getServiceId() != null) {
                 String subscriptionName = ("CBM".equals(linkType))
-                        ? req.getSubscriberName() + "_" + req.getServiceId()
-                        : req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN();
+                        ? req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId()
+                        : req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
 
                 Optional<Subscription> subsOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
                 if (subsOpt.isPresent()) {

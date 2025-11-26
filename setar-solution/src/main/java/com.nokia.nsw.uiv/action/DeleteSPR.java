@@ -33,6 +33,7 @@ import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.DeleteSPRRequest;
 import com.nokia.nsw.uiv.response.DeleteSPRResponse;
 
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.*;
 import lombok.extern.slf4j.Slf4j;
@@ -92,12 +93,12 @@ public class DeleteSPR implements HttpAction {
         // -----------------------------
         // 2) Construct Required Names
         // -----------------------------
-        String subscriberNameWithOnt = req.getSubscriberName() + "_" + req.getOntSN();
-        String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN();
-        String cfsName = "CFS_" + subscriberNameWithOnt;
-        String rfsName = "RFS_" + subscriptionName;
-        String productName = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
-        String ontName = "ONT" + req.getOntSN();
+        String subscriberNameWithOnt = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
+        String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
+        String cfsName = "CFS" + Constants.UNDER_SCORE + subscriberNameWithOnt;
+        String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+        String productName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getProductSubtype() + Constants.UNDER_SCORE  + req.getServiceId();
+        String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
 
         if (ontName.length() > 100) {
             // Code6
@@ -144,7 +145,7 @@ public class DeleteSPR implements HttpAction {
                 optOlt = getParentOlt(ont);
             }
 
-            // Attempt to retrieve a CPE device named "ONT" + ontSN (optional)
+            // Attempt to retrieve a CPE device named"ONT" + Constants.UNDER_SCORE + ontSN (optional)
             String optCpeName="ONT" + req.getOntSN();
             Optional<LogicalDevice> optCpe = logicalDeviceRepository.findByDiscoveredName(optCpeName);
 

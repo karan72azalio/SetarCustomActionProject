@@ -60,8 +60,8 @@ public class QueryProductSubscription implements HttpAction {
 
             // ================== Construct Product Name ==================
             String subscriberName = request.getSubscriberName();
-            String subscriptionName = subscriberName + "_" + request.getServiceID();
-            String productName = request.getServiceID() + "_" + request.getComponentName();
+            String subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceID();
+            String productName = request.getServiceID() + Constants.UNDER_SCORE  + request.getComponentName();
             if (productName.length() > 100) {
                 throw new BadRequestException("Product Name String exceeds 100 characters");
             }

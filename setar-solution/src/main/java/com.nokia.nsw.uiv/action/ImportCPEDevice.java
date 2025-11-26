@@ -141,7 +141,7 @@ public class ImportCPEDevice implements HttpAction {
     private void createPotsPort(String serialNo, String portType, LogicalDevice cpeDevice)
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
         log.info("-----------------Create POTS ports-Started------------------");
-        String portName = serialNo + "_" + portType;
+        String portName = serialNo + Constants.UNDER_SCORE  + portType;
         Optional<LogicalComponent> optPort = componentRepository.findByDiscoveredName(portName);
 
         if (!optPort.isPresent()) {
@@ -173,7 +173,7 @@ public class ImportCPEDevice implements HttpAction {
     private void createEthernetPort(String serialNo, String portType, LogicalDevice cpeDevice)
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
 
-        String portName = serialNo + "_" + portType;
+        String portName = serialNo + Constants.UNDER_SCORE  + portType;
         Optional<LogicalComponent> optPort = componentRepository.findByDiscoveredName(portName);
         if (!optPort.isPresent()) {
             log.info("Creating Ethernet port: {}", portName);
@@ -198,7 +198,7 @@ public class ImportCPEDevice implements HttpAction {
 
             // VLAN interfaces (LogicalInterface)
             for (int vlanIndex = 1; vlanIndex <= 7; vlanIndex++) {
-                String vlanName = portName + "_" + vlanIndex;
+                String vlanName = portName + Constants.UNDER_SCORE  + vlanIndex;
                 Optional<LogicalInterface> optVlan = logicalInterfaceRepository.findByDiscoveredName(vlanName);
                 if (!optVlan.isPresent()) {
                     log.info("Creating VLAN interface: {}", vlanName);

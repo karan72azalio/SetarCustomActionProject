@@ -90,7 +90,7 @@ public class DeleteCBM implements HttpAction {
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceId();
-        String cbmName = "CBM" + request.getCbmSN();
+        String cbmName = "CBM" + Constants.UNDER_SCORE +request.getCbmSN();
         String subscriberName = request.getSubscriberName();
 
         // 6. Validate CBM name length early

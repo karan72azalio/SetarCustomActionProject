@@ -9,6 +9,7 @@ import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceVoIPRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.response.CreateServiceVoIPResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 import com.nokia.nsw.uiv.model.common.party.Customer;
@@ -92,7 +93,7 @@ public class CreateServiceVoIP implements HttpAction {
             }
 
             // Step 2 & 3: Subscriber
-            String subscriberNameStr = req.getSubscriberName() + "_" + req.getOntSN();
+            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
             if (subscriberNameStr.length() > 100) {
                 return new CreateServiceVoIPResponse(
                         "400",
@@ -126,11 +127,11 @@ public class CreateServiceVoIP implements HttpAction {
                         return customerRepo.save(newSub);
                     });
             if(subscriber.getDiscoveredName()==null){
-                return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN(),"ONT" + req.getOntSN());
+                return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN(),"ONT" + req.getOntSN());
             }
 
             // Step 4: Subscription
-            String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN();
+            String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
             if (subscriptionName.length() > 100) {
                 return new CreateServiceVoIPResponse(
                         "400",
@@ -190,7 +191,7 @@ public class CreateServiceVoIP implements HttpAction {
             subscriptionRepo.save(subscription);
 
             // Step 7: Product
-            String productNameStr = req.getSubscriberName() +"_"+ req.getProductSubtype() +"_"+ req.getServiceId();
+            String productNameStr = req.getSubscriberName() +Constants.UNDER_SCORE + req.getProductSubtype() +Constants.UNDER_SCORE + req.getServiceId();
             if (productNameStr.length() > 100) {
                 return new CreateServiceVoIPResponse(
                         "400",
@@ -220,7 +221,7 @@ public class CreateServiceVoIP implements HttpAction {
                     });
 
             // Step 8: CFS
-            String cfsName = "CFS_" + subscriptionName;
+            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             CustomerFacingService cfs = cfsRepo.findByDiscoveredName(cfsName)
                     .orElseGet(() -> {
                         CustomerFacingService newCfs = new CustomerFacingService();
@@ -241,7 +242,7 @@ public class CreateServiceVoIP implements HttpAction {
                     });
 
             // Step 9: RFS
-            String rfsName = "RFS_" + subscriptionName;
+            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             ResourceFacingService rfs = rfsRepo.findByDiscoveredName(rfsName)
                     .orElseGet(() -> {
                         ResourceFacingService newRfs = new ResourceFacingService();
@@ -262,7 +263,7 @@ public class CreateServiceVoIP implements HttpAction {
                     });
 
             // Step 10: ONT & OLT
-            String ontName = "ONT" + req.getOntSN();
+            String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
             if (ontName.length() > 100) {
                 return new CreateServiceVoIPResponse(
                         "400",

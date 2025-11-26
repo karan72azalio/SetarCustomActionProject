@@ -7,6 +7,7 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryIPTVByServiceIDRequest;
 import com.nokia.nsw.uiv.response.QueryIPTVByServiceIDResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.Product;
 import com.setar.uiv.model.product.ResourceFacingService;
@@ -31,7 +32,7 @@ import java.util.*;
  *
  * Behavior follows the legacy QueryIPTVByServiceID + instruction file you provided:
  * - Validate mandatory serviceId
- * - Find matching CFS names (middle portion or 3rd "_" segment == serviceId)
+ * - Find matching CFS names (middle portion or 3rd Constants.UNDER_SCORE  segment == serviceId)
  * - For each matching CFS, find its RFS (name replace CFS -> RFS), read Product -> Subscription -> Customer
  * - Collect IPTV details into iptvInfo map and keep ordered list of output parameter names
  *
@@ -109,7 +110,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                     }
                 }
                 // third segment when split by '_'
-                String[] parts = cfsName.split("_");
+                String[] parts = cfsName.split(Constants.UNDER_SCORE );
                 if (parts.length >= 3 && serviceId.equals(parts[2])) {
                     matchingCfsNames.add(cfsName);
                 }
@@ -227,7 +228,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                                 if (prodName != null && prodName.startsWith(serviceId)) {
                                     String comp = prodName.replaceFirst("^" + serviceId, "");
                                     // remove underscores
-                                    comp = comp.replace("_", "");
+                                    comp = comp.replace(Constants.UNDER_SCORE , "");
                                     String label = "Service_Component_" + serviceComponentCounter;
                                     iptvInfo.put(label, comp);
                                     outputParameterNames.add(label);
@@ -238,7 +239,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                         } else {
                             // fallback: product (containing product) maybe itself is the one; check product variable
                             if (product != null && product.getDiscoveredName() != null && product.getDiscoveredName().startsWith(serviceId)) {
-                                String comp = product.getName().replaceFirst("^" + serviceId, "").replace("_", "");
+                                String comp = product.getName().replaceFirst("^" + serviceId, "").replace(Constants.UNDER_SCORE , "");
                                 String label = "Service_Component_" + serviceComponentCounter;
                                 iptvInfo.put(label, comp);
                                 outputParameterNames.add(label);

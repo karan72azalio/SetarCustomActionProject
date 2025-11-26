@@ -12,6 +12,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryServicesInfoRequest;
 import com.nokia.nsw.uiv.response.QueryServicesInfoResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.Product;
 import com.setar.uiv.model.product.ResourceFacingService;
@@ -110,7 +111,7 @@ public class QueryServicesInfo implements HttpAction {
                     if (rfsByOnt.size() >= 2) {
                         String rfsName2 = rfsByOnt.get(1).getDiscoveredName();
                         if (rfsName2 != null) {
-                            String[] parts = rfsName2.split("_", -1);
+                            String[] parts = rfsName2.split(Constants.UNDER_SCORE , -1);
                             if (parts.length >= 2) {
                                 String anchorAccNo = parts[1];
                                 List<ResourceFacingService> candidates = new ArrayList<>();
@@ -178,11 +179,11 @@ public class QueryServicesInfo implements HttpAction {
                     // 5.1 Derive subscriber, serviceID, subscriptionName
                     String subscriptionName = "";
                     if (isIptvCandidate) {
-                        String[] rfsnames = rfsnameget.split("_", -1);
+                        String[] rfsnames = rfsnameget.split(Constants.UNDER_SCORE , -1);
                         if (rfsnames.length >= 3) {
                             subscriber = rfsnames[1];
                             serviceID = rfsnames[2];
-                            subscriptionName = subscriber + "_" + serviceID;
+                            subscriptionName = subscriber + Constants.UNDER_SCORE  + serviceID;
                         } else {
                             log.debug("IPTV rfs name not parsable: {}", rfsnameget);
                         }
@@ -190,37 +191,37 @@ public class QueryServicesInfo implements HttpAction {
                         String fiberrfsname = rfsnameget;
                         if (fiberrfsname.contains("ALC")) {
                             // tokens: ... _ACC_NO_..._ONT_SNO
-                            String[] tokens = fiberrfsname.split("_", -1);
+                            String[] tokens = fiberrfsname.split(Constants.UNDER_SCORE , -1);
                             if (tokens.length >= 3) {
                                 String accNo = tokens[1];
                                 String ontLast = tokens[tokens.length - 1];
-                                // SID = middle tokens joined by "_"
+                                // SID = middle tokens joined by Constants.UNDER_SCORE 
                                 StringBuilder sidBuilder = new StringBuilder();
                                 for (int i = 2; i < tokens.length - 1; i++) {
-                                    if (sidBuilder.length() > 0) sidBuilder.append("_");
+                                    if (sidBuilder.length() > 0) sidBuilder.append(Constants.UNDER_SCORE );
                                     sidBuilder.append(tokens[i]);
                                 }
                                 String sid = sidBuilder.toString();
                                 subscriber = accNo;
                                 serviceID = sid;
                                 ontSno = ontLast;
-                                subscriptionName = subscriber + "_" + serviceID + "_" + ontSno;
-                                setarSubscribername = subscriber + "_" + ontSno;
+                                subscriptionName = subscriber + Constants.UNDER_SCORE  + serviceID + Constants.UNDER_SCORE  + ontSno;
+                                setarSubscribername = subscriber + Constants.UNDER_SCORE  + ontSno;
                             } else {
                                 log.debug("ALC-format rfs name not parsable: {}", fiberrfsname);
                             }
                         } else {
-                            String[] fibesubname = fiberrfsname.split("_", -1);
+                            String[] fibesubname = fiberrfsname.split(Constants.UNDER_SCORE , -1);
                             if (fibesubname.length >= 3) {
                                 subscriber = fibesubname[1];
                                 // serviceID is token[2] plus remaining tokens
                                 StringBuilder sidBuilder = new StringBuilder();
                                 sidBuilder.append(fibesubname[2]);
                                 for (int i = 3; i < fibesubname.length; i++) {
-                                    sidBuilder.append("_").append(fibesubname[i]);
+                                    sidBuilder.append(Constants.UNDER_SCORE ).append(fibesubname[i]);
                                 }
                                 serviceID = sidBuilder.toString();
-                                subscriptionName = subscriber + "_" + serviceID;
+                                subscriptionName = subscriber + Constants.UNDER_SCORE  + serviceID;
                             } else {
                                 log.debug("Generic format rfs name not parsable: {}", fiberrfsname);
                             }
@@ -239,7 +240,7 @@ public class QueryServicesInfo implements HttpAction {
 
                     if (setarSubscription == null) {
                         // Try alternative: sometimes subscriptionName may be subscriber_serviceId only (no ONT)
-                        String altSubName = subscriber + "_" + serviceID;
+                        String altSubName = subscriber + Constants.UNDER_SCORE  + serviceID;
                         Optional<Subscription> optSubAlt = subscriptionRepository.findByDiscoveredName(altSubName);
                         if (optSubAlt.isPresent()) setarSubscription = optSubAlt.get();
                     }
@@ -274,7 +275,7 @@ public class QueryServicesInfo implements HttpAction {
                         if (optCust.isPresent()) setarSubscriber = optCust.get();
                     } else if (subscriber != null && !subscriber.isEmpty() && ontSno != null && !ontSno.isEmpty()) {
                         // fallback subscriber + ont
-                        String name = subscriber + "_" + ontSno;
+                        String name = subscriber + Constants.UNDER_SCORE  + ontSno;
                         Optional<Customer> optCust = customerRepository.findByDiscoveredName(name);
                         if (optCust.isPresent()) setarSubscriber = optCust.get();
                     }
@@ -284,7 +285,7 @@ public class QueryServicesInfo implements HttpAction {
                     Product setarProduct = null;
                     if (serviceID != null && !serviceID.isEmpty() && setarSubscription != null) {
                         String serviceSubType = (setarSubscription.getProperties() == null) ? "" : String.valueOf(setarSubscription.getProperties().getOrDefault("serviceSubType", ""));
-                        productName = subscriber + "_" + serviceSubType + "_" + serviceID;
+                        productName = subscriber + Constants.UNDER_SCORE  + serviceSubType + Constants.UNDER_SCORE  + serviceID;
                         if (productName != null && !productName.isEmpty()) {
                             Optional<Product> optProd = productRepository.findByDiscoveredName(productName);
                             if (optProd.isPresent()) setarProduct = optProd.get();
@@ -304,7 +305,7 @@ public class QueryServicesInfo implements HttpAction {
                                 if (ssn != null) ontSno = ssn.toString();
                             }
                             if (ontSno != null && !ontSno.isEmpty()) {
-                                String ontName = "ONT" + ontSno;
+                                String ontName ="ONT" + Constants.UNDER_SCORE + ontSno;
                                 Optional<LogicalDevice> optOnt = logicalDeviceRepository.findByDiscoveredName(ontName);
                                 if (optOnt.isPresent()) {
                                     nameONT = optOnt.get();
@@ -359,7 +360,7 @@ public class QueryServicesInfo implements HttpAction {
                         for (Product prod : compos) {
                             String pname = prod.getDiscoveredName();
                             if (pname != null) {
-                                String[] parts = pname.split("_", -1);
+                                String[] parts = pname.split(Constants.UNDER_SCORE , -1);
                                 if (parts.length >= 2) {
                                     listOfComponents.add(parts[1]);
                                 }
@@ -382,7 +383,7 @@ public class QueryServicesInfo implements HttpAction {
                     else if (serviceSubTypeLower.contains("cloudstarter")) { sname = "CLOUDSTARTER"; t = u; }
                     else { sname = "SERVICE"; t = 1; }
 
-                    String prefix = sname + "_" + t + "_";
+                    String prefix = sname + Constants.UNDER_SCORE  + t + Constants.UNDER_SCORE ;
 
                     // 5.5 If IPTV, collect device serials and components (we already did)
                     boolean applicableType = serviceTypeLower.contains("iptv") ||
@@ -553,7 +554,7 @@ public class QueryServicesInfo implements HttpAction {
                                     String oltPrefix = oltDevice.getDiscoveredName();
                                     String[] preparts = oltPrefix.split(":", -1);
                                     String prefixText = preparts.length > 0 ? preparts[0] : oltPrefix;
-                                    String vlanIntName = prefixText + "_" + evpnVlan;
+                                    String vlanIntName = prefixText + Constants.UNDER_SCORE  + evpnVlan;
                                     Optional<LogicalInterface> optVlanInt = logicalInterfaceRepository.findByDiscoveredName(vlanIntName);
                                     if (optVlanInt.isPresent()) {
                                         Object mgmt = optVlanInt.get().getProperties() == null ? null : optVlanInt.get().getProperties().get("mgmtTemplate");

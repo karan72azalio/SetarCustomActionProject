@@ -137,14 +137,14 @@ public class ChangeTechnology implements HttpAction {
             // In UIV mapped model we set properties accordingly (create missing objects handled by repositories when needed).
 
             // 3. Prepare names
-            String subscriptionName = subscriberName + "_" + serviceId;
-            String cfsName = "CFS_" + subscriptionName;
-            String rfsName = "RFS_" + subscriptionName;
-            String cbmName = "CBM" + cbmSn;
-            String mgmtVlanName = menm + "_" + vlanId;
-            String ontName = "ONT" + ontSN;
-            String subscriberNameFibernet = subscriberName + "_" + ontSN;
-            String subscriberNameCbmKey = subscriberName + "_" + cbmMac.replace(":", "");
+            String subscriptionName = subscriberName + Constants.UNDER_SCORE  + serviceId;
+            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+            String cbmName = "CBM" + Constants.UNDER_SCORE +cbmSn;
+            String mgmtVlanName = menm + Constants.UNDER_SCORE  + vlanId;
+            String ontName ="ONT" + Constants.UNDER_SCORE + ontSN;
+            String subscriberNameFibernet = subscriberName + Constants.UNDER_SCORE  + ontSN;
+            String subscriberNameCbmKey = subscriberName + Constants.UNDER_SCORE  + cbmMac.replace(":", "");
 
             // 4. Update existing subscriber (only when productSubType == Fibernet)
             if ("Fibernet".equalsIgnoreCase(productSubtype)) {
@@ -180,7 +180,7 @@ public class ChangeTechnology implements HttpAction {
                 subProps.put("serviceSubtype", "Broadband");
                 if ("Fibernet".equalsIgnoreCase(productSubtype)) {
                     if (qosProfile != null) subProps.put("veipQosSessionProfile", qosProfile);
-                    subscription.setDiscoveredName(subscriptionName + "_" + ontSN);
+                    subscription.setDiscoveredName(subscriptionName + Constants.UNDER_SCORE  + ontSN);
                     // link to subscriber updated earlier if present
                     String gdnFibernet = Validations.getGlobalName(subscriberNameFibernet);
                     Optional<Customer> maybeSub = customerRepo.findByDiscoveredName(subscriberNameFibernet);
@@ -194,7 +194,7 @@ public class ChangeTechnology implements HttpAction {
             Optional<CustomerFacingService> maybeCfs = cfsRepo.findByDiscoveredName(cfsName);
             if (maybeCfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 CustomerFacingService cfs = maybeCfs.get();
-                cfs.setDiscoveredName(cfs.getLocalName() + "_" + ontSN);
+                cfs.setDiscoveredName(cfs.getLocalName() + Constants.UNDER_SCORE  + ontSN);
                 if (fxOrderId != null) {
                     Map<String, Object> p = cfs.getProperties() != null ? cfs.getProperties() : new HashMap<>();
                     p.put("transactionId", fxOrderId);
@@ -207,7 +207,7 @@ public class ChangeTechnology implements HttpAction {
             Optional<ResourceFacingService> maybeRfs = rfsRepo.findByDiscoveredName(rfsName);
             if (maybeRfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 ResourceFacingService rfs = maybeRfs.get();
-                rfs.setDiscoveredName(rfs.getName() + "_" + ontSN);
+                rfs.setDiscoveredName(rfs.getName() + Constants.UNDER_SCORE  + ontSN);
                 rfsRepo.save(rfs);
             }
 
@@ -317,8 +317,8 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 12. Reassign CPE devices
-            String cpeDeviceName = "ONT" + ontSN;
-            String cpeDeviceOldName = "CBM" + cbmMac;
+            String cpeDeviceName ="ONT" + Constants.UNDER_SCORE + ontSN;
+            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +cbmMac;
 
             Optional<LogicalDevice> maybeCpeNew = cpeRepo.findByDiscoveredName(cpeDeviceName);
             Optional<LogicalDevice> maybeCpeOld = cpeRepo.findByDiscoveredName(cpeDeviceOldName);

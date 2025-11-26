@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryAllServicesByCPERequest;
 import com.nokia.nsw.uiv.response.QueryAllServicesByCPEResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,7 @@ public class QueryAllServicesByCPE implements HttpAction {
             if (req.getOntSn() == null || req.getOntSn().isEmpty()) {
                 return errorResponse("400", "Missing mandatory parameter(s): ontSn");
             }
-            String ontName = "ONT" + req.getOntSn();
+            String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSn();
 
             // 2) Identify the ONT
             Optional<LogicalDevice> ontOpt = logicalDeviceRepo.findByDiscoveredName(ontName);

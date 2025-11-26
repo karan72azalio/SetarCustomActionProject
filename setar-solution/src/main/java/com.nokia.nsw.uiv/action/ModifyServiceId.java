@@ -7,6 +7,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifyServiceIdRequest;
 import com.nokia.nsw.uiv.response.ModifyServiceIdResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 import com.setar.uiv.model.product.CustomerFacingService;
@@ -101,9 +102,9 @@ public class ModifyServiceId implements HttpAction {
 
                 // Matching Rule A/B
                 boolean matches = false;
-                if (oldServiceId.contains("_")) {
-                    int first = cfsName.indexOf("_");
-                    int last = cfsName.lastIndexOf("_");
+                if (oldServiceId.contains(Constants.UNDER_SCORE )) {
+                    int first = cfsName.indexOf(Constants.UNDER_SCORE );
+                    int last = cfsName.lastIndexOf(Constants.UNDER_SCORE );
                     if (first >= 0 && last > first) {
                         String between = cfsName.substring(first + 1, last);
                         if (between.equalsIgnoreCase(oldServiceId)) {
@@ -111,7 +112,7 @@ public class ModifyServiceId implements HttpAction {
                         }
                     }
                 } else {
-                    String[] tokens = cfsName.split("_");
+                    String[] tokens = cfsName.split(Constants.UNDER_SCORE );
                     if (tokens.length >= 3 && tokens[2].equalsIgnoreCase(oldServiceId)) {
                         matches = true;
                     }

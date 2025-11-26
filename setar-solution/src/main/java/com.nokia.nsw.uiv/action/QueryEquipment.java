@@ -5,6 +5,7 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
+import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
@@ -78,10 +79,10 @@ public class QueryEquipment implements HttpAction {
         }
 
         // 2. Construct names
-        String subscriptionName = request.getSubscriberName() + "_" + request.getServiceId();
-        String cfsName = "CFS_" + subscriptionName;
-        String rfsName = "RFS_" + subscriptionName;
-        String productName = request.getSubscriberName() + Constants.UNDER_SCORE+  request.getProductSubType() + Constants.UNDER_SCORE + request.getServiceId();
+        String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId();
+        String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+        String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+        String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubType() + Constants.UNDER_SCORE + request.getServiceId();
 
         boolean successFlag = false;
         int apCounter = 1;
@@ -115,66 +116,43 @@ public class QueryEquipment implements HttpAction {
             log.info("RFS Name: {}", rfsName);
             log.info("Product Name: {}", productName);
 
-            // 4️⃣ Retrieve linked devices
-            Object linkedDevicesObj = null;
-            if (rfs.getProperties() != null) {
-                linkedDevicesObj = rfs.getProperties().get("linkedDevices");
-            }
-
-            // Fallback to Product if not found in RFS
-            if (linkedDevicesObj == null && productOpt.isPresent()) {
-                Product product = productOpt.get();
-                if (product.getProperties() != null) {
-                    linkedDevicesObj = product.getProperties().get("linkedDevices");
-                }
-            }
-
-            log.info("RFS Properties: {}", rfs.getProperties());
-            if (productOpt.isPresent()) {
-                log.info("Product Properties: {}", productOpt.get().getProperties());
-            }
-            log.info("linkedDevicesObj: {}", linkedDevicesObj);
-
+            //retrieved linked devices
+            Set<Resource> linkedResources = rfs.getUsedResource();
             List<String> apSns = new ArrayList<>();
             List<String> stbSns = new ArrayList<>();
 
             // 5️⃣ Process linked devices
-            if (linkedDevicesObj instanceof List<?>) {
-                List<?> linkedDevicesList = (List<?>) linkedDevicesObj;
+            for (Resource r : linkedResources) {
+                LogicalDevice device = null;
+                if (r instanceof LogicalDevice) {
+                    LogicalDevice ld = (LogicalDevice) r;
+                    device = logicalDeviceRepository.findByDiscoveredName(ld.getDiscoveredName()).orElse(null);
+                }
+                if (device == null) continue;
 
-                for (Object gdnObj : linkedDevicesList) {
-                    if (!(gdnObj instanceof String)) continue;
-                    String gdn = (String) gdnObj;
+                String devName = device.getDiscoveredName();
+                if (devName == null) continue;
 
-                    LogicalDevice device = logicalDeviceRepository.findByDiscoveredName(gdn).orElse(null);
-                    if (device == null) continue;
+                Object serialObj = device.getProperties() != null ? device.getProperties().get("serialNo") : null;
+                String serialNo = serialObj != null ? serialObj.toString() : "";
 
-                    String devName = device.getName();
-                    if (devName == null) continue;
-
-                    Object serialObj = device.getProperties() != null ? device.getProperties().get("serialNo") : null;
-                    String serialNo = serialObj != null ? serialObj.toString() : "";
-
-                    if (devName.startsWith("AP")) {
-                        if (apCounter <= 5) {
-                            apSns.add(serialNo);
-                            apCounter++;
-                            successFlag = true;
-                        } else {
-                            log.warn("Ignored extra AP device beyond 5: {}", devName);
-                        }
-                    } else if (devName.startsWith("STB")) {
-                        if (stbCounter <= 5) {
-                            stbSns.add(serialNo);
-                            stbCounter++;
-                            successFlag = true;
-                        } else {
-                            log.warn("Ignored extra STB device beyond 5: {}", devName);
-                        }
+                if (devName.startsWith("AP")) {
+                    if (apCounter <= 5) {
+                        apSns.add(serialNo);
+                        apCounter++;
+                        successFlag = true;
+                    } else {
+                        log.warn("Ignored extra AP device beyond 5: {}", devName);
+                    }
+                } else if (devName.startsWith("STB")) {
+                    if (stbCounter <= 5) {
+                        stbSns.add(serialNo);
+                        stbCounter++;
+                        successFlag = true;
+                    } else {
+                        log.warn("Ignored extra STB device beyond 5: {}", devName);
                     }
                 }
-            } else {
-                log.warn("linkedDevicesObj is null or not a List, cannot process equipment");
             }
 
 

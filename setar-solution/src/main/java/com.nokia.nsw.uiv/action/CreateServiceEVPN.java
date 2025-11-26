@@ -10,6 +10,7 @@ import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceEVPNRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.response.CreateServiceEVPNResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 import com.nokia.nsw.uiv.model.common.party.Customer;
@@ -101,7 +102,7 @@ public class CreateServiceEVPN implements HttpAction {
             }
 
             // 2) Prepare names
-            String subscriberNameStr = req.getSubscriberName() + "_" + req.getOntSN();
+            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
             if (subscriberNameStr.length() > 100) {
                 System.out.println("------------Trace # 3--------------- Subscriber name too long");
                 return new CreateServiceEVPNResponse(
@@ -113,7 +114,7 @@ public class CreateServiceEVPN implements HttpAction {
                 );
             }
 
-            String subscriptionName = req.getSubscriberName() + "_" + req.getServiceId() + "_" + req.getOntSN();
+            String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
             if (subscriptionName.length() > 100) {
                 System.out.println("------------Trace # 4--------------- Subscription name too long");
                 return new CreateServiceEVPNResponse(
@@ -125,7 +126,7 @@ public class CreateServiceEVPN implements HttpAction {
                 );
             }
 
-            String productNameStr = req.getSubscriberName() + "_" + req.getProductSubtype() + "_" + req.getServiceId();
+            String productNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getProductSubtype() + Constants.UNDER_SCORE  + req.getServiceId();
             if (productNameStr.length() > 100) {
                 System.out.println("------------Trace # 5--------------- Product name too long");
                 return new CreateServiceEVPNResponse(
@@ -137,9 +138,9 @@ public class CreateServiceEVPN implements HttpAction {
                 );
             }
 
-            String cfsName = "CFS_" + subscriptionName;
-            String rfsName = "RFS_" + subscriptionName;
-            String ontName = "ONT" + req.getOntSN();
+            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+            String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
             if (ontName.length() > 100) {
                 System.out.println("------------Trace # 6--------------- ONT name too long");
                 return new CreateServiceEVPNResponse(
@@ -151,8 +152,8 @@ public class CreateServiceEVPN implements HttpAction {
                 );
             }
 
-            String vlanName = req.getMenm() + "_" + (req.getVlanId() == null ? "" : req.getVlanId());
-            String mgmtVlanName = req.getMenm() + "_" + req.getMgmntVlanId();
+            String vlanName = req.getMenm() + Constants.UNDER_SCORE  + (req.getVlanId() == null ? "" : req.getVlanId());
+            String mgmtVlanName = req.getMenm() + Constants.UNDER_SCORE  + req.getMgmntVlanId();
 
             System.out.println("------------Trace # 7--------------- Names prepared: subscriber=" + subscriberNameStr
                     + ", subscription=" + subscriptionName + ", product=" + productNameStr

@@ -106,15 +106,15 @@ public class CreateServiceCbmVoice implements HttpAction {
         if ("Broadband".equalsIgnoreCase(productSubtype) || "Voice".equalsIgnoreCase(productSubtype)) {
             // remove colons if present
             String macClean = request.getCbmMac() == null ? "" : request.getCbmMac().replace(":", "");
-            subscriberNameString = request.getSubscriberName() + "_" + macClean;
+            subscriberNameString = request.getSubscriberName() + Constants.UNDER_SCORE  + macClean;
         } else {
             subscriberNameString = request.getSubscriberName();
         }
 
         String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getServiceId();
-        String cfsName = "CFS_" + subscriptionName;
-        String rfsName = "RFS_" + subscriptionName;
-        String cbmName = "CBM" + request.getServiceId();
+        String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+        String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+        String cbmName = "CBM" + Constants.UNDER_SCORE +request.getServiceId();
 
         // name length checks
         if (subscriberNameString.length() > 100 ||
@@ -337,7 +337,7 @@ public class CreateServiceCbmVoice implements HttpAction {
 
             // 9. CPE Voice Port Update (only when productSubtype == "Voice")
             if ("Voice".equalsIgnoreCase(request.getProductSubtype())) {
-                String cpeDeviceName = "CBM_" + request.getCbmMac();
+                String cpeDeviceName = "CBM" + Constants.UNDER_SCORE +request.getCbmMac();
                 Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.findByDiscoveredName(cpeDeviceName);
                 if (!cpeOpt.isPresent()) {
                     return createErrorResponse(CODE_CPE_NOT_FOUND, "CPE device not found");
@@ -366,7 +366,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                 }
             }
             //STB is created for local testing, this shouldn't be in the step.
-            String stbDeviceName = "STB"+"_"+ request.getCbmSN();
+            String stbDeviceName = "STB"+Constants.UNDER_SCORE + request.getCbmSN();
             Optional<LogicalDevice> stbOpt = cpeDeviceRepository.findByDiscoveredName(stbDeviceName);
             LogicalDevice stbDevice;
             if (stbOpt.isPresent()) {
@@ -384,7 +384,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                 log.info("Created ONT device: {}", stbDeviceName);
             }
            //AP is created for local testing, this shouldn't be in the step.
-            String apDeviceName = "AP"+"_"+ request.getCbmSN();
+            String apDeviceName = "AP"+Constants.UNDER_SCORE + request.getCbmSN();
             Optional<LogicalDevice> apOpt = cpeDeviceRepository.findByDiscoveredName(apDeviceName);
             LogicalDevice apDevice;
             if (apOpt.isPresent()) {

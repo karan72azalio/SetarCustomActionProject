@@ -9,6 +9,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryResourceRequest;
 import com.nokia.nsw.uiv.response.QueryResourceResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +51,7 @@ public class QueryResource implements HttpAction {
             if ("CBM".equalsIgnoreCase(resourceType) || "ONT".equalsIgnoreCase(resourceType)) {
                 devName = resourceType + resourceSN;
             } else {
-                devName = resourceType + "_" + resourceSN;
+                devName = resourceType + Constants.UNDER_SCORE  + resourceSN;
             }
 
             // Step 3: Search Device

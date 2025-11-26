@@ -76,9 +76,9 @@ public class ModifySPR implements HttpAction {
             log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             // 2. Name Construction
-            String subscriberName = request.getSubscriberName() + "_" + request.getOntSN();
-            String subscriptionName = request.getSubscriberName() + "_" + request.getServiceId() + "_" + request.getOntSN();
-            String ontName = "ONT" + request.getOntSN();
+            String subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getOntSN();
+            String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId() + Constants.UNDER_SCORE  + request.getOntSN();
+            String ontName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
 
             if (ontName.length() > 100) {
                 throw new BadRequestException("ONT name too long");
@@ -278,11 +278,11 @@ public class ModifySPR implements HttpAction {
         }
 
         // update CPE Device
-        String cpeDeviceName = request.getProductType() + "_" + request.getOntSN();
+        String cpeDeviceName = request.getProductType() + Constants.UNDER_SCORE  + request.getOntSN();
         logicalDeviceRepository.findByDiscoveredName(cpeDeviceName).ifPresent(cpe -> {
             Map<String, Object> cpeProps = cpe.getProperties();
             cpeProps.put("serialNo", request.getModifyParam1());
-            cpe.setDiscoveredName(request.getProductType() + "_" + request.getModifyParam1());
+            cpe.setDiscoveredName(request.getProductType() + Constants.UNDER_SCORE  + request.getModifyParam1());
             cpe.setProperties(cpeProps);
             logicalDeviceRepository.save(cpe, 2);
         });
@@ -298,13 +298,13 @@ public class ModifySPR implements HttpAction {
                                                String newServiceId) throws BadRequestException, AccessForbiddenException {
         String oldSubscriptionName = request.getSubscriberName() +Constants.UNDER_SCORE + request.getServiceId() +Constants.UNDER_SCORE+ request.getOntSN();
         String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
-        String cfsName = "CFS_" + oldSubscriptionName;
-        String rfsName = "RFS_" + oldSubscriptionName;
+        String cfsName = "CFS" + Constants.UNDER_SCORE + oldSubscriptionName;
+        String rfsName = "RFS" + Constants.UNDER_SCORE + oldSubscriptionName;
 
         String subscriptionNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + newServiceId + Constants.UNDER_SCORE + request.getOntSN();
         String productNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + request.getProductSubtype()+Constants.UNDER_SCORE + newServiceId;
-        String cfsNameNew = "CFS_" + subscriptionNameNew;
-        String rfsNameNew = "RFS_" + subscriptionNameNew;
+        String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
+        String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
 
         logicalComponentRepository.findByDiscoveredName(productName).ifPresent(product -> {
             product.setDiscoveredName(productNameNew);

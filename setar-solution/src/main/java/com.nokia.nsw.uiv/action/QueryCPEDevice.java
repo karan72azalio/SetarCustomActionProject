@@ -12,6 +12,7 @@ import com.nokia.nsw.uiv.repository.LogicalInterfaceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryCPEDeviceRequest;
 import com.nokia.nsw.uiv.response.ChangeStateResponse;
 import com.nokia.nsw.uiv.response.QueryCPEDeviceResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -57,7 +58,7 @@ public class QueryCPEDevice implements HttpAction {
             resourceType = "CBM";
         }
 
-        String devName = resourceType + "_"+ request.getResourceSN();
+        String devName = resourceType + Constants.UNDER_SCORE + request.getResourceSN();
         Optional<LogicalDevice> deviceOpt = cpeDeviceRepository.findByDiscoveredName(devName);
         if (!deviceOpt.isPresent()) {
             return new QueryCPEDeviceResponse("404", "CPE Details Not Found", String.valueOf(System.currentTimeMillis()));
@@ -80,7 +81,7 @@ public class QueryCPEDevice implements HttpAction {
         response.setResourceDescription((String) device.getProperties().get("description"));
 
         // Map resourceSN from localName (remove prefix)
-        response.setResourceSN(device.getDiscoveredName().replaceFirst(resourceType + "_", ""));
+        response.setResourceSN(device.getDiscoveredName().replaceFirst(resourceType + Constants.UNDER_SCORE , ""));
 
         // Map voice ports
         response.setResourceVoicePort1((String) device.getProperties().get("voipPort1"));

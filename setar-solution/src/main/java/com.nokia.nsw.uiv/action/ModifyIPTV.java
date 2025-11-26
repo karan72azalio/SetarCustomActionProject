@@ -88,11 +88,11 @@ public class ModifyIPTV implements HttpAction {
                         java.time.Instant.now().toString(), "","");
             }
             String subscriberName = request.getSubscriberName();
-            String subscriptionName = subscriberName + "_" + request.getServiceId();
+            String subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceId();
             String productName = subscriberName+Constants.UNDER_SCORE + request.getProductSubtype()+Constants.UNDER_SCORE + request.getServiceId();
-            String cfsName = "CFS_" + subscriptionName;
-            String rfsName = "RFS_" + subscriptionName;
-            String cbmDeviceName = "CBM" + request.getServiceId();
+            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+            String cbmDeviceName = "CBM" + Constants.UNDER_SCORE +request.getServiceId();
 
             // -------------------- Fetch entities --------------------
             Optional<Customer> optSubscriber = customerRepository.findByDiscoveredName(subscriberName);

@@ -121,7 +121,7 @@ public class QueryFlags implements HttpAction {
                     && !"Configure".equalsIgnoreCase(actionType)) {
                 if (ontSN == null || ontSN.trim().isEmpty() || "NA".equalsIgnoreCase(ontSN)) {
                     try {
-                        String rfsLocalName = "RFS_" + subscriber + "_" + (serviceID == null ? "" : serviceID);
+                        String rfsLocalName = "RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
                         Iterable<ResourceFacingService> allRfs = rfsRepository.findAll();
 
                         for (ResourceFacingService rfs : allRfs) {
@@ -175,7 +175,7 @@ public class QueryFlags implements HttpAction {
             log.info("------------Test Trace # 6---------------");
             if (equalsIgnoreCase(productType, "VOIP") && equalsIgnoreCase(actionType, "Configure") && serviceID != null) {
                 log.info("Trace: VOIP Configure flow - checking voip device mapping");
-                String voipDeviceName = subscriber + "_" + serviceID;
+                String voipDeviceName = subscriber + Constants.UNDER_SCORE  + serviceID;
                 Optional<LogicalDevice> optVoip = deviceRepository.findByDiscoveredName(voipDeviceName);
 
                 if (optVoip.isPresent()) {
@@ -228,7 +228,7 @@ public class QueryFlags implements HttpAction {
                 flags.put("CBM_ACCOUNT_EXIST", anyCbm ? "Exist" : "New");
             } else if (!equalsIgnoreCase(actionType, "Configure") && ontSN != null && ontSN.contains("ALCL")) {
                 log.info("Trace: Configure with ALCL ONT -> check subscriber_ONT existence");
-                String subscriberWithOnt = subscriber + "_" + ontSN;
+                String subscriberWithOnt = subscriber + Constants.UNDER_SCORE  + ontSN;
                 boolean exists = customerRepository.findByDiscoveredName(subscriberWithOnt).isPresent();
                 flags.put("ACCOUNT_EXIST", exists ? "Exist" : "New");
                 flags.put("SERVICE_FLAG", exists ? "Exist" : "New");
@@ -261,7 +261,7 @@ public class QueryFlags implements HttpAction {
             log.info("------------Test Trace # 8---------------");
             if (ontSN != null && !"".equals(ontSN) && equalsIgnoreCase(productSubType, "IPTV") && equalsIgnoreCase(actionType, "Unconfigure")) {
                 log.info("Trace: IPTV Unconfigure path - searching subscription");
-                String subGdn = subscriber + "_" + (serviceID == null ? "" : serviceID);
+                String subGdn = subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
                 Optional<Subscription> optSub = subscriptionRepository.findByDiscoveredName(subGdn);
                 String ontSNO = "NA";
                 if (optSub.isPresent()) {
@@ -326,9 +326,9 @@ public class QueryFlags implements HttpAction {
             if (!equalsIgnoreCase(actionType, "Configure")) {
                 String subscriptionToSearch;
                 if (ontSN != null && ontSN.contains("ALCL")) {
-                    subscriptionToSearch = subscriber + "_" + (serviceID == null ? "" : serviceID) + "_" + ontSN;
+                    subscriptionToSearch = subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID) + Constants.UNDER_SCORE  + ontSN;
                 } else {
-                    subscriptionToSearch = subscriber + "_" + (serviceID == null ? "" : serviceID);
+                    subscriptionToSearch = subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
                 }
                 log.info("Trace: Searching subscription by DN: " + subscriptionToSearch);
                 Optional<Subscription> optFound = subscriptionRepository.findByDiscoveredName(subscriptionToSearch);
@@ -348,7 +348,7 @@ public class QueryFlags implements HttpAction {
                     if (kenan != null) flags.put("KENAN_UIDNO", kenan.toString());
 
                     if ("Cable_Modem".equalsIgnoreCase(String.valueOf(link))) {
-                        String cbmName = "CBM_" + (sMAC == null ? "" : sMAC.toString());
+                        String cbmName = "CBM" + Constants.UNDER_SCORE +(sMAC == null ? "" : sMAC.toString());
                         Optional<LogicalDevice> optCbm = deviceRepository.findByDiscoveredName(cbmName);
                         if (optCbm.isPresent()) {
                             LogicalDevice cbm = optCbm.get();
@@ -366,7 +366,7 @@ public class QueryFlags implements HttpAction {
                             }
                             log.info("Trace: CBM inspected: mac=" + flags.get("CBM_MAC") + " voip1=" + flags.get("SERVICE_VOIP_NUMBER1"));
                         } else {
-                            String alt = "CBM" + (serviceID == null ? "" : serviceID);
+                            String alt = "CBM" + Constants.UNDER_SCORE +(serviceID == null ? "" : serviceID);
                             deviceRepository.findByDiscoveredName(alt).ifPresent(dev -> {
                                 Map<String, Object> dp = safeProps(dev.getProperties());
                                 flags.put("ONT_MODEL", (String) dp.getOrDefault("deviceModel", ""));
@@ -386,7 +386,7 @@ public class QueryFlags implements HttpAction {
 
             log.info("------------Test Trace # 12---------------");
             if ("ONT".equalsIgnoreCase(serviceLink) || "SRX".equalsIgnoreCase(serviceLink) || (ontSN != null && ontSN.contains("ALCL"))) {
-                String ontGdn = ontSN == null ? "" : "ONT" + ontSN;
+                String ontGdn = ontSN == null ? "" :"ONT" + Constants.UNDER_SCORE + ontSN;
                 if (ontGdn.length() > 100) {
                     return new QueryFlagsResponse("400", ERROR_PREFIX + "ONT name too long", getCurrentTimestamp(), Collections.emptyMap());
                 }
@@ -469,7 +469,7 @@ public class QueryFlags implements HttpAction {
                                 if (sid != null) iptvIds.add(sid.toString());
                             }
                         }
-                        String cbmGdn = "CBM_" + cbmMac;
+                        String cbmGdn = "CBM" + Constants.UNDER_SCORE +cbmMac;
                         deviceRepository.findByDiscoveredName(cbmGdn).ifPresent(cpe -> {
                             Map<String, Object> cp = safeProps(cpe.getProperties());
                             flags.put("RESOURCE_MAC_MTA_OLD", (String) cp.getOrDefault("macAddressMta", ""));

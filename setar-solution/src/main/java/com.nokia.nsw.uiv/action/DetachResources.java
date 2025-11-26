@@ -53,9 +53,9 @@ public class DetachResources implements HttpAction {
         log.info("Executing action: {}", ACTION_LABEL);
 
         DetachResourcesRequest request = (DetachResourcesRequest) actionContext.getObject();
-        String subscriptionName = request.getSubscriberName() + "_" + request.getServiceID();
-        String cfsName = "CFS_" + subscriptionName;
-        String rfsName = "RFS_" + subscriptionName;
+        String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceID();
+        String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+        String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubType() + Constants.UNDER_SCORE+ request.getServiceID();
 
         try {

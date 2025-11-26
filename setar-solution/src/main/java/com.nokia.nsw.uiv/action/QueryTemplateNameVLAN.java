@@ -10,6 +10,7 @@ import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.repository.LogicalInterfaceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryTemplateNameVLANRequest;
 import com.nokia.nsw.uiv.response.QueryTemplateNameVLANResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,7 @@ public class QueryTemplateNameVLAN implements HttpAction {
             }
 
             // 2) Build ONT name and validate length (Code6)
-            String ontName = "ONT" + request.getOntSN();
+            String ontName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
             if (ontName.length() > 100) {
                 return createErrorResponse("400", ERROR_PREFIX + "Identifier exceeds allowed character length");
             }
@@ -132,7 +133,7 @@ public class QueryTemplateNameVLAN implements HttpAction {
             // 5) Find next free VLAN ID for this MENM prefix
             String freeVLAN = "";
             for (int v = rangeStart; v < rangeEnd; v++) {
-                String vlanName = request.getMenm() + "_" + v;
+                String vlanName = request.getMenm() + Constants.UNDER_SCORE  + v;
                 Optional<LogicalInterface> optVlanIf = logicalInterfaceRepository.findByDiscoveredName(vlanName);
                 if (!optVlanIf.isPresent()) {
                     freeVLAN = String.valueOf(v);

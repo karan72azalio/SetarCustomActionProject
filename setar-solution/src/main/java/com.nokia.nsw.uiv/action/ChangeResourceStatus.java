@@ -9,6 +9,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.ChangeResourceStatusRequest;
 import com.nokia.nsw.uiv.response.ChangeResourceStatusResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 
@@ -76,7 +77,7 @@ public class ChangeResourceStatus implements HttpAction {
             }
 
             // 3. Derive Device Name
-            String devName = type + "_" + sn;
+            String devName = type + Constants.UNDER_SCORE  + sn;
             System.out.println("------------Test Trace # 4--------------- Derived device name: " + devName);
 
             // 4. Locate device

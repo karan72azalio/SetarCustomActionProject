@@ -82,34 +82,34 @@ public class ChangeState implements HttpAction {
 
         // IPTV case
         if (!isEmpty(productType) && productType.toUpperCase().contains("IPTV")) {
-            subscriptionName = req.getSubscriberName() + "_" + req.getServiceId();
-            rfsName = "RFS_" + req.getSubscriberName() + "_" + req.getServiceId();
+            subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId();
+            rfsName = "RFS" + Constants.UNDER_SCORE + req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId();
         }
         // Broadband/Voice with serviceLink provided and not Cloudstarter/Bridged
         else if ((equalsAny(productType, "Broadband", "Voice") && !equalsAny(productSubType, "Cloudstarter", "Bridged"))
                 && !isEmpty(serviceLink)) {
 
             if (serviceLink.equalsIgnoreCase("ONT")) {
-                subscriptionName = req.getSubscriberName() + "_" + req.getServiceId()+ "_" + nullSafe(req.getOntSN());
-                rfsName = "RFS_" + req.getSubscriberName()+ "_" + req.getServiceId() + "_" + nullSafe(req.getOntSN());
+                subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId()+ Constants.UNDER_SCORE  + nullSafe(req.getOntSN());
+                rfsName = "RFS" + Constants.UNDER_SCORE + req.getSubscriberName()+ Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + nullSafe(req.getOntSN());
             } else { // Cable_Modem
-                subscriptionName = req.getSubscriberName() +"_" + req.getServiceId();
-                rfsName = "RFS" + req.getSubscriberName() + "_" + req.getServiceId();
+                subscriptionName = req.getSubscriberName() +Constants.UNDER_SCORE  + req.getServiceId();
+                rfsName = "RFS" + req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId();
             }
         }
         // fallback when ontSN present
         else if (!isEmpty(req.getOntSN())) {
-            subscriptionName = req.getSubscriberName()+ "_" + req.getServiceId()+ "_" + req.getOntSN();
-            rfsName = "RFS_" + req.getSubscriberName()+ "_" + req.getServiceId()+ "_" + req.getOntSN();
+            subscriptionName = req.getSubscriberName()+ Constants.UNDER_SCORE  + req.getServiceId()+ Constants.UNDER_SCORE  + req.getOntSN();
+            rfsName = "RFS" + Constants.UNDER_SCORE + req.getSubscriberName()+ Constants.UNDER_SCORE  + req.getServiceId()+ Constants.UNDER_SCORE  + req.getOntSN();
         } else {
             // default fallback: subscriber + serviceId
-            subscriptionName = req.getSubscriberName()+ "_" + req.getServiceId();
-            rfsName = "RFS_" + subscriptionName;
+            subscriptionName = req.getSubscriberName()+ Constants.UNDER_SCORE  + req.getServiceId();
+            rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         }
 
         // 3. Check ONT name length if present
         if (!isEmpty(req.getOntSN())) {
-            ontName = "ONT" + req.getOntSN();
+            ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
             if (ontName.length() > 100) {
                 return new ChangeStateResponse("400", Constants.ERROR_PREFIX + "ONT name too long",
                         java.time.Instant.now().toString(), "", ontName, "");
@@ -129,8 +129,8 @@ public class ChangeState implements HttpAction {
             }
 
             if (!isEmpty(req.getCbmMac())) {
-                // attempt find by GDN "CBM" + mac (as per naming in your system)
-                cbmName = "CBM" + req.getCbmMac();
+                // attempt find by GDN "CBM" + Constants.UNDER_SCORE +mac (as per naming in your system)
+                cbmName = "CBM" + Constants.UNDER_SCORE +req.getCbmMac();
                 optCbm = logicalDeviceRepository.findByDiscoveredName(cbmName);
             }
             if (!optSubscription.isPresent() || !optRfs.isPresent()) {
