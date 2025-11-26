@@ -101,7 +101,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             String cbmName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn();
             String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN(); // per spec: ONT + SN (no underscore)
             String cpeDeviceName ="ONT" + Constants.UNDER_SCORE + req.getOntSN(); // CPE device convention used elsewhere
-            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmMac(); // CBM CPE
+            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn(); // CBM CPE
 
             System.out.println("------------Test Trace # 4--------------- Names prepared:"
                     + " subscriptionName=" + subscriptionName
@@ -311,7 +311,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 System.out.println("------------Test Trace # 35--------------- ONT device not found: " + ontName + " (no creation per spec)");
             }
 
-            // 12. Remove CBM device (if exists)
+            // 12. update CBM device (if exists)
             System.out.println("------------Test Trace # 36--------------- Looking up CBM device: " + cbmName);
             String cbmGdn = Validations.getGlobalName(cbmName);
             Optional<LogicalDevice> cbmDeviceOpt = logicalDeviceRepo.findByDiscoveredName(cbmName);
@@ -324,12 +324,10 @@ public class ChangeTechnologyVoice implements HttpAction {
                 cbmDevice.setProperties(cbmProps);
                 // Per spec: delete CBM device from inventory
                 try {
-                    logicalDeviceRepo.delete(cbmDevice);
+                    logicalDeviceRepo.save(cbmDevice);
                     System.out.println("------------Test Trace # 37--------------- CBM device deleted: " + cbmDevice.getLocalName());
                 } catch (Exception e) {
-                    // If deletion fails, attempt to save as Available
-                    logicalDeviceRepo.save(cbmDevice);
-                    System.out.println("------------Test Trace # 38--------------- CBM deletion failed, saved as Available");
+                    System.out.println("------------Test Trace # 38--------------- CBM updation failed, saved as Available");
                 }
             } else {
                 System.out.println("------------Test Trace # 39--------------- CBM device not found: " + cbmName);

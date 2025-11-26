@@ -302,12 +302,10 @@ public class ChangeTechnology implements HttpAction {
                 return vlanRepo.save(v);
             });
 
-            // 11. Remove CBM device if exists
+            // 11. Persist CBM device if exists
             Optional<LogicalDevice> maybeCbm = cbmRepo.findByDiscoveredName(cbmName);
             if (maybeCbm.isPresent()) {
                 LogicalDevice cbmDevice = maybeCbm.get();
-                // clear RFS link and set states
-                cbmDevice.addManagingDevices(null);
                 Map<String, Object> cbmProps = cbmDevice.getProperties() != null ? cbmDevice.getProperties() : new HashMap<>();
                 cbmProps.put("administrativeState", "Available");
                 cbmProps.put("operationalState", "Available");
@@ -318,7 +316,7 @@ public class ChangeTechnology implements HttpAction {
 
             // 12. Reassign CPE devices
             String cpeDeviceName ="ONT" + Constants.UNDER_SCORE + ontSN;
-            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +cbmMac;
+            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn();
 
             Optional<LogicalDevice> maybeCpeNew = cpeRepo.findByDiscoveredName(cpeDeviceName);
             Optional<LogicalDevice> maybeCpeOld = cpeRepo.findByDiscoveredName(cpeDeviceOldName);
