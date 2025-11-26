@@ -177,8 +177,8 @@ public class CreateServiceEVPN implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> subProps = new HashMap<>();
-                        subProps.put("custStatus", "Active");
-                        subProps.put("type", "Regular");
+                        subProps.put("subscriberStatus", "Active");
+                        subProps.put("subscriberType", "Regular");
                         subProps.put("accountNumber", req.getSubscriberName());
                         subProps.put("householdId", req.getHhid());
                         if (req.getFirstName() != null) subProps.put("firstName", req.getFirstName());
@@ -206,7 +206,7 @@ public class CreateServiceEVPN implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> subsProps = new HashMap<>();
-                        subsProps.put("subsStatus", "Active");
+                        subsProps.put("subscriptionStatus", "Active");
                         subsProps.put("serviceSubtype", req.getProductSubtype());
                         if (req.getQosProfile() != null) subsProps.put("evpnQosProfile", req.getQosProfile());
                         if (req.getOntPort() != null) subsProps.put("evpnPort", req.getOntPort());
@@ -257,8 +257,8 @@ public class CreateServiceEVPN implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String,Object> prodProps = new HashMap<>();
-                        prodProps.put("type", req.getProductType());
-                        prodProps.put("prodStatus", "Active");
+                        prodProps.put("productType", req.getProductType());
+                        prodProps.put("productStatus", "Active");
                         prodProps.put("linkedSubscriber", subscriber.getLocalName());
                         prodProps.put("linkedSubscription", subscription.getLocalName());
                         prod.setProperties(prodProps);
@@ -282,6 +282,7 @@ public class CreateServiceEVPN implements HttpAction {
                         Map<String,Object> cfsProps = new HashMap<>();
                         cfsProps.put("serviceStatus", "Active");
                         cfsProps.put("serviceType", req.getProductType());
+                        cfsProps.put("cfsType",req.getProductSubtype());
                         cfsProps.put("serviceStartDate", Instant.now().toString());
                         if (req.getFxOrderID() != null) cfsProps.put("transactionId", req.getFxOrderID());
                         cfsProps.put("linkedProduct", product.getLocalName());
@@ -305,7 +306,7 @@ public class CreateServiceEVPN implements HttpAction {
                         }
                         Map<String,Object> rfsProps = new HashMap<>();
                         rfsProps.put("rfsStatus", "Active");
-                        rfsProps.put("type", req.getProductType());
+                        rfsProps.put("rfsType", req.getProductType());
                         rfsProps.put("linkedCFS", cfs.getLocalName());
                         newRfs.setContainingCfs(cfs);
                         return rfsRepo.save(newRfs);

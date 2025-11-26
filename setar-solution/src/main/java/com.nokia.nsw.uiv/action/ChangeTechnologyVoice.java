@@ -182,7 +182,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                     Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
                     custProps.put("accountNumber", req.getSubscriberName());
                     custProps.put("Status", "Active");
-                    custProps.put("type","Regular");
+                    custProps.put("subscriberType","Regular");
                     if (req.getHhid() != null) custProps.put("HouseholdId", req.getHhid());
                     if (req.getSimaCustId() != null) custProps.put("simaCustId", req.getSimaCustId());
                     cust.setProperties(custProps);

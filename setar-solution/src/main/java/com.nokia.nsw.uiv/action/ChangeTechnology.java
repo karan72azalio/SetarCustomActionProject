@@ -159,8 +159,8 @@ public class ChangeTechnology implements HttpAction {
                     cbmSubscriber.setContext("Setar");
                     cbmSubscriber.setKind("SetarSubscriber");
                     Map<String, Object> props = cbmSubscriber.getProperties() != null ? cbmSubscriber.getProperties() : new HashMap<>();
-                    props.put("custStatus", "Active");
-                    props.put("type", "Regular");
+                    props.put("subscriberStatus", "Active");
+                    props.put("subscriberType", "Regular");
                     props.put("accountNumber", subscriberName);
                     if (hhid != null) props.put("householdId", hhid);
                     cbmSubscriber.setProperties(props);

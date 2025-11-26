@@ -119,8 +119,8 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> subProps = new HashMap<>();
-                        subProps.put("subsStatus", "Active");
-                        subProps.put("type", "Regular");
+                        subProps.put("subscriptionStatus", "Active");
+                        subProps.put("subscriberType", "Regular");
                         subProps.put("accountNumber", req.getSubscriberName());
                         subProps.put("householdId", req.getHhid());
                         newSub.setProperties(subProps);
@@ -153,7 +153,7 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> subProps = new HashMap<>();
-                        subProps.put("subsStatus", "Active");
+                        subProps.put("subscriptionStatus", "Active");
                         subProps.put("serviceSubtype", req.getProductSubtype());
                         subProps.put("serviceID", req.getServiceId());
                         subProps.put("oltPosition", req.getOltName());
@@ -213,8 +213,8 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> prodProps = new HashMap<>();
-                        prodProps.put("prodStatus", "Active");
-                        prodProps.put("type", req.getProductType());
+                        prodProps.put("productStatus", "Active");
+                        prodProps.put("productType", req.getProductType());
                         prod.setProperties(prodProps);
                         prod.setSubscription(subscription);
                         return productRepo.save(prod);
@@ -235,7 +235,7 @@ public class CreateServiceVoIP implements HttpAction {
                         }
                         Map<String, Object> cfsProps = new HashMap<>();
                         cfsProps.put("cfsStatus", "Active");
-                        cfsProps.put("type", req.getProductType());
+                        cfsProps.put("cfsType", req.getProductType());
                         newCfs.setProperties(cfsProps);
                         newCfs.setContainingProduct(product);
                         return cfsRepo.save(newCfs);
@@ -256,7 +256,7 @@ public class CreateServiceVoIP implements HttpAction {
                         }
                         Map<String, Object> rfsProps = new HashMap<>();
                         rfsProps.put("rfsStatus", "Active");
-                        rfsProps.put("type", req.getProductType());
+                        rfsProps.put("rfsType", req.getProductType());
                         newRfs.setProperties(rfsProps);
                         newRfs.setContainingCfs(cfs);
                         return rfsRepo.save(newRfs);

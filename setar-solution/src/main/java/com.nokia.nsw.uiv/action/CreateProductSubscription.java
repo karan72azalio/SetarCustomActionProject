@@ -92,8 +92,8 @@ public class CreateProductSubscription implements HttpAction {
                 subscriber.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();
                 props.put("name", subscriberName);
-                props.put("custStatus", "Active");
-                props.put("type", "Regular");
+                props.put("subscriberStatus", "Active");
+                props.put("subscriberType", "Regular");
                 subscriber.setProperties(props);
                 subscriberRepository.save(subscriber, 2);
                 log.info("Created new subscriber: {}", subscriberName);
@@ -118,7 +118,7 @@ public class CreateProductSubscription implements HttpAction {
                 subscription.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();
                 props.put("name", subscriptionName);
-                props.put("subsStatus", "Active");
+                props.put("subscriptionStatus", "Active");
                 props.put("serviceID", request.getServiceID());
                 subscription.setProperties(props);
                 subscription.setCustomer(subscriber);
@@ -145,8 +145,8 @@ public class CreateProductSubscription implements HttpAction {
                 product.setContext(Constants.SETAR);
                 Map<String, Object> props = new HashMap<>();
                 props.put("name", productName);
-                props.put("prodStatus", "Active");
-                props.put("type", request.getProductType());
+                props.put("productStatus", "Active");
+                props.put("productType", request.getProductType());
                 props.put("productId", request.getReferenceID());
                 props.put("catalogItemName", request.getProduct());
                 props.put("catalogItemVersion", request.getProductVariant());

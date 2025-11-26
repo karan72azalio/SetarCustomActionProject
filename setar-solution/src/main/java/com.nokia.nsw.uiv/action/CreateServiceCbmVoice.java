@@ -145,8 +145,8 @@ public class CreateServiceCbmVoice implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> subProps = new HashMap<>();
-                        subProps.put("custStatus", "Active");
-                        subProps.put("type", "Regular");
+                        subProps.put("subscriberStatus", "Active");
+                        subProps.put("subscriberType", "Regular");
                         subProps.put("accountNumber", request.getSubscriberName());
                         subProps.put("householdId", request.getHhid());
                         if (request.getUserName() != null && !request.getUserName().trim().isEmpty()) {
@@ -191,7 +191,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         }
 
                         Map<String, Object> props = new HashMap<>();
-                        props.put("subsStatus", "Active");
+                        props.put("subscriptionStatus", "Active");
                         props.put("serviceSubType", request.getProductSubtype());
                         props.put("serviceLink", "Cable_Modem");
                         props.put("serviceSN", request.getCbmSN());
@@ -252,8 +252,8 @@ public class CreateServiceCbmVoice implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> prodProps = new HashMap<>();
-                        prodProps.put("prodStatus", "Active");
-                        prodProps.put("type",request.getProductType());
+                        prodProps.put("productStatus", "Active");
+                        prodProps.put("productType",request.getProductType());
                         p.setProperties(prodProps);
                         p.setCustomer(subscriber);
                         p.setSubscription(subscription);
@@ -280,6 +280,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         Map<String, Object> cfsProps = new HashMap<>();
                         cfsProps.put("serviceStatus", "Active");
                         cfsProps.put("serviceType", request.getProductType());
+                        cfsProps.put("cfsType",request.getProductSubtype());
                         cfsProps.put("serviceStartDate", Instant.now().toString());
                         if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
                         c.setProperties(cfsProps);

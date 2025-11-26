@@ -134,10 +134,10 @@ public class CreateServiceCBM implements HttpAction {
 
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("accountNumber", request.getSubscriberName());
-                    prop.put("custStatus", "Active");
+                    prop.put("subscriberStatus", "Active");
                     prop.put("subscriberUserName", request.getUserName());
                     prop.put("address", request.getSubsAddress());
-                    prop.put("type", "Regular");
+                    prop.put("subscriberType", "Regular");
                     s.setProperties(prop);
 
                     subscriberRepository.save(s, 2);
@@ -236,8 +236,8 @@ public class CreateServiceCBM implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> prop = new HashMap<>();
-                    prop.put("prodStatus", "Active");
-                    prop.put("type",request.getProductType());
+                    prop.put("productStatus", "Active");
+                    prop.put("productType",request.getProductType());
                     p.setProperties(prop);
                     p.setCustomer(subscriber);
                     p.setSubscription(subscription);
@@ -270,7 +270,7 @@ public class CreateServiceCBM implements HttpAction {
                     }
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("cfsStatus", "Active");
-                    prop.put("type",request.getProductType());
+                    prop.put("cfsType",request.getProductType());
                     c.setProperties(prop);
                     c.setStartDate(new Date());
                     c.setTransactionId(request.getFxOrderID());
@@ -308,7 +308,7 @@ public class CreateServiceCBM implements HttpAction {
                     }
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("rfsStatus", "Active");
-                    prop.put("type",request.getProductType());
+                    prop.put("rfsType",request.getProductType());
                     r.setProperties(prop);
                     r.setContainingCfs(cfs);
                     rfsRepository.save(r, 2);

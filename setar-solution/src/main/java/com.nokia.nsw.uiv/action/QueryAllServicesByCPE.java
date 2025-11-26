@@ -96,7 +96,7 @@ public class QueryAllServicesByCPE implements HttpAction {
 
             // 4) Traverse services linked to ONT
             for (ResourceFacingService rfs : linkedRfsList) {
-                String prodType = (String) rfs.getProperties().get("type");
+                String prodType = (String) rfs.getProperties().get("rfsType");
                 if (prodType == null) continue;
 
                 switch (prodType) {
