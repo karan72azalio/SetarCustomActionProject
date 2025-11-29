@@ -33,6 +33,8 @@ public class Constants {
     public static final String ACCOUNT_TRANSFER_BY_SERVICE_ID = "AccountTransferByServiceID";
     public static final String CHANGE_TECHNOLOGY = "ChangeTechnology";
     public static final String CHANGE_TECHNOLOGY_VOICE = "ChangeTechnologyVoice";
+    public static final String CHANGE_RESOURCE_STATUS = "ChangeResourceStatus";
+    public static final String CREATE_SERVICE_EVPN = "CreateServiceEVPN";
 
     //Kinds
     public static final String SETAR_KIND_SETAR_SUBSCRIBER = "SetarSubscriber";

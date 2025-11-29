@@ -34,7 +34,7 @@ import java.util.*;
 @Action
 @Slf4j
 public class DeleteIPTV implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.DELETE_IPTV;
     private static final String ERROR_PREFIX = "UIV action DeleteIPTV execution failed - ";
 
     @Autowired private CustomerCustomRepository customerRepository;
@@ -51,6 +51,7 @@ public class DeleteIPTV implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         DeleteIPTVRequest request = (DeleteIPTVRequest) actionContext.getObject();
         String subscriberName = request.getSubscriberName();
         String productType = request.getProductType();
@@ -62,11 +63,13 @@ public class DeleteIPTV implements HttpAction {
         try {
             // Step 1: Validate mandatory parameters
             try{
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(subscriberName, "subscriberName");
                 Validations.validateMandatoryParams(productType, "productType");
                 Validations.validateMandatoryParams(productSubType, "productSubType");
                 Validations.validateMandatoryParams(serviceId, "serviceId");
                 Validations.validateMandatoryParams(ontSN, "ontSN");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             }catch (BadRequestException bre) {
                 return new DeleteIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
@@ -151,7 +154,7 @@ public class DeleteIPTV implements HttpAction {
                     subscriptionRepository.delete(optSub.get());
                 }
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // Step 9: Return success
             return successResponse(subscriptionName, ontName, "UIV action DeleteIPTV executed successfully.");
 

@@ -40,7 +40,7 @@ import java.util.Map;
 @Action
 @Slf4j
 public class CreateServiceVoIP implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.CREATE_SERVICE_VOIP;
     private static final String ERROR_PREFIX = "UIV action CreateServiceVoIP execution failed - ";
 
     @Autowired private CustomerCustomRepository customerRepo;
@@ -58,11 +58,13 @@ public class CreateServiceVoIP implements HttpAction {
     @Override
     public Object doPost(ActionContext actionContext) {
         log.info("Executing CreateServiceVoIP action...");
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         CreateServiceVoIPRequest req = (CreateServiceVoIPRequest) actionContext.getObject();
 
         try {
             // Step 1: Validate mandatory params
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(req.getProductType(), "productType");
                 Validations.validateMandatoryParams(req.getProductSubtype(), "productSubtype");
@@ -82,6 +84,7 @@ public class CreateServiceVoIP implements HttpAction {
                 Validations.validateMandatoryParams(req.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(req.getVoipServiceCode(), "voipServiceCode");
                 Validations.validateMandatoryParams(req.getVoipPackage(), "voipPackage");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new CreateServiceVoIPResponse(
                         "400",
@@ -336,7 +339,7 @@ public class CreateServiceVoIP implements HttpAction {
 
             logicalDeviceRepo.save(ont);
             logicalDeviceRepo.save(olt);
-
+            log.info(Constants.ACTION_COMPLETED);
             return new CreateServiceVoIPResponse(
                     "201",
                     "UIV action CreateServiceVoIP executed successfully.",

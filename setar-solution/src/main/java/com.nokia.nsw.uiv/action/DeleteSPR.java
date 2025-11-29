@@ -75,11 +75,13 @@ public class DeleteSPR implements HttpAction {
         // 1) Mandatory validations
         // -----------------------------
         try {
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             validateMandatory(req.getSubscriberName(), "subscriberName");
             validateMandatory(req.getProductType(), "productType");
             validateMandatory(req.getProductSubtype(), "productSubtype");
             validateMandatory(req.getServiceId(), "serviceId");
             validateMandatory(req.getOntSN(), "ontSN");
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             // Code5
             return new DeleteSPRResponse(
@@ -95,7 +97,7 @@ public class DeleteSPR implements HttpAction {
         // -----------------------------
         String subscriberNameWithOnt = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
         String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
-        String cfsName = "CFS" + Constants.UNDER_SCORE + subscriberNameWithOnt;
+        String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String productName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getProductSubtype() + Constants.UNDER_SCORE  + req.getServiceId();
         String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
@@ -142,11 +144,10 @@ public class DeleteSPR implements HttpAction {
             Optional<LogicalDevice> optOlt = Optional.empty();
             if (optOnt.isPresent()) {
                 LogicalDevice ont = optOnt.get();
-                optOlt = getParentOlt(ont);
+                optOlt = ont.getManagingDevices().stream().findFirst();
             }
-
             // Attempt to retrieve a CPE device named"ONT" + Constants.UNDER_SCORE + ontSN (optional)
-            String optCpeName="ONT" + req.getOntSN();
+            String optCpeName="ONT" + Constants.UNDER_SCORE + req.getOntSN();
             Optional<LogicalDevice> optCpe = logicalDeviceRepository.findByDiscoveredName(optCpeName);
 
             // -----------------------------
@@ -326,7 +327,7 @@ public class DeleteSPR implements HttpAction {
                     customerRepository.delete(sub);
                 }
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // -----------------------------
             // 11) Final Response
             // -----------------------------

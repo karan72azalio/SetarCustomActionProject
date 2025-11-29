@@ -36,7 +36,6 @@ import java.util.Optional;
 @Action
 @Slf4j
 public class ChangeState implements HttpAction {
-
     private static final String ACTION_LABEL = "ChangeState";
 
     @Autowired
@@ -58,14 +57,17 @@ public class ChangeState implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.info("Executing action {}", ACTION_LABEL);
         ChangeStateRequest req = (ChangeStateRequest) actionContext.getObject();
 
         // 1. Mandatory validation
         try {
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             validateMandatory(req.getSubscriberName(), "subscriberName");
             validateMandatory(req.getServiceId(), "serviceId");
             validateMandatory(req.getActionType(), "actionType");
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return new ChangeStateResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                     java.time.Instant.now().toString(), "","","");
@@ -179,7 +181,7 @@ public class ChangeState implements HttpAction {
 //                LogicalDevice cbm = optCbm.get();
 //                logicalDeviceRepository.save(cbm, 2);
 //            }
-
+            log.info(Constants.ACTION_COMPLETED);
             // 7. Final response
             return new ChangeStateResponse("200",
                     "UIV action ChangeState executed successfully.",

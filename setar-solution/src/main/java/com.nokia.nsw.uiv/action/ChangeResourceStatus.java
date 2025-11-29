@@ -28,7 +28,7 @@ import java.util.Optional;
 @Action
 @Slf4j
 public class ChangeResourceStatus implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.CHANGE_RESOURCE_STATUS;
     private static final String ERROR_PREFIX = "UIV action ChangeResourceStatus execution failed - ";
 
     @Autowired
@@ -41,15 +41,18 @@ public class ChangeResourceStatus implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         System.out.println("------------Test Trace # 1--------------- ChangeResourceStatus started");
         ChangeResourceStatusRequest req = (ChangeResourceStatusRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getResourceSn(), "resourceSn");
                 Validations.validateMandatory(req.getResourceType(), "resourceType");
                 Validations.validateMandatory(req.getResourceStatus(), "resourceStatus");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
                 System.out.println("------------Test Trace # 2--------------- Missing param: " + bre.getMessage());
                 return new ChangeResourceStatusResponse(
@@ -116,7 +119,7 @@ public class ChangeResourceStatus implements HttpAction {
             stbRepo.save(device);
 
             System.out.println("------------Test Trace # 8--------------- Device status updated to " + targetStatus);
-
+            log.info(Constants.ACTION_COMPLETED);
             // 6. Success response
             return new ChangeResourceStatusResponse(
                     "200",

@@ -45,7 +45,7 @@ import java.util.Optional;
 @Action
 @Slf4j
 public class ChangeTechnology implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.CHANGE_TECHNOLOGY;
     private static final String ERROR_PREFIX = "UIV action ChangeTechnology execution failed - ";
 
     @Autowired
@@ -82,6 +82,7 @@ public class ChangeTechnology implements HttpAction {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.info("Executing ChangeTechnology action...");
         ChangeTechnologyRequest req = (ChangeTechnologyRequest) actionContext.getObject();
 
@@ -109,6 +110,7 @@ public class ChangeTechnology implements HttpAction {
 
 // Validate mandatory parameters
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(subscriberName, "subscriberName");
                 Validations.validateMandatoryParams(productSubtype, "productSubtype");
                 Validations.validateMandatoryParams(serviceId, "serviceId");
@@ -120,6 +122,7 @@ public class ChangeTechnology implements HttpAction {
                 Validations.validateMandatoryParams(vlanId, "vlanId");
                 Validations.validateMandatoryParams(ontModel, "ontModel");
                 Validations.validateMandatoryParams(cbmMac, "cbmMac");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new ChangeTechnologyResponse(
                         "400",
@@ -347,7 +350,7 @@ public class ChangeTechnology implements HttpAction {
             Map<String, String> out = new HashMap<>();
             out.put("subscriptionName", subscriptionName);
             out.put("ontName", ontName);
-
+            log.info(Constants.ACTION_COMPLETED);
             return new ChangeTechnologyResponse("200", "ChangeTechnology executed successfully.", Instant.now().toString(), subscriptionName,ontName);
 
         } catch (Exception ex) {

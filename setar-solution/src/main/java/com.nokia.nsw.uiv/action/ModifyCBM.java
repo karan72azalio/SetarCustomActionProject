@@ -54,12 +54,14 @@ public class ModifyCBM implements HttpAction {
         try {
             // 1️⃣ Mandatory validations
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(input.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(input.getResourceSN(), "resourceSN");
                 Validations.validateMandatoryParams(input.getProductType(), "productType");
                 Validations.validateMandatoryParams(input.getProductSubtype(), "productSubtype");
                 Validations.validateMandatoryParams(input.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(input.getModifyType(), "modifyType");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new ModifyCBMResponse("400",
                         ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),

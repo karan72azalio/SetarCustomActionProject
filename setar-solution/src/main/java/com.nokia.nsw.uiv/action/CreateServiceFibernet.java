@@ -67,17 +67,19 @@ public class CreateServiceFibernet implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.info("Executing action {}", ACTION_LABEL);
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         CreateServiceFibernetRequest request = (CreateServiceFibernetRequest) actionContext.getObject();
 
         try {
             // 1. Validate mandatory params
             try{
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatory(request.getServiceID(), "serviceID");
                 Validations.validateMandatory(request.getOntSN(), "ontSN");
                 Validations.validateMandatory(request.getProductType(), "productType");
                 Validations.validateMandatory(request.getProductSubtype(), "productSubtype");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
                 return new CreateServiceFibernetResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         Instant.now().toString(), "","");
@@ -254,6 +256,15 @@ public class CreateServiceFibernet implements HttpAction {
             LogicalDevice ontDevice;
             if (optOnt.isPresent()) {
                 ontDevice = optOnt.get();
+                Map<String, Object> ontProps = ontDevice.getProperties();
+                ontProps.put("serialNo", request.getOntSN());
+                if (request.getOntModel() != null) ontProps.put("deviceModel", request.getOntModel());
+                if (request.getTemplateNameONT() != null) ontProps.put("ontTemplate", request.getTemplateNameONT());
+                if (request.getMenm() != null) ontProps.put("description", request.getMenm());
+                if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
+                ontDevice.addUsingService(rfs);
+                ontDevice.addManagingDevices(oltDevice);
+                logicalDeviceRepository.save(ontDevice, 2);
                 log.info("Found existing ONT: {}", ontName);
             } else {
                 ontDevice = new LogicalDevice();
@@ -326,7 +337,7 @@ public class CreateServiceFibernet implements HttpAction {
             if (oltDevice != null) rfsProps.put("oltPosition", oltDevice.getDiscoveredName());
             rfs.setProperties(rfsProps);
             rfsRepository.save(rfs, 2);
-
+            log.info(Constants.ACTION_COMPLETED);
             // 11. Final response
             String ontNameResp = ontDevice != null ? ontDevice.getDiscoveredName() : "";
             CreateServiceFibernetResponse response = new CreateServiceFibernetResponse();

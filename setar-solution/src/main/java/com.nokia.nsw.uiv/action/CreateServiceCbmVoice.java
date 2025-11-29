@@ -38,7 +38,7 @@ import java.util.Date;
 @Action
 @Slf4j
 public class CreateServiceCbmVoice implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.CREATE_SERVICE_CBM_VOICE;
     // Error code mappings (adjust if you use different codes)
     private static final String CODE_SUCCESS = "201";
     private static final String CODE_MISSING_PARAMS = "400"; // $code5
@@ -77,10 +77,12 @@ public class CreateServiceCbmVoice implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         CreateServiceCbmVoiceRequest request = (CreateServiceCbmVoiceRequest) actionContext.getObject();
 
         // 1. Mandatory validations
         try {
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
             Validations.validateMandatoryParams(request.getCbmSN(), "cbmSN");
@@ -95,6 +97,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             Validations.validateMandatoryParams(request.getSimaCustId(), "simaCustId");
             Validations.validateMandatoryParams(request.getSimaSubsId(), "simaSubsId");
             Validations.validateMandatoryParams(request.getSimaEndpointId(), "simaEndpointId");
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return createErrorResponse(CODE_MISSING_PARAMS,
                     "Missing mandatory parameter(s): " + bre.getMessage());
@@ -400,7 +403,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                 cpeDeviceRepository.save(apDevice, 2);
                 log.info("Created ONT device: {}", apDeviceName);
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // 10. Final success response
             CreateServiceCbmVoiceResponse response = new CreateServiceCbmVoiceResponse();
             response.setStatus(CODE_SUCCESS);

@@ -37,7 +37,7 @@ import java.util.Optional;
 @Action
 @Slf4j
 public class ChangeTechnologyVoice implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.CHANGE_TECHNOLOGY_VOICE;
     private static final String ERROR_PREFIX = "UIV action ChangeTechnologyVoice execution failed - ";
 
     @Autowired
@@ -65,12 +65,14 @@ public class ChangeTechnologyVoice implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         System.out.println("------------Test Trace # 1---------------");
         ChangeTechnologyVoiceRequest req = (ChangeTechnologyVoiceRequest) actionContext.getObject();
 
         try {
             // 1. Validate mandatory params (runtime validation)
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatory(req.getProductSubtype(), "productSubtype");
                 Validations.validateMandatory(req.getServiceId(), "serviceId");
@@ -85,6 +87,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 Validations.validateMandatory(req.getOntModel(), "ontModel");
                 Validations.validateMandatory(req.getCbmMac(), "cbmMac");
                 Validations.validateMandatory(req.getOntPort(), "ontPort");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
                 // Missing mandatory param
                 System.out.println("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
@@ -336,7 +339,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             // 13. Persist any pending RFS (already saved earlier if renamed) and final flush - repository implementations typically auto-flush on save
 
             System.out.println("------------Test Trace # 40--------------- ChangeTechnologyVoice finished successfully");
-
+            log.info(Constants.ACTION_COMPLETED);
             // Return success
             return new ChangeTechnologyVoiceResponse("200",
                     "UIV action ChangeTechnologyVoice executed successfully.",

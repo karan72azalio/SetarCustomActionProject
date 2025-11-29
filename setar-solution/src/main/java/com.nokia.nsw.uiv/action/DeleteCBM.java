@@ -74,11 +74,13 @@ public class DeleteCBM implements HttpAction {
 
         // 1. Validate mandatory params (including CBM_SN)
         try {
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
             Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
             Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
-            Validations.validateMandatoryParams(request.getCbmSN(), "cbmSN"); // <-- added
+            Validations.validateMandatoryParams(request.getCbmSN(), "cbmSN");
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);// <-- added
             // serviceFlag was previously validated in your code; it's optional in spec — validate only if required.
         } catch (BadRequestException bre) {
             return new DeleteCBMResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
@@ -332,7 +334,7 @@ public class DeleteCBM implements HttpAction {
             } else {
                 log.info("Not deleting subscriber {} because subscriptionCount != 1 (count={})", subscriberName, subscriptionCount);
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // --- 11. Return success response ---
             return new DeleteCBMResponse("200", "CBM objects Deleted", java.time.Instant.now().toString(),
                     cbmName, subscriptionName);

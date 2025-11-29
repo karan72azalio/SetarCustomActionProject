@@ -32,7 +32,7 @@ import java.util.Set;
 @Action
 @Slf4j
 public class AssociateResources implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.ASSOCIATE_RESOURCES;
     private static final String ERROR_PREFIX = "UIV action AssociateResources execution failed - ";
 
     @Autowired
@@ -49,18 +49,21 @@ public class AssociateResources implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.info("Executing AssociateResources action...");
         System.out.println("----Trace #1: Entered AssociateResources Action ----");
 
         AssociateResourcesRequest request = (AssociateResourcesRequest) actionContext.getObject();
 
         try {
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             // Step 1: Mandatory validations
             System.out.println("----Trace #2: Validating mandatory params ----");
             try {
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new AssociateResourcesResponse(
                         "400",
@@ -220,6 +223,7 @@ public class AssociateResources implements HttpAction {
                 rfsProps.put("transactionId",request.getFxOrderID());
                 rfsRepository.save(rfs,2);
                 System.out.println("----Trace #9: Saving RFS changes ----");
+                log.info(Constants.ACTION_COMPLETED);
                 return new AssociateResourcesResponse(
                         "200",
                         "UIV action AssociateResources executed successfully.",

@@ -36,7 +36,7 @@ import java.util.*;
 @Action
 @Slf4j
 public class AccountTransferByServiceID implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.ACCOUNT_TRANSFER_BY_SERVICE_ID;
     private static final String ERROR_PREFIX = "UIV action AccountTransferByServiceID execution failed - ";
 
     @Autowired private CustomerFacingServiceCustomRepository cfsRepo;
@@ -53,6 +53,7 @@ public class AccountTransferByServiceID implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         AccountTransferByServiceIDRequest req = (AccountTransferByServiceIDRequest) actionContext.getObject();
         System.out.println("------Trace #1: Starting AccountTransferByServiceID");
 
@@ -193,7 +194,7 @@ public class AccountTransferByServiceID implements HttpAction {
             if (!updated) {
                 return errorResponse("404", "Error, No Account found");
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             AccountTransferByServiceIDResponse resp = new AccountTransferByServiceIDResponse();
             resp.setStatus("200");
             resp.setMessage("AccountNumber successfully updated executed successfully.");

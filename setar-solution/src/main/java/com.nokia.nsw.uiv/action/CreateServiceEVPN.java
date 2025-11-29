@@ -44,6 +44,7 @@ import java.util.Optional;
 public class CreateServiceEVPN implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action CreateServiceEVPN execution failed - ";
+    protected static final String ACTION_LABEL = Constants.CREATE_SERVICE_EVPN;
 
     @Autowired
     private CustomerCustomRepository customerRepo;
@@ -74,12 +75,14 @@ public class CreateServiceEVPN implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         System.out.println("------------Trace # 1--------------- CreateServiceEVPN started");
         CreateServiceEVPNRequest req = (CreateServiceEVPNRequest) actionContext.getObject();
 
         try {
             // 1) Validate mandatory parameters (runtime)
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(req.getProductType(), "productType");
                 Validations.validateMandatoryParams(req.getProductSubtype(), "productSubtype");
@@ -90,6 +93,7 @@ public class CreateServiceEVPN implements HttpAction {
                 Validations.validateMandatoryParams(req.getMenm(), "menm");
                 Validations.validateMandatoryParams(req.getHhid(), "hhid");
                 Validations.validateMandatoryParams(req.getOntModel(), "ontModel");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
                 System.out.println("------------Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
                 return new CreateServiceEVPNResponse(
@@ -586,6 +590,7 @@ public class CreateServiceEVPN implements HttpAction {
             logicalDeviceRepo.save(olt);
 
             // final response
+            log.info(Constants.ACTION_COMPLETED);
             System.out.println("------------Trace # 19--------------- CreateServiceEVPN completed successfully");
             return new CreateServiceEVPNResponse(
                     "201",
