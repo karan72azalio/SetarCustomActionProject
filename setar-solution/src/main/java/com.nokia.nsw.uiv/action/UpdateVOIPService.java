@@ -30,7 +30,7 @@ import java.util.Optional;
 @Action
 @Slf4j
 public class UpdateVOIPService implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.UPDATE_VOIP_SERVICE;
     private static final String ERROR_PREFIX = "UIV action UpdateVOIPService execution failed - ";
 
     @Autowired private CustomerCustomRepository customerRepo;
@@ -43,16 +43,19 @@ public class UpdateVOIPService implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.info("Executing UpdateVOIPService...");
         UpdateVOIPServiceRequest req = (UpdateVOIPServiceRequest) actionContext.getObject();
 
         try {
             // Step 1: Validate mandatory params
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(req.getOntSN(), "ontSN");
                 Validations.validateMandatoryParams(req.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(req.getSimaSubsId(), "simaSubsId");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new UpdateVOIPServiceResponse(
                         "400",
@@ -139,6 +142,7 @@ public class UpdateVOIPService implements HttpAction {
 
             // Step 8: Final Response
             if (updatedFlag) {
+                log.info(Constants.ACTION_COMPLETED);
                 return new UpdateVOIPServiceResponse(
                         "200",
                         "UIV action UpdateVOIPService executed successfully.",

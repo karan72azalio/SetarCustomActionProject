@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class QueryTemplateNameVLAN implements HttpAction {
 
-    private static final String ACTION_LABEL = "QueryTemplateNameVLAN";
+    private static final String ACTION_LABEL = Constants.QUERY_TEMPLATENAME_VLAN;
     private static final String ERROR_PREFIX = "UIV action QueryTemplateNameVLAN execution failed - ";
 
     @Autowired
@@ -47,11 +47,13 @@ public class QueryTemplateNameVLAN implements HttpAction {
         try {
             // 1) Mandatory and optional input validations
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(request.getOntSN(), "ONT_SN");
                 Validations.validateMandatory(request.getOntPort(), "ONT_PORT");
                 Validations.validateMandatory(request.getMenm(), "MENM");
                 Validations.validateMandatory(request.getTemplateNameVlan(), "TEMPLATE_NAME_VLAN");
                 Validations.validateMandatory(request.getTemplateNameVlanCreate(), "TEMPLATE_NAME_VLAN_CREATE");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 // Code5 -> Missing mandatory parameter
                 return createErrorResponse("400", ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage());
@@ -169,7 +171,7 @@ public class QueryTemplateNameVLAN implements HttpAction {
                 // Code7 -> More than 8 Vlans not allowed on port
                 return createErrorResponse("400", ERROR_PREFIX + "More than 8 Vlans not allowed on port.");
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // 7) Final response (success)
             QueryTemplateNameVLANResponse resp = new QueryTemplateNameVLANResponse();
             resp.setStatus("200");

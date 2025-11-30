@@ -32,7 +32,7 @@ import java.util.Optional;
 @Action
 @Slf4j
 public class QueryAccountCPE implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.QUERY_ACCOUNT_CPE;
     private static final String ERROR_PREFIX = "UIV action QueryAccountCPE execution failed - ";
 
     @Autowired private SubscriptionCustomRepository subscriptionRepo;
@@ -45,14 +45,17 @@ public class QueryAccountCPE implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         System.out.println("------------Trace # 1--------------- QueryAccountCPE started");
         QueryAccountCPERequest req = (QueryAccountCPERequest) actionContext.getObject();
 
         try {
             // Step 1: Validate mandatory parameters
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(req.getServiceId(), "serviceId");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
                 return new QueryAccountCPEResponse(
                         "400",
@@ -134,7 +137,7 @@ public class QueryAccountCPE implements HttpAction {
                     v2 = safeStr(dev.getProperties().get("voipPort2"));
                 }
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // Step 7: Build response
             return new QueryAccountCPEResponse(
                     "200",

@@ -26,7 +26,7 @@ import java.util.*;
 @Slf4j
 public class QueryService implements HttpAction {
 
-    private static final String ACTION_LABEL = "QueryService";
+    private static final String ACTION_LABEL = Constants.QUERY_SERVICE;
     private static final String ERROR_PREFIX = "UIV action QueryService execution failed - ";
 
     @Autowired private CustomerCustomRepository customerRepository;

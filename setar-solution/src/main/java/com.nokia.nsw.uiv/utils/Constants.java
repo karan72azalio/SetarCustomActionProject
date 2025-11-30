@@ -35,6 +35,18 @@ public class Constants {
     public static final String CHANGE_TECHNOLOGY_VOICE = "ChangeTechnologyVoice";
     public static final String CHANGE_RESOURCE_STATUS = "ChangeResourceStatus";
     public static final String CREATE_SERVICE_EVPN = "CreateServiceEVPN";
+    public static final String MODIFY_SERVICE_ID = "ModifyServiceId";
+    public static final String MODIFY_SUBSCRIBER = "ModifySubscriber";
+    public static final String QUERY_ACCOUNT_CPE = "QueryAccountCPE";
+    public static final String QUERY_ADDRBY_SERVICEID = "QueryAddrByServiceId";
+    public static final String QUERY_ONT_POSITION = "QueryONTPosition";
+    public static final String QUERY_SERVICE = "QueryService";
+    public static final String QUERY_SERVICES_INFO = "QueryServicesInfo";
+    public static final String QUERY_TEMPLATENAME_VLAN = "QueryTemplateNameVlan";
+    public static final String UPDATE_DEVICE_PROPERTY = "UpdateDeviceProperty";
+
+
+
 
     //Kinds
     public static final String SETAR_KIND_SETAR_SUBSCRIBER = "SetarSubscriber";

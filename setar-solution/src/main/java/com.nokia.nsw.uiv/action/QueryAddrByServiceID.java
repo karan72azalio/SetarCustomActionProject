@@ -29,7 +29,7 @@ import java.util.Optional;
 @Slf4j
 public class QueryAddrByServiceID implements HttpAction {
 
-    private static final String ACTION_LABEL = "QueryAddrByServiceID";
+    private static final String ACTION_LABEL = Constants.QUERY_ADDRBY_SERVICEID;
     private static final String ERROR_PREFIX = "UIV action QueryAddrByServiceID execution failed - ";
 
     @Autowired
@@ -59,7 +59,9 @@ public class QueryAddrByServiceID implements HttpAction {
         try {
             // 1) Mandatory input validation
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(request.getServiceId(), "SERVICE_ID");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 // Code5 -> Missing mandatory parameter
                 return createErrorResponse("400", ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage());
@@ -186,7 +188,7 @@ public class QueryAddrByServiceID implements HttpAction {
                         productName, address, serviceLink);
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // 4) Build success response
             QueryAddrByServiceIDResponse resp = new QueryAddrByServiceIDResponse();
             resp.setStatus("200");

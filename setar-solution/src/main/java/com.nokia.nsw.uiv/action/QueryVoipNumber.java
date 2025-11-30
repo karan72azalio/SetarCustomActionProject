@@ -31,7 +31,7 @@ import java.util.Optional;
 public class QueryVoipNumber implements HttpAction {
 
     private static final String ERROR_PREFIX = "UIV action QueryVoipNumber execution failed - ";
-
+    protected static final String ACTION_LABEL = Constants.QUERY_VOIP_NUMBER;
     @Autowired private LogicalDeviceCustomRepository logicalDeviceRepo;
     @Autowired private SubscriptionCustomRepository subscriptionRepo;
 
@@ -42,13 +42,16 @@ public class QueryVoipNumber implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         QueryVoipNumberRequest req = (QueryVoipNumberRequest) actionContext.getObject();
         log.info("Executing QueryVoipNumber action...");
 
         try {
             // Step 1: Mandatory validation
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getOntSN(), "ontSN");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new QueryVoipNumberResponse(
                         "400",
@@ -197,7 +200,7 @@ public class QueryVoipNumber implements HttpAction {
                 }
 
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // Step 7: Final response
             if (simaCustId != null && !simaCustId.isEmpty()) {
                 return new QueryVoipNumberResponse(

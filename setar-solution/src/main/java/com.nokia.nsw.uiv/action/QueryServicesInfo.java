@@ -28,7 +28,7 @@ import java.util.*;
 @Slf4j
 public class QueryServicesInfo implements HttpAction {
 
-    private static final String ACTION_LABEL = "QueryServicesInfo";
+    private static final String ACTION_LABEL = Constants.QUERY_SERVICES_INFO;
     private static final String ERROR_PREFIX = "UIV action QueryServicesInfo execution failed - ";
 
     @Autowired

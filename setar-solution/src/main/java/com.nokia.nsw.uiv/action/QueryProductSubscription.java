@@ -27,7 +27,7 @@ import java.util.Optional;
 @Slf4j
 public class QueryProductSubscription implements HttpAction {
 
-    protected static final String ACTION_LABEL = "QueryProductSubscription";
+    protected static final String ACTION_LABEL = Constants.QUERY_PRODUCT_SUBSCRIPTION;
 
     @Autowired
     private ProductCustomRepository productRepository;

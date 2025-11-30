@@ -34,7 +34,7 @@ import java.util.*;
 @Action
 @Slf4j
 public class ModifyServiceId implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.MODIFY_SERVICE_ID;
     private static final String ERROR_PREFIX = "UIV action ModifyServiceId execution failed - ";
 
     @Autowired
@@ -62,14 +62,17 @@ public class ModifyServiceId implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         System.out.println("------------Test Trace # 1--------------- ModifyServiceId started");
         ModifyServiceIdRequest req = (ModifyServiceIdRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getServiceId(), "serviceId");
                 Validations.validateMandatory(req.getServiceIdNew(), "serviceIdNew");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
                 System.out.println("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
                 return new ModifyServiceIdResponse(
@@ -229,6 +232,7 @@ public class ModifyServiceId implements HttpAction {
 
             // 5. Generate response
             if (updatesApplied) {
+                log.info(Constants.ACTION_COMPLETED);
                 return new ModifyServiceIdResponse("200",
                         "ServiceID successfully updated",
                         Instant.now().toString());

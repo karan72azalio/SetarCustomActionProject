@@ -65,7 +65,7 @@ public class QueryIPTVByServiceID implements HttpAction {
     @Autowired
     private LogicalDeviceCustomRepository logicalDeviceRepo;
 
-
+    protected static final String ACTION_LABEL = Constants.QUERY_IPTV_BY_SERVICE_ID;
     private static final String ERROR_PREFIX = "UIV action QueryIPTVByServiceID execution failed - ";
 
     @Override
@@ -76,12 +76,15 @@ public class QueryIPTVByServiceID implements HttpAction {
     @Override
     public Object doPost(ActionContext actionContext) {
         log.info("Executing QueryIPTVByServiceID action...");
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         QueryIPTVByServiceIDRequest req = (QueryIPTVByServiceIDRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getServiceID(), "serviceId");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception ex) {
                 QueryIPTVByServiceIDResponse resp = new QueryIPTVByServiceIDResponse();
                 resp.setStatus("400");
@@ -416,6 +419,7 @@ public class QueryIPTVByServiceID implements HttpAction {
 
             // 8. Final response
             if (successFlag) {
+                log.info(Constants.ACTION_COMPLETED);
                 QueryIPTVByServiceIDResponse resp = new QueryIPTVByServiceIDResponse();
                 resp.setStatus("200");
                 resp.setMessage("IPTV Service Details Found");

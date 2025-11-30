@@ -33,7 +33,7 @@ import java.util.*;
 @Action
 @Slf4j
 public class ModifySubscriber implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.MODIFY_SUBSCRIBER;
     private static final String ERROR_PREFIX = "UIV action ModifySubscriber execution failed - ";
 
     @Autowired

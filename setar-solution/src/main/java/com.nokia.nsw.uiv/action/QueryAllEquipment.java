@@ -27,7 +27,7 @@ import java.util.Set;
 @Action
 @Slf4j
 public class QueryAllEquipment implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.QUERY_ALL_EQUIPMENT;
     private static final String ERROR_PREFIX = "UIV action QueryAllEquipment execution failed - ";
 
     @Autowired
@@ -40,14 +40,17 @@ public class QueryAllEquipment implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.info("Executing QueryAllEquipment action...");
         QueryAllEquipmentRequest request = (QueryAllEquipmentRequest) actionContext.getObject();
 
         try {
             // Step 1: Validate mandatory params
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
 
                 return new QueryAllEquipmentResponse(
@@ -153,7 +156,7 @@ public class QueryAllEquipment implements HttpAction {
                         null, null, null, null,null,null,null,null
                 );
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             return response;
 
         } catch (Exception ex) {

@@ -26,7 +26,7 @@ import java.util.Set;
 @Action
 @Slf4j
 public class QueryAllServicesByCPE implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.QUERY_ALL_SERVICES_BY_CPE;
     private static final String ERROR_PREFIX = "UIV action QueryAllServicesByCPE execution failed - ";
 
     @Autowired
@@ -54,6 +54,7 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.info("Executing QueryAllServicesByCPE action...");
         QueryAllServicesByCPERequest req = (QueryAllServicesByCPERequest) actionContext.getObject();
 
@@ -88,7 +89,7 @@ public class QueryAllServicesByCPE implements HttpAction {
             // 3) Initialize counters
             int bbCount = 0, voiceCount = 0, entCount = 0, iptvCount = 0;
             int stbIndex = 1, apIndex = 1, prodIndex = 1;
-
+            log.info(Constants.ACTION_COMPLETED);
             QueryAllServicesByCPEResponse resp = new QueryAllServicesByCPEResponse();
             resp.setStatus("200");
             resp.setMessage("UIV action QueryAllServicesByCPE executed successfully.");

@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.UpdatedevicepropertyRequest;
 import com.nokia.nsw.uiv.response.UpdatedevicepropertyResponse;
+import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 
 
@@ -26,7 +27,7 @@ import java.util.Optional;
 @Action
 @Slf4j
 public class Updatedeviceproperty implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.UPDATE_DEVICE_PROPERTY;
     private static final String ERROR_PREFIX = "UIV action Updatedeviceproperty execution failed - ";
 
     @Autowired
@@ -39,14 +40,17 @@ public class Updatedeviceproperty implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         System.out.println("------------Test Trace # 1--------------- Updatedeviceproperty started");
         UpdatedevicepropertyRequest req = (UpdatedevicepropertyRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getStbSn1(), "stbSn1");
                 Validations.validateMandatory(req.getCustomerGroupId(), "customerGroupId");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
                 System.out.println("------------Test Trace # 2--------------- Missing param: " + bre.getMessage());
                 return new UpdatedevicepropertyResponse(
@@ -100,7 +104,7 @@ public class Updatedeviceproperty implements HttpAction {
             stb.setProperties(props);
             stbRepo.save(stb);
             System.out.println("------------Test Trace # 8--------------- CustomerGroupId updated to " + custGroupId);
-
+            log.info(Constants.ACTION_COMPLETED);
             // 6. Success response
             return new UpdatedevicepropertyResponse(
                     "200",

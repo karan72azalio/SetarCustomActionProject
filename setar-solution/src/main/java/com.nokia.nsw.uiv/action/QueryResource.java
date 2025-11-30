@@ -24,7 +24,7 @@ import java.util.Optional;
 @Action
 @Slf4j
 public class QueryResource implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.QUERY_RESOURCE;
     private static final String ERROR_PREFIX = "UIV action QueryResource execution failed - ";
 
     @Autowired
@@ -37,15 +37,17 @@ public class QueryResource implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         QueryResourceRequest request = (QueryResourceRequest) actionContext.getObject();
         String resourceSN = request.getResourceSN();
         String resourceType = request.getResourceType();
 
         try {
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             // Step 1: Mandatory Validations
             Validations.validateMandatoryParams(resourceSN, "resourceSN");
             Validations.validateMandatoryParams(resourceType, "resourceType");
-
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             // Step 2: Construct Device Name
             String devName;
             if ("CBM".equalsIgnoreCase(resourceType) || "ONT".equalsIgnoreCase(resourceType)) {
@@ -80,7 +82,7 @@ public class QueryResource implements HttpAction {
                 devGroupID = (String) device.getProperties().getOrDefault("deviceGroupId", "NA");
                 devSubTYPE = (String) device.getProperties().getOrDefault("modelSubType", "");
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             // Step 4: Final Success Response
             return new QueryResourceResponse(
                     "200",

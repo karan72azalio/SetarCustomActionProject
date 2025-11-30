@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class DeleteCBM implements HttpAction {
 
-    private static final String ACTION_LABEL = "DeleteCBM";
+    private static final String ACTION_LABEL = Constants.DELETE_CBM;
 
     @Autowired
     private LogicalDeviceCustomRepository cbmDeviceRepository;

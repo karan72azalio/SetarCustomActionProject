@@ -26,7 +26,7 @@ import java.util.Set;
 @Action
 @Slf4j
 public class QueryONTPosition implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.QUERY_ONT_POSITION;
     private static final String ERROR_PREFIX = "UIV action QueryONTPosition execution failed - ";
 
     @Autowired
@@ -39,13 +39,16 @@ public class QueryONTPosition implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         System.out.println("------------Trace # 1--------------- QueryONTPosition started");
         QueryONTPositionRequest req = (QueryONTPositionRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getOntSn(), "ontSn");
+                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
                 System.out.println("------------Trace # 2--------------- Missing param: " + bre.getMessage());
                 return new QueryONTPositionResponse(
@@ -119,6 +122,7 @@ public class QueryONTPosition implements HttpAction {
             System.out.println("------------Trace # 10--------------- Resolved OLT Object ID=" + objectId);
 
             // 5. Success response
+            log.info(Constants.ACTION_COMPLETED);
             return new QueryONTPositionResponse(
                     "200",
                     "UIV action QueryONTPosition executed successfully.",

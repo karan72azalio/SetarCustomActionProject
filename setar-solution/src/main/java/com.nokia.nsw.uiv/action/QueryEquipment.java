@@ -31,7 +31,7 @@ import java.util.*;
 @Action
 @Slf4j
 public class QueryEquipment implements HttpAction {
-
+    protected static final String ACTION_LABEL = Constants.QUERY_EQUIPMENT;
     private static final String CODE_SUCCESS = "200";
     private static final String CODE_MISSING_PARAMS = "400";
     private static final String CODE_NO_ENTRY = "404";
@@ -64,15 +64,18 @@ public class QueryEquipment implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
+        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
         QueryEquipmentRequest request = (QueryEquipmentRequest) actionContext.getObject();
 
         // 1. Mandatory validations
         try {
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
             Validations.validateMandatoryParams(request.getResourceSn(), "resourceSn");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
             Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
+            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return createErrorResponse(CODE_MISSING_PARAMS,
                     "Missing mandatory parameter(s): " + bre.getMessage());
@@ -186,7 +189,7 @@ public class QueryEquipment implements HttpAction {
                 response.setStatus(CODE_EQUIP_NOT_FOUND);
                 response.setMessage("Error, Equipment Not Queried.");
             }
-
+            log.info(Constants.ACTION_COMPLETED);
             return response;
 
         } catch (Exception e) {
