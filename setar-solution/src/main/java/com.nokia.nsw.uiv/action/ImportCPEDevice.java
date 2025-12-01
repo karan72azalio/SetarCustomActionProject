@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ImportCPEDevice implements HttpAction {
 
     protected static final String ACTION_LABEL = Constants.IMPORT_CPE_DEVICE;
-    private static final String ERROR_PREFIX = "UIV action CreateServiceFibernet execution failed - ";
+    private static final String ERROR_PREFIX = "UIV action ImportCPEDevice execution failed - ";
 
     @Autowired
     private LogicalDeviceCustomRepository cpeDeviceRepository;
