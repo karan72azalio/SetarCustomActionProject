@@ -163,8 +163,8 @@ public class ImportCPEDevice implements HttpAction {
             potsPort.setProperties(properties);
 
             componentRepository.save(potsPort, 2);
-            cpeDevice.addContained(potsPort);
-            cpeDeviceRepository.save(cpeDevice, 2);
+//            cpeDevice.addContained(potsPort);
+//            cpeDeviceRepository.save(cpeDevice, 2);
             log.error("POTS port created and associated: {}", portName);
         } else {
             log.error("POTS port already exists: {}", portName);
@@ -199,9 +199,9 @@ public class ImportCPEDevice implements HttpAction {
 
             ethPort.setProperties(properties);
 
-            componentRepository.save(ethPort, 2);
-            cpeDevice.addContained(ethPort);
-            cpeDeviceRepository.save(cpeDevice, 2);
+            //componentRepository.save(ethPort, 2);
+           // cpeDevice.addContained(ethPort);
+           // cpeDeviceRepository.save(cpeDevice, 2);
             log.error("Ethernet port created and associated: {}", portName);
 
             // VLAN interfaces (LogicalInterface)
@@ -232,17 +232,13 @@ public class ImportCPEDevice implements HttpAction {
                         vlanProps.put("serviceType", "");
                         vlanProps.put("vlanId", "");
                         vlanProps.put("vlanStatus", "Available");
-
                         vlan.setProperties(vlanProps);
-                        vlan.addContained(ethPort);
-                        logicalInterfaceRepository.save(vlan);
-//                        ethPort.addContained(vlan);
-//                        componentRepository.save(ethPort);
-
+                        logicalInterfaceRepository.save(vlan,2);
+                        ethPort.addContained(vlan);
                     }
                 }
+                componentRepository.save(ethPort);
                 Map<String, Object> props = ethPort.getProperties();
-
                 if (vlanCreated) {
                     props.put("portStatus", "Allocated");
                     log.error("Port status updated to Allocated for: {}", portName);
@@ -251,8 +247,9 @@ public class ImportCPEDevice implements HttpAction {
                     log.error("No VLAN created. Port status updated to Available for: {}", portName);
                 }
                 componentRepository.save(ethPort);
+            }else{
+                componentRepository.save(ethPort);
             }
-
         }
     }
 
