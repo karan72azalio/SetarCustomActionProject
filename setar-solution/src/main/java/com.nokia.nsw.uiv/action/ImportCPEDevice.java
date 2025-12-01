@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -80,6 +81,7 @@ public class ImportCPEDevice implements HttpAction {
             if (optDevice.isPresent()) {
                 cpeDevice = optDevice.get();
                 log.info("Found existing CPE device: {}", devName);
+                return new ImportCPEDeviceResponse("409","Service already exist/Duplicate entry", Instant.now().toString());
             } else {
                 log.info("Creating new CPE device: {}", devName);
                 cpeDevice = new LogicalDevice();
