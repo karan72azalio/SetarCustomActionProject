@@ -57,14 +57,14 @@ public class CreateServiceVoIP implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.info("Executing CreateServiceVoIP action...");
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("Executing CreateServiceVoIP action...");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         CreateServiceVoIPRequest req = (CreateServiceVoIPRequest) actionContext.getObject();
 
         try {
             // Step 1: Validate mandatory params
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(req.getProductType(), "productType");
                 Validations.validateMandatoryParams(req.getProductSubtype(), "productSubtype");
@@ -84,7 +84,7 @@ public class CreateServiceVoIP implements HttpAction {
                 Validations.validateMandatoryParams(req.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(req.getVoipServiceCode(), "voipServiceCode");
                 Validations.validateMandatoryParams(req.getVoipPackage(), "voipPackage");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new CreateServiceVoIPResponse(
                         "400",
@@ -342,7 +342,7 @@ public class CreateServiceVoIP implements HttpAction {
 
             logicalDeviceRepo.save(ont);
             logicalDeviceRepo.save(olt);
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             return new CreateServiceVoIPResponse(
                     "201",
                     "UIV action CreateServiceVoIP executed successfully.",

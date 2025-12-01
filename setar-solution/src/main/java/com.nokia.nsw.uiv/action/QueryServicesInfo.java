@@ -59,7 +59,7 @@ public class QueryServicesInfo implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.info("Executing action {}", ACTION_LABEL);
+        log.error("Executing action {}", ACTION_LABEL);
         QueryServicesInfoRequest request = (QueryServicesInfoRequest) actionContext.getObject();
 
         try {
@@ -70,7 +70,7 @@ public class QueryServicesInfo implements HttpAction {
                 return createErrorResponse("400", ERROR_PREFIX + "Missing mandatory parameter(s): SUBSCRIBER_NAME or ONT_SN");
             }
 
-            log.info("QueryServicesInfo start: subscriberName='{}', ontSN='{}'", accno, ontSN);
+            log.error("QueryServicesInfo start: subscriberName='{}', ontSN='{}'", accno, ontSN);
 
             // 2) Find initial candidate services
             List<ResourceFacingService> setarsRFS = new ArrayList<>();
@@ -147,7 +147,7 @@ public class QueryServicesInfo implements HttpAction {
             if (iptvrfsname != null) setarRFSs.add(iptvrfsname);
 
             if (setarRFSs.isEmpty()) {
-                log.warn("No candidate RFS found for inputs subscriber='{}' ontSN='{}'", accno, ontSN);
+                log.error("No candidate RFS found for inputs subscriber='{}' ontSN='{}'", accno, ontSN);
                 return createErrorResponse("404", ERROR_PREFIX + "Error, No Service Details Available.");
             }
 
@@ -161,7 +161,7 @@ public class QueryServicesInfo implements HttpAction {
                 try {
                     String rfsnameget = rfs.getDiscoveredName() == null ? "" : rfs.getDiscoveredName();
                     String serviceType = rfs.getProperties().get("ServiceTypeName") == null ? "" : rfs.getProperties().get("ServiceTypeName").toString();
-                    log.info("Processing RFS '{}' with serviceType='{}'", rfsnameget, serviceType);
+                    log.error("Processing RFS '{}' with serviceType='{}'", rfsnameget, serviceType);
 
                     // initialize per-service vars
                     String subscriber = "";
@@ -606,7 +606,7 @@ public class QueryServicesInfo implements HttpAction {
 
             // 9) Package the result
             if (!success || allvalues.isEmpty()) {
-                log.warn("No service details could be collected (success={}, keys={})", success, allvalues.size());
+                log.error("No service details could be collected (success={}, keys={})", success, allvalues.size());
                 return createErrorResponse("404", ERROR_PREFIX + "Error, No Service Details Available.");
             }
 

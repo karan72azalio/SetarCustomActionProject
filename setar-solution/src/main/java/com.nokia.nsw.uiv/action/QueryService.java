@@ -43,7 +43,7 @@ public class QueryService implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.info("Executing action {}", ACTION_LABEL);
+        log.error("Executing action {}", ACTION_LABEL);
         QueryServiceRequest request = (QueryServiceRequest) actionContext.getObject();
         Map<String, Object> iptvinfo = new HashMap<>();
         List<String> returnedParams = new ArrayList<>();
@@ -58,7 +58,7 @@ public class QueryService implements HttpAction {
             }
 
             String serviceId = request.getServiceId().trim();
-            log.info("Processing QueryService for SERVICE_ID: {}", serviceId);
+            log.error("Processing QueryService for SERVICE_ID: {}", serviceId);
 
             // Step 2: Find Candidate CFS Names
             List<CustomerFacingService> cfsList = (List<CustomerFacingService>) cfsRepository.findAll();
@@ -76,7 +76,7 @@ public class QueryService implements HttpAction {
             }
 
             if (cfsNameSet.isEmpty()) {
-                log.info("No matching CFS found for serviceId {}", serviceId);
+                log.error("No matching CFS found for serviceId {}", serviceId);
                 return new QueryServiceResponse("404", "No IPTV Service Details Found.",
                         Instant.now().toString(), false, "No CFS match found");
             }
@@ -147,7 +147,7 @@ public class QueryService implements HttpAction {
                                 iptvinfo.put("CBM_Device_MacAddr_1", ont.getProperties().get("macAddress"));
                                 iptvinfo.put("CBM_Device_Model_1", ont.getProperties().get("deviceType"));
                             }
-                            System.out.println("------------Test Trace #9--------------- ONT updated: " + ont.getLocalName());
+                            log.error("------------Test Trace #9--------------- ONT updated: " + ont.getLocalName());
                         }
                     });
                 }

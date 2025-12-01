@@ -54,8 +54,8 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        log.info("Executing QueryAllServicesByCPE action...");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("Executing QueryAllServicesByCPE action...");
         QueryAllServicesByCPERequest req = (QueryAllServicesByCPERequest) actionContext.getObject();
 
         try {
@@ -71,7 +71,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                 return errorResponse("404", "CPE/ONT not found");
             }
             LogicalDevice ont = ontOpt.get();
-            log.info("ONT located: {}", ontName);
+            log.error("ONT located: {}", ontName);
 
             // Collect linked RFS entries
             Set<Service> linkedServiceList = ont.getUsingService();
@@ -89,7 +89,7 @@ public class QueryAllServicesByCPE implements HttpAction {
             // 3) Initialize counters
             int bbCount = 0, voiceCount = 0, entCount = 0, iptvCount = 0;
             int stbIndex = 1, apIndex = 1, prodIndex = 1;
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             QueryAllServicesByCPEResponse resp = new QueryAllServicesByCPEResponse();
             resp.setStatus("200");
             resp.setMessage("UIV action QueryAllServicesByCPE executed successfully.");

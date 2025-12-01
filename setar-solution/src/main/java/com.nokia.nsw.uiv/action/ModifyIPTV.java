@@ -72,19 +72,19 @@ public class ModifyIPTV implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         ModifyIPTVRequest request = (ModifyIPTVRequest) actionContext.getObject();
 
         try {
             // -------------------- Validate mandatory parameters --------------------
             try{
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getProductType(), "productType");
                 Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(request.getModifyType(), "modifyType");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
                 return new ModifyIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         java.time.Instant.now().toString(), "","");
@@ -221,7 +221,7 @@ public class ModifyIPTV implements HttpAction {
                     }
                 }
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             return new ModifyIPTVResponse(
                     "200",
                     "UIV action ModifyIPTV executed successfully.",

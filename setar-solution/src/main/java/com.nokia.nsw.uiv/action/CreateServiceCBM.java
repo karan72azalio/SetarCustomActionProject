@@ -68,14 +68,14 @@ public class CreateServiceCBM implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         CreateServiceCBMRequest request = (CreateServiceCBMRequest) actionContext.getObject();
         // 1. Validate mandatory params
         try{
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         }catch (BadRequestException bre) {
             return new CreateServiceCBMResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                     java.time.Instant.now().toString(), "","");
@@ -198,7 +198,7 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("macAddress", request.getCbmMac());
                     prop.put("serviceID", request.getServiceId());
                     prop.put("veipQosSessionProfile", request.getQosProfile());
-//                    prop.put("houseHoldId", request.getHhid());
+                    prop.put("houseHoldId", request.getHhid());
                     prop.put("customerGroupId", request.getCustomerGroupId());
                     prop.put("subscriberID_CableModem", request.getSubscriberId());
                     prop.put("servicePackage", request.getServicePackage());
@@ -352,7 +352,7 @@ public class CreateServiceCBM implements HttpAction {
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });
-        log.info(Constants.ACTION_COMPLETED);
+        log.error(Constants.ACTION_COMPLETED);
         // --- 8. Final Response ---
         CreateServiceCBMResponse response = new CreateServiceCBMResponse();
         response.setStatus("201");

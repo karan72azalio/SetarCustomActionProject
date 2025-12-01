@@ -64,18 +64,18 @@ public class QueryEquipment implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         QueryEquipmentRequest request = (QueryEquipmentRequest) actionContext.getObject();
 
         // 1. Mandatory validations
         try {
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
             Validations.validateMandatoryParams(request.getResourceSn(), "resourceSn");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
             Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return createErrorResponse(CODE_MISSING_PARAMS,
                     "Missing mandatory parameter(s): " + bre.getMessage());
@@ -100,7 +100,7 @@ public class QueryEquipment implements HttpAction {
 
             Optional<CustomerFacingService> cfsOpt = cfsRepository.findByDiscoveredName(cfsName);
             if (cfsOpt.isEmpty()) {
-                log.warn("CFS not found: {}", cfsName);
+                log.error("CFS not found: {}", cfsName);
             }
 
             String rfsGdn = Validations.getGlobalName(rfsName);
@@ -111,13 +111,13 @@ public class QueryEquipment implements HttpAction {
 
             Optional<Product> productOpt = productRepository.findByDiscoveredName(productName);
             if (productOpt.isEmpty()) {
-                log.warn("Product not found: {}", productName);
+                log.error("Product not found: {}", productName);
             }
 
-            log.info("Subscription Name : {}", subscriptionName);
-            log.info("CFS Name: {}", cfsName);
-            log.info("RFS Name: {}", rfsName);
-            log.info("Product Name: {}", productName);
+            log.error("Subscription Name : {}", subscriptionName);
+            log.error("CFS Name: {}", cfsName);
+            log.error("RFS Name: {}", rfsName);
+            log.error("Product Name: {}", productName);
 
             //retrieved linked devices
             Set<Resource> linkedResources = rfs.getUsedResource();
@@ -145,7 +145,7 @@ public class QueryEquipment implements HttpAction {
                         apCounter++;
                         successFlag = true;
                     } else {
-                        log.warn("Ignored extra AP device beyond 5: {}", devName);
+                        log.error("Ignored extra AP device beyond 5: {}", devName);
                     }
                 } else if (devName.startsWith("STB")) {
                     if (stbCounter <= 5) {
@@ -153,7 +153,7 @@ public class QueryEquipment implements HttpAction {
                         stbCounter++;
                         successFlag = true;
                     } else {
-                        log.warn("Ignored extra STB device beyond 5: {}", devName);
+                        log.error("Ignored extra STB device beyond 5: {}", devName);
                     }
                 }
             }
@@ -189,7 +189,7 @@ public class QueryEquipment implements HttpAction {
                 response.setStatus(CODE_EQUIP_NOT_FOUND);
                 response.setMessage("Error, Equipment Not Queried.");
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             return response;
 
         } catch (Exception e) {

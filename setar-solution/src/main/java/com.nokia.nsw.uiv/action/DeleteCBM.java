@@ -68,19 +68,19 @@ public class DeleteCBM implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.info("Executing action {}", ACTION_LABEL);
+        log.error("Executing action {}", ACTION_LABEL);
 
         DeleteCBMRequest request = (DeleteCBMRequest) actionContext.getObject();
 
         // 1. Validate mandatory params (including CBM_SN)
         try {
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
             Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
             Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
             Validations.validateMandatoryParams(request.getCbmSN(), "cbmSN");
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);// <-- added
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);// <-- added
             // serviceFlag was previously validated in your code; it's optional in spec — validate only if required.
         } catch (BadRequestException bre) {
             return new DeleteCBMResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
@@ -113,7 +113,7 @@ public class DeleteCBM implements HttpAction {
             try {
                 optCbmDevice = cbmDeviceRepository.findByDiscoveredName(cbmName);
                 if (!optCbmDevice.isPresent()) {
-                    log.warn("CBM device {} not found", cbmName);
+                    log.error("CBM device {} not found", cbmName);
                 }
             } catch (Exception e) {
                 log.error("Error fetching CBM device {}", cbmName, e);
@@ -131,13 +131,13 @@ public class DeleteCBM implements HttpAction {
                             subscriptionCount = 0;
                         }
                     } else {
-                        log.warn("Subscriber {} not found (IPTV)", subscriberName);
+                        log.error("Subscriber {} not found (IPTV)", subscriberName);
                         subscriptionCount = 0;
                     }
                 } else {
                     // Non-IPTV: need MAC from CBM device
                     if (!optCbmDevice.isPresent()) {
-                        log.warn("CBM device required to derive subscriber name for non-IPTV product but CBM not found: {}", cbmName);
+                        log.error("CBM device required to derive subscriber name for non-IPTV product but CBM not found: {}", cbmName);
                         // If CBM required, return or continue depending on business decision.
                         return new DeleteCBMResponse("404", Constants.ERROR_PREFIX + "CBM device not found for non-IPTV product",
                                 java.time.Instant.now().toString(), cbmName, subscriptionName);
@@ -145,7 +145,7 @@ public class DeleteCBM implements HttpAction {
                     LogicalDevice cbm = optCbmDevice.get();
                     Object macObj = cbm.getProperties() != null ? cbm.getProperties().get("macAddress") : null;
                     if (macObj == null) {
-                        log.warn("CBM {} has no macAddress property", cbmName);
+                        log.error("CBM {} has no macAddress property", cbmName);
                         return new DeleteCBMResponse("400", Constants.ERROR_PREFIX + "CBM missing macAddress",
                                 java.time.Instant.now().toString(), cbmName, subscriptionName);
                     }
@@ -163,7 +163,7 @@ public class DeleteCBM implements HttpAction {
                         }
                         subscriberName = newSubscriberName; // update for later deletion if necessary
                     } else {
-                        log.warn("Subscriber {} not found (derived using MAC)", newSubscriberName);
+                        log.error("Subscriber {} not found (derived using MAC)", newSubscriberName);
                         subscriptionCount = 0;
                     }
                 }
@@ -193,7 +193,7 @@ public class DeleteCBM implements HttpAction {
             try {
                 optRfs = rfsRepository.findByDiscoveredName(rfsName);
                 if (!optRfs.isPresent()) {
-                    log.warn("RFS {} not found; continuing but skipping RFS-specific updates", rfsName);
+                    log.error("RFS {} not found; continuing but skipping RFS-specific updates", rfsName);
                 }
             } catch (Exception e) {
                 log.error("Error fetching RFS {}", rfsName, e);
@@ -218,15 +218,15 @@ public class DeleteCBM implements HttpAction {
                             if (cbmDevice.getProperties() == null) {
                                 cbmDevice.setProperties(new HashMap<>());
                             }
-                            cbmDevice.getProperties().put("administrativeState", "Available");
+                            cbmDevice.getProperties().put("AdministrativeState", "Available");
                         }
                     } catch (Exception e) {
-                        log.warn("Error while evaluating voip ports for broadband CBM {}", cbmName, e);
+                        log.error("Error while evaluating voip ports for broadband CBM {}", cbmName, e);
                     }
                     cbmDeviceRepository.save(cbmDevice, 2);
                 }
             } else {
-                log.info("Subscription or CBM device not present; skipping CPE device logic.");
+                log.error("Subscription or CBM device not present; skipping CPE device logic.");
             }
 
             // --- 7. Delete CBM device if exists ---
@@ -234,7 +234,7 @@ public class DeleteCBM implements HttpAction {
                 optCbmDevice.ifPresent(device -> {
                     try {
                         cbmDeviceRepository.delete(device);
-                        log.info("Deleted CBM device {}", cbmName);
+                        log.error("Deleted CBM device {}", cbmName);
                     } catch (Exception e) {
                         log.error("Error deleting CBM device {}", cbmName, e);
                     }
@@ -260,7 +260,7 @@ public class DeleteCBM implements HttpAction {
                                 Map<String, Object> props = resource.getProperties() != null
                                         ? new HashMap<>(resource.getProperties())
                                         : new HashMap<>();
-                                props.put("administrativeState", "Available");
+                                props.put("AdministrativeState", "Available");
 
                                 if (isSTB) {
                                     // clear deviceGroupId for STB
@@ -272,9 +272,9 @@ public class DeleteCBM implements HttpAction {
                                 // Persist resource - resource may be LogicalDevice
                                 try {
                                     cbmDeviceRepository.save((LogicalDevice) resource, 2);
-                                    log.info("Updated resource {} administrative state to Available", localName);
+                                    log.error("Updated resource {} administrative state to Available", localName);
                                 } catch (ClassCastException cce) {
-                                    log.warn("Resource {} is not a LogicalDevice; skipping save via cbmDeviceRepository", localName);
+                                    log.error("Resource {} is not a LogicalDevice; skipping save via cbmDeviceRepository", localName);
                                 } catch (Exception saveEx) {
                                     log.error("Failed to save resource {}", localName, saveEx);
                                 }
@@ -287,12 +287,12 @@ public class DeleteCBM implements HttpAction {
                 // Delete RFS after resources processed
                 try {
                     rfsRepository.delete(setarRFS);
-                    log.info("Deleted RFS {}", rfsName);
+                    log.error("Deleted RFS {}", rfsName);
                 } catch (Exception e) {
                     log.error("Error deleting RFS {}", rfsName, e);
                 }
             } else {
-                log.info("No RFS to process for {}", rfsName);
+                log.error("No RFS to process for {}", rfsName);
             }
 
             // --- 9. Delete Product & Subscription & CFS (SPR objects) ---
@@ -323,7 +323,7 @@ public class DeleteCBM implements HttpAction {
                     subscriberToDelete.ifPresent(subscriber -> {
                         try {
                             subscriberRepository.delete(subscriber);
-                            log.info("Deleted subscriber {}", subscriberNameToDelete);
+                            log.error("Deleted subscriber {}", subscriberNameToDelete);
                         } catch (Exception e) {
                             log.error("Error deleting subscriber {}", subscriberNameToDelete, e);
                         }
@@ -332,9 +332,9 @@ public class DeleteCBM implements HttpAction {
                     log.error("Error while attempting to delete subscriber {}", subscriberName, e);
                 }
             } else {
-                log.info("Not deleting subscriber {} because subscriptionCount != 1 (count={})", subscriberName, subscriptionCount);
+                log.error("Not deleting subscriber {} because subscriptionCount != 1 (count={})", subscriberName, subscriptionCount);
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             // --- 11. Return success response ---
             return new DeleteCBMResponse("200", "CBM objects Deleted", java.time.Instant.now().toString(),
                     cbmName, subscriptionName);

@@ -68,20 +68,20 @@ public class DeleteSPR implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.info("Executing action {}", ACTION_LABEL);
+        log.error("Executing action {}", ACTION_LABEL);
         DeleteSPRRequest req = (DeleteSPRRequest) actionContext.getObject();
 
         // -----------------------------
         // 1) Mandatory validations
         // -----------------------------
         try {
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             validateMandatory(req.getSubscriberName(), "subscriberName");
             validateMandatory(req.getProductType(), "productType");
             validateMandatory(req.getProductSubtype(), "productSubtype");
             validateMandatory(req.getServiceId(), "serviceId");
             validateMandatory(req.getOntSN(), "ontSN");
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             // Code5
             return new DeleteSPRResponse(
@@ -327,7 +327,7 @@ public class DeleteSPR implements HttpAction {
                     customerRepository.delete(sub);
                 }
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             // -----------------------------
             // 11) Final Response
             // -----------------------------
@@ -525,11 +525,11 @@ public class DeleteSPR implements HttpAction {
             oltDevice.setDescription("EVPN card template cleared");
 
             Map<String, Object> props = new HashMap<>();
-            props.put("administrativeState", "Available");
+            props.put("AdministrativeState", "Available");
             oltDevice.setProperties(props);
 
             logicalDeviceRepository.save(oltDevice, 2);
-            log.info("Cleared EVPN card template for OLT {}", oltDevice.getDiscoveredName());
+            log.error("Cleared EVPN card template for OLT {}", oltDevice.getDiscoveredName());
         }
     }
 }

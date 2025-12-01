@@ -82,8 +82,8 @@ public class ChangeTechnology implements HttpAction {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        log.info("Executing ChangeTechnology action...");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("Executing ChangeTechnology action...");
         ChangeTechnologyRequest req = (ChangeTechnologyRequest) actionContext.getObject();
 
         try {
@@ -110,7 +110,7 @@ public class ChangeTechnology implements HttpAction {
 
 // Validate mandatory parameters
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(subscriberName, "subscriberName");
                 Validations.validateMandatoryParams(productSubtype, "productSubtype");
                 Validations.validateMandatoryParams(serviceId, "serviceId");
@@ -122,7 +122,7 @@ public class ChangeTechnology implements HttpAction {
                 Validations.validateMandatoryParams(vlanId, "vlanId");
                 Validations.validateMandatoryParams(ontModel, "ontModel");
                 Validations.validateMandatoryParams(cbmMac, "cbmMac");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new ChangeTechnologyResponse(
                         "400",
@@ -310,8 +310,8 @@ public class ChangeTechnology implements HttpAction {
             if (maybeCbm.isPresent()) {
                 LogicalDevice cbmDevice = maybeCbm.get();
                 Map<String, Object> cbmProps = cbmDevice.getProperties() != null ? cbmDevice.getProperties() : new HashMap<>();
-                cbmProps.put("administrativeState", "Available");
-                cbmProps.put("operationalState", "Available");
+                cbmProps.put("AdministrativeState", "Available");
+                cbmProps.put("OperationalState", "Available");
                 cbmDevice.setProperties(cbmProps);
                 // remove from inventory
                 cbmRepo.save(cbmDevice,2);
@@ -330,11 +330,11 @@ public class ChangeTechnology implements HttpAction {
 
                 Map<String, Object> newProps = cpeNew.getProperties() != null ? cpeNew.getProperties() : new HashMap<>();
                 newProps.put("description", "Internet");
-                newProps.put("administrativeState", "Allocated");
+                newProps.put("AdministrativeState", "Allocated");
 
                 Map<String, Object> oldProps = cpeOld.getProperties() != null ? cpeOld.getProperties() : new HashMap<>();
                 oldProps.put("description", null);
-                oldProps.put("administrativeState", "Available");
+                oldProps.put("AdministrativeState", "Available");
 
                 cpeNew.setProperties(newProps);
                 cpeOld.setProperties(oldProps);
@@ -350,7 +350,7 @@ public class ChangeTechnology implements HttpAction {
             Map<String, String> out = new HashMap<>();
             out.put("subscriptionName", subscriptionName);
             out.put("ontName", ontName);
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             return new ChangeTechnologyResponse("200", "ChangeTechnology executed successfully.", Instant.now().toString(), subscriptionName,ontName);
 
         } catch (Exception ex) {

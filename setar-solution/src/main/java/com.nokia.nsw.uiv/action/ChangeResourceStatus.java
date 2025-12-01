@@ -41,20 +41,20 @@ public class ChangeResourceStatus implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        System.out.println("------------Test Trace # 1--------------- ChangeResourceStatus started");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("------------Test Trace # 1--------------- ChangeResourceStatus started");
         ChangeResourceStatusRequest req = (ChangeResourceStatusRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getResourceSn(), "resourceSn");
                 Validations.validateMandatory(req.getResourceType(), "resourceType");
                 Validations.validateMandatory(req.getResourceStatus(), "resourceStatus");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
-                System.out.println("------------Test Trace # 2--------------- Missing param: " + bre.getMessage());
+                log.error("------------Test Trace # 2--------------- Missing param: " + bre.getMessage());
                 return new ChangeResourceStatusResponse(
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
@@ -67,7 +67,7 @@ public class ChangeResourceStatus implements HttpAction {
             String type = req.getResourceType();
             String targetStatus = req.getResourceStatus();
 
-            System.out.println("------------Test Trace # 3--------------- Inputs: SN=" + sn + ", Type=" + type + ", TargetStatus=" + targetStatus);
+            log.error("------------Test Trace # 3--------------- Inputs: SN=" + sn + ", Type=" + type + ", TargetStatus=" + targetStatus);
 
             // 2. Resolve states
             if (!("Available".equalsIgnoreCase(targetStatus) || "Deallocated".equalsIgnoreCase(targetStatus) || "Unknown".equalsIgnoreCase(targetStatus) || "NotApplicabe".equalsIgnoreCase(targetStatus))) {
@@ -81,12 +81,12 @@ public class ChangeResourceStatus implements HttpAction {
 
             // 3. Derive Device Name
             String devName = type + Constants.UNDER_SCORE  + sn;
-            System.out.println("------------Test Trace # 4--------------- Derived device name: " + devName);
+            log.error("------------Test Trace # 4--------------- Derived device name: " + devName);
 
             // 4. Locate device
             Optional<LogicalDevice> devOpt = stbRepo.findByDiscoveredName(devName);
             if (!devOpt.isPresent()) {
-                System.out.println("------------Test Trace # 5--------------- Device not found: " + devName);
+                log.error("------------Test Trace # 5--------------- Device not found: " + devName);
                 return new ChangeResourceStatusResponse(
                         "404",
                         ERROR_PREFIX + type + sn + " not found",
@@ -100,11 +100,11 @@ public class ChangeResourceStatus implements HttpAction {
             String model = device.getProperties().get("Model") == null ? "" : device.getProperties().get("Model").toString();
             String mac = device.getProperties().get("MacAddress") == null ? "" : device.getProperties().get("MacAddress").toString() ;
 
-            System.out.println("------------Test Trace # 6--------------- Device found. Current status=" + currentStatus);
+            log.error("------------Test Trace # 6--------------- Device found. Current status=" + currentStatus);
 
             // 5. Apply status change
             if (targetStatus.equalsIgnoreCase(currentStatus)) {
-                System.out.println("------------Test Trace # 7--------------- No change required");
+                log.error("------------Test Trace # 7--------------- No change required");
                 return new ChangeResourceStatusResponse(
                         "404",
                         ERROR_PREFIX + "No change required. Resource already in status " + targetStatus,
@@ -118,8 +118,8 @@ public class ChangeResourceStatus implements HttpAction {
             device.setProperties(deviceProps);
             stbRepo.save(device);
 
-            System.out.println("------------Test Trace # 8--------------- Device status updated to " + targetStatus);
-            log.info(Constants.ACTION_COMPLETED);
+            log.error("------------Test Trace # 8--------------- Device status updated to " + targetStatus);
+            log.error(Constants.ACTION_COMPLETED);
             // 6. Success response
             return new ChangeResourceStatusResponse(
                     "200",

@@ -51,7 +51,7 @@ public class DeleteIPTV implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         DeleteIPTVRequest request = (DeleteIPTVRequest) actionContext.getObject();
         String subscriberName = request.getSubscriberName();
         String productType = request.getProductType();
@@ -63,13 +63,13 @@ public class DeleteIPTV implements HttpAction {
         try {
             // Step 1: Validate mandatory parameters
             try{
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(subscriberName, "subscriberName");
                 Validations.validateMandatoryParams(productType, "productType");
                 Validations.validateMandatoryParams(productSubType, "productSubType");
                 Validations.validateMandatoryParams(serviceId, "serviceId");
                 Validations.validateMandatoryParams(ontSN, "ontSN");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             }catch (BadRequestException bre) {
                 return new DeleteIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
@@ -121,7 +121,7 @@ public class DeleteIPTV implements HttpAction {
                         try {
                             deviceRepository.findByDiscoveredName(res.getDiscoveredName()).ifPresent(dev -> {
                                 dev.getProperties().put("deviceGroupId", "");
-                                dev.getProperties().put("administrativeState", "Available");
+                                dev.getProperties().put("AdministrativeState", "Available");
                                 deviceRepository.save(dev);
                             });
                         } catch (Exception ignored) {}
@@ -154,7 +154,7 @@ public class DeleteIPTV implements HttpAction {
                     subscriptionRepository.delete(optSub.get());
                 }
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             // Step 9: Return success
             return successResponse(subscriptionName, ontName, "UIV action DeleteIPTV executed successfully.");
 

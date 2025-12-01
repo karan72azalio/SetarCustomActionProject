@@ -39,18 +39,18 @@ public class QueryONTPosition implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        System.out.println("------------Trace # 1--------------- QueryONTPosition started");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("------------Trace # 1--------------- QueryONTPosition started");
         QueryONTPositionRequest req = (QueryONTPositionRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getOntSn(), "ontSn");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
-                System.out.println("------------Trace # 2--------------- Missing param: " + bre.getMessage());
+                log.error("------------Trace # 2--------------- Missing param: " + bre.getMessage());
                 return new QueryONTPositionResponse(
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
@@ -60,14 +60,14 @@ public class QueryONTPosition implements HttpAction {
             }
 
             String ontSn = req.getOntSn();
-            System.out.println("------------Trace # 3--------------- Input ontSn=" + ontSn);
+            log.error("------------Trace # 3--------------- Input ontSn=" + ontSn);
 
             // 2. Build ONT Name and length check
             String ontName ="ONT" + ontSn;
-            System.out.println("------------Trace # 4--------------- Constructed ONT name: " + ontName);
+            log.error("------------Trace # 4--------------- Constructed ONT name: " + ontName);
 
             if (ontName.length() > 100) {
-                System.out.println("------------Trace # 5--------------- ONT name too long");
+                log.error("------------Trace # 5--------------- ONT name too long");
                 return new QueryONTPositionResponse(
                         "400",
                         ERROR_PREFIX + "ONT name too long.",
@@ -79,7 +79,7 @@ public class QueryONTPosition implements HttpAction {
             // 3. Locate ONT
             Optional<LogicalDevice> ontOpt = ontRepo.findByDiscoveredName(ontName);
             if (!ontOpt.isPresent()) {
-                System.out.println("------------Trace # 6--------------- No ONT found with name=" + ontName);
+                log.error("------------Trace # 6--------------- No ONT found with name=" + ontName);
                 return new QueryONTPositionResponse(
                         "404",
                         ERROR_PREFIX + "No ONT found.",
@@ -89,12 +89,12 @@ public class QueryONTPosition implements HttpAction {
             }
 
             LogicalDevice ont = ontOpt.get();
-            System.out.println("------------Trace # 7--------------- ONT found, checking linked OLT");
+            log.error("------------Trace # 7--------------- ONT found, checking linked OLT");
 
             Set<LogicalDevice> managingDevices =  ont.getManagingDevices();
             LogicalDevice olt = managingDevices.stream().findFirst().get();
             if (olt == null) {
-                System.out.println("------------Trace # 8--------------- No OLT linked to ONT=" + ontName);
+                log.error("------------Trace # 8--------------- No OLT linked to ONT=" + ontName);
                 return new QueryONTPositionResponse(
                         "404",
                         ERROR_PREFIX + "No ONT Object ID found.",
@@ -110,7 +110,7 @@ public class QueryONTPosition implements HttpAction {
             }
 
             if (objectId == null || objectId.isEmpty()) {
-                System.out.println("------------Trace # 9--------------- OLT Object ID is empty");
+                log.error("------------Trace # 9--------------- OLT Object ID is empty");
                 return new QueryONTPositionResponse(
                         "404",
                         ERROR_PREFIX + "No ONT Object ID found.",
@@ -119,10 +119,10 @@ public class QueryONTPosition implements HttpAction {
                 );
             }
 
-            System.out.println("------------Trace # 10--------------- Resolved OLT Object ID=" + objectId);
+            log.error("------------Trace # 10--------------- Resolved OLT Object ID=" + objectId);
 
             // 5. Success response
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             return new QueryONTPositionResponse(
                     "200",
                     "UIV action QueryONTPosition executed successfully.",

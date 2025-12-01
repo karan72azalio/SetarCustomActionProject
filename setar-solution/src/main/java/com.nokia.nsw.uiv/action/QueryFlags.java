@@ -62,8 +62,8 @@ public class QueryFlags implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        System.out.println("------------Test Trace # 1---------------");
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("------------Test Trace # 1---------------");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
 
         QueryFlagsRequest request = (QueryFlagsRequest) actionContext.getObject();
 
@@ -79,8 +79,8 @@ public class QueryFlags implements HttpAction {
         String serviceID = request.getServiceId();
 
         try {
-            log.info("------------Test Trace # 2---------------");
-            log.info("Validating mandatory parameters...");
+            log.error("------------Test Trace # 2---------------");
+            log.error("Validating mandatory parameters...");
             try {
                 Validations.validateMandatory(subscriber, "subscriberName");
                 Validations.validateMandatory(productType, "productType");
@@ -91,31 +91,31 @@ public class QueryFlags implements HttpAction {
                 String msg = ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage();
                 return new QueryFlagsResponse("400", msg, getCurrentTimestamp(), Collections.emptyMap());
             }
-            log.info("Mandatory validation completed.");
+            log.error("Mandatory validation completed.");
 
-            log.info("------------Test Trace # 3---------------");
+            log.error("------------Test Trace # 3---------------");
             if (!equalsIgnoreCase(productType, "VOIP") && !equalsIgnoreCase(productType, "Voice")) {
-                log.info("Trace: Non-voice product -> default VOIP ports to Available");
+                log.error("Trace: Non-voice product -> default VOIP ports to Available");
                 flags.put("SERVICE_VOIP_NUMBER1", "Available");
                 flags.put("SERVICE_VOIP_NUMBER2", "Available");
             }
 
-            log.info("------------Test Trace # 4---------------");
+            log.error("------------Test Trace # 4---------------");
             String serviceLink = "NA";
             if (ontSN != null) {
                 if (ontSN.startsWith("ALCL")) {
                     serviceLink = "ONT";
-                    log.info("Trace: ontSN startsWith ALCL -> serviceLink=ONT");
+                    log.error("Trace: ontSN startsWith ALCL -> serviceLink=ONT");
                 } else if (ontSN.startsWith("CW")) {
                     serviceLink = "SRX";
-                    log.info("Trace: ontSN startsWith CW -> serviceLink=SRX");
+                    log.error("Trace: ontSN startsWith CW -> serviceLink=SRX");
                 } else {
-                    log.info("Trace: ontSN pattern not recognized -> serviceLink=NA");
+                    log.error("Trace: ontSN pattern not recognized -> serviceLink=NA");
                 }
             }
             flags.put("SERVICE_LINK", serviceLink);
 
-            log.info("------------Test Trace # 5---------------");
+            log.error("------------Test Trace # 5---------------");
             boolean subtypeMatches = equalsAnyIgnoreCase(productSubType, "Broadband", "Voice", "Cloudstarter", "Bridged");
             if ((subtypeMatches || equalsIgnoreCase(productType, "ENTERPRISE"))
                     && !"Configure".equalsIgnoreCase(actionType)) {
@@ -167,14 +167,14 @@ public class QueryFlags implements HttpAction {
                             }
                         }
                     } catch (Exception e) {
-                        log.warn("RFS discovery best-effort failed: {}", e.getMessage());
+                        log.error("RFS discovery best-effort failed: {}", e.getMessage());
                     }
                 }
             }
 
-            log.info("------------Test Trace # 6---------------");
+            log.error("------------Test Trace # 6---------------");
             if (equalsIgnoreCase(productType, "VOIP") && equalsIgnoreCase(actionType, "Configure") && serviceID != null) {
-                log.info("Trace: VOIP Configure flow - checking voip device mapping");
+                log.error("Trace: VOIP Configure flow - checking voip device mapping");
                 String voipDeviceName = subscriber + Constants.UNDER_SCORE  + serviceID;
                 Optional<LogicalDevice> optVoip = deviceRepository.findByDiscoveredName(voipDeviceName);
 
@@ -184,13 +184,13 @@ public class QueryFlags implements HttpAction {
                     String pots2 = (String) p.getOrDefault("potsPort2Number", "");
                     if (serviceID.equals(pots1)) {
                         flags.put("VOICE_POTS_PORT", "1");
-                        log.info("Trace: VOIP pots mapped on port1");
+                        log.error("Trace: VOIP pots mapped on port1");
                     } else if (serviceID.equals(pots2)) {
                         flags.put("VOICE_POTS_PORT", "2");
-                        log.info("Trace: VOIP pots mapped on port2");
+                        log.error("Trace: VOIP pots mapped on port2");
                     }
                 } else {
-                    log.info("Trace: VOIP device not found by GDN - scanning all devices (best-effort)");
+                    log.error("Trace: VOIP device not found by GDN - scanning all devices (best-effort)");
                     for (LogicalDevice d : deviceRepository.findAll()) {
                         Map<String, Object> p = safeProps(d.getProperties());
                         if (serviceID.equals(p.getOrDefault("potsPort1Number", ""))) {
@@ -204,7 +204,7 @@ public class QueryFlags implements HttpAction {
                 }
             }
 
-            log.info("------------Test Trace # 7---------------");
+            log.error("------------Test Trace # 7---------------");
             boolean subscriberExists = customerRepository.findByDiscoveredName(subscriber).isPresent();
             List<Subscription> subsForCustomer = new ArrayList<>();
             List<Subscription> subs = (List<Subscription>) subscriptionRepository.findAll();
@@ -213,7 +213,7 @@ public class QueryFlags implements HttpAction {
                     subsForCustomer.add(s);
             }
             if (Arrays.asList("Unconfigure", "MoveOut", "ChangeTechnology", "AccountTransfer").contains(actionType)) {
-                log.info("Trace: Action in Unconfigure/MoveOut/ChangeTechnology/AccountTransfer");
+                log.error("Trace: Action in Unconfigure/MoveOut/ChangeTechnology/AccountTransfer");
                 if (subsForCustomer.size() <= 1) {
                     flags.put("ACCOUNT_EXIST", "New");
                     flags.put("SERVICE_FLAG", "New");
@@ -227,13 +227,13 @@ public class QueryFlags implements HttpAction {
                 });
                 flags.put("CBM_ACCOUNT_EXIST", anyCbm ? "Exist" : "New");
             } else if (!equalsIgnoreCase(actionType, "Configure") && ontSN != null && ontSN.contains("ALCL")) {
-                log.info("Trace: Configure with ALCL ONT -> check subscriber_ONT existence");
+                log.error("Trace: Configure with ALCL ONT -> check subscriber_ONT existence");
                 String subscriberWithOnt = subscriber + Constants.UNDER_SCORE  + ontSN;
                 boolean exists = customerRepository.findByDiscoveredName(subscriberWithOnt).isPresent();
                 flags.put("ACCOUNT_EXIST", exists ? "Exist" : "New");
                 flags.put("SERVICE_FLAG", exists ? "Exist" : "New");
             } else if (equalsIgnoreCase(actionType, "Migrate") && ontSN != null && ontSN.contains("ALCL")) {
-                log.info("Trace: Migrate with ALCL ONT -> default flags New, check subscriptions for existence");
+                log.error("Trace: Migrate with ALCL ONT -> default flags New, check subscriptions for existence");
                 flags.put("ACCOUNT_EXIST", "New");
                 flags.put("SERVICE_FLAG", "New");
                 String finalOntSN1 = ontSN;
@@ -248,7 +248,7 @@ public class QueryFlags implements HttpAction {
                     });
                 }
             } else {
-                log.info("Trace: Default account/service flag handling");
+                log.error("Trace: Default account/service flag handling");
                 flags.put("ACCOUNT_EXIST", subscriberExists ? "Exist" : "New");
                 boolean anyCbm = subsForCustomer.stream().anyMatch(s -> {
                     Object l = safeProps(s.getProperties()).get("serviceLink");
@@ -258,9 +258,9 @@ public class QueryFlags implements HttpAction {
                 flags.put("SERVICE_FLAG", subscriberExists ? "Exist" : "New");
             }
 
-            log.info("------------Test Trace # 8---------------");
+            log.error("------------Test Trace # 8---------------");
             if (ontSN != null && !"".equals(ontSN) && equalsIgnoreCase(productSubType, "IPTV") && equalsIgnoreCase(actionType, "Unconfigure")) {
-                log.info("Trace: IPTV Unconfigure path - searching subscription");
+                log.error("Trace: IPTV Unconfigure path - searching subscription");
                 String subGdn = subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
                 Optional<Subscription> optSub = subscriptionRepository.findByDiscoveredName(subGdn);
                 String ontSNO = "NA";
@@ -291,15 +291,15 @@ public class QueryFlags implements HttpAction {
                         }
                     }
                     flags.put("IPTV_COUNT", String.valueOf(iptvCount));
-                    log.info("Trace: IPTV count for ontSNO=" + ontSNO + " is " + iptvCount);
+                    log.error("Trace: IPTV count for ontSNO=" + ontSNO + " is " + iptvCount);
                 }
             }
 
-            log.info("------------Test Trace # 9---------------");
+            log.error("------------Test Trace # 9---------------");
             List<String> subscount = new ArrayList<>();
             if (equalsAnyIgnoreCase(productSubType, "Fibernet", "Broadband", "Voice", "Bridged")
                     || (equalsIgnoreCase(productType, "Broadband") && equalsIgnoreCase(productSubType, "Bridged"))) {
-                log.info("Trace: Searching subscriptions for fibernet/bridged related entries");
+                log.error("Trace: Searching subscriptions for fibernet/bridged related entries");
                 for (Subscription s : subscriptionRepository.findAll()) {
                     String name = s.getDiscoveredName() == null ? "" : s.getDiscoveredName();
                     if (ontSN != null && ontSN.contains("ALCL")) {
@@ -309,7 +309,7 @@ public class QueryFlags implements HttpAction {
                             if ("Bridged".equalsIgnoreCase((String) sp.getOrDefault("serviceSubType", "")) && name.contains(ontSN)) {
                                 String qos = (String) sp.getOrDefault("evpnQosSessionProfile", "");
                                 if (qos != null && !qos.isEmpty()) flags.put("QOS_PROFILE_BRIDGE", qos);
-                                log.info("Trace: Found bridged subscription with QOS profile: " + qos);
+                                log.error("Trace: Found bridged subscription with QOS profile: " + qos);
                             }
                         }
                     } else {
@@ -320,9 +320,9 @@ public class QueryFlags implements HttpAction {
                 }
             }
             flags.put("FIBERNET_COUNT", subscount.isEmpty() ? "0" : String.valueOf(subscount.size()));
-            log.info("Trace: Fibernet count = " + flags.get("FIBERNET_COUNT"));
+            log.error("Trace: Fibernet count = " + flags.get("FIBERNET_COUNT"));
 
-            log.info("------------Test Trace # 10---------------");
+            log.error("------------Test Trace # 10---------------");
             if (!equalsIgnoreCase(actionType, "Configure")) {
                 String subscriptionToSearch;
                 if (ontSN != null && ontSN.contains("ALCL")) {
@@ -330,7 +330,7 @@ public class QueryFlags implements HttpAction {
                 } else {
                     subscriptionToSearch = subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
                 }
-                log.info("Trace: Searching subscription by DN: " + subscriptionToSearch);
+                log.error("Trace: Searching subscription by DN: " + subscriptionToSearch);
                 Optional<Subscription> optFound = subscriptionRepository.findByDiscoveredName(subscriptionToSearch);
                 if (optFound.isPresent()) {
                     Subscription found = optFound.get();
@@ -364,7 +364,7 @@ public class QueryFlags implements HttpAction {
                             } else {
                                 flags.put("SERVICE_TEMPLATE_VOIP", "New");
                             }
-                            log.info("Trace: CBM inspected: mac=" + flags.get("CBM_MAC") + " voip1=" + flags.get("SERVICE_VOIP_NUMBER1"));
+                            log.error("Trace: CBM inspected: mac=" + flags.get("CBM_MAC") + " voip1=" + flags.get("SERVICE_VOIP_NUMBER1"));
                         } else {
                             String alt = "CBM" +(serviceID == null ? "" : serviceID);
                             deviceRepository.findByDiscoveredName(alt).ifPresent(dev -> {
@@ -376,15 +376,15 @@ public class QueryFlags implements HttpAction {
                 }
             }
 
-            log.info("------------Test Trace # 11---------------");
+            log.error("------------Test Trace # 11---------------");
             customerRepository.findByDiscoveredName(subscriber).ifPresent(cust -> {
                 Map<String, Object> cp = safeProps(cust.getProperties());
                 flags.put("FIRST_NAME", (String) cp.getOrDefault("subscriberFirstName", ""));
                 flags.put("LAST_NAME", (String) cp.getOrDefault("subscriberLastName", ""));
-                log.info("Trace: Subscriber info: " + flags.get("FIRST_NAME") + " " + flags.get("LAST_NAME"));
+                log.error("Trace: Subscriber info: " + flags.get("FIRST_NAME") + " " + flags.get("LAST_NAME"));
             });
 
-            log.info("------------Test Trace # 12---------------");
+            log.error("------------Test Trace # 12---------------");
             if ("ONT".equalsIgnoreCase(serviceLink) || "SRX".equalsIgnoreCase(serviceLink) || (ontSN != null && ontSN.contains("ALCL"))) {
                 String ontGdn = ontSN == null ? "" :"ONT" + ontSN;
                 if (ontGdn.length() > 100) {
@@ -397,7 +397,7 @@ public class QueryFlags implements HttpAction {
                     flags.put("ONT_MODEL", (String) ontProps.getOrDefault("deviceModel", ""));
                     flags.put("SERVICE_SN", (String) ontProps.getOrDefault("serialNo", ""));
                     flags.put("SERVICE_MAC", (String) ontProps.getOrDefault("macAddress", ""));
-                    log.info("Trace: ONT found: model=" + flags.get("ONT_MODEL") + " sn=" + flags.get("SERVICE_SN"));
+                    log.error("Trace: ONT found: model=" + flags.get("ONT_MODEL") + " sn=" + flags.get("SERVICE_SN"));
 
                     Object parentOltObj = ontProps.get("parentOlt");
                     if (parentOltObj != null) {
@@ -411,7 +411,7 @@ public class QueryFlags implements HttpAction {
                             flags.put("SERVICE_TEMPLATE_VOIP", existsString(oltProps.get("voipServiceTemplate")));
                             flags.put("SERVICE_TEMPLATE_POTS1", existsString(oltProps.get("voipPots1Template")));
                             flags.put("SERVICE_TEMPLATE_POTS2", existsString(oltProps.get("voipPots2Template")));
-                            log.info("Trace: OLT templates checked for OLT=" + oltGdn);
+                            log.error("Trace: OLT templates checked for OLT=" + oltGdn);
                         });
                     }
 
@@ -428,12 +428,12 @@ public class QueryFlags implements HttpAction {
                             Object tmpl = vp.get("template");
                             if ("4.3B EVPN SINGLETAGGED VLAN v2".equalsIgnoreCase(String.valueOf(tmpl))) {
                                 flags.put("SERVICE_TEMPLATE_MGMT", "4.3B EVPN SINGLETAGGED VLAN v2");
-                                log.info("Trace: VLAN " + vl + " uses management template " + vp.get("template"));
+                                log.error("Trace: VLAN " + vl + " uses management template " + vp.get("template"));
                             }
                         });
                     }
                 } else {
-                    log.info("Trace: ONT device not found by GDN: " + ontGdn);
+                    log.error("Trace: ONT device not found by GDN: " + ontGdn);
                 }
             } else if ("Cable_Modem".equalsIgnoreCase(serviceLink) || equalsIgnoreCase(productType, "CBM")) {
                 boolean iptvExists = false, veipExists = false;
@@ -444,12 +444,12 @@ public class QueryFlags implements HttpAction {
                 }
                 flags.put("SERVICE_TEMPLATE_IPTV", iptvExists ? "Exist" : "New");
                 flags.put("SERVICE_TEMPLATE_VEIP", veipExists ? "Exist" : "New");
-                log.info("Trace: CBM path: IPTV exist=" + flags.get("SERVICE_TEMPLATE_IPTV") + " VEIP exist=" + flags.get("SERVICE_TEMPLATE_VEIP"));
+                log.error("Trace: CBM path: IPTV exist=" + flags.get("SERVICE_TEMPLATE_IPTV") + " VEIP exist=" + flags.get("SERVICE_TEMPLATE_VEIP"));
             }
 
-            log.info("------------Test Trace # 13---------------");
+            log.error("------------Test Trace # 13---------------");
             if (Arrays.asList("AccountTransfer", "MoveOut", "ChangeTechnology", "Unconfigure").contains(actionType) || (actionType != null && actionType.contains("Modify_CPE"))) {
-                log.info("Trace: IPTV service ID list discovery path");
+                log.error("Trace: IPTV service ID list discovery path");
                 List<String> iptvIds = new ArrayList<>();
                 if ("ONT".equalsIgnoreCase(serviceLink)) {
                     for (Subscription s : subscriptionRepository.findAll()) {
@@ -478,13 +478,13 @@ public class QueryFlags implements HttpAction {
                     }
                 }
                 flags.put("IPTV_COUNT", String.valueOf(iptvIds.size()));
-                log.info("Trace: IPTV IDs discovered count = " + iptvIds.size());
+                log.error("Trace: IPTV IDs discovered count = " + iptvIds.size());
             }
 
-            log.info("------------Test Trace # 14---------------");
+            log.error("------------Test Trace # 14---------------");
             if ((equalsAnyIgnoreCase(productType, "EVPN", "ENTERPRISE") || equalsAnyIgnoreCase(productSubType, "Cloudstarter", "Bridged"))
                     && (equalsAnyIgnoreCase(actionType, "Configure", "Migrate"))) {
-                log.info("Trace: Evaluating template requirements for EVPN/Enterprise/Cloudstarter/Bridged");
+                log.error("Trace: Evaluating template requirements for EVPN/Enterprise/Cloudstarter/Bridged");
                 String oltPos = flags.getOrDefault("OLT_POSITION", "");
                 if (!oltPos.isEmpty()) {
                     String oltPosGdn = Validations.getGlobalName(oltPos);
@@ -494,7 +494,7 @@ public class QueryFlags implements HttpAction {
                         flags.put("SERVICE_PORT3_EXIST", existsString(oltProps.get("port3Template")));
                         flags.put("SERVICE_PORT4_EXIST", existsString(oltProps.get("port4Template")));
                         flags.put("SERVICE_PORT5_EXIST", existsString(oltProps.get("port5Template")));
-                        log.info("Trace: OLT port templates checked for OLT=" + oltPos);
+                        log.error("Trace: OLT port templates checked for OLT=" + oltPos);
                     });
                 }
                 if (ontPort != null) {
@@ -506,14 +506,14 @@ public class QueryFlags implements HttpAction {
                 }
             }
 
-            log.info("------------Test Trace # 15---------------");
+            log.error("------------Test Trace # 15---------------");
             flags.putIfAbsent("SERVICE_EXIST", "Exist");
             flags.putIfAbsent("SERVICE_IPTV_EXIST", flags.getOrDefault("SERVICE_TEMPLATE_IPTV", "New"));
             flags.putIfAbsent("QOS_PROFILE", flags.getOrDefault("QOS_PROFILE", ""));
 
-            log.info("------------Test Trace # 16---------------");
-            log.info(Constants.ACTION_COMPLETED);
-            log.info("Trace: QueryFlags completed - returning flags map with " + flags.size() + " entries");
+            log.error("------------Test Trace # 16---------------");
+            log.error(Constants.ACTION_COMPLETED);
+            log.error("Trace: QueryFlags completed - returning flags map with " + flags.size() + " entries");
             return new QueryFlagsResponse("200", "UIV action QueryFlags executed successfully.", getCurrentTimestamp(), flags);
 
         } catch (Exception ex) {

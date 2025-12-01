@@ -50,7 +50,7 @@ public class DetachResources implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.info("Executing action: {}", ACTION_LABEL);
+        log.error("Executing action: {}", ACTION_LABEL);
 
         DetachResourcesRequest request = (DetachResourcesRequest) actionContext.getObject();
         String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceID();
@@ -60,7 +60,7 @@ public class DetachResources implements HttpAction {
 
         try {
             // 1. Mandatory validation
-            log.info("Validating mandatory parameters...");
+            log.error("Validating mandatory parameters...");
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getOntSN(), "ontSN");
             Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
@@ -133,7 +133,7 @@ public class DetachResources implements HttpAction {
             if (isSTB) {
                 device.getProperties().put("deviceGroupId", "");
             }
-            device.getProperties().put("administrativeState", "Available");
+            device.getProperties().put("AdministrativeState", "Available");
             device.getProperties().put("description", "");
             device.setContained(null);
             deviceRepository.save(device, 2);

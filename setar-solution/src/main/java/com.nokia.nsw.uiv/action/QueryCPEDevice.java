@@ -43,14 +43,14 @@ public class QueryCPEDevice implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         QueryCPEDeviceRequest request = (QueryCPEDeviceRequest) actionContext.getObject();
         // 1. Mandatory validation
         try {
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             validateMandatory(request.getResourceSN(), "resourceSN");
             validateMandatory(request.getResourceType(), "resourceType");
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return new QueryCPEDeviceResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                     java.time.Instant.now().toString());
@@ -113,7 +113,7 @@ public class QueryCPEDevice implements HttpAction {
             }
         }
 
-        log.info(Constants.ACTION_COMPLETED);
+        log.error(Constants.ACTION_COMPLETED);
         return response;
     }
     private void validateMandatory(String val, String name) throws BadRequestException {

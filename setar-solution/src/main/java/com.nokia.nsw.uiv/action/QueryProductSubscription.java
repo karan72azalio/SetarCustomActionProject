@@ -39,12 +39,12 @@ public class QueryProductSubscription implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn("Executing action: {}", ACTION_LABEL);
+        log.error("Executing action: {}", ACTION_LABEL);
 
         QueryProductSubscriptionRequest request = (QueryProductSubscriptionRequest) actionContext.getObject();
 
         try {
-            log.info("Mandatory parameter validation started...");
+            log.error("Mandatory parameter validation started...");
             try{
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
@@ -56,7 +56,7 @@ public class QueryProductSubscription implements HttpAction {
             }
 
 
-            log.info("Mandatory parameter validation completed");
+            log.error("Mandatory parameter validation completed");
 
             // ================== Construct Product Name ==================
             String subscriberName = request.getSubscriberName();
@@ -74,7 +74,7 @@ public class QueryProductSubscription implements HttpAction {
                 Product product = optProduct.get();
                 String productId = (String) product.getProperties().getOrDefault("productId", "");
 
-                log.info("Product Subscription found: {} with ID {}", productName, productId);
+                log.error("Product Subscription found: {} with ID {}", productName, productId);
 
                 return new QueryProductSubscriptionResponse(
                         "200",

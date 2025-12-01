@@ -58,7 +58,7 @@ public class ModifySubscriber implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        System.out.println("------------Test Trace # 1--------------- ModifySubscriber started");
+        log.error("------------Test Trace # 1--------------- ModifySubscriber started");
         ModifySubscriberRequest req = (ModifySubscriberRequest) actionContext.getObject();
 
         try {
@@ -67,7 +67,7 @@ public class ModifySubscriber implements HttpAction {
                 Validations.validateMandatory(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatory(req.getSubscriberNameOld(), "subscriberNameOld");
             } catch (Exception bre) {
-                System.out.println("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
+                log.error("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
                 return new ModifySubscriberResponse(
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
@@ -78,7 +78,7 @@ public class ModifySubscriber implements HttpAction {
             String oldSubscriberName = req.getSubscriberNameOld();
             String newSubscriberName = req.getSubscriberName();
 
-            System.out.println("------------Test Trace # 3--------------- old=" + oldSubscriberName + ", new=" + newSubscriberName);
+            log.error("------------Test Trace # 3--------------- old=" + oldSubscriberName + ", new=" + newSubscriberName);
 
             boolean updatesApplied = false;
 
@@ -92,13 +92,13 @@ public class ModifySubscriber implements HttpAction {
                     cfsList.add(cfs);
                 }
             }
-            System.out.println("------------Test Trace # 4--------------- CFS candidates found: " + cfsList.size());
+            log.error("------------Test Trace # 4--------------- CFS candidates found: " + cfsList.size());
 
             for (CustomerFacingService cfs : cfsList) {
                 String cfsName = cfs.getDiscoveredName();
                 if (!cfsName.contains(oldSubscriberName)) continue;
 
-                System.out.println("------------Test Trace # 5--------------- Processing CFS: " + cfsName);
+                log.error("------------Test Trace # 5--------------- Processing CFS: " + cfsName);
                 log.error("CFS found with old subscriber name: "+cfsName);
                 // Derive RFS name
                 String rfsName = cfsName.replace("CFS", "RFS");
@@ -121,7 +121,7 @@ public class ModifySubscriber implements HttpAction {
 
                 if (newCustOpt.isPresent()) {
                     Customer newCust = newCustOpt.get();
-                    System.out.println("------------Test Trace # 6--------------- New subscriber found: " + newCust.getLocalName());
+                    log.error("------------Test Trace # 6--------------- New subscriber found: " + newCust.getLocalName());
                     log.error("subscriber found with new subscriber name: "+newSubscriberName);
 
                     // Update subscription
@@ -133,7 +133,7 @@ public class ModifySubscriber implements HttpAction {
                         log.error("subscription updated successfully with the updated name: "+newSubName);
                         subscriptionCustomRepo.save(subs);
                         updatesApplied = true;
-                        System.out.println("------------Test Trace # 7--------------- Subscription updated: " + newSubName);
+                        log.error("------------Test Trace # 7--------------- Subscription updated: " + newSubName);
                     }
 
                     // Update product
@@ -145,11 +145,11 @@ public class ModifySubscriber implements HttpAction {
                         log.error("product updated successfully with the updated name: "+newProdName);
                         productCustomRepo.save(prod);
                         updatesApplied = true;
-                        System.out.println("------------Test Trace # 8--------------- Product updated: " + newProdName);
+                        log.error("------------Test Trace # 8--------------- Product updated: " + newProdName);
                     }
 
                 } else {
-                    System.out.println("------------Test Trace # 9--------------- New subscriber not found → fallback mode");
+                    log.error("------------Test Trace # 9--------------- New subscriber not found → fallback mode");
                     if (oldCustOpt.isPresent()) {
                         Customer oldCust = oldCustOpt.get();
                         String newName;
@@ -167,7 +167,7 @@ public class ModifySubscriber implements HttpAction {
 
                         customerRepo.save(oldCust);
                         updatesApplied = true;
-                        System.out.println("------------Test Trace # 11--------------- Subscriber updated (fallback): " + newName);
+                        log.error("------------Test Trace # 11--------------- Subscriber updated (fallback): " + newName);
                     }
                     // Fallback: update subscription, subscriber, product with renaming
                     if (subsOpt.isPresent()) {
@@ -177,7 +177,7 @@ public class ModifySubscriber implements HttpAction {
                         log.error("subscription updated successfully with the updated name: "+newSubName);
                         subscriptionCustomRepo.save(subs);
                         updatesApplied = true;
-                        System.out.println("------------Test Trace # 10--------------- Subscription renamed (fallback): " + newSubName);
+                        log.error("------------Test Trace # 10--------------- Subscription renamed (fallback): " + newSubName);
                     }
 
                     if (productOpt.isPresent()) {
@@ -187,7 +187,7 @@ public class ModifySubscriber implements HttpAction {
                         log.error("product updated successfully with the updated name: "+newProdName);
                         productCustomRepo.save(prod);
                         updatesApplied = true;
-                        System.out.println("------------Test Trace # 12--------------- Product updated (fallback): " + newProdName);
+                        log.error("------------Test Trace # 12--------------- Product updated (fallback): " + newProdName);
                     }
                 }
                 // Update CFS
@@ -198,7 +198,7 @@ public class ModifySubscriber implements HttpAction {
                 cfsRepo.save(cfs);
                 updatesApplied = true;
                 log.error("update applied successfully");
-                System.out.println("------------Test Trace # 14--------------- CFS updated: " + newCfsName);
+                log.error("------------Test Trace # 14--------------- CFS updated: " + newCfsName);
 
                 // Update RFS
                 if (rfsOpt.isPresent()) {
@@ -209,7 +209,7 @@ public class ModifySubscriber implements HttpAction {
                     log.error("RFS updated successfully with the updated name: "+newRfsName);
                     rfsRepo.save(rfs);
                     updatesApplied = true;
-                    System.out.println("------------Test Trace # 13--------------- RFS updated: " + newRfsName);
+                    log.error("------------Test Trace # 13--------------- RFS updated: " + newRfsName);
                 }
 
 

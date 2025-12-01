@@ -49,21 +49,21 @@ public class AssociateResources implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        log.info("Executing AssociateResources action...");
-        System.out.println("----Trace #1: Entered AssociateResources Action ----");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("Executing AssociateResources action...");
+        log.error("----Trace #1: Entered AssociateResources Action ----");
 
         AssociateResourcesRequest request = (AssociateResourcesRequest) actionContext.getObject();
 
         try {
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             // Step 1: Mandatory validations
-            System.out.println("----Trace #2: Validating mandatory params ----");
+            log.error("----Trace #2: Validating mandatory params ----");
             try {
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new AssociateResourcesResponse(
                         "400",
@@ -77,7 +77,7 @@ public class AssociateResources implements HttpAction {
             String subscriberName = request.getSubscriberName();
             String subscriptionName;
             String rfsName;
-            System.out.println("----Trace #3: Preparing entity names ----");
+            log.error("----Trace #3: Preparing entity names ----");
             if ("IPTV".equalsIgnoreCase(request.getProductSubType())) {
                 subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceId();
                 rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
@@ -97,7 +97,7 @@ public class AssociateResources implements HttpAction {
             }
 
             // Step 3: Retrieve RFS and Admin State
-            System.out.println("----Trace #4: Retrieving RFS and AdminState ----");
+            log.error("----Trace #4: Retrieving RFS and AdminState ----");
             Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
             if (!optRfs.isPresent()) {
                 return new AssociateResourcesResponse(
@@ -111,7 +111,7 @@ public class AssociateResources implements HttpAction {
             // Step 4: IPTV logic
             boolean deviceUpdated = false;
             if ("IPTV".equalsIgnoreCase(request.getProductSubType())) {
-                System.out.println("----Trace #5: Executing IPTV device association ----");
+                log.error("----Trace #5: Executing IPTV device association ----");
 
                 // STBs
                 String[] stbSerials = {
@@ -138,7 +138,7 @@ public class AssociateResources implements HttpAction {
                     String sn = stbSerials[i];
                     if (sn != null && !"NA".equalsIgnoreCase(sn) && !sn.isEmpty()) {
                         String devName = "STB_" + sn;
-                        System.out.println("----Trace #6: Processing STB device: " + devName + " ----");
+                        log.error("----Trace #6: Processing STB device: " + devName + " ----");
                         Optional<LogicalDevice> optDev = deviceRepository.findByDiscoveredName(devName);
                         if (!optDev.isPresent()) {
                             return new AssociateResourcesResponse(
@@ -166,7 +166,7 @@ public class AssociateResources implements HttpAction {
                 for (String sn : apSerials) {
                     if (sn != null && !"NA".equalsIgnoreCase(sn) && !sn.isEmpty()) {
                         String devName = "AP_" + sn;
-                        System.out.println("----Trace #7: Processing AP device: " + devName + " ----");
+                        log.error("----Trace #7: Processing AP device: " + devName + " ----");
                         Optional<LogicalDevice> optDev = deviceRepository.findByDiscoveredName(devName);
                         if (!optDev.isPresent()) {
                             return new AssociateResourcesResponse(
@@ -187,7 +187,7 @@ public class AssociateResources implements HttpAction {
                 }
             } else {
                 // Step 6: Non-IPTV (ONT/CBM)
-                System.out.println("----Trace #8: Executing Non-IPTV device association ----");
+                log.error("----Trace #8: Executing Non-IPTV device association ----");
                 String devName = null;
                 if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
                     devName ="ONT" + request.getOntSN();
@@ -222,8 +222,8 @@ public class AssociateResources implements HttpAction {
                 Map<String,Object> rfsProps = rfs.getProperties();
                 rfsProps.put("transactionId",request.getFxOrderID());
                 rfsRepository.save(rfs,2);
-                System.out.println("----Trace #9: Saving RFS changes ----");
-                log.info(Constants.ACTION_COMPLETED);
+                log.error("----Trace #9: Saving RFS changes ----");
+                log.error(Constants.ACTION_COMPLETED);
                 return new AssociateResourcesResponse(
                         "200",
                         "UIV action AssociateResources executed successfully.",

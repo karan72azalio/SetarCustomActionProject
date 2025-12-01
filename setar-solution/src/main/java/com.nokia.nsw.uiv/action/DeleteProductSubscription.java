@@ -45,12 +45,12 @@ public class DeleteProductSubscription implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn("Executing action: {}", ACTION_LABEL);
+        log.error("Executing action: {}", ACTION_LABEL);
 
         DeleteProductSubscriptionRequest request = (DeleteProductSubscriptionRequest) actionContext.getObject();
 
         try {
-            log.info("Mandatory parameter validation started...");
+            log.error("Mandatory parameter validation started...");
             try{
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
@@ -60,7 +60,7 @@ public class DeleteProductSubscription implements HttpAction {
                 return new DeleteProductSubscriptionResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         Instant.now().toString(), "");
             }
-            log.info("Mandatory parameter validation completed");
+            log.error("Mandatory parameter validation completed");
 
             // ========== Construct Product Name ==========
             String subscriberName = request.getSubscriberName();
@@ -80,9 +80,9 @@ public class DeleteProductSubscription implements HttpAction {
                     rfs.getProperties().put("transactionType", "DeleteProductSubscription");
                     rfs.getProperties().put("transactionId", request.getFxOrderID());
                     rfsRepository.save(rfs);
-                    log.info("RFS updated successfully for {}", rfsName);
+                    log.error("RFS updated successfully for {}", rfsName);
                 } else {
-                    log.warn("No RFS found for name {}", rfsName);
+                    log.error("No RFS found for name {}", rfsName);
                 }
             }
 
@@ -92,7 +92,7 @@ public class DeleteProductSubscription implements HttpAction {
             if (optProduct.isPresent()) {
                 Product product = optProduct.get();
                 productRepository.delete(product);
-                log.info("Deleted Product Subscription {}", productName);
+                log.error("Deleted Product Subscription {}", productName);
 
                 return new DeleteProductSubscriptionResponse(
                         "200",

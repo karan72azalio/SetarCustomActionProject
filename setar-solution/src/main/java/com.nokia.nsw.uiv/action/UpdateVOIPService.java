@@ -43,19 +43,19 @@ public class UpdateVOIPService implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        log.info("Executing UpdateVOIPService...");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("Executing UpdateVOIPService...");
         UpdateVOIPServiceRequest req = (UpdateVOIPServiceRequest) actionContext.getObject();
 
         try {
             // Step 1: Validate mandatory params
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(req.getOntSN(), "ontSN");
                 Validations.validateMandatoryParams(req.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(req.getSimaSubsId(), "simaSubsId");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new UpdateVOIPServiceResponse(
                         "400",
@@ -142,7 +142,7 @@ public class UpdateVOIPService implements HttpAction {
 
             // Step 8: Final Response
             if (updatedFlag) {
-                log.info(Constants.ACTION_COMPLETED);
+                log.error(Constants.ACTION_COMPLETED);
                 return new UpdateVOIPServiceResponse(
                         "200",
                         "UIV action UpdateVOIPService executed successfully.",

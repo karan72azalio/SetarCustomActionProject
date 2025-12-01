@@ -59,21 +59,21 @@ public class ModifySPR implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
 
         ModifySPRRequest request = (ModifySPRRequest) actionContext.getObject();
         boolean success = false;
 
         try {
             // 1. Mandatory Validations
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "SUBSCRIBER_NAME");
             Validations.validateMandatoryParams(request.getProductType(), "PRODUCT_TYPE");
             Validations.validateMandatoryParams(request.getProductSubtype(), "PRODUCT_SUB_TYPE");
             Validations.validateMandatoryParams(request.getOntSN(), "ONT_SN");
             Validations.validateMandatoryParams(request.getServiceId(), "SERVICE_ID");
             Validations.validateMandatoryParams(request.getModifyType(), "MODIFY_TYPE");
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             // 2. Name Construction
             String subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getOntSN();
@@ -104,7 +104,7 @@ public class ModifySPR implements HttpAction {
 
             // 5. Response
             if (success) {
-                log.info(Constants.ACTION_COMPLETED);
+                log.error(Constants.ACTION_COMPLETED);
                 return new ModifySPRResponse("200", "UIV action ModifySPR executed successfully.", getCurrentTimestamp(),
                         ontName, subscriptionName);
             } else {

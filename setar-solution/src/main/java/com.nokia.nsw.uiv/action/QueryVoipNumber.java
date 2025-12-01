@@ -42,16 +42,16 @@ public class QueryVoipNumber implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         QueryVoipNumberRequest req = (QueryVoipNumberRequest) actionContext.getObject();
-        log.info("Executing QueryVoipNumber action...");
+        log.error("Executing QueryVoipNumber action...");
 
         try {
             // Step 1: Mandatory validation
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getOntSN(), "ontSN");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new QueryVoipNumberResponse(
                         "400",
@@ -117,7 +117,7 @@ public class QueryVoipNumber implements HttpAction {
 
                 }else {
                     // Step 6: Retrieve Subscription by Search on Identifiers (Fallback Path)
-                    log.info("Executing fallback subscription search for linkType: {}", linkType);
+                    log.error("Executing fallback subscription search for linkType: {}", linkType);
 
                     ArrayList<Subscription> allSubscriptions = (ArrayList<Subscription>) subscriptionRepo.findAll();
                     ArrayList<Subscription> matchedSubs = new ArrayList<>();
@@ -153,7 +153,7 @@ public class QueryVoipNumber implements HttpAction {
                         }
                     }
 
-                    log.info("Fallback search found {} matching subscriptions", matchedSubs.size());
+                    log.error("Fallback search found {} matching subscriptions", matchedSubs.size());
 
                     // 0 → No SIMA ID found
                     if (matchedSubs.isEmpty()) {
@@ -195,12 +195,12 @@ public class QueryVoipNumber implements HttpAction {
                         }
                     } else {
                         // If more than 2 → take only first two
-                        log.warn("More than two subscriptions found. Only first two will be considered.");
+                        log.error("More than two subscriptions found. Only first two will be considered.");
                     }
                 }
 
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             // Step 7: Final response
             if (simaCustId != null && !simaCustId.isEmpty()) {
                 return new QueryVoipNumberResponse(

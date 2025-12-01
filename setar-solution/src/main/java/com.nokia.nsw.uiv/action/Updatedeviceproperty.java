@@ -40,19 +40,19 @@ public class Updatedeviceproperty implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        System.out.println("------------Test Trace # 1--------------- Updatedeviceproperty started");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("------------Test Trace # 1--------------- Updatedeviceproperty started");
         UpdatedevicepropertyRequest req = (UpdatedevicepropertyRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getStbSn1(), "stbSn1");
                 Validations.validateMandatory(req.getCustomerGroupId(), "customerGroupId");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
-                System.out.println("------------Test Trace # 2--------------- Missing param: " + bre.getMessage());
+                log.error("------------Test Trace # 2--------------- Missing param: " + bre.getMessage());
                 return new UpdatedevicepropertyResponse(
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
@@ -63,16 +63,16 @@ public class Updatedeviceproperty implements HttpAction {
 
             String stbSn = req.getStbSn1();
             String custGroupId = req.getCustomerGroupId();
-            System.out.println("------------Test Trace # 3--------------- Inputs: stbSn=" + stbSn + ", customerGroupId=" + custGroupId);
+            log.error("------------Test Trace # 3--------------- Inputs: stbSn=" + stbSn + ", customerGroupId=" + custGroupId);
 
             // 2. Derive device name
             String stbName = "STB_" + stbSn;
-            System.out.println("------------Test Trace # 4--------------- Derived device name: " + stbName);
+            log.error("------------Test Trace # 4--------------- Derived device name: " + stbName);
 
             // 3. Locate STB
             Optional<LogicalDevice> stbOpt = stbRepo.findByDiscoveredName(stbName);
             if (!stbOpt.isPresent()) {
-                System.out.println("------------Test Trace # 5--------------- STB not found: " + stbName);
+                log.error("------------Test Trace # 5--------------- STB not found: " + stbName);
                 return new UpdatedevicepropertyResponse(
                         "404",
                         ERROR_PREFIX + "Error, No STB found with Allocated state to update.",
@@ -84,11 +84,11 @@ public class Updatedeviceproperty implements HttpAction {
 
             LogicalDevice stb = stbOpt.get();
             String currentState = stb.getProperties().get("administrativeState")!=null?stb.getProperties().get("administrativeState").toString():null;
-            System.out.println("------------Test Trace # 6--------------- STB found. Current state=" + currentState);
+            log.error("------------Test Trace # 6--------------- STB found. Current state=" + currentState);
 
             // 4. Validate Allocated state
             if (!"Available".equalsIgnoreCase(currentState)) {
-                System.out.println("------------Test Trace # 7--------------- STB not in Allocated state");
+                log.error("------------Test Trace # 7--------------- STB not in Allocated state");
                 return new UpdatedevicepropertyResponse(
                         "404",
                         ERROR_PREFIX + "Error, No STB found with Activated state to update.",
@@ -103,8 +103,8 @@ public class Updatedeviceproperty implements HttpAction {
             props.put("DeviceGroupId",custGroupId);
             stb.setProperties(props);
             stbRepo.save(stb);
-            System.out.println("------------Test Trace # 8--------------- CustomerGroupId updated to " + custGroupId);
-            log.info(Constants.ACTION_COMPLETED);
+            log.error("------------Test Trace # 8--------------- CustomerGroupId updated to " + custGroupId);
+            log.error(Constants.ACTION_COMPLETED);
             // 6. Success response
             return new UpdatedevicepropertyResponse(
                     "200",

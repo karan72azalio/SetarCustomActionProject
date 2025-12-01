@@ -53,9 +53,9 @@ public class AccountTransferByServiceID implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         AccountTransferByServiceIDRequest req = (AccountTransferByServiceIDRequest) actionContext.getObject();
-        System.out.println("------Trace #1: Starting AccountTransferByServiceID");
+        log.error("------Trace #1: Starting AccountTransferByServiceID");
 
         try {
             // Step 1: Mandatory validations
@@ -64,7 +64,7 @@ public class AccountTransferByServiceID implements HttpAction {
                     || req.getServiceId() == null || req.getServiceId().isEmpty()) {
                 return errorResponse("400", "Missing mandatory parameter(s)");
             }
-            System.out.println("------Trace #2: Validated mandatory params");
+            log.error("------Trace #2: Validated mandatory params");
 
             String oldSubscriberName = req.getSubscriberNameOld();
             String subscriberName = req.getSubscriberName();
@@ -86,7 +86,7 @@ public class AccountTransferByServiceID implements HttpAction {
             if (cfsList.isEmpty()) {
                 return errorResponse("404", "No entry found for update");
             }
-            System.out.println("------Trace #3: Matching CFS found count=" + cfsList.size());
+            log.error("------Trace #3: Matching CFS found count=" + cfsList.size());
 
             boolean updated = false;
             Product childProd = null;
@@ -194,7 +194,7 @@ public class AccountTransferByServiceID implements HttpAction {
             if (!updated) {
                 return errorResponse("404", "Error, No Account found");
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             AccountTransferByServiceIDResponse resp = new AccountTransferByServiceIDResponse();
             resp.setStatus("200");
             resp.setMessage("AccountNumber successfully updated executed successfully.");

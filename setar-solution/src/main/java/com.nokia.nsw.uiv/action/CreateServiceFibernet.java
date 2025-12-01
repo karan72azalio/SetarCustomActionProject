@@ -67,19 +67,19 @@ public class CreateServiceFibernet implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         CreateServiceFibernetRequest request = (CreateServiceFibernetRequest) actionContext.getObject();
 
         try {
             // 1. Validate mandatory params
             try{
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatory(request.getServiceID(), "serviceID");
                 Validations.validateMandatory(request.getOntSN(), "ontSN");
                 Validations.validateMandatory(request.getProductType(), "productType");
                 Validations.validateMandatory(request.getProductSubtype(), "productSubtype");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
                 return new CreateServiceFibernetResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         Instant.now().toString(), "","");
@@ -117,7 +117,7 @@ public class CreateServiceFibernet implements HttpAction {
             Customer subscriber;
             if (optCustomer.isPresent()) {
                 subscriber = optCustomer.get();
-                log.info("Found existing subscriber: {}", subscriberName);
+                log.error("Found existing subscriber: {}", subscriberName);
                 return new CreateServiceFibernetResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,ontName);
             } else {
                 subscriber = new Customer();
@@ -135,7 +135,7 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getHhid() != null) custProps.put("houseHoldId", request.getHhid());
                 subscriber.setProperties(custProps);
                 customerRepository.save(subscriber, 2);
-                log.info("Created subscriber: {}", subscriberName);
+                log.error("Created subscriber: {}", subscriberName);
             }
 
             // 3. Subscription: create or fetch (stored as LogicalComponent or service in your model — here we use Subscription entity)
@@ -143,7 +143,7 @@ public class CreateServiceFibernet implements HttpAction {
             Subscription subscription;
             if (optSubscription.isPresent()) {
                 subscription = optSubscription.get();
-                log.info("Found existing subscription: {}", subscriptionName);
+                log.error("Found existing subscription: {}", subscriptionName);
             } else {
                 subscription = new Subscription();
                 subscription.setLocalName(Validations.encryptName(subscriptionName));
@@ -160,7 +160,7 @@ public class CreateServiceFibernet implements HttpAction {
                 subscription.setProperties(subProps);
                 subscription.setCustomer(subscriber);
                 subscriptionRepository.save(subscription, 2);
-                log.info("Created subscription: {}", subscriptionName);
+                log.error("Created subscription: {}", subscriptionName);
             }
 
             // 4. Product: create or fetch
@@ -168,7 +168,7 @@ public class CreateServiceFibernet implements HttpAction {
             Product product;
             if (optProduct.isPresent()) {
                 product = optProduct.get();
-                log.info("Found existing product: {}", productName);
+                log.error("Found existing product: {}", productName);
             } else {
                 product = new Product();
                 product.setLocalName(Validations.encryptName(productName));
@@ -181,7 +181,7 @@ public class CreateServiceFibernet implements HttpAction {
                 product.setProperties(prodProps);
                 product.setSubscription(subscription);
                 productRepository.save(product, 2);
-                log.info("Created product: {}", productName);
+                log.error("Created product: {}", productName);
             }
 
             // 5. CFS: create or fetch
@@ -189,7 +189,7 @@ public class CreateServiceFibernet implements HttpAction {
             CustomerFacingService cfs;
             if (optCfs.isPresent()) {
                 cfs = optCfs.get();
-                log.info("Found existing CFS: {}", cfsName);
+                log.error("Found existing CFS: {}", cfsName);
             } else {
                 cfs = new CustomerFacingService();
                 cfs.setLocalName(Validations.encryptName(cfsName));
@@ -202,7 +202,7 @@ public class CreateServiceFibernet implements HttpAction {
                 cfs.setProperties(cfsProps);
                 cfs.setContainingProduct(product);
                 cfsRepository.save(cfs, 2);
-                log.info("Created CFS: {}", cfsName);
+                log.error("Created CFS: {}", cfsName);
             }
 
             // 6. RFS: create or fetch
@@ -210,7 +210,7 @@ public class CreateServiceFibernet implements HttpAction {
             ResourceFacingService rfs;
             if (optRfs.isPresent()) {
                 rfs = optRfs.get();
-                log.info("Found existing RFS: {}", rfsName);
+                log.error("Found existing RFS: {}", rfsName);
             } else {
                 rfs = new ResourceFacingService();
                 rfs.setLocalName(Validations.encryptName(rfsName));
@@ -223,7 +223,7 @@ public class CreateServiceFibernet implements HttpAction {
                 rfs.setProperties(rfsProps);
                 rfs.setContainingCfs(cfs);
                 rfsRepository.save(rfs, 2);
-                log.info("Created RFS: {}", rfsName);
+                log.error("Created RFS: {}", rfsName);
             }
             // 7. OLT device: find or create as LogicalDevice with kind=OLT
             String oltName = request.getOltName() == null ? "" : request.getOltName();
@@ -245,7 +245,7 @@ public class CreateServiceFibernet implements HttpAction {
                     oltDevice.setProperties(props);
                     oltDevice.addUsingService(rfs);
                     logicalDeviceRepository.save(oltDevice, 2);
-                    log.info("Created OLT device: {}", oltName);
+                    log.error("Created OLT device: {}", oltName);
                 }
             }
 
@@ -265,7 +265,7 @@ public class CreateServiceFibernet implements HttpAction {
                 ontDevice.addUsingService(rfs);
                 ontDevice.addManagingDevices(oltDevice);
                 logicalDeviceRepository.save(ontDevice, 2);
-                log.info("Found existing ONT: {}", ontName);
+                log.error("Found existing ONT: {}", ontName);
             } else {
                 ontDevice = new LogicalDevice();
                 ontDevice.setLocalName(Validations.encryptName(ontName));
@@ -281,7 +281,7 @@ public class CreateServiceFibernet implements HttpAction {
                 ontDevice.addUsingService(rfs);
                 ontDevice.addManagingDevices(oltDevice);
                 logicalDeviceRepository.save(ontDevice, 2);
-                log.info("Created ONT device: {}", ontName);
+                log.error("Created ONT device: {}", ontName);
             }
 
             // 8. ONT device: find or create as LogicalDevice with kind=ONT
@@ -289,7 +289,7 @@ public class CreateServiceFibernet implements HttpAction {
             Optional<LogicalDevice> stbOpt = logicalDeviceRepository.findByDiscoveredName(stbDeviceName);
             LogicalDevice stbDevice;
             if (stbOpt.isPresent()) {
-                log.info("Found existing ONT: {}", stbDeviceName);
+                log.error("Found existing ONT: {}", stbDeviceName);
             } else {
                 stbDevice = new LogicalDevice();
                 stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
@@ -306,7 +306,7 @@ public class CreateServiceFibernet implements HttpAction {
                 stbDevice.addUsingService(rfs);
                 stbDevice.addManagingDevices(oltDevice);
                 logicalDeviceRepository.save(stbDevice, 2);
-                log.info("Created ONT device: {}", stbDeviceName);
+                log.error("Created ONT device: {}", stbDeviceName);
             }
 
 
@@ -327,7 +327,7 @@ public class CreateServiceFibernet implements HttpAction {
                     vlan.setProperties(vlanProps);
                     vlan.setContainingLogicalDevice(oltDevice);
                     logicalInterfaceRepository.save(vlan, 2);
-                    log.info("Created VLAN interface: {}", vlanName);
+                    log.error("Created VLAN interface: {}", vlanName);
                 }
             }
 
@@ -337,7 +337,7 @@ public class CreateServiceFibernet implements HttpAction {
             if (oltDevice != null) rfsProps.put("oltPosition", oltDevice.getDiscoveredName());
             rfs.setProperties(rfsProps);
             rfsRepository.save(rfs, 2);
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             // 11. Final response
             String ontNameResp = ontDevice != null ? ontDevice.getDiscoveredName() : "";
             CreateServiceFibernetResponse response = new CreateServiceFibernetResponse();

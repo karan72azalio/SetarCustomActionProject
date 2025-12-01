@@ -55,11 +55,11 @@ public class ImportCPEDevice implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
 
         ImportCPEDeviceRequest request = (ImportCPEDeviceRequest) actionContext.getObject();
         try {
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             try{
                 Validations.validateMandatoryParams(request.getCpeSerialNo(), "cpeSerialNo");
                 Validations.validateMandatoryParams(request.getCpeModel(), "cpeModel");
@@ -71,19 +71,19 @@ public class ImportCPEDevice implements HttpAction {
                         java.time.Instant.now().toString());
             }
 
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             String devName = request.getCpeType() + Constants.UNDER_SCORE + request.getCpeSerialNo();
-            log.info("devName :: {}", devName);
+            log.error("devName :: {}", devName);
 
             Optional<LogicalDevice> optDevice = cpeDeviceRepository.findByDiscoveredName(devName);
             LogicalDevice cpeDevice;
             if (optDevice.isPresent()) {
                 cpeDevice = optDevice.get();
-                log.info("Found existing CPE device: {}", devName);
+                log.error("Found existing CPE device: {}", devName);
                 return new ImportCPEDeviceResponse("409","Service already exist/Duplicate entry", Instant.now().toString());
             } else {
-                log.info("Creating new CPE device: {}", devName);
+                log.error("Creating new CPE device: {}", devName);
                 cpeDevice = new LogicalDevice();
                 cpeDevice.setLocalName(Validations.encryptName(devName));
                 cpeDevice.setDiscoveredName(devName);
@@ -102,27 +102,27 @@ public class ImportCPEDevice implements HttpAction {
                 properties.put("manufacturer", request.getCpeManufacturer());
                 properties.put("modelSubType", request.getCpeModelSubType());
 
-                properties.put("operationalState", "Active");
-                properties.put("administrativeState", "Available");
+                properties.put("OperationalState", "Active");
+                properties.put("AdministrativeState", "Available");
 
                 cpeDevice.setProperties(properties);
                 cpeDeviceRepository.save(cpeDevice, 2);
-                log.info("Saved new CPE device: {}", devName);
+                log.error("Saved new CPE device: {}", devName);
             }
 
             // Create POTS ports
-            log.info("-----------------Create POTS ports------------------");
+            log.error("-----------------Create POTS ports------------------");
             createPotsPort(request.getCpeSerialNo(), "POTS_1", cpeDevice);
             createPotsPort(request.getCpeSerialNo(), "POTS_2", cpeDevice);
 
             // Create Ethernet ports
-            log.info("-----------------Create Ethernet ports------------------");
+            log.error("-----------------Create Ethernet ports------------------");
             int noOfPorts = determineNumberOfEthernetPorts(request.getCpeType(), request.getCpeModel());
             for (int i = 1; i <= noOfPorts; i++) {
                 createEthernetPort(request.getCpeSerialNo(), "ETH_" + i, cpeDevice);
             }
 
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             return new ImportCPEDeviceResponse("201", "CPE Details Found", getCurrentTimestamp());
 
         } catch (BadRequestException bre) {
@@ -142,12 +142,12 @@ public class ImportCPEDevice implements HttpAction {
 
     private void createPotsPort(String serialNo, String portType, LogicalDevice cpeDevice)
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
-        log.info("-----------------Create POTS ports-Started------------------");
+        log.error("-----------------Create POTS ports-Started------------------");
         String portName = serialNo + Constants.UNDER_SCORE  + portType;
         Optional<LogicalComponent> optPort = componentRepository.findByDiscoveredName(portName);
 
         if (!optPort.isPresent()) {
-            log.info("Creating POTS port: {}", portName);
+            log.error("Creating POTS port: {}", portName);
             LogicalComponent potsPort = new LogicalComponent();
             potsPort.setLocalName(Validations.encryptName(portName));
             potsPort.setDiscoveredName(portName);
@@ -165,11 +165,11 @@ public class ImportCPEDevice implements HttpAction {
             componentRepository.save(potsPort, 2);
             cpeDevice.addContained(potsPort);
             cpeDeviceRepository.save(cpeDevice, 2);
-            log.info("POTS port created and associated: {}", portName);
+            log.error("POTS port created and associated: {}", portName);
         } else {
-            log.info("POTS port already exists: {}", portName);
+            log.error("POTS port already exists: {}", portName);
         }
-        log.info("-----------------Create POTS ports-Completed------------------");
+        log.error("-----------------Create POTS ports-Completed------------------");
     }
 
     private void createEthernetPort(String serialNo, String portType, LogicalDevice cpeDevice)
@@ -178,7 +178,7 @@ public class ImportCPEDevice implements HttpAction {
         String portName = serialNo + Constants.UNDER_SCORE  + portType;
         Optional<LogicalComponent> optPort = componentRepository.findByDiscoveredName(portName);
         if (!optPort.isPresent()) {
-            log.info("Creating Ethernet port: {}", portName);
+            log.error("Creating Ethernet port: {}", portName);
             LogicalComponent ethPort = new LogicalComponent();
             ethPort.setLocalName(Validations.encryptName(portName));
             ethPort.setDiscoveredName(portName);
@@ -188,49 +188,71 @@ public class ImportCPEDevice implements HttpAction {
             Map<String, Object> properties = new HashMap<>();
             properties.put("portName", portName);
             properties.put("serialNumber", serialNo);
-            properties.put("portStatus", "Available");
             properties.put("portType", portType);
             properties.put("serviceCount", "0");
+
+            if (portType.equalsIgnoreCase("ETH_1") || portType.equalsIgnoreCase("ETH_2")) {
+                properties.put("portStatus", "Available");
+            } else {
+                properties.put("portStatus", "Reserved");
+            }
+
             ethPort.setProperties(properties);
 
             componentRepository.save(ethPort, 2);
             cpeDevice.addContained(ethPort);
             cpeDeviceRepository.save(cpeDevice, 2);
-            log.info("Ethernet port created and associated: {}", portName);
+            log.error("Ethernet port created and associated: {}", portName);
 
             // VLAN interfaces (LogicalInterface)
-            for (int vlanIndex = 1; vlanIndex <= 7; vlanIndex++) {
-                String vlanName = portName + Constants.UNDER_SCORE  + vlanIndex;
-                Optional<LogicalInterface> optVlan = logicalInterfaceRepository.findByDiscoveredName(vlanName);
-                if (!optVlan.isPresent()) {
-                    log.info("Creating VLAN interface: {}", vlanName);
-                    LogicalInterface vlan = new LogicalInterface();
-                    vlan.setLocalName(Validations.encryptName(vlanName));
-                    vlan.setDiscoveredName(vlanName);
-                    vlan.setKind(Constants.SETAR_KIND_VLAN_INTERFACE);
-                    vlan.setContext(Constants.SETAR);
-                    vlan.setDescription("VLAN Interface for " + portName);
+            if (!portType.equalsIgnoreCase("ETH_1") && !portType.equalsIgnoreCase("ETH_2")) {
 
-                    Map<String, Object> vlanProps = new HashMap<>();
-                    vlanProps.put("name", vlanName);
-                    vlanProps.put("linkedEthPort", portName);
-                    vlanProps.put("serviceId", "");
-                    vlanProps.put("serviceType", "");
-                    vlanProps.put("vlanId", "");
-                    vlanProps.put("vlanStatus", "Available");
-                    vlan.setProperties(vlanProps);
+                boolean vlanCreated = false;
 
-                    logicalInterfaceRepository.save(vlan, 2);
-                    ethPort.addContained(vlan);
-                    componentRepository.save(ethPort, 2);
-                    log.info("VLAN interface created and associated: {}", vlanName);
-                } else {
-                    log.info("VLAN interface already exists: {}", vlanName);
+                for (int vlanIndex = 1; vlanIndex <= 7; vlanIndex++) {
+
+                    String vlanName = portName + "_" + vlanIndex;
+                    Optional<LogicalInterface> optVlan = logicalInterfaceRepository.findByDiscoveredName(vlanName);
+
+                    if (!optVlan.isPresent()) {
+
+                        vlanCreated = true;
+
+                        LogicalInterface vlan = new LogicalInterface();
+                        vlan.setLocalName(Validations.encryptName(vlanName));
+                        vlan.setDiscoveredName(vlanName);
+                        vlan.setKind(Constants.SETAR_KIND_VLAN_INTERFACE);
+                        vlan.setContext(Constants.SETAR);
+                        vlan.setDescription("VLAN Interface for " + portName);
+
+                        Map<String, Object> vlanProps = new HashMap<>();
+                        vlanProps.put("name", vlanName);
+                        vlanProps.put("linkedEthPort", portName);
+                        vlanProps.put("serviceId", "");
+                        vlanProps.put("serviceType", "");
+                        vlanProps.put("vlanId", "");
+                        vlanProps.put("vlanStatus", "Available");
+
+                        vlan.setProperties(vlanProps);
+                        vlan.addContained(ethPort);
+                        logicalInterfaceRepository.save(vlan);
+//                        ethPort.addContained(vlan);
+//                        componentRepository.save(ethPort);
+
+                    }
                 }
+                Map<String, Object> props = ethPort.getProperties();
+
+                if (vlanCreated) {
+                    props.put("portStatus", "Allocated");
+                    log.error("Port status updated to Allocated for: {}", portName);
+                } else {
+                    props.put("portStatus", "Available");
+                    log.error("No VLAN created. Port status updated to Available for: {}", portName);
+                }
+                componentRepository.save(ethPort);
             }
 
-        } else {
-            log.info("Ethernet port already exists: {}", portName);
         }
     }
 

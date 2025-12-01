@@ -77,12 +77,12 @@ public class CreateServiceCbmVoice implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         CreateServiceCbmVoiceRequest request = (CreateServiceCbmVoiceRequest) actionContext.getObject();
 
         // 1. Mandatory validations
         try {
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
             Validations.validateMandatoryParams(request.getCbmSN(), "cbmSN");
@@ -97,7 +97,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             Validations.validateMandatoryParams(request.getSimaCustId(), "simaCustId");
             Validations.validateMandatoryParams(request.getSimaSubsId(), "simaSubsId");
             Validations.validateMandatoryParams(request.getSimaEndpointId(), "simaEndpointId");
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return createErrorResponse(CODE_MISSING_PARAMS,
                     "Missing mandatory parameter(s): " + bre.getMessage());
@@ -374,7 +374,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             Optional<LogicalDevice> stbOpt = cpeDeviceRepository.findByDiscoveredName(stbDeviceName);
             LogicalDevice stbDevice;
             if (stbOpt.isPresent()) {
-                log.info("Found existing ONT: {}", stbDeviceName);
+                log.error("Found existing ONT: {}", stbDeviceName);
             } else {
                 Map<String,Object> stbProps = new HashMap<>();
                 stbProps.put("administrativeState","Available");
@@ -385,14 +385,14 @@ public class CreateServiceCbmVoice implements HttpAction {
                 stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
                 stbDevice.addUsingService(rfs);
                 cpeDeviceRepository.save(stbDevice, 2);
-                log.info("Created ONT device: {}", stbDeviceName);
+                log.error("Created ONT device: {}", stbDeviceName);
             }
            //AP is created for local testing, this shouldn't be in the step.
             String apDeviceName = "AP"+Constants.UNDER_SCORE + request.getCbmSN();
             Optional<LogicalDevice> apOpt = cpeDeviceRepository.findByDiscoveredName(apDeviceName);
             LogicalDevice apDevice;
             if (apOpt.isPresent()) {
-                log.info("Found existing ONT: {}", apDeviceName);
+                log.error("Found existing ONT: {}", apDeviceName);
             } else {
                 apDevice = new LogicalDevice();
                 apDevice.setLocalName(Validations.encryptName(apDeviceName));
@@ -401,9 +401,9 @@ public class CreateServiceCbmVoice implements HttpAction {
                 apDevice.addUsingService(rfs);
 
                 cpeDeviceRepository.save(apDevice, 2);
-                log.info("Created ONT device: {}", apDeviceName);
+                log.error("Created ONT device: {}", apDeviceName);
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             // 10. Final success response
             CreateServiceCbmVoiceResponse response = new CreateServiceCbmVoiceResponse();
             response.setStatus(CODE_SUCCESS);

@@ -52,12 +52,12 @@ public class CreateProductSubscription implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
 
         CreateProductSubscriptionRequest request = (CreateProductSubscriptionRequest) actionContext.getObject();
 
         try {
-            log.info("Mandatory parameter validation started...");
+            log.error("Mandatory parameter validation started...");
             try{
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getProductType(), "productType");
@@ -71,7 +71,7 @@ public class CreateProductSubscription implements HttpAction {
                         java.time.Instant.now().toString(), "","");
             }
 
-            log.info("Mandatory parameter validation completed");
+            log.error("Mandatory parameter validation completed");
 
             // ================== Subscriber ==================
             String subscriberName = request.getSubscriberName();
@@ -83,7 +83,7 @@ public class CreateProductSubscription implements HttpAction {
             Customer subscriber;
             if (optSubscriber.isPresent()) {
                 subscriber = optSubscriber.get();
-                log.info("Found existing subscriber: {}", subscriberName);
+                log.error("Found existing subscriber: {}", subscriberName);
             } else {
                 subscriber = new Customer();
                 subscriber.setLocalName(Validations.encryptName(subscriberName));
@@ -96,7 +96,7 @@ public class CreateProductSubscription implements HttpAction {
                 props.put("subscriberType", "Regular");
                 subscriber.setProperties(props);
                 subscriberRepository.save(subscriber, 2);
-                log.info("Created new subscriber: {}", subscriberName);
+                log.error("Created new subscriber: {}", subscriberName);
             }
 
             // ================== Subscription ==================
@@ -109,7 +109,7 @@ public class CreateProductSubscription implements HttpAction {
             Subscription subscription;
             if (optSubscription.isPresent()) {
                 subscription = optSubscription.get();
-                log.info("Found existing subscription: {}", subscriptionName);
+                log.error("Found existing subscription: {}", subscriptionName);
             } else {
                 subscription = new Subscription();
                 subscription.setLocalName(Validations.encryptName(subscriptionName));
@@ -123,7 +123,7 @@ public class CreateProductSubscription implements HttpAction {
                 subscription.setProperties(props);
                 subscription.setCustomer(subscriber);
                 subscriptionRepository.save(subscription, 2);
-                log.info("Created new subscription: {}", subscriptionName);
+                log.error("Created new subscription: {}", subscriptionName);
             }
 
             // ================== Product ==================
@@ -136,7 +136,7 @@ public class CreateProductSubscription implements HttpAction {
             Product product;
             if (optProduct.isPresent()) {
                 product = optProduct.get();
-                log.info("Found existing product: {}", productName);
+                log.error("Found existing product: {}", productName);
             } else {
                 product = new Product();
                 product.setLocalName(Validations.encryptName(productName));
@@ -154,7 +154,7 @@ public class CreateProductSubscription implements HttpAction {
                 product.setCustomer(subscriber);
                 product.setSubscription(subscription);
                 productRepository.save(product, 2);
-                log.info("Created new product: {}", productName);
+                log.error("Created new product: {}", productName);
             }
 
             // ================== Success Response ==================

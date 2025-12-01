@@ -53,22 +53,22 @@ public class QueryAddrByServiceID implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.info("Executing action {}", ACTION_LABEL);
+        log.error("Executing action {}", ACTION_LABEL);
 
         QueryAddrByServiceIDRequest request = (QueryAddrByServiceIDRequest) actionContext.getObject();
         try {
             // 1) Mandatory input validation
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(request.getServiceId(), "SERVICE_ID");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 // Code5 -> Missing mandatory parameter
                 return createErrorResponse("400", ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage());
             }
 
             String serviceId = request.getServiceId().trim();
-            log.info("Looking up RFS entries containing service id '{}'", serviceId);
+            log.error("Looking up RFS entries containing service id '{}'", serviceId);
 
             // 2) Locate the target service (RFS) using SERVICE_ID
             List<ResourceFacingService> rfsListAll = (List<ResourceFacingService>) rfsRepository.findAll();
@@ -78,7 +78,7 @@ public class QueryAddrByServiceID implements HttpAction {
                     rfsList.add(rFS);
                 }});
             if (rfsList == null || rfsList.isEmpty()) {
-                log.info("No RFS entries found containing '{}'", serviceId);
+                log.error("No RFS entries found containing '{}'", serviceId);
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
 
@@ -88,13 +88,13 @@ public class QueryAddrByServiceID implements HttpAction {
                 String[] tokens = name.split(Constants.UNDER_SCORE , -1);
                 if (tokens.length >= 3 && serviceId.equals(tokens[2])) {
                     matchedRfs = rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
-                    log.info("Matched RFS by token check: {}", name);
+                    log.error("Matched RFS by token check: {}", name);
                     break;
                 }
             }
 
             if (matchedRfs == null) {
-                log.info("No RFS found whose 3rd token equals '{}'", serviceId);
+                log.error("No RFS found whose 3rd token equals '{}'", serviceId);
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
 
@@ -104,7 +104,7 @@ public class QueryAddrByServiceID implements HttpAction {
                 cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();  
             }
             if (cfs == null) {
-                log.warn("Matched RFS does not reference a CustomerFacingService");
+                log.error("Matched RFS does not reference a CustomerFacingService");
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
 
@@ -114,7 +114,7 @@ public class QueryAddrByServiceID implements HttpAction {
                 product = productRepository.findByDiscoveredName(product.getDiscoveredName()).get();
             }
             if (product == null) {
-                log.warn("CustomerFacingService does not reference Product");
+                log.error("CustomerFacingService does not reference Product");
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
 
@@ -142,7 +142,7 @@ public class QueryAddrByServiceID implements HttpAction {
             }
             if (subscription == null) {
                 // fallback: maybe product.properties contains subscription id or link - but per spec this is required
-                log.warn("Product does not have Subscription reference");
+                log.error("Product does not have Subscription reference");
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
 
@@ -175,7 +175,7 @@ public class QueryAddrByServiceID implements HttpAction {
                     if (a != null) address = a.toString();
                 }
             } else {
-                log.warn("Subscription does not reference a Subscriber");
+                log.error("Subscription does not reference a Subscriber");
             }
 
             // Validate final outputs - if any null/empty -> treat as not found per spec
@@ -184,11 +184,11 @@ public class QueryAddrByServiceID implements HttpAction {
                     || (serviceLink == null || serviceLink.trim().isEmpty());
 
             if (missing) {
-                log.warn("One or more resolved values are missing: productName='{}', address='{}', serviceLink='{}'",
+                log.error("One or more resolved values are missing: productName='{}', address='{}', serviceLink='{}'",
                         productName, address, serviceLink);
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             // 4) Build success response
             QueryAddrByServiceIDResponse resp = new QueryAddrByServiceIDResponse();
             resp.setStatus("200");

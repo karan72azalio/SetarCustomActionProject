@@ -75,16 +75,16 @@ public class QueryIPTVByServiceID implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.info("Executing QueryIPTVByServiceID action...");
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("Executing QueryIPTVByServiceID action...");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         QueryIPTVByServiceIDRequest req = (QueryIPTVByServiceIDRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(req.getServiceID(), "serviceId");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception ex) {
                 QueryIPTVByServiceIDResponse resp = new QueryIPTVByServiceIDResponse();
                 resp.setStatus("400");
@@ -411,7 +411,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                         }
 
                     } catch (Exception e) {
-                        log.warn("Error while processing RFS resources for {} : {}", rfsName, e.getMessage());
+                        log.error("Error while processing RFS resources for {} : {}", rfsName, e.getMessage());
                     }
                 } // end rfs present
 
@@ -419,7 +419,7 @@ public class QueryIPTVByServiceID implements HttpAction {
 
             // 8. Final response
             if (successFlag) {
-                log.info(Constants.ACTION_COMPLETED);
+                log.error(Constants.ACTION_COMPLETED);
                 QueryIPTVByServiceIDResponse resp = new QueryIPTVByServiceIDResponse();
                 resp.setStatus("200");
                 resp.setMessage("IPTV Service Details Found");

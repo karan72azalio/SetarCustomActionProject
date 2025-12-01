@@ -73,13 +73,13 @@ public class CreateServiceIPTV implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) throws Exception {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
 
         CreateServiceIPTVRequest request = (CreateServiceIPTVRequest) actionContext.getObject();
 
         try {
             // Validate mandatory parameters
-            log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+            log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             try{
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getProductType(), "productType");
@@ -91,7 +91,7 @@ public class CreateServiceIPTV implements HttpAction {
                 Validations.validateMandatoryParams(request.getHhid(), "hhid");
                 Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
                 Validations.validateMandatoryParams(request.getCustomerGroupID(), "customerGroupID");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
                 return new CreateServiceIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         java.time.Instant.now().toString(), "","");
@@ -113,7 +113,7 @@ public class CreateServiceIPTV implements HttpAction {
             Customer subscriber;
             if (optSubscriber.isPresent()) {
                 subscriber = optSubscriber.get();
-                log.info("Subscriber already exists: {}", subscriberName);
+                log.error("Subscriber already exists: {}", subscriberName);
                 return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry", Instant.now().toString(),subscriberName,ontName);
             } else {
                 subscriber = new Customer();
@@ -132,7 +132,7 @@ public class CreateServiceIPTV implements HttpAction {
 
                 subscriber.setProperties(subscriberProps);
                 customerRepository.save(subscriber, 2);
-                log.info("Created Subscriber: {}", subscriberName);
+                log.error("Created Subscriber: {}", subscriberName);
             }
 
             // ------------------- Subscription -------------------
@@ -140,7 +140,7 @@ public class CreateServiceIPTV implements HttpAction {
             Subscription subscription;
             if (optSubscription.isPresent()) {
                 subscription = optSubscription.get();
-                log.info("Subscription already exists: {}", subscriptionName);
+                log.error("Subscription already exists: {}", subscriptionName);
             } else {
                 subscription = new Subscription();
                 subscription.setLocalName(Validations.encryptName(subscriptionName));
@@ -164,7 +164,7 @@ public class CreateServiceIPTV implements HttpAction {
                 subscription.setProperties(subscriptionProps);
                 subscription.setCustomer(subscriber); // association
                 subscriptionRepository.save(subscription, 2);
-                log.info("Created Subscription: {}", subscriptionName);
+                log.error("Created Subscription: {}", subscriptionName);
             }
 
             // ------------------- Product -------------------
@@ -172,7 +172,7 @@ public class CreateServiceIPTV implements HttpAction {
             Product product;
             if (optProduct.isPresent()) {
                 product = optProduct.get();
-                log.info("Product already exists: {}", productName);
+                log.error("Product already exists: {}", productName);
             } else {
                 product = new Product();
                 product.setLocalName(Validations.encryptName(productName));
@@ -188,7 +188,7 @@ public class CreateServiceIPTV implements HttpAction {
                 product.setCustomer(subscriber);
                 product.setSubscription(subscription);
                 productRepository.save(product, 2);
-                log.info("Created Product: {}", productName);
+                log.error("Created Product: {}", productName);
             }
 
             // ------------------- Customer Facing Service (CFS) -------------------
@@ -196,7 +196,7 @@ public class CreateServiceIPTV implements HttpAction {
             CustomerFacingService cfs;
             if (optCFS.isPresent()) {
                 cfs = optCFS.get();
-                log.info("CFS already exists: {}", cfsName);
+                log.error("CFS already exists: {}", cfsName);
             } else {
                 cfs = new CustomerFacingService();
                 cfs.setLocalName(Validations.encryptName(cfsName));
@@ -213,7 +213,7 @@ public class CreateServiceIPTV implements HttpAction {
                 cfs.setProperties(cfsProps);
                 cfs.setContainingProduct(product);
                 cfsRepository.save(cfs, 2);
-                log.info("Created CFS: {}", cfsName);
+                log.error("Created CFS: {}", cfsName);
             }
 
             // ------------------- Resource Facing Service (RFS) -------------------
@@ -221,7 +221,7 @@ public class CreateServiceIPTV implements HttpAction {
             ResourceFacingService rfs;
             if (optRFS.isPresent()) {
                 rfs = optRFS.get();
-                log.info("RFS already exists: {}", rfsName);
+                log.error("RFS already exists: {}", rfsName);
             } else {
                 rfs = new ResourceFacingService();
                 rfs.setLocalName(Validations.encryptName(rfsName));
@@ -236,7 +236,7 @@ public class CreateServiceIPTV implements HttpAction {
                 rfs.setProperties(rfsProps);
                 rfs.setContainingCfs(cfs);
                 rfsRepository.save(rfs, 2);
-                log.info("Created RFS: {}", rfsName);
+                log.error("Created RFS: {}", rfsName);
             }
 
             String oltName=request.getOltName()==null?"":request.getOltName();
@@ -247,7 +247,7 @@ public class CreateServiceIPTV implements HttpAction {
             LogicalDevice oltDevice;
             if (optOlt.isPresent()) {
                 oltDevice = optOlt.get();
-                log.info("OLT already exists: {}", oltName);
+                log.error("OLT already exists: {}", oltName);
             } else {
                 oltDevice = new LogicalDevice();
                 oltDevice.setLocalName(Validations.encryptName(oltName));
@@ -257,7 +257,7 @@ public class CreateServiceIPTV implements HttpAction {
 
                 Map<String, Object> oltProps = new HashMap<>();
                 oltProps.put("oltPosition", request.getOltName());
-                oltProps.put("operationalState", "ACTIVE");
+                oltProps.put("OperationalState", "Active");
                 oltProps.put("ontTemplate", request.getTemplateNameONT());
                 oltProps.put("veipServiceTemplate", request.getTemplateNameVEIP());
                 oltProps.put("veipIptvTemplate", request.getTemplateNameIPTV());
@@ -266,7 +266,7 @@ public class CreateServiceIPTV implements HttpAction {
                 oltDevice.setProperties(oltProps);
                 oltDevice.addUsingService(rfs);
                 logicalDeviceRepository.save(oltDevice, 2);
-                log.info("Created OLT Device: {}", request.getOltName());
+                log.error("Created OLT Device: {}", request.getOltName());
             }
 
             // ONT Device
@@ -274,7 +274,7 @@ public class CreateServiceIPTV implements HttpAction {
             LogicalDevice ontDevice;
             if (optOnt.isPresent()) {
                 ontDevice = optOnt.get();
-                log.info("ONT already exists: {}", ontName);
+                log.error("ONT already exists: {}", ontName);
             } else {
                 ontDevice = new LogicalDevice();
                 ontDevice.setLocalName(Validations.encryptName(ontName));
@@ -285,13 +285,13 @@ public class CreateServiceIPTV implements HttpAction {
                 Map<String, Object> ontProps = new HashMap<>();
                 ontProps.put("serialNo", request.getOntSN());
                 ontProps.put("deviceModel", request.getOntModel());
-                ontProps.put("operationalState", "ACTIVE");
+                ontProps.put("OperationalState", "Active");
                 ontProps.put("iptvVlan", request.getVlanID());
                 ontDevice.setProperties(ontProps);
                 ontDevice.addUsingService(rfs);
                 ontDevice.addManagingDevices(oltDevice);
                 logicalDeviceRepository.save(ontDevice, 2);
-                log.info("Created ONT Device: {}", ontName);
+                log.error("Created ONT Device: {}", ontName);
             }
 
             // VLAN Interface
@@ -299,7 +299,7 @@ public class CreateServiceIPTV implements HttpAction {
             LogicalInterface vlanInterface;
             if (optVlan.isPresent()) {
                 vlanInterface = optVlan.get();
-                log.info("VLAN Interface already exists: {}", mgmtVlanName);
+                log.error("VLAN Interface already exists: {}", mgmtVlanName);
             } else {
                 vlanInterface = new LogicalInterface();
                 vlanInterface.setLocalName(Validations.encryptName(mgmtVlanName));
@@ -309,14 +309,14 @@ public class CreateServiceIPTV implements HttpAction {
 
                 Map<String, Object> vlanProps = new HashMap<>();
                 vlanProps.put("vlanId", request.getVlanID());
-                vlanProps.put("operationalState", "ACTIVE");
+                vlanProps.put("OperationalState", "Active");
                 vlanInterface.setProperties(vlanProps);
 
                 vlanRepository.save(vlanInterface, 2);
-                log.info("Created VLAN Interface: {}", mgmtVlanName);
+                log.error("Created VLAN Interface: {}", mgmtVlanName);
             }
 
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
 
             return new CreateServiceIPTVResponse(
                     "201",

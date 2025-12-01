@@ -48,20 +48,20 @@ public class ModifyCBM implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         ModifyCBMRequest input = (ModifyCBMRequest) actionContext.getObject();
 
         try {
             // 1️⃣ Mandatory validations
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(input.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(input.getResourceSN(), "resourceSN");
                 Validations.validateMandatoryParams(input.getProductType(), "productType");
                 Validations.validateMandatoryParams(input.getProductSubtype(), "productSubtype");
                 Validations.validateMandatoryParams(input.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(input.getModifyType(), "modifyType");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new ModifyCBMResponse("400",
                         ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
@@ -90,7 +90,7 @@ public class ModifyCBM implements HttpAction {
                     + input.getProductSubtype() + Constants.UNDER_SCORE + input.getServiceId();
             String cbmDeviceName = "CBM" +input.getServiceId();
 
-            log.info("ModifyCBM start: subscriberDerived='{}', subscriptionName='{}', cfsName='{}', rfsName='{}', productName='{}', cbmDeviceName='{}'",
+            log.error("ModifyCBM start: subscriberDerived='{}', subscriptionName='{}', cfsName='{}', rfsName='{}', productName='{}', cbmDeviceName='{}'",
                     subscriberNameDerived, subscriptionName, cfsName, rfsName, productName, cbmDeviceName);
 
             // 4️⃣ Retrieve entities
@@ -221,7 +221,7 @@ public class ModifyCBM implements HttpAction {
                                 custProps.put("name", newSubscriberName);
                                 subscriberObj.setProperties(custProps);
                                 customerCustomRepository.save(subscriberObj);
-                                log.info("Subscriber name changed from '{}' to '{}'", customer.getDiscoveredName(), newSubscriberName);
+                                log.error("Subscriber name changed from '{}' to '{}'", customer.getDiscoveredName(), newSubscriberName);
                             }
                         }
                     } else {
@@ -307,7 +307,7 @@ public class ModifyCBM implements HttpAction {
                         logicalDeviceRepository.save(newCbm);
 
                         // Reset old CBM
-                        oldProps.put("administrativeState", "Available");
+                        oldProps.put("AdministrativeState", "Available");
                         oldProps.put("description", "");
                         oldProps.put("modelSubtype", "");
                         oldProps.put("voipPorts", "Available");

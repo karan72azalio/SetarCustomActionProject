@@ -40,17 +40,17 @@ public class QueryAllEquipment implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        log.info("Executing QueryAllEquipment action...");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("Executing QueryAllEquipment action...");
         QueryAllEquipmentRequest request = (QueryAllEquipmentRequest) actionContext.getObject();
 
         try {
             // Step 1: Validate mandatory params
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
 
                 return new QueryAllEquipmentResponse(
@@ -156,7 +156,7 @@ public class QueryAllEquipment implements HttpAction {
                         null, null, null, null,null,null,null,null
                 );
             }
-            log.info(Constants.ACTION_COMPLETED);
+            log.error(Constants.ACTION_COMPLETED);
             return response;
 
         } catch (Exception ex) {

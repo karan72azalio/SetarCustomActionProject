@@ -62,19 +62,19 @@ public class ModifyServiceId implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        System.out.println("------------Test Trace # 1--------------- ModifyServiceId started");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("------------Test Trace # 1--------------- ModifyServiceId started");
         ModifyServiceIdRequest req = (ModifyServiceIdRequest) actionContext.getObject();
 
         try {
             // 1. Mandatory validation
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getServiceId(), "serviceId");
                 Validations.validateMandatory(req.getServiceIdNew(), "serviceIdNew");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
-                System.out.println("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
+                log.error("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
                 return new ModifyServiceIdResponse(
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
@@ -86,7 +86,7 @@ public class ModifyServiceId implements HttpAction {
             String newServiceId = req.getServiceIdNew();
             boolean updatesApplied = false;
 
-            System.out.println("------------Test Trace # 3--------------- old=" + oldServiceId + ", new=" + newServiceId);
+            log.error("------------Test Trace # 3--------------- old=" + oldServiceId + ", new=" + newServiceId);
 
             // 2. Locate CFS candidates
             List<CustomerFacingService> cfsList1 = (List<CustomerFacingService>) cfsRepo.findAll();
@@ -98,7 +98,7 @@ public class ModifyServiceId implements HttpAction {
                     cfsList.add(cfs);
                 }
             }
-            System.out.println("------------Test Trace # 4--------------- Found CFS candidates: " + cfsList.size());
+            log.error("------------Test Trace # 4--------------- Found CFS candidates: " + cfsList.size());
 
             for (CustomerFacingService cfs : cfsList) {
                 String cfsName = cfs.getDiscoveredName();
@@ -123,7 +123,7 @@ public class ModifyServiceId implements HttpAction {
 
                 if (!matches) continue;
                 log.error("Customer Facing Service match found: "+cfsName);
-                System.out.println("------------Test Trace # 5--------------- Processing CFS: " + cfsName);
+                log.error("------------Test Trace # 5--------------- Processing CFS: " + cfsName);
 
                 // Locate RFS
                 String rfsName = cfsName.replace("CFS", "RFS");
@@ -154,7 +154,7 @@ public class ModifyServiceId implements HttpAction {
                     log.error("Subscription updated successfully with the updated name: "+newName);
                     subscriptionRepo.save(subs);
                     updatesApplied = true;
-                    System.out.println("------------Test Trace # 6--------------- Subscription updated: " + newName);
+                    log.error("------------Test Trace # 6--------------- Subscription updated: " + newName);
                 }
 
                 // Update product
@@ -165,7 +165,7 @@ public class ModifyServiceId implements HttpAction {
                     log.error("Product updated successfully with the updated name: "+newName);
                     productRepo.save(prod);
                     updatesApplied = true;
-                    System.out.println("------------Test Trace # 7--------------- Product updated: " + newName);
+                    log.error("------------Test Trace # 7--------------- Product updated: " + newName);
                 }
 
                 // Update subscriber
@@ -180,7 +180,7 @@ public class ModifyServiceId implements HttpAction {
                     log.error("Subscriber updated successfully with the updated name: "+newName);
                     customerRepo.save(cust);
                     updatesApplied = true;
-                    System.out.println("------------Test Trace # 8--------------- Subscriber updated: " + newName);
+                    log.error("------------Test Trace # 8--------------- Subscriber updated: " + newName);
                 }
 
                 // Update RFS + resources
@@ -202,13 +202,13 @@ public class ModifyServiceId implements HttpAction {
                                 }
 
                                 logicalDeviceRepository.save(ont);
-                                System.out.println("------------Test Trace # 9--------------- ONT updated: " + ont.getDiscoveredName());
+                                log.error("------------Test Trace # 9--------------- ONT updated: " + ont.getDiscoveredName());
                             }else if(ont.getDiscoveredName().contains("CBM")){
                                 LogicalDevice cbm = (LogicalDevice) res;
                                 String newDevName = cbm.getDiscoveredName().replace(oldServiceId, newServiceId);
                                 log.error("CBM Device updated successfully with the updated name: "+newDevName);
                                 cbm.setDiscoveredName(newDevName);
-                                System.out.println("------------Test Trace # 10--------------- CBM updated: " + cbm.getDiscoveredName());
+                                log.error("------------Test Trace # 10--------------- CBM updated: " + cbm.getDiscoveredName());
                             }
                         }
                     });
@@ -217,7 +217,7 @@ public class ModifyServiceId implements HttpAction {
                     rfs.setDiscoveredName(newRfsName);
                     rfsRepo.save(rfs);
                     updatesApplied = true;
-                    System.out.println("------------Test Trace # 11--------------- RFS updated: " + newRfsName);
+                    log.error("------------Test Trace # 11--------------- RFS updated: " + newRfsName);
                 }
 
                 // Update CFS
@@ -227,12 +227,12 @@ public class ModifyServiceId implements HttpAction {
                 log.error("CFS updated successfully with the updated name: "+newCfsName);
                 cfsRepo.save(cfs);
                 updatesApplied = true;
-                System.out.println("------------Test Trace # 12--------------- CFS updated: " + newCfsName);
+                log.error("------------Test Trace # 12--------------- CFS updated: " + newCfsName);
             }
 
             // 5. Generate response
             if (updatesApplied) {
-                log.info(Constants.ACTION_COMPLETED);
+                log.error(Constants.ACTION_COMPLETED);
                 return new ModifyServiceIdResponse("200",
                         "ServiceID successfully updated",
                         Instant.now().toString());

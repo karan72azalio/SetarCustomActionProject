@@ -65,14 +65,14 @@ public class ChangeTechnologyVoice implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.warn(Constants.EXECUTING_ACTION, ACTION_LABEL);
-        System.out.println("------------Test Trace # 1---------------");
+        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+        log.error("------------Test Trace # 1---------------");
         ChangeTechnologyVoiceRequest req = (ChangeTechnologyVoiceRequest) actionContext.getObject();
 
         try {
             // 1. Validate mandatory params (runtime validation)
             try {
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(req.getSubscriberName(), "subscriberName");
                 Validations.validateMandatory(req.getProductSubtype(), "productSubtype");
                 Validations.validateMandatory(req.getServiceId(), "serviceId");
@@ -87,15 +87,15 @@ public class ChangeTechnologyVoice implements HttpAction {
                 Validations.validateMandatory(req.getOntModel(), "ontModel");
                 Validations.validateMandatory(req.getCbmMac(), "cbmMac");
                 Validations.validateMandatory(req.getOntPort(), "ontPort");
-                log.info(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
+                log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (Exception bre) {
                 // Missing mandatory param
-                System.out.println("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
+                log.error("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
                 return new ChangeTechnologyVoiceResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         Instant.now().toString(), "", "");
             }
 
-            System.out.println("------------Test Trace # 3--------------- Validations OK");
+            log.error("------------Test Trace # 3--------------- Validations OK");
 
             // 2. Prepare names
             String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId();
@@ -106,7 +106,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             String cpeDeviceName ="ONT" + req.getOntSN(); // CPE device convention used elsewhere
             String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn(); // CBM CPE
 
-            System.out.println("------------Test Trace # 4--------------- Names prepared:"
+            log.error("------------Test Trace # 4--------------- Names prepared:"
                     + " subscriptionName=" + subscriptionName
                     + " cfsName=" + cfsName
                     + " rfsName=" + rfsName
@@ -115,18 +115,18 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             // 3. Name length checks
             if (ontName.length() > 100) {
-                System.out.println("------------Test Trace # 5--------------- ONT name too long");
+                log.error("------------Test Trace # 5--------------- ONT name too long");
                 return new ChangeTechnologyVoiceResponse("400", ERROR_PREFIX + "ONT name too long",
                         Instant.now().toString(), subscriptionName, ontName);
             }
 
             // 4. Update Subscription (must exist)
-            System.out.println("------------Test Trace # 6--------------- Fetching Subscription by " + subscriptionName);
+            log.error("------------Test Trace # 6--------------- Fetching Subscription by " + subscriptionName);
             String subscriptionGdn = Validations.getGlobalName(subscriptionName);
             Optional<Subscription> subsOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
             if (subsOpt.isPresent()) {
                 Subscription subs = subsOpt.get();
-                System.out.println("------------Test Trace # 7--------------- Subscription found: " + subs.getLocalName());
+                log.error("------------Test Trace # 7--------------- Subscription found: " + subs.getLocalName());
 
                 // Update core subscription fields
                 Map<String, Object> props = new HashMap<>();
@@ -138,12 +138,12 @@ public class ChangeTechnologyVoice implements HttpAction {
                 // SIMA fields if provided
                 if (req.getSimaSubsId() != null && !req.getSimaSubsId().trim().isEmpty()) {
                     props.put("SimaSubsId", req.getSimaSubsId());
-                    System.out.println("------------Test Trace # 8--------------- Set SIMA subs id: " + req.getSimaSubsId());
+                    log.error("------------Test Trace # 8--------------- Set SIMA subs id: " + req.getSimaSubsId());
                 }
                 if (req.getServiceEndpointNumber1() != null && !req.getServiceEndpointNumber1().trim().isEmpty()) {
                     // map to subscription endpoint slot 1
                     props.put("SimaEndpointId", req.getServiceEndpointNumber1());
-                    System.out.println("------------Test Trace # 9--------------- Set SIMA endpoint id 1: " + req.getServiceEndpointNumber1());
+                    log.error("------------Test Trace # 9--------------- Set SIMA endpoint id 1: " + req.getServiceEndpointNumber1());
                 } else if (req.getSimaSubsId() != null && !req.getSimaSubsId().trim().isEmpty()) {
                     // If simaSubsId provided but not endpoint number, keep existing endpoint if any
                 }
@@ -151,22 +151,22 @@ public class ChangeTechnologyVoice implements HttpAction {
                 // VoIP package/code
                 if (req.getVoipPackage() != null && !req.getVoipPackage().trim().isEmpty()) {
                     props.put("VoipPackage", req.getVoipPackage());
-                    System.out.println("------------Test Trace # 10--------------- Set VoIP package: " + req.getVoipPackage());
+                    log.error("------------Test Trace # 10--------------- Set VoIP package: " + req.getVoipPackage());
                 }
                 if (req.getVoipServiceCode() != null && !req.getVoipServiceCode().trim().isEmpty()) {
                     props.put("VoipServiceCode", req.getVoipServiceCode());
-                    System.out.println("------------Test Trace # 11--------------- Set VoIP service code: " + req.getVoipServiceCode());
+                    log.error("------------Test Trace # 11--------------- Set VoIP service code: " + req.getVoipServiceCode());
                 }
 
                 // Rename subscription to include ONT SN per spec
                 String newSubscriptionName = subscriptionName + Constants.UNDER_SCORE  + req.getOntSN();
-                System.out.println("------------Test Trace # 12--------------- Renaming subscription to: " + newSubscriptionName);
+                log.error("------------Test Trace # 12--------------- Renaming subscription to: " + newSubscriptionName);
                 subs.setDiscoveredName(subscriptionName);
                 subs.setProperties(props);
 
                 // Persist subscription updates
                 subscriptionRepo.save(subs);
-                System.out.println("------------Test Trace # 13--------------- Subscription saved: " + newSubscriptionName);
+                log.error("------------Test Trace # 13--------------- Subscription saved: " + newSubscriptionName);
 
                 // 5. Update Subscriber if linked via subscription
                 // Try to find linked subscriber — attempt several common patterns
@@ -180,7 +180,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 }
                 if (custOpt.isPresent()) {
                     Customer cust = custOpt.get();
-                    System.out.println("------------Test Trace # 14--------------- Subscriber found: " + cust.getLocalName());
+                    log.error("------------Test Trace # 14--------------- Subscriber found: " + cust.getLocalName());
                     // accountNumber mapping stored in properties map - preserve or set
                     Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
                     custProps.put("accountNumber", req.getSubscriberName());
@@ -190,18 +190,18 @@ public class ChangeTechnologyVoice implements HttpAction {
                     if (req.getSimaCustId() != null) custProps.put("simaCustId", req.getSimaCustId());
                     cust.setProperties(custProps);
                     customerRepo.save(cust);
-                    System.out.println("------------Test Trace # 15--------------- Subscriber updated and saved");
+                    log.error("------------Test Trace # 15--------------- Subscriber updated and saved");
                 } else {
-                    System.out.println("------------Test Trace # 16--------------- Subscriber not found using common patterns - continuing");
+                    log.error("------------Test Trace # 16--------------- Subscriber not found using common patterns - continuing");
                 }
 
             } else {
                 // Per spec, subscription must exist; but we proceed (action does not create new subscription)
-                System.out.println("------------Test Trace # 17--------------- Subscription not found: " + subscriptionName + " - continuing without subscription updates");
+                log.error("------------Test Trace # 17--------------- Subscription not found: " + subscriptionName + " - continuing without subscription updates");
             }
 
             // 6. Update CFS (if exists)
-            System.out.println("------------Test Trace # 18--------------- Checking CFS: " + cfsName);
+            log.error("------------Test Trace # 18--------------- Checking CFS: " + cfsName);
             String cfsGdn = Validations.getGlobalName(cfsName);
             Optional<CustomerFacingService> cfsOpt = cfsRepo.findByDiscoveredName(cfsName);
             if (cfsOpt.isPresent()) {
@@ -214,26 +214,26 @@ public class ChangeTechnologyVoice implements HttpAction {
                     cfs.setProperties(cfsProps);
                 }
                 cfsRepo.save(cfs);
-                System.out.println("------------Test Trace # 19--------------- CFS renamed/saved: " + newCfsName);
+                log.error("------------Test Trace # 19--------------- CFS renamed/saved: " + newCfsName);
             } else {
-                System.out.println("------------Test Trace # 20--------------- CFS not found: " + cfsName);
+                log.error("------------Test Trace # 20--------------- CFS not found: " + cfsName);
             }
 
             // 7. Update RFS (if exists)
-            System.out.println("------------Test Trace # 21--------------- Checking RFS: " + rfsName);
+            log.error("------------Test Trace # 21--------------- Checking RFS: " + rfsName);
             Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
             if (rfsOpt.isPresent()) {
                 ResourceFacingService rfs = rfsOpt.get();
                 String newRfsName = rfs.getLocalName() + Constants.UNDER_SCORE  + req.getOntSN();
                 rfs.setDiscoveredName(newRfsName);
                 rfsRepo.save(rfs);
-                System.out.println("------------Test Trace # 22--------------- RFS renamed/saved: " + newRfsName);
+                log.error("------------Test Trace # 22--------------- RFS renamed/saved: " + newRfsName);
             } else {
-                System.out.println("------------Test Trace # 23--------------- RFS not found: " + rfsName);
+                log.error("------------Test Trace # 23--------------- RFS not found: " + rfsName);
             }
 
             // 8. Update OLT (if exists)
-            System.out.println("------------Test Trace # 24--------------- Checking OLT: " + req.getOltName());
+            log.error("------------Test Trace # 24--------------- Checking OLT: " + req.getOltName());
             String oltName = req.getOltName();
             Optional<LogicalDevice> oltOpt = logicalDeviceRepo.findByDiscoveredName(oltName);
             if (oltOpt.isPresent()) {
@@ -250,13 +250,13 @@ public class ChangeTechnologyVoice implements HttpAction {
                 }
                 olt.setProperties(oltProps);
                 logicalDeviceRepo.save(olt);
-                System.out.println("------------Test Trace # 25--------------- OLT updated and saved: " + olt.getLocalName());
+                log.error("------------Test Trace # 25--------------- OLT updated and saved: " + olt.getLocalName());
             } else {
-                System.out.println("------------Test Trace # 26--------------- OLT not found: " + req.getOltName());
+                log.error("------------Test Trace # 26--------------- OLT not found: " + req.getOltName());
             }
 
             // 9. Retrieve CPE devices (ONT_ and CBM_ entries) - these are CPE representations
-            System.out.println("------------Test Trace # 27--------------- Looking for CPE devices: " + cpeDeviceName + ", " + cpeDeviceOldName);
+            log.error("------------Test Trace # 27--------------- Looking for CPE devices: " + cpeDeviceName + ", " + cpeDeviceOldName);
             String cpeDeviceGdn = Validations.getGlobalName(cpeDeviceName);
             String cpeDeviceOldGdn = Validations.getGlobalName(cpeDeviceOldName);
             Optional<LogicalDevice> ontCpeOpt = logicalDeviceRepo.findByDiscoveredName(cpeDeviceName);
@@ -264,7 +264,7 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             if (!ontCpeOpt.isPresent() || !cbmCpeOpt.isPresent()) {
                 String missing = !ontCpeOpt.isPresent() ? cpeDeviceName : (!cbmCpeOpt.isPresent() ? cpeDeviceOldName : "");
-                System.out.println("------------Test Trace # 28--------------- CPE missing: " + missing);
+                log.error("------------Test Trace # 28--------------- CPE missing: " + missing);
                 // Per spec: If either device is missing → return error about ONT name in CPEDevice
                 return new ChangeTechnologyVoiceResponse("404", ERROR_PREFIX + "ONT name \"" + ontName + "\" is not found in CPEDevice",
                         Instant.now().toString(), subscriptionName, ontName);
@@ -272,24 +272,24 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             LogicalDevice ontCpe = ontCpeOpt.get();
             LogicalDevice cbmCpe = cbmCpeOpt.get();
-            System.out.println("------------Test Trace # 29--------------- Both CPE devices found");
+            log.error("------------Test Trace # 29--------------- Both CPE devices found");
 
             // 10. Move voice port on CPEs
             if ("1".equals(req.getOntPort())) {
                 ontCpe.getProperties().put("voipPort1", req.getServiceId());
                 cbmCpe.getProperties().put("voipPort1", "Available");
-                System.out.println("------------Test Trace # 30--------------- POTS1 assigned to ONT and freed on CBM");
+                log.error("------------Test Trace # 30--------------- POTS1 assigned to ONT and freed on CBM");
             } else {
                 ontCpe.getProperties().put("voipPort2", req.getServiceId());
                 cbmCpe.getProperties().put("voipPort2", "Available");
-                System.out.println("------------Test Trace # 31--------------- POTS2 assigned to ONT and freed on CBM");
+                log.error("------------Test Trace # 31--------------- POTS2 assigned to ONT and freed on CBM");
             }
             logicalDeviceRepo.save(ontCpe);
             logicalDeviceRepo.save(cbmCpe);
-            System.out.println("------------Test Trace # 32--------------- CPE devices saved");
+            log.error("------------Test Trace # 32--------------- CPE devices saved");
 
             // 11. Update ONT device (logical device, ONT object)
-            System.out.println("------------Test Trace # 33--------------- Looking for ONT device: " + ontName);
+            log.error("------------Test Trace # 33--------------- Looking for ONT device: " + ontName);
             String ontGdn = Validations.getGlobalName(ontName);
             Optional<LogicalDevice> ontDeviceOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
             if (ontDeviceOpt.isPresent()) {
@@ -309,37 +309,37 @@ public class ChangeTechnologyVoice implements HttpAction {
                     ontDevice.getProperties().put("linkedRFS", rfsOpt.get().getLocalName());
                 }
                 logicalDeviceRepo.save(ontDevice);
-                System.out.println("------------Test Trace # 34--------------- ONT device updated and saved: " + ontDevice.getLocalName());
+                log.error("------------Test Trace # 34--------------- ONT device updated and saved: " + ontDevice.getLocalName());
             } else {
-                System.out.println("------------Test Trace # 35--------------- ONT device not found: " + ontName + " (no creation per spec)");
+                log.error("------------Test Trace # 35--------------- ONT device not found: " + ontName + " (no creation per spec)");
             }
 
             // 12. update CBM device (if exists)
-            System.out.println("------------Test Trace # 36--------------- Looking up CBM device: " + cbmName);
+            log.error("------------Test Trace # 36--------------- Looking up CBM device: " + cbmName);
             String cbmGdn = Validations.getGlobalName(cbmName);
             Optional<LogicalDevice> cbmDeviceOpt = logicalDeviceRepo.findByDiscoveredName(cbmName);
             if (cbmDeviceOpt.isPresent()) {
                 LogicalDevice cbmDevice = cbmDeviceOpt.get();
                 // clear RFS association (store null or remove prop)
                 Map<String, Object> cbmProps = cbmDevice.getProperties() == null ? new HashMap<>() : new HashMap<>(cbmDevice.getProperties());
-                cbmProps.put("administrativeState", "Available");
-                cbmProps.put("operationalState", "Available");
+                cbmProps.put("AdministrativeState", "Available");
+                cbmProps.put("OperationalState", "Available");
                 cbmDevice.setProperties(cbmProps);
                 // Per spec: delete CBM device from inventory
                 try {
                     logicalDeviceRepo.save(cbmDevice);
-                    System.out.println("------------Test Trace # 37--------------- CBM device deleted: " + cbmDevice.getLocalName());
+                    log.error("------------Test Trace # 37--------------- CBM device deleted: " + cbmDevice.getLocalName());
                 } catch (Exception e) {
-                    System.out.println("------------Test Trace # 38--------------- CBM updation failed, saved as Available");
+                    log.error("------------Test Trace # 38--------------- CBM updation failed, saved as Available");
                 }
             } else {
-                System.out.println("------------Test Trace # 39--------------- CBM device not found: " + cbmName);
+                log.error("------------Test Trace # 39--------------- CBM device not found: " + cbmName);
             }
 
             // 13. Persist any pending RFS (already saved earlier if renamed) and final flush - repository implementations typically auto-flush on save
 
-            System.out.println("------------Test Trace # 40--------------- ChangeTechnologyVoice finished successfully");
-            log.info(Constants.ACTION_COMPLETED);
+            log.error("------------Test Trace # 40--------------- ChangeTechnologyVoice finished successfully");
+            log.error(Constants.ACTION_COMPLETED);
             // Return success
             return new ChangeTechnologyVoiceResponse("200",
                     "UIV action ChangeTechnologyVoice executed successfully.",
@@ -349,7 +349,7 @@ public class ChangeTechnologyVoice implements HttpAction {
 
         } catch (Exception ex) {
             log.error("Unhandled exception in ChangeTechnologyVoice", ex);
-            System.out.println("------------Test Trace # 99--------------- Exception: " + ex.getMessage());
+            log.error("------------Test Trace # 99--------------- Exception: " + ex.getMessage());
             return new ChangeTechnologyVoiceResponse("500",
                     ERROR_PREFIX + "Internal server error occurred - " + ex.getMessage(),
                     Instant.now().toString(),
