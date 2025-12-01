@@ -117,7 +117,7 @@ public class CreateServiceCbmVoice implements HttpAction {
         String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getServiceId();
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-        String cbmName = "CBM" + Constants.UNDER_SCORE +request.getServiceId();
+        String cbmName = "CBM" +request.getServiceId();
 
         // name length checks
         if (subscriberNameString.length() > 100 ||

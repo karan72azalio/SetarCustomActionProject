@@ -366,7 +366,7 @@ public class QueryFlags implements HttpAction {
                             }
                             log.info("Trace: CBM inspected: mac=" + flags.get("CBM_MAC") + " voip1=" + flags.get("SERVICE_VOIP_NUMBER1"));
                         } else {
-                            String alt = "CBM" + Constants.UNDER_SCORE +(serviceID == null ? "" : serviceID);
+                            String alt = "CBM" +(serviceID == null ? "" : serviceID);
                             deviceRepository.findByDiscoveredName(alt).ifPresent(dev -> {
                                 Map<String, Object> dp = safeProps(dev.getProperties());
                                 flags.put("ONT_MODEL", (String) dp.getOrDefault("deviceModel", ""));
@@ -386,7 +386,7 @@ public class QueryFlags implements HttpAction {
 
             log.info("------------Test Trace # 12---------------");
             if ("ONT".equalsIgnoreCase(serviceLink) || "SRX".equalsIgnoreCase(serviceLink) || (ontSN != null && ontSN.contains("ALCL"))) {
-                String ontGdn = ontSN == null ? "" :"ONT" + Constants.UNDER_SCORE + ontSN;
+                String ontGdn = ontSN == null ? "" :"ONT" + ontSN;
                 if (ontGdn.length() > 100) {
                     return new QueryFlagsResponse("400", ERROR_PREFIX + "ONT name too long", getCurrentTimestamp(), Collections.emptyMap());
                 }

@@ -104,7 +104,7 @@ public class CreateServiceIPTV implements HttpAction {
             String productName = subscriberName + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE+ request.getServiceID();
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            String ontName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
+            String ontName ="ONT" + request.getOntSN();
             String mgmtVlanName = request.getMenm() + Constants.UNDER_SCORE  + request.getVlanID();
 
 
@@ -159,6 +159,7 @@ public class CreateServiceIPTV implements HttpAction {
                 subscriptionProps.put("servicePackage", request.getServicePackage());
                 subscriptionProps.put("kenanSubscriberID", request.getKenanUidNo());
                 subscriptionProps.put("gatewayMacAddress", request.getGatewayMac());
+                subscriptionProps.put("serviceLink",((request.getOltName()!=null) && request.getOltName().equalsIgnoreCase("SRX"))?"SRX":"ONT");
 
                 subscription.setProperties(subscriptionProps);
                 subscription.setCustomer(subscriber); // association

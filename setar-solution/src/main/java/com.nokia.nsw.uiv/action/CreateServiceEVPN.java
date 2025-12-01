@@ -144,7 +144,7 @@ public class CreateServiceEVPN implements HttpAction {
 
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
+            String ontName ="ONT" + req.getOntSN();
             if (ontName.length() > 100) {
                 System.out.println("------------Trace # 6--------------- ONT name too long");
                 return new CreateServiceEVPNResponse(

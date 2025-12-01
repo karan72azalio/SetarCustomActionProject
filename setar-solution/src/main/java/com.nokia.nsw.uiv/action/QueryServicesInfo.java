@@ -305,7 +305,7 @@ public class QueryServicesInfo implements HttpAction {
                                 if (ssn != null) ontSno = ssn.toString();
                             }
                             if (ontSno != null && !ontSno.isEmpty()) {
-                                String ontName ="ONT" + Constants.UNDER_SCORE + ontSno;
+                                String ontName ="ONT" + ontSno;
                                 Optional<LogicalDevice> optOnt = logicalDeviceRepository.findByDiscoveredName(ontName);
                                 if (optOnt.isPresent()) {
                                     nameONT = optOnt.get();

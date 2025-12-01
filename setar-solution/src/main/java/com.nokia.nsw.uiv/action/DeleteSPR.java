@@ -100,7 +100,7 @@ public class DeleteSPR implements HttpAction {
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String productName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getProductSubtype() + Constants.UNDER_SCORE  + req.getServiceId();
-        String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
+        String ontName ="ONT" + req.getOntSN();
 
         if (ontName.length() > 100) {
             // Code6
@@ -146,8 +146,8 @@ public class DeleteSPR implements HttpAction {
                 LogicalDevice ont = optOnt.get();
                 optOlt = ont.getManagingDevices().stream().findFirst();
             }
-            // Attempt to retrieve a CPE device named"ONT" + Constants.UNDER_SCORE + ontSN (optional)
-            String optCpeName="ONT" + Constants.UNDER_SCORE + req.getOntSN();
+            // Attempt to retrieve a CPE device named"ONT" + ontSN (optional)
+            String optCpeName="ONT" + req.getOntSN();
             Optional<LogicalDevice> optCpe = logicalDeviceRepository.findByDiscoveredName(optCpeName);
 
             // -----------------------------

@@ -282,7 +282,7 @@ public class CreateServiceCBM implements HttpAction {
                     return c;
                 });
         // --- 7. CBM Device Logic ---
-        String cbmName = "CBM" + Constants.UNDER_SCORE +request.getCbmSN();
+        String cbmName = "CBM" +request.getCbmSN();
         if (cbmName.length() > 100) {
             return createErrorResponse("CBM name too long", 400);
         }

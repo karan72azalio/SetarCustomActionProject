@@ -88,7 +88,7 @@ public class ModifyCBM implements HttpAction {
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             String productName = input.getSubscriberName() + Constants.UNDER_SCORE
                     + input.getProductSubtype() + Constants.UNDER_SCORE + input.getServiceId();
-            String cbmDeviceName = "CBM" + Constants.UNDER_SCORE +input.getServiceId();
+            String cbmDeviceName = "CBM" +input.getServiceId();
 
             log.info("ModifyCBM start: subscriberDerived='{}', subscriptionName='{}', cfsName='{}', rfsName='{}', productName='{}', cbmDeviceName='{}'",
                     subscriberNameDerived, subscriptionName, cfsName, rfsName, productName, cbmDeviceName);
@@ -160,7 +160,7 @@ public class ModifyCBM implements HttpAction {
                 // CBM for modifyParam1 if present
                 LogicalDevice cbmForParam1 = null;
                 if (modifyParam1 != null && !modifyParam1.isEmpty()) {
-                    String cbmForParam1Name = "CBM" + Constants.UNDER_SCORE +removeColons(modifyParam1);
+                    String cbmForParam1Name = "CBM" +removeColons(modifyParam1);
                     Optional<LogicalDevice> opt = logicalDeviceRepository.findByDiscoveredName(cbmForParam1Name);
                     if (opt.isPresent()) cbmForParam1 = opt.get();
                 }
@@ -227,7 +227,7 @@ public class ModifyCBM implements HttpAction {
                     } else {
                         // serviceMAC mismatch: try to find CBM by serviceID (from subscription) and update that device
                         String serviceID = (String) subscription.getProperties().getOrDefault("serviceID", "");
-                        String newCBMName = "CBM" + Constants.UNDER_SCORE +serviceID;
+                        String newCBMName = "CBM" +serviceID;
                         Optional<LogicalDevice> optNewCbm = logicalDeviceRepository.findByDiscoveredName(newCBMName);
                         Map<String, Object> dProps = Optional.ofNullable(subscription.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                         if (optNewCbm.isPresent()) {
@@ -278,8 +278,8 @@ public class ModifyCBM implements HttpAction {
             // 7️⃣ Migrate Broadband Port Assignments
             if ("Broadband".equalsIgnoreCase(input.getProductType()) && modifyParam1 != null && !modifyParam1.isEmpty()) {
                 try {
-                    String oldCbmName = "CBM" + Constants.UNDER_SCORE +sanitizeForName(input.getResourceSN());
-                    String newCbmName = "CBM" + Constants.UNDER_SCORE +sanitizeForName(modifyParam1);
+                    String oldCbmName = "CBM" +sanitizeForName(input.getResourceSN());
+                    String newCbmName = "CBM" +sanitizeForName(modifyParam1);
 
                     Optional<LogicalDevice> optOldCbm = logicalDeviceRepository.findByDiscoveredName(oldCbmName);
                     Optional<LogicalDevice> optNewCbm = logicalDeviceRepository.findByDiscoveredName(newCbmName);
@@ -383,7 +383,7 @@ public class ModifyCBM implements HttpAction {
                             String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
                             String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
                             String productNameNew = input.getSubscriberName() + Constants.UNDER_SCORE + input.getProductSubtype() + Constants.UNDER_SCORE + newServiceId;
-                            String cbmDeviceNameNew = "CBM" + Constants.UNDER_SCORE +newServiceId;
+                            String cbmDeviceNameNew = "CBM" +newServiceId;
 
                             // rename subscription
                             subscription.setDiscoveredName(subscriptionNameNew);

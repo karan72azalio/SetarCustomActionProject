@@ -92,7 +92,7 @@ public class CreateServiceFibernet implements HttpAction {
             String productName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getProductSubtype() + Constants.UNDER_SCORE  + request.getServiceID();
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            String ontName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
+            String ontName ="ONT" + request.getOntSN();
 
 
 

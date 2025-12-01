@@ -63,7 +63,7 @@ public class QueryAllServicesByCPE implements HttpAction {
             if (req.getOntSn() == null || req.getOntSn().isEmpty()) {
                 return errorResponse("400", "Missing mandatory parameter(s): ontSn");
             }
-            String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSn();
+            String ontName ="ONT" + req.getOntSn();
 
             // 2) Identify the ONT
             Optional<LogicalDevice> ontOpt = logicalDeviceRepo.findByDiscoveredName(ontName);

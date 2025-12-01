@@ -111,7 +111,7 @@ public class ChangeState implements HttpAction {
 
         // 3. Check ONT name length if present
         if (!isEmpty(req.getOntSN())) {
-            ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
+            ontName ="ONT" + req.getOntSN();
             if (ontName.length() > 100) {
                 return new ChangeStateResponse("400", Constants.ERROR_PREFIX + "ONT name too long",
                         java.time.Instant.now().toString(), "", ontName, "");

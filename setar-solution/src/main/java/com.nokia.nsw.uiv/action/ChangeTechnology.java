@@ -143,9 +143,9 @@ public class ChangeTechnology implements HttpAction {
             String subscriptionName = subscriberName + Constants.UNDER_SCORE  + serviceId;
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            String cbmName = "CBM" + Constants.UNDER_SCORE +cbmSn;
+            String cbmName = "CBM" +cbmSn;
             String mgmtVlanName = menm + Constants.UNDER_SCORE  + vlanId;
-            String ontName ="ONT" + Constants.UNDER_SCORE + ontSN;
+            String ontName ="ONT" + ontSN;
             String subscriberNameFibernet = subscriberName + Constants.UNDER_SCORE  + ontSN;
             String subscriberNameCbmKey = subscriberName + Constants.UNDER_SCORE  + cbmMac.replace(":", "");
 
@@ -318,7 +318,7 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 12. Reassign CPE devices
-            String cpeDeviceName ="ONT" + Constants.UNDER_SCORE + ontSN;
+            String cpeDeviceName ="ONT" + ontSN;
             String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn();
 
             Optional<LogicalDevice> maybeCpeNew = cpeRepo.findByDiscoveredName(cpeDeviceName);

@@ -63,7 +63,7 @@ public class QueryONTPosition implements HttpAction {
             System.out.println("------------Trace # 3--------------- Input ontSn=" + ontSn);
 
             // 2. Build ONT Name and length check
-            String ontName ="ONT" + Constants.UNDER_SCORE + ontSn;
+            String ontName ="ONT" + ontSn;
             System.out.println("------------Trace # 4--------------- Constructed ONT name: " + ontName);
 
             if (ontName.length() > 100) {

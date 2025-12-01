@@ -188,6 +188,7 @@ public class CreateServiceVoIP implements HttpAction {
             subsProps.put("simaEndpointId", req.getSimaEndpointID());
             subsProps.put("voipPackage", req.getVoipPackage());
             subsProps.put("voipServiceCode", req.getVoipServiceCode());
+            subsProps.put("serviceLink",(req.getOntSN()!=null && req.getOntSN().startsWith("ALCL"))?"ONT":"Cable_Modem");
             subscription.setProperties(subsProps);
 
             customerRepo.save(subscriber);
@@ -266,7 +267,7 @@ public class CreateServiceVoIP implements HttpAction {
                     });
 
             // Step 10: ONT & OLT
-            String ontName ="ONT" + Constants.UNDER_SCORE + req.getOntSN();
+            String ontName ="ONT" + req.getOntSN();
             if (ontName.length() > 100) {
                 return new CreateServiceVoIPResponse(
                         "400",
@@ -328,9 +329,11 @@ public class CreateServiceVoIP implements HttpAction {
             if ("1".equals(req.getOntPort())) {
                 ontProps.put("potsPort1Number", req.getVoipNumber1());
                 oltProps.put("potsTemplate1", req.getTemplateNamePots1());
+                ontProps.put("voipPort1",req.getVoipNumber1());
             } else {
                 ontProps.put("potsPort2Number", req.getVoipNumber1());
                 oltProps.put("potsTemplate2", req.getTemplateNamePots2());
+                ontProps.put("voipPort2",req.getVoipNumber1());
             }
             oltProps.put("voipServiceTemplate", req.getVoipServiceTemplate());
 

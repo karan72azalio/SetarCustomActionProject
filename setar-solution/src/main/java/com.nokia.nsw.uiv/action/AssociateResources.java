@@ -190,9 +190,9 @@ public class AssociateResources implements HttpAction {
                 System.out.println("----Trace #8: Executing Non-IPTV device association ----");
                 String devName = null;
                 if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
-                    devName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
+                    devName ="ONT" + request.getOntSN();
                 } else if (request.getCbmSN() != null && !"NA".equalsIgnoreCase(request.getCbmSN())) {
-                    devName = "CBM" + Constants.UNDER_SCORE +request.getCbmSN();
+                    devName = "CBM" +request.getCbmSN();
                 }
 
                 if (devName != null) {

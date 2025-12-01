@@ -94,7 +94,7 @@ public class ModifyIPTV implements HttpAction {
             String productName = subscriberName+Constants.UNDER_SCORE + request.getProductSubtype()+Constants.UNDER_SCORE + request.getServiceId();
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            String cbmDeviceName = "CBM" + Constants.UNDER_SCORE +request.getServiceId();
+            String cbmDeviceName = "CBM" +request.getServiceId();
 
             // -------------------- Fetch entities --------------------
             Optional<Customer> optSubscriber = customerRepository.findByDiscoveredName(subscriberName);

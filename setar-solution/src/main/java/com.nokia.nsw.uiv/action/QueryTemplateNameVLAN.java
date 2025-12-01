@@ -60,7 +60,7 @@ public class QueryTemplateNameVLAN implements HttpAction {
             }
 
             // 2) Build ONT name and validate length (Code6)
-            String ontName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
+            String ontName ="ONT" + request.getOntSN();
             if (ontName.length() > 100) {
                 return createErrorResponse("400", ERROR_PREFIX + "Identifier exceeds allowed character length");
             }

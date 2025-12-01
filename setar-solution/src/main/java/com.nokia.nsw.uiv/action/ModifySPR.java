@@ -78,7 +78,7 @@ public class ModifySPR implements HttpAction {
             // 2. Name Construction
             String subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getOntSN();
             String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId() + Constants.UNDER_SCORE  + request.getOntSN();
-            String ontName ="ONT" + Constants.UNDER_SCORE + request.getOntSN();
+            String ontName ="ONT" + request.getOntSN();
 
             if (ontName.length() > 100) {
                 throw new BadRequestException("ONT name too long");
