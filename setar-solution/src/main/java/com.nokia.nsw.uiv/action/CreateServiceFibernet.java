@@ -147,7 +147,7 @@ public class CreateServiceFibernet implements HttpAction {
                 log.error("Created subscriber: {}", subscriberName);
             }
 
-            // 3. Subscription: create or fetch (stored as LogicalComponent or service in your model — here we use Subscription entity)
+            // 3. Subscription: create or fetch
             Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
             Subscription subscription;
             if (optSubscription.isPresent()) {

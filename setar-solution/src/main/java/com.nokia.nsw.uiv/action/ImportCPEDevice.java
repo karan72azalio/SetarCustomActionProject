@@ -60,13 +60,13 @@ public class ImportCPEDevice implements HttpAction {
         ImportCPEDeviceRequest request = (ImportCPEDeviceRequest) actionContext.getObject();
         try {
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
-            try{
+            try {
                 Validations.validateMandatoryParams(request.getCpeSerialNo(), "cpeSerialNo");
                 Validations.validateMandatoryParams(request.getCpeModel(), "cpeModel");
                 Validations.validateMandatoryParams(request.getCpeType(), "cpeType");
                 Validations.validateMandatoryParams(request.getCpeMacAddress(), "cpeMacAddress");
                 Validations.validateMandatoryParams(request.getCpeGwMacAddress(), "cpeGwMacAddress");
-            }catch (BadRequestException bre) {
+            } catch (BadRequestException bre) {
                 return new ImportCPEDeviceResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         java.time.Instant.now().toString());
             }
@@ -81,7 +81,7 @@ public class ImportCPEDevice implements HttpAction {
             if (optDevice.isPresent()) {
                 cpeDevice = optDevice.get();
                 log.error("Found existing CPE device: {}", devName);
-                return new ImportCPEDeviceResponse("409","Service already exist/Duplicate entry", Instant.now().toString());
+                return new ImportCPEDeviceResponse("409", "Service already exist/Duplicate entry", Instant.now().toString());
             } else {
                 log.error("Creating new CPE device: {}", devName);
                 cpeDevice = new LogicalDevice();
@@ -143,7 +143,7 @@ public class ImportCPEDevice implements HttpAction {
     private void createPotsPort(String serialNo, String portType, LogicalDevice cpeDevice)
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
         log.error("-----------------Create POTS ports-Started------------------");
-        String portName = serialNo + Constants.UNDER_SCORE  + portType;
+        String portName = serialNo + Constants.UNDER_SCORE + portType;
         Optional<LogicalComponent> optPort = componentRepository.findByDiscoveredName(portName);
 
         if (!optPort.isPresent()) {
@@ -163,8 +163,8 @@ public class ImportCPEDevice implements HttpAction {
             potsPort.setProperties(properties);
 
             componentRepository.save(potsPort, 2);
-//            cpeDevice.addContained(potsPort);
-//            cpeDeviceRepository.save(cpeDevice, 2);
+            cpeDevice.addContained(potsPort);
+            cpeDeviceRepository.save(cpeDevice, 2);
             log.error("POTS port created and associated: {}", portName);
         } else {
             log.error("POTS port already exists: {}", portName);
@@ -175,7 +175,7 @@ public class ImportCPEDevice implements HttpAction {
     private void createEthernetPort(String serialNo, String portType, LogicalDevice cpeDevice)
             throws BadRequestException, AccessForbiddenException, ModificationNotAllowedException {
 
-        String portName = serialNo + Constants.UNDER_SCORE  + portType;
+        String portName = serialNo + Constants.UNDER_SCORE + portType;
         Optional<LogicalComponent> optPort = componentRepository.findByDiscoveredName(portName);
         if (!optPort.isPresent()) {
             log.error("Creating Ethernet port: {}", portName);
@@ -198,10 +198,9 @@ public class ImportCPEDevice implements HttpAction {
             }
 
             ethPort.setProperties(properties);
-
-            //componentRepository.save(ethPort, 2);
-           // cpeDevice.addContained(ethPort);
-           // cpeDeviceRepository.save(cpeDevice, 2);
+            componentRepository.save(ethPort, 2);
+            cpeDevice.addContained(ethPort);
+            cpeDeviceRepository.save(cpeDevice, 2);
             log.error("Ethernet port created and associated: {}", portName);
 
             // VLAN interfaces (LogicalInterface)
@@ -233,21 +232,28 @@ public class ImportCPEDevice implements HttpAction {
                         vlanProps.put("vlanId", "");
                         vlanProps.put("vlanStatus", "Available");
                         vlan.setProperties(vlanProps);
-                        logicalInterfaceRepository.save(vlan,2);
+                        logicalInterfaceRepository.save(vlan, 2);
                         ethPort.addContained(vlan);
                     }
                 }
-                componentRepository.save(ethPort);
-                Map<String, Object> props = ethPort.getProperties();
-                if (vlanCreated) {
-                    props.put("portStatus", "Allocated");
-                    log.error("Port status updated to Allocated for: {}", portName);
-                } else {
+                try {
+                    componentRepository.save(ethPort);
+                    Map<String, Object> props = ethPort.getProperties();
+                    if (vlanCreated) {
+                        props.put("portStatus", "Allocated");
+                        log.error("Port status updated to Allocated for: {}", portName);
+                    } else {
+                        props.put("portStatus", "Available");
+                        log.error("No VLAN created. Port status updated to Available for: {}", portName);
+                    }
+                    componentRepository.save(ethPort);
+                } catch (Exception e) {
+                    Map<String, Object> props = ethPort.getProperties();
                     props.put("portStatus", "Available");
-                    log.error("No VLAN created. Port status updated to Available for: {}", portName);
+                    componentRepository.save(ethPort);
                 }
-                componentRepository.save(ethPort);
-            }else{
+
+            } else {
                 componentRepository.save(ethPort);
             }
         }

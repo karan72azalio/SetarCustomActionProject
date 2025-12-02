@@ -41,5 +41,7 @@ public class CreateServiceCBMRequest {
     private String servicePackage;
     private String qosProfile;
     private String kenanUidNo;
+    private String email;
+    private String emailPassword;
 }
 

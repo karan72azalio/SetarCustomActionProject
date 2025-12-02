@@ -93,11 +93,11 @@ public class CreateServiceCBM implements HttpAction {
             if (cpeOpt.isPresent()) {
                 LogicalDevice cpe = cpeOpt.get();
                 Map<String,Object> cpeProps = cpe.getProperties();
-                cpeProps.put("administrativeState","Available");
-                cpe.setProperties(cpeProps);
+                cpeProps.put("AdministrativeState","Available");
                 if ("Broadband".equalsIgnoreCase(request.getProductSubtype())) {
-                    cpe.setDescription("Internet");
+                    cpeProps.put("description","Internet");
                 }
+                cpe.setProperties(cpeProps);
                 cpeDeviceRepository.save(cpe, 2);
             }
 
@@ -156,6 +156,8 @@ public class CreateServiceCBM implements HttpAction {
             if (request.getCompanyName() != null && !request.getCompanyName().trim().isEmpty()) sp.put("companyName", request.getCompanyName());
             if (request.getContactPhone() != null && !request.getContactPhone().trim().isEmpty()) sp.put("contactPhone", request.getContactPhone());
             if (request.getSubsAddress() != null && !request.getSubsAddress().trim().isEmpty()) sp.put("subsAddress", request.getSubsAddress());
+            if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) sp.put("email", request.getEmail());
+            if (request.getEmailPassword() != null  && !request.getEmailPassword().trim().isEmpty()) sp.put("emailPassword", request.getEmailPassword());
             subscriber.setProperties(sp);
             subscriberRepository.save(subscriber, 2);
         } catch (Exception e) {
@@ -194,16 +196,15 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("subscriptionStatus", "Active");
                     prop.put("serviceSubType", request.getProductSubtype());
                     prop.put("serviceLink", "Cable_Modem");
-                    prop.put("serviceSN", request.getCbmSN());
+                    prop.put("serviceSerialNumber", request.getCbmSN());
                     prop.put("macAddress", request.getCbmMac());
                     prop.put("serviceID", request.getServiceId());
-                    prop.put("veipQosSessionProfile", request.getQosProfile());
+                    prop.put("QosSessionProfile", request.getQosProfile());
                     prop.put("houseHoldId", request.getHhid());
                     prop.put("customerGroupId", request.getCustomerGroupId());
-                    prop.put("subscriberID_CableModem", request.getSubscriberId());
+                    prop.put("subscriberIDForCableModem", request.getSubscriberId());
                     prop.put("servicePackage", request.getServicePackage());
                     prop.put("kenanSubscriberId", request.getKenanUidNo());
-                    prop.put("hhid",request.getHhid());
                     sub.setCustomer(subscriber);
                     sub.setProperties(prop);
                     subscriptionRepository.save(sub, 2);
@@ -293,22 +294,12 @@ public class CreateServiceCBM implements HttpAction {
                     ResourceFacingService r = new ResourceFacingService();
                     try {
                         r.setLocalName(Validations.encryptName(rfsName));
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
+                        r.setKind(Constants.SETAR_KIND_SETAR_RFS);
+                        r.setContext(Constants.SETAR);
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                     r.setDiscoveredName(rfsName);
-                    try {
-                        r.setKind(Constants.SETAR_KIND_SETAR_RFS);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        r.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("rfsStatus", "Active");
                     prop.put("rfsType",request.getProductType());
@@ -323,22 +314,12 @@ public class CreateServiceCBM implements HttpAction {
                     LogicalDevice d = new LogicalDevice();
                     try {
                         d.setLocalName(Validations.encryptName(cbmName));
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
+                        d.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
+                        d.setContext(Constants.SETAR);
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                     d.setDiscoveredName(cbmName);
-                    try {
-                        d.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        d.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
                     Map<String, Object> deviceProps = new HashMap<>();
                     deviceProps.put("serialNo", request.getCbmSN());
                     deviceProps.put("macAddress", request.getCbmMac());

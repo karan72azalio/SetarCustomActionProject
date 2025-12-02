@@ -52,7 +52,7 @@ public class ModifyCBM implements HttpAction {
         ModifyCBMRequest input = (ModifyCBMRequest) actionContext.getObject();
 
         try {
-            // 1️⃣ Mandatory validations
+            // 1 Mandatory validations
             try {
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(input.getSubscriberName(), "subscriberName");
