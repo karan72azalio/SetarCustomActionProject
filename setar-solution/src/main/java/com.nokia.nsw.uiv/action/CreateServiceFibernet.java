@@ -75,10 +75,16 @@ public class CreateServiceFibernet implements HttpAction {
             try{
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatory(request.getSubscriberName(), "subscriberName");
-                Validations.validateMandatory(request.getServiceID(), "serviceID");
-                Validations.validateMandatory(request.getOntSN(), "ontSN");
                 Validations.validateMandatory(request.getProductType(), "productType");
                 Validations.validateMandatory(request.getProductSubtype(), "productSubtype");
+                Validations.validateMandatory(request.getOntSN(), "ontSN");
+                Validations.validateMandatory(request.getOltName(), "oltName");
+                Validations.validateMandatory(request.getQosProfile(), "qosProfile");
+                Validations.validateMandatory(request.getVlanID(), "vlanID");
+                Validations.validateMandatory(request.getMenm(), "menm");
+                Validations.validateMandatory(request.getHhid(), "hhid");
+                Validations.validateMandatory(request.getServiceID(), "serviceID");
+                Validations.validateMandatory(request.getOntModel(), "ontModel");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
                 return new CreateServiceFibernetResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
@@ -95,22 +101,21 @@ public class CreateServiceFibernet implements HttpAction {
             String ontName ="ONT" + request.getOntSN();
 
 
-
-
-
             // Length checks
-            if (subscriberName.length() > 100) {
-                return createErrorResponse("Subscriber name too long", "400", "", "");
-            }
-            if (subscriptionName.length() > 100) {
-                return createErrorResponse("Subscription name too long", "400", "", "");
-            }
             if (productName.length() > 100) {
                 return createErrorResponse("Product name too long", "400", "", "");
             }
             if (ontName.length() > 100) {
                 return createErrorResponse("ONT name too long", "400", "", "");
             }
+            if (subscriptionName.length() > 100) {
+                return createErrorResponse("Subscription name too long", "400", "", "");
+            }
+            if (subscriberName.length() > 100) {
+                return createErrorResponse("Subscriber name too long", "400", "", "");
+            }
+
+
 
             // 2. Subscriber: create or fetch
             Optional<Customer> optCustomer = customerRepository.findByDiscoveredName(subscriberName);
@@ -127,12 +132,16 @@ public class CreateServiceFibernet implements HttpAction {
                 subscriber.setContext(Constants.SETAR);
                 Map<String, Object> custProps = new HashMap<>();
                 custProps.put("accountNumber", request.getSubscriberName());
+                custProps.put("subscriberStatus", "Active");
+                custProps.put("subscriberType", "Regular");
                 if (request.getFirstName() != null) custProps.put("subscriberFirstName", request.getFirstName());
                 if (request.getLastName() != null) custProps.put("subscriberLastName", request.getLastName());
                 if (request.getSubsAddress() != null) custProps.put("address", request.getSubsAddress());
                 if (request.getCompanyName() != null) custProps.put("companyName", request.getCompanyName());
                 if (request.getContactPhone() != null) custProps.put("contactPhoneNumber", request.getContactPhone());
                 if (request.getHhid() != null) custProps.put("houseHoldId", request.getHhid());
+                if (request.getEmail() != null) custProps.put("email", request.getEmail());
+                if (request.getEmailPassword() != null) custProps.put("emailPassword", request.getEmailPassword());
                 subscriber.setProperties(custProps);
                 customerRepository.save(subscriber, 2);
                 log.error("Created subscriber: {}", subscriberName);
@@ -151,10 +160,15 @@ public class CreateServiceFibernet implements HttpAction {
                 subscription.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
                 subscription.setContext(Constants.SETAR);
                 Map<String, Object> subProps = new HashMap<>();
+                subProps.put("subscriptionStatus", "Active");
                 subProps.put("serviceSubType", request.getProductSubtype());
                 subProps.put("serviceLink", "ONT");
+                subProps.put("subscriptionDetails", request.getSubscriberID());
                 subProps.put("serviceID", request.getServiceID());
                 subProps.put("serviceSN", request.getOntSN());
+                subProps.put("oltPosition", request.getOltName());
+                subProps.put("householdID", request.getHhid());
+                subProps.put("subscriberID_CableModem", request.getSubscriberID());
                 if (request.getQosProfile() != null) subProps.put("veipQosSessionProfile", request.getQosProfile());
                 if (request.getKenanUidNo() != null) subProps.put("kenanSubscriberId", request.getKenanUidNo());
                 subscription.setProperties(subProps);
@@ -178,7 +192,9 @@ public class CreateServiceFibernet implements HttpAction {
                 Map<String, Object> prodProps = new HashMap<>();
                 prodProps.put("productType", request.getProductType());
                 prodProps.put("productSubtype", request.getProductSubtype());
+                prodProps.put("productStatus", "Active");
                 product.setProperties(prodProps);
+                product.setCustomer(subscriber);
                 product.setSubscription(subscription);
                 productRepository.save(product, 2);
                 log.error("Created product: {}", productName);
