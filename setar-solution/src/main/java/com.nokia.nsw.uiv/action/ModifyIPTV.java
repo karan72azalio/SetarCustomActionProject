@@ -86,7 +86,7 @@ public class ModifyIPTV implements HttpAction {
                 Validations.validateMandatoryParams(request.getModifyType(), "modifyType");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
-                return new ModifyIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                return new ModifyIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         java.time.Instant.now().toString(), "","");
             }
             String subscriberName = request.getSubscriberName();

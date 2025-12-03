@@ -72,7 +72,7 @@ public class DeleteIPTV implements HttpAction {
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             }catch (BadRequestException bre) {
-                return new DeleteIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                return new DeleteIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         Instant.now().toString(), "","");
             }
             // Step 2: Prepare entity names

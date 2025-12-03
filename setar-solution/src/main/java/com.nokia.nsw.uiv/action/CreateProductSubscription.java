@@ -35,6 +35,7 @@ import java.util.Optional;
 public class CreateProductSubscription implements HttpAction {
 
     protected static final String ACTION_LABEL = "CreateProductSubscription";
+    private static final String ERROR_PREFIX = "UIV action CreateProductSubscription execution failed - ";
 
     @Autowired
     private CustomerCustomRepository subscriberRepository;
@@ -67,7 +68,7 @@ public class CreateProductSubscription implements HttpAction {
                 Validations.validateMandatoryParams(request.getProduct(), "product");
                 Validations.validateMandatoryParams(request.getReferenceID(), "referenceID");
             }catch (BadRequestException bre) {
-                return new CreateProductSubscriptionResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                return new CreateProductSubscriptionResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         java.time.Instant.now().toString(), "","");
             }
 

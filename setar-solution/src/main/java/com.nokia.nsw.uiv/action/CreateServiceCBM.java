@@ -39,6 +39,7 @@ import java.util.*;
 @Slf4j
 public class CreateServiceCBM implements HttpAction {
     protected static final String ACTION_LABEL = Constants.CREATE_SERVICE_CBM;
+    private static final String ERROR_PREFIX = "UIV action CreateServiceCBM execution failed - ";
     @Autowired
     private CustomerCustomRepository subscriberRepository;
 
@@ -77,7 +78,7 @@ public class CreateServiceCBM implements HttpAction {
             Validations.validateMandatoryParams(request.getProductType(), "productType");
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         }catch (BadRequestException bre) {
-            return new CreateServiceCBMResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+            return new CreateServiceCBMResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                     java.time.Instant.now().toString(), "","");
         }
 

@@ -93,7 +93,7 @@ public class CreateServiceIPTV implements HttpAction {
                 Validations.validateMandatoryParams(request.getCustomerGroupID(), "customerGroupID");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
-                return new CreateServiceIPTVResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                return new CreateServiceIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         java.time.Instant.now().toString(), "","");
             }
 

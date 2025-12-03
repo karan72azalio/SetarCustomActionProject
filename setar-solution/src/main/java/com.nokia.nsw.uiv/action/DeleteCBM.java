@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Action
 @Slf4j
 public class DeleteCBM implements HttpAction {
-
+    private static final String ERROR_PREFIX = "UIV action DeleteCBM execution failed - ";
     private static final String ACTION_LABEL = Constants.DELETE_CBM;
 
     @Autowired
@@ -83,7 +83,7 @@ public class DeleteCBM implements HttpAction {
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);// <-- added
             // serviceFlag was previously validated in your code; it's optional in spec — validate only if required.
         } catch (BadRequestException bre) {
-            return new DeleteCBMResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+            return new DeleteCBMResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                     java.time.Instant.now().toString(), "", "");
         }
 
@@ -97,7 +97,7 @@ public class DeleteCBM implements HttpAction {
 
         // 6. Validate CBM name length early
         if (cbmName.length() > 100) {
-            return new DeleteCBMResponse("400", Constants.ERROR_PREFIX + "CBM name too long",
+            return new DeleteCBMResponse("400", ERROR_PREFIX + "CBM name too long",
                     java.time.Instant.now().toString(), cbmName, subscriptionName);
         }
 
@@ -139,14 +139,14 @@ public class DeleteCBM implements HttpAction {
                     if (!optCbmDevice.isPresent()) {
                         log.error("CBM device required to derive subscriber name for non-IPTV product but CBM not found: {}", cbmName);
                         // If CBM required, return or continue depending on business decision.
-                        return new DeleteCBMResponse("404", Constants.ERROR_PREFIX + "CBM device not found for non-IPTV product",
+                        return new DeleteCBMResponse("404", ERROR_PREFIX + "CBM device not found for non-IPTV product",
                                 java.time.Instant.now().toString(), cbmName, subscriptionName);
                     }
                     LogicalDevice cbm = optCbmDevice.get();
                     Object macObj = cbm.getProperties() != null ? cbm.getProperties().get("macAddress") : null;
                     if (macObj == null) {
                         log.error("CBM {} has no macAddress property", cbmName);
-                        return new DeleteCBMResponse("400", Constants.ERROR_PREFIX + "CBM missing macAddress",
+                        return new DeleteCBMResponse("400", ERROR_PREFIX + "CBM missing macAddress",
                                 java.time.Instant.now().toString(), cbmName, subscriptionName);
                     }
                     String cbmMacAddr = macObj.toString();

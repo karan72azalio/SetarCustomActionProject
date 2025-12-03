@@ -77,7 +77,6 @@ public class Constants {
     public static final String ACTION_COMPLETED = "---------------------Action-Completed---------------------";
     public static final String MANDATORY_PARAMS_VALIDATION_STARTED = "MANDATORY PARAMS VALIDATION STARTED";
     public static final String MANDATORY_PARAMS_VALIDATION_COMPLETED = "MANDATORY PARAMS VALIDATION COMPLETED";
-    public static final String ERROR_PREFIX = "UIV action ChangeState execution failed - ";
     public static final String UNDER_SCORE = "_" ;
     public static final String COMMA = ",";
     public static final String SETAR = "Setar";

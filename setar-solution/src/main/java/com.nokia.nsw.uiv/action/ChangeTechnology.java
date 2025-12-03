@@ -126,7 +126,7 @@ public class ChangeTechnology implements HttpAction {
             } catch (BadRequestException bre) {
                 return new ChangeTechnologyResponse(
                         "400",
-                        Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         Instant.now().toString(),
                         "",
                         ""

@@ -37,6 +37,7 @@ import java.util.Optional;
 @Slf4j
 public class ChangeState implements HttpAction {
     private static final String ACTION_LABEL = "ChangeState";
+    private static final String ERROR_PREFIX = "UIV action ChangeState execution failed - ";
 
     @Autowired
     private SubscriptionCustomRepository subscriptionRepository;
@@ -69,7 +70,7 @@ public class ChangeState implements HttpAction {
             validateMandatory(req.getActionType(), "actionType");
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
-            return new ChangeStateResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+            return new ChangeStateResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                     java.time.Instant.now().toString(), "","","");
         }
 
@@ -113,7 +114,7 @@ public class ChangeState implements HttpAction {
         if (!isEmpty(req.getOntSN())) {
             ontName ="ONT" + req.getOntSN();
             if (ontName.length() > 100) {
-                return new ChangeStateResponse("400", Constants.ERROR_PREFIX + "ONT name too long",
+                return new ChangeStateResponse("400", ERROR_PREFIX + "ONT name too long",
                         java.time.Instant.now().toString(), "", ontName, "");
             }
         }
@@ -136,7 +137,7 @@ public class ChangeState implements HttpAction {
                 optCbm = logicalDeviceRepository.findByDiscoveredName(cbmName);
             }
             if (!optSubscription.isPresent() || !optRfs.isPresent()) {
-                return new ChangeStateResponse("500", Constants.ERROR_PREFIX + "No entry found for Suspend/Resume",
+                return new ChangeStateResponse("500", ERROR_PREFIX + "No entry found for Suspend/Resume",
                         java.time.Instant.now().toString(), (cbmName == null ? "" : cbmName),
                         (ontName == null ? "" : ontName), subscriptionName);
             }
@@ -152,7 +153,7 @@ public class ChangeState implements HttpAction {
             } else if ("Resume".equalsIgnoreCase(actionType)) {
                 newStatus = "Active";
             } else {
-                return new ChangeStateResponse("400", Constants.ERROR_PREFIX + "Unsupported actionType: " + actionType,
+                return new ChangeStateResponse("400", ERROR_PREFIX + "Unsupported actionType: " + actionType,
                         java.time.Instant.now().toString(), (cbmName == null ? "" : cbmName),
                         (ontName == null ? "" : ontName), subscriptionName);
             }
@@ -193,7 +194,7 @@ public class ChangeState implements HttpAction {
 
         } catch (Exception ex) {
             log.error("ChangeState failed", ex);
-            return new ChangeStateResponse("500", Constants.ERROR_PREFIX + "Internal server error occurred - " + ex.getMessage(),
+            return new ChangeStateResponse("500", ERROR_PREFIX + "Internal server error occurred - " + ex.getMessage(),
                     java.time.Instant.now().toString(),
                     (cbmName == null ? "" : cbmName),
                     (ontName == null ? "" : ontName),

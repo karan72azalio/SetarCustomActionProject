@@ -31,6 +31,7 @@ import java.util.Optional;
 public class DeleteProductSubscription implements HttpAction {
 
     protected static final String ACTION_LABEL = "DeleteProductSubscription";
+    private static final String ERROR_PREFIX = "UIV action DeleteProductSubscription execution failed - ";
 
     @Autowired
     private ProductCustomRepository productRepository;
@@ -57,7 +58,7 @@ public class DeleteProductSubscription implements HttpAction {
                 Validations.validateMandatoryParams(request.getProductType(), "productType");
                 Validations.validateMandatoryParams(request.getComponentName(), "componentName");
             }catch (BadRequestException bre) {
-                return new DeleteProductSubscriptionResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                return new DeleteProductSubscriptionResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         Instant.now().toString(), "");
             }
             log.error("Mandatory parameter validation completed");

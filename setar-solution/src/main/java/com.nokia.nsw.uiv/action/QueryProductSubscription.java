@@ -28,6 +28,7 @@ import java.util.Optional;
 public class QueryProductSubscription implements HttpAction {
 
     protected static final String ACTION_LABEL = Constants.QUERY_PRODUCT_SUBSCRIPTION;
+    private static final String ERROR_PREFIX = "UIV action QueryONTPosition execution failed - ";
 
     @Autowired
     private ProductCustomRepository productRepository;
@@ -51,7 +52,7 @@ public class QueryProductSubscription implements HttpAction {
                 Validations.validateMandatoryParams(request.getProductType(), "productType");
                 Validations.validateMandatoryParams(request.getComponentName(), "componentName");
             }catch (BadRequestException bre) {
-                return new QueryProductSubscriptionResponse("400", Constants.ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                return new QueryProductSubscriptionResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         java.time.Instant.now().toString(), "","");
             }
 
