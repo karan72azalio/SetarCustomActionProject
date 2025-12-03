@@ -80,6 +80,7 @@ public class DeleteCBM implements HttpAction {
             Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
             Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
             Validations.validateMandatoryParams(request.getCbmSN(), "cbmSN");
+            Validations.validateMandatoryParams(request.getServiceFlag(), "serviceFlag");
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);// <-- added
             // serviceFlag was previously validated in your code; it's optional in spec — validate only if required.
         } catch (BadRequestException bre) {
