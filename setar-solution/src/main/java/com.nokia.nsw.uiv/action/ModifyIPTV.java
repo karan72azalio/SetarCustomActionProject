@@ -136,7 +136,7 @@ public class ModifyIPTV implements HttpAction {
                     if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
                         Map<String, Object> subProps = subscription.getProperties();
                         if (subProps == null) subProps = new HashMap<>();
-                        subProps.put("macAddress", request.getModifyParam1());
+                        subProps.put("serviceMAC", request.getModifyParam1());
                         if (request.getGatewayMac() != null && !request.getGatewayMac().equalsIgnoreCase("NA")) {
                             subProps.put("gatewayMacAddress", request.getGatewayMac());
                         }
@@ -153,7 +153,7 @@ public class ModifyIPTV implements HttpAction {
                     if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
                         Map<String, Object> subProps = subscription.getProperties();
                         if (subProps == null) subProps = new HashMap<>();
-                        subProps.put("macAddress", request.getModifyParam1());
+                        subProps.put("serviceMAC", request.getModifyParam1());
                         subscription.setProperties(subProps);
                         subscriptionRepository.save(subscription, 2);
 

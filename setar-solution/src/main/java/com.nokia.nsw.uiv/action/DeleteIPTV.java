@@ -131,7 +131,7 @@ public class DeleteIPTV implements HttpAction {
 
             // Step 6: Delete RFS, CFS, Product
             optRfs.ifPresent(rfsRepository::delete);
-            //optCfs.ifPresent(cfsRepository::delete);
+            optCfs.ifPresent(cfsRepository::delete);
             optProd.ifPresent(productRepository::delete);
 
             // Step 7: Conditional deletion of devices
