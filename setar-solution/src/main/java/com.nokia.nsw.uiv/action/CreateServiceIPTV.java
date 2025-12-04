@@ -125,6 +125,8 @@ public class CreateServiceIPTV implements HttpAction {
                 Map<String, Object> subscriberProps = new HashMap<>();
                 subscriberProps.put("accountNumber", subscriberName);
                 subscriberProps.put("houseHoldId", request.getHhid());
+                subscriberProps.put("subscriberType", "Regular");
+                subscriberProps.put("subscriberStatus", "Active");
                 subscriberProps.put("subscriberFirstName", request.getFirstName());
                 subscriberProps.put("subscriberLastName", request.getLastName());
                 subscriberProps.put("companyName", request.getCompanyName());

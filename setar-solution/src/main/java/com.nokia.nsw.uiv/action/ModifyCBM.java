@@ -226,6 +226,7 @@ public class ModifyCBM implements HttpAction {
                                     }
                                 } else {
                                     // no matching CBM found by serviceID - nothing to change
+                                    log.error("no matching CBM found by serviceID - nothing to change");
                                 }
                             }
                         }
@@ -450,8 +451,11 @@ public class ModifyCBM implements HttpAction {
 
     private String deriveSubscriberName(String productType, String origSubscriber, String resourceSN,
                                         String modifyType, String modifyParam1) {
-        if ("IPTV".equalsIgnoreCase(productType)) return origSubscriber;
-        if (resourceSN == null || resourceSN.trim().isEmpty() || "NA".equalsIgnoreCase(resourceSN)) {
+        if ("IPTV".equalsIgnoreCase(productType))
+        {
+            return origSubscriber;
+        }
+        else if (resourceSN == null || resourceSN.trim().isEmpty() || "NA".equalsIgnoreCase(resourceSN)) {
             if (containsAny(modifyType, "Package", "Components", "Products", "Contracts")) {
                 return origSubscriber;
             } else {
@@ -460,7 +464,9 @@ public class ModifyCBM implements HttpAction {
                         : origSubscriber;
             }
         }
-        return origSubscriber + Constants.UNDER_SCORE  + removeColons(resourceSN);
+        else{
+            return origSubscriber + Constants.UNDER_SCORE  + removeColons(resourceSN);
+        }
     }
 
     private String trimOrNull(String s) {
