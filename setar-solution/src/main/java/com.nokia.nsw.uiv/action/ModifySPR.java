@@ -114,7 +114,7 @@ public class ModifySPR implements HttpAction {
         } catch (BadRequestException bre) {
             log.error("Validation or not found error: {}", bre.getMessage(), bre);
             String msg = ERROR_PREFIX + bre.getMessage();
-            return new ModifySPRResponse("400", msg, getCurrentTimestamp(), "", "");
+            return new ModifySPRResponse("409", msg, getCurrentTimestamp(), "", "");
         } catch (ModificationNotAllowedException ex) {
             log.error("Persistence error: {}", ex.getMessage(), ex);
             String msg = ERROR_PREFIX + ex.getMessage();
@@ -226,7 +226,7 @@ public class ModifySPR implements HttpAction {
                 subscription.setProperties(subProps);
 
                 LogicalDevice ont = logicalDeviceRepository.findByDiscoveredName(ontName)
-                        .orElseThrow(() -> new BadRequestException("ONT not found"));
+                        .orElseThrow(() -> new BadRequestException("No entry found to modify ONT"));
 
                 Map<String, Object> ontProps = ont.getProperties();
                 ontProps.put("potsPort1Number", request.getModifyParam1());

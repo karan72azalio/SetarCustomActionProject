@@ -111,31 +111,31 @@ public class ModifyCBM implements HttpAction {
                         return new ModifyCBMResponse("409", ERROR_PREFIX + "Customer not active", String.valueOf(System.currentTimeMillis()), "", "");
                     }
                 } else {
-                    return new ModifyCBMResponse("409", ERROR_PREFIX + "Customer not found", String.valueOf(System.currentTimeMillis()), "", "");
+                    return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify Customer", String.valueOf(System.currentTimeMillis()), "", "");
                 }
             }
 
             Optional<Subscription> optSubsc = subscriptionRepository.findByDiscoveredName(subscriptionName);
             if (optSubsc.isEmpty()) {
-                return new ModifyCBMResponse("409", ERROR_PREFIX + "Subscription not found", String.valueOf(System.currentTimeMillis()), "", "");
+                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify Subscription", String.valueOf(System.currentTimeMillis()), "", "");
             }
             Subscription subscription = optSubsc.get();
 
             Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
             if (optCfs.isEmpty()) {
-                return new ModifyCBMResponse("409", ERROR_PREFIX + "CFS not found", String.valueOf(System.currentTimeMillis()), "", "");
+                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify CFS", String.valueOf(System.currentTimeMillis()), "", "");
             }
             CustomerFacingService cfs = optCfs.get();
 
             Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
             if (optRfs.isEmpty()) {
-                return new ModifyCBMResponse("409", ERROR_PREFIX + "RFS not found", String.valueOf(System.currentTimeMillis()), "", "");
+                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify RFS", String.valueOf(System.currentTimeMillis()), "", "");
             }
             ResourceFacingService rfs = optRfs.get();
 
             Optional<LogicalDevice> optCbm = logicalDeviceRepository.findByDiscoveredName(cbmDeviceName);
             if (optCbm.isEmpty()) {
-                return new ModifyCBMResponse("409", ERROR_PREFIX + "CBM device not found", String.valueOf(System.currentTimeMillis()), "", "");
+                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify CBM device", String.valueOf(System.currentTimeMillis()), "", "");
             }
             LogicalDevice cbmDevice = optCbm.get();
 
