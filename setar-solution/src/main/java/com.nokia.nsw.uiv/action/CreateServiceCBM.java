@@ -276,9 +276,13 @@ public class CreateServiceCBM implements HttpAction {
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("cfsStatus", "Active");
                     prop.put("cfsType",request.getProductType());
+                    prop.put("serviceType",request.getProductType());
+                    if(request.getFxOrderID()!=null && !request.getFxOrderID().isBlank())
+                    {
+                        prop.put("TransactionID",request.getProductType());
+                    }
+                    prop.put("startDate",new Date());
                     c.setProperties(prop);
-                    c.setStartDate(new Date());
-                    c.setTransactionId(request.getFxOrderID());
                     c.setContainingProduct(product);
                     cfsRepository.save(c, 2);
                     return c;
@@ -304,6 +308,8 @@ public class CreateServiceCBM implements HttpAction {
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("rfsStatus", "Active");
                     prop.put("rfsType",request.getProductType());
+                    prop.put("serviceType",request.getProductType());
+                    prop.put("CFSReference",cfs.getDiscoveredName());
                     r.setProperties(prop);
                     r.setContainingCfs(cfs);
                     rfsRepository.save(r, 2);

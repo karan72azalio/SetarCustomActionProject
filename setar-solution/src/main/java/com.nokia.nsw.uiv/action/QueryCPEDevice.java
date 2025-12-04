@@ -102,8 +102,8 @@ public class QueryCPEDevice implements HttpAction {
             interfaceIterable.forEach(interfaceList::add);
 
             for (int portNumber = 1; portNumber <= 5; portNumber++) {
-                //String portName = request.getResourceSN() + "_P" + portNumber + "_SINGLETAGGED";
-                String portName = request.getResourceSN() + Constants.UNDER_SCORE+ "ETH_" + portNumber;
+                String portName = request.getResourceSN() + "_P" + portNumber + "_SINGLETAGGED";
+//                String portName = request.getResourceSN() + Constants.UNDER_SCORE+ "ETH_" + portNumber;
 
                 long vlanCount = interfaceList.stream()
                         .filter(in -> in.getDiscoveredName().contains(portName))
