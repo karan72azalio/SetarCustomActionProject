@@ -76,6 +76,14 @@ public class CreateServiceCBM implements HttpAction {
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
+            Validations.validateMandatoryParams(request.getCbmSN(), "cbmSN");
+            Validations.validateMandatoryParams(request.getCbmMac(), "cbmMAC");
+            Validations.validateMandatoryParams(request.getCbmManufacturer(), "cbmManufacturer");
+            Validations.validateMandatoryParams(request.getCbmType(), "cbmType");
+            Validations.validateMandatoryParams(request.getCbmModel(), "cbmModel");
+            Validations.validateMandatoryParams(request.getHhid(), "hhid");
+            Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
+            Validations.validateMandatoryParams(request.getQosProfile(), "qosProfile");
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         }catch (BadRequestException bre) {
             return new CreateServiceCBMResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
