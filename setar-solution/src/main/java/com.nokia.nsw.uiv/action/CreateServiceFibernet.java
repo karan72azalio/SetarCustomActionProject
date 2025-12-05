@@ -214,6 +214,8 @@ public class CreateServiceFibernet implements HttpAction {
                 cfs.setContext(Constants.SETAR);
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStartDate", Instant.now().toString());
+                cfsProps.put("cfsType", request.getProductType());
+                cfsProps.put("cfsStatus", "Active");
                 if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
                 cfs.setProperties(cfsProps);
                 cfs.setContainingProduct(product);
@@ -234,6 +236,7 @@ public class CreateServiceFibernet implements HttpAction {
                 rfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
                 rfs.setContext(Constants.SETAR);
                 Map<String, Object> rfsProps = new HashMap<>();
+                rfsProps.put("rfsType", request.getProductType());
                 rfsProps.put("rfsStatus", "Active");
                 if (request.getFxOrderID() != null) rfsProps.put("transactionId", request.getFxOrderID());
                 rfs.setProperties(rfsProps);
@@ -280,6 +283,7 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
                 ontDevice.addUsingService(rfs);
                 ontDevice.addManagingDevices(oltDevice);
+                ontDevice.setProperties(ontProps);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Found existing ONT: {}", ontName);
             } else {
@@ -289,13 +293,18 @@ public class CreateServiceFibernet implements HttpAction {
                 ontDevice.setKind(Constants.SETAR_KIND_ONT_DEVICE);
                 ontDevice.setContext(ontContext);
                 Map<String, Object> ontProps = new HashMap<>();
-                ontProps.put("serialNo", request.getOntSN());
+                ontProps.put("serial", request.getOntSN());
+                ontProps.put("Model", request.getOntModel());
+                ontProps.put("oltPosition", request.getOltName());
+                ontProps.put("Template", request.getTemplateNameONT());
+                ontProps.put("OperationalState", "Active");
                 if (request.getOntModel() != null) ontProps.put("deviceModel", request.getOntModel());
                 if (request.getTemplateNameONT() != null) ontProps.put("ontTemplate", request.getTemplateNameONT());
                 if (request.getMenm() != null) ontProps.put("description", request.getMenm());
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
                 ontDevice.addUsingService(rfs);
                 ontDevice.addManagingDevices(oltDevice);
+                ontDevice.setProperties(ontProps);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Created ONT device: {}", ontName);
             }
@@ -339,6 +348,7 @@ public class CreateServiceFibernet implements HttpAction {
                     vlan.setContext(vlanContext);
                     Map<String, Object> vlanProps = new HashMap<>();
                     vlanProps.put("vlanId", request.getVlanID());
+                    vlanProps.put("state", "Active");
                     vlanProps.put("serviceId", request.getServiceID());
                     vlan.setProperties(vlanProps);
                     vlan.setContainingLogicalDevice(oltDevice);
