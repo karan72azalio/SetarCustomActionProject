@@ -65,7 +65,7 @@ public class ModifyCBM implements HttpAction {
             } catch (BadRequestException bre) {
                 return new ModifyCBMResponse("400",
                         ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        String.valueOf(System.currentTimeMillis()), "", "");
+                        getCurrentTimestamp(), "", "");
             }
 
             // 2️⃣ Extract optional parameters
@@ -117,25 +117,25 @@ public class ModifyCBM implements HttpAction {
 
             Optional<Subscription> optSubsc = subscriptionRepository.findByDiscoveredName(subscriptionName);
             if (optSubsc.isEmpty()) {
-                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify Subscription", String.valueOf(System.currentTimeMillis()), "", "");
+                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify Subscription: "+subscriptionName, String.valueOf(System.currentTimeMillis()), "", "");
             }
             Subscription subscription = optSubsc.get();
 
             Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
             if (optCfs.isEmpty()) {
-                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify CFS", String.valueOf(System.currentTimeMillis()), "", "");
+                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify CFS: "+cfsName, String.valueOf(System.currentTimeMillis()), "", "");
             }
             CustomerFacingService cfs = optCfs.get();
 
             Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
             if (optRfs.isEmpty()) {
-                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify RFS", String.valueOf(System.currentTimeMillis()), "", "");
+                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify RFS: "+rfsName, String.valueOf(System.currentTimeMillis()), "", "");
             }
             ResourceFacingService rfs = optRfs.get();
 
             Optional<LogicalDevice> optCbm = logicalDeviceRepository.findByDiscoveredName(cbmDeviceName);
             if (optCbm.isEmpty()) {
-                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify CBM device", String.valueOf(System.currentTimeMillis()), "", "");
+                return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify CBM device: "+cbmDeviceName, String.valueOf(System.currentTimeMillis()), "", "");
             }
             LogicalDevice cbmDevice = optCbm.get();
 
@@ -144,6 +144,7 @@ public class ModifyCBM implements HttpAction {
                 Map<String, Object> rfsProps = Optional.ofNullable(rfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                 rfsProps.put("transactionId", fxOrderId);
                 rfsProps.put("transactionType", input.getModifyType());
+                rfsProps.put("endDate",getCurrentTimestamp());
                 rfs.setProperties(rfsProps);
                 rfsRepository.save(rfs);
             }
@@ -471,5 +472,8 @@ public class ModifyCBM implements HttpAction {
 
     private String trimOrNull(String s) {
         return (s == null) ? null : (s.trim().isEmpty() ? null : s.trim());
+    }
+    private String getCurrentTimestamp() {
+        return java.time.Instant.now().toString();
     }
 }

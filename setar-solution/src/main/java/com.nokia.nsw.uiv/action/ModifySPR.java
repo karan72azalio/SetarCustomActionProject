@@ -25,6 +25,7 @@ import com.nokia.nsw.uiv.request.ModifySPRRequest;
 import com.nokia.nsw.uiv.response.ModifySPRResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
+import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,6 +53,11 @@ public class ModifySPR implements HttpAction {
 
     @Autowired
     private SubscriptionCustomRepository subscriptionRepository;
+    @Autowired
+    private CustomerFacingServiceCustomRepository cfsRepository;
+
+    @Autowired
+    private ResourceFacingServiceCustomRepository rfsRepository;
     @Override
     public Class getActionClass() {
         return ModifySPRRequest.class;
@@ -86,10 +92,10 @@ public class ModifySPR implements HttpAction {
 
             // 3. Fetch Entities
             Customer subscriber = customerRepository.findByDiscoveredName(subscriberName)
-                    .orElseThrow(() -> new BadRequestException("Subscriber not found: " + subscriberName));
+                    .orElseThrow(() -> new BadRequestException("No entry found to modify Subscriber: " + subscriberName));
 
             Subscription subscription = subscriptionRepository.findByDiscoveredName(subscriptionName)
-                    .orElseThrow(() -> new BadRequestException("Subscription not found: " + subscriptionName));
+                    .orElseThrow(() -> new BadRequestException("No entry found to modify Subscription: " + subscriptionName));
 
             // 4. Route to correct handler
             if (isBroadband(request)) {
@@ -143,8 +149,6 @@ public class ModifySPR implements HttpAction {
             if (!request.getServiceId().equals(request.getModifyParam3())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam3());
             }
-
-            subscriptionRepository.save(subscription, 2);
             subscriber = customerRepository.findByDiscoveredName(subscriber.getDiscoveredName()).get();
             subscriber.setProperties(subrProps);
             customerRepository.save(subscriber, 2);
@@ -189,12 +193,11 @@ public class ModifySPR implements HttpAction {
             if (!request.getServiceId().equals(request.getModifyParam1())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
             }
-
-            subscriptionRepository.save(subscription, 2);
             return true;
 
         } else if ("Component".equalsIgnoreCase(request.getModifyType())) {
             try {
+                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 Map<String, Object> subProps = subscription.getProperties();
                 subProps.put("evpnQosSessionProfile", request.getModifyParam1());
                 subscription.setProperties(subProps);
@@ -237,7 +240,6 @@ public class ModifySPR implements HttpAction {
                 }
 
                 logicalDeviceRepository.save(ont, 2);
-                subscriptionRepository.save(subscription, 2);
                 return true;
             } catch (Exception e) {
                 throw new ModificationNotAllowedException("Failed to modify VOIP number: " + e.getMessage());
@@ -248,7 +250,7 @@ public class ModifySPR implements HttpAction {
 
     private boolean handleModifyONT(ModifySPRRequest request, String ontName) throws BadRequestException, AccessForbiddenException {
         LogicalDevice ont = logicalDeviceRepository.findByDiscoveredName(ontName)
-                .orElseThrow(() -> new BadRequestException("ONT not found"));
+                .orElseThrow(() -> new BadRequestException("No entry found to modify ONT: "+ontName));
 
         // update subscriptions linked by simaCustomerId
         List<LogicalComponent> allComponents = (List<LogicalComponent>) logicalComponentRepository.findAll();
@@ -311,21 +313,23 @@ public class ModifySPR implements HttpAction {
             logicalComponentRepository.save(product, 2);
         });
 
-        logicalComponentRepository.findByDiscoveredName(cfsName).ifPresent(cfs -> {
+        cfsRepository.findByDiscoveredName(cfsName).ifPresent(cfs -> {
             cfs.setDiscoveredName(cfsNameNew);
-            logicalComponentRepository.save(cfs, 2);
+            cfsRepository.save(cfs, 2);
         });
 
-        logicalComponentRepository.findByDiscoveredName(rfsName).ifPresent(rfs -> {
+        rfsRepository.findByDiscoveredName(rfsName).ifPresent(rfs -> {
             rfs.setDiscoveredName(rfsNameNew);
             rfs.getProperties().put("transactionType", request.getModifyType());
             if (request.getFxOrderId() != null) {
                 rfs.getProperties().put("transactionId", request.getFxOrderId());
             }
-            logicalComponentRepository.save(rfs, 2);
+            rfs.getProperties().put("endData",getCurrentTimestamp());
+            rfsRepository.save(rfs, 2);
         });
-
+        subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
         subscription.setDiscoveredName(subscriptionNameNew);
+        subscriptionRepository.save(subscription);
     }
 
     private boolean isBroadband(ModifySPRRequest request) {
