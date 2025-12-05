@@ -203,7 +203,7 @@ public class ModifyCBM implements HttpAction {
                                         dProps.put("gatewayMAC", modifyParam2);
                                     }
                                     // Voice subtype handling
-                                    String sType = (String) sProps.getOrDefault("subType", "");
+                                    String sType = (String) sProps.getOrDefault("serviceSubType", "");
                                     if ("Voice".equalsIgnoreCase(sType) && modifyParam1 != null && !modifyParam1.isEmpty()) {
                                         sProps.put("serviceSN", modifyParam1);
                                     }
