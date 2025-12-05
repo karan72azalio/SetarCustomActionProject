@@ -144,7 +144,7 @@ public class ModifySPR implements HttpAction {
             subscription.setProperties(subProps);
 
             Map<String, Object> subrProps = subscriber.getProperties();
-            subrProps.put("email_username", request.getModifyParam2());
+            subrProps.put("email", request.getModifyParam2());
 
             if (!request.getServiceId().equals(request.getModifyParam3())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam3());
@@ -157,7 +157,7 @@ public class ModifySPR implements HttpAction {
         } else if ("Password".equalsIgnoreCase(request.getModifyType())) {
             try {
                 Map<String, Object> subrProps = subscriber.getProperties();
-                subrProps.put("email_pwd", request.getModifyParam1());
+                subrProps.put("emailPassword", request.getModifyParam1());
                 subscriber.setProperties(subrProps);
                 customerRepository.save(subscriber, 2);
                 return true;
