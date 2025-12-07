@@ -68,13 +68,13 @@ public class ModifyCBM implements HttpAction {
                         getCurrentTimestamp(), "", "");
             }
 
-            // 2️⃣ Extract optional parameters
+            //Extract optional parameters
             String modifyParam1 = trimOrNull(input.getModifyParam1());
             String modifyParam2 = trimOrNull(input.getModifyParam2());
             String fxOrderId = trimOrNull(input.getFxOrderId());
             String cbmModelInput = trimOrNull(input.getCbmModel());
 
-            // 3️⃣ Derive names
+            //Derive names
             String subscriberNameDerived = deriveSubscriberName(
                     input.getProductType(),
                     input.getSubscriberName(),
@@ -93,7 +93,7 @@ public class ModifyCBM implements HttpAction {
             log.error("ModifyCBM start: subscriberDerived='{}', subscriptionName='{}', cfsName='{}', rfsName='{}', productName='{}', cbmDeviceName='{}'",
                     subscriberNameDerived, subscriptionName, cfsName, rfsName, productName, cbmDeviceName);
 
-            // 4️⃣ Retrieve entities
+            // Retrieve entities
             boolean skipEntities = containsAny(input.getModifyType(), "Package", "Components", "Products", "Contracts");
             Optional<Customer> subscriber = Optional.empty();
 
@@ -139,7 +139,7 @@ public class ModifyCBM implements HttpAction {
             }
             LogicalDevice cbmDevice = optCbm.get();
 
-            // 5️⃣ Update RFS metadata if fxOrderId present
+            //Update RFS metadata if fxOrderId present
             if (fxOrderId != null && !fxOrderId.isEmpty()) {
                 Map<String, Object> rfsProps = Optional.ofNullable(rfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                 rfsProps.put("transactionId", fxOrderId);
@@ -149,7 +149,7 @@ public class ModifyCBM implements HttpAction {
                 rfsRepository.save(rfs);
             }
             if(!"IPTV".equalsIgnoreCase(input.getProductType())){
-                // 6️⃣ Update Service MAC / Gateway MAC flows (ModifyCableModem / Cable_Modem)
+                // Update Service MAC / Gateway MAC flows (ModifyCableModem / Cable_Modem)
                 if (containsAny(input.getModifyType(), "ModfiyCableModem", "Cable_Modem", "ModifyCableModem")) {
 
                     // subscriberWithMAC variant (subscriberName + resourceSN sanitized)
@@ -238,11 +238,11 @@ public class ModifyCBM implements HttpAction {
                     }
                 }
 
-                // 7️⃣ Migrate Broadband Port Assignments
+                //Migrate Broadband Port Assignments
                 if ("Broadband".equalsIgnoreCase(input.getProductType()) && modifyParam1 != null && !modifyParam1.isEmpty()) {
                     try {
-                        String oldCbmName = "CBM" +sanitizeForName(input.getResourceSN());
-                        String newCbmName = "CBM" +sanitizeForName(modifyParam1);
+                        String oldCbmName = "CBM_" +sanitizeForName(input.getResourceSN());
+                        String newCbmName = "CBM_" +sanitizeForName(modifyParam1);
 
                         Optional<LogicalDevice> optOldCbm = logicalDeviceRepository.findByDiscoveredName(oldCbmName);
                         Optional<LogicalDevice> optNewCbm = logicalDeviceRepository.findByDiscoveredName(newCbmName);
@@ -259,7 +259,7 @@ public class ModifyCBM implements HttpAction {
                             if (oldProps.containsKey("VOIP_PORT2")) newProps.put("VOIP_PORT2", oldProps.get("VOIP_PORT2"));
 
                             // Set new CBM fields
-                            newProps.put("administrativeState", "Allocated");
+                            newProps.put("AdministrativeState", "Allocated");
                             newProps.put("description", "Internet");
                             newProps.put("modelSubtype", "HFC");
                             String voip1 = (String) newProps.getOrDefault("VOIP_PORT1", "Available");
@@ -284,7 +284,7 @@ public class ModifyCBM implements HttpAction {
                     }
                 }
 
-                // 8️⃣ Modify Profile, Package, or Components
+                //Modify Profile, Package, or Components
                 if (containsAny(input.getModifyType(), "Package", "Components", "Products", "Contracts")) {
                     try {
                         subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
@@ -303,7 +303,7 @@ public class ModifyCBM implements HttpAction {
                     }
                 }
 
-                // 9️⃣ Update Email Password
+                //Update Email Password
                 if (input.getModifyType() != null && input.getModifyType().contains("Password")) {
                     try {
                         // fallback subscriber retrieval if empty
@@ -328,7 +328,7 @@ public class ModifyCBM implements HttpAction {
                     }
                 }
 
-                // 10️⃣ Modify Service ID and VOIP Number and Rename entities if serviceID changed
+                // Modify Service ID and VOIP Number and Rename entities if serviceID changed
                 if (input.getModifyType() != null && input.getModifyType().contains("Modify_Number")) {
                     try {
                         subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
