@@ -128,19 +128,9 @@ public class CreateServiceCBM implements HttpAction {
                     try {
                         s.setLocalName(Validations.encryptName(subscriberName));
                         s.setDiscoveredName(subscriberName);
-                    } catch (AccessForbiddenException | BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    try {
                         s.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIBER);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    try {
                         s.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
 
@@ -185,19 +175,9 @@ public class CreateServiceCBM implements HttpAction {
                     try {
                         sub.setLocalName(Validations.encryptName(subscriptionName));
                         sub.setDiscoveredName(subscriptionName);
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         sub.setKind(Constants.SETAR_KIND_SETAR_SUBSCRIPTION);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         sub.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> prop = new HashMap<>();
@@ -233,19 +213,9 @@ public class CreateServiceCBM implements HttpAction {
                     p.setDiscoveredName(productName);
                     try {
                         p.setLocalName(Validations.encryptName(productName));
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         p.setKind(Constants.SETAR_KIND_SETAR_PRODUCT);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
                         p.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> prop = new HashMap<>();
@@ -265,22 +235,12 @@ public class CreateServiceCBM implements HttpAction {
                     CustomerFacingService c = new CustomerFacingService();
                     try {
                         c.setLocalName(Validations.encryptName(cfsName));
-                    } catch (AccessForbiddenException e) {
-                        throw new RuntimeException(e);
-                    } catch (BadRequestException e) {
+                        c.setKind(Constants.SETAR_KIND_SETAR_CFS);
+                        c.setContext(Constants.SETAR);
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                     c.setDiscoveredName(cfsName);
-                    try {
-                        c.setKind(Constants.SETAR_KIND_SETAR_CFS);
-                    } catch (ModificationNotAllowedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        c.setContext(Constants.SETAR);
-                    } catch (BadRequestException e) {
-                        throw new RuntimeException(e);
-                    }
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("cfsStatus", "Active");
                     prop.put("cfsType",request.getProductType());
