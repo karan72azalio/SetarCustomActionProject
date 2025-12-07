@@ -190,12 +190,7 @@ public class ImportCPEDevice implements HttpAction {
             properties.put("serialNumber", serialNo);
             properties.put("portType", portType);
             properties.put("serviceCount", "0");
-
-            if (portType.equalsIgnoreCase("ETH_1") || portType.equalsIgnoreCase("ETH_2")) {
-                properties.put("portStatus", "Available");
-            } else {
-                properties.put("portStatus", "Reserved");
-            }
+            properties.put("portStatus", "Available");
 
             ethPort.setProperties(properties);
             componentRepository.save(ethPort, 2);
