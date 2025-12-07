@@ -89,6 +89,7 @@ public class CreateServiceIPTV implements HttpAction {
                 Validations.validateMandatoryParams(request.getQosProfile(), "qosProfile");
                 Validations.validateMandatoryParams(request.getVlanID(), "vlanID");
                 Validations.validateMandatoryParams(request.getHhid(), "hhid");
+                Validations.validateMandatoryParams(request.getMenm(), "menm");
                 Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
                 Validations.validateMandatoryParams(request.getCustomerGroupID(), "customerGroupID");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
