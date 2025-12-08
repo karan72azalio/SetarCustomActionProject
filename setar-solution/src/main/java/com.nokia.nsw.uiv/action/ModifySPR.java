@@ -232,17 +232,15 @@ public class ModifySPR implements HttpAction {
                 subProps.put("serviceID", request.getModifyParam1());
                 subscription.setProperties(subProps);
 
+                if (!request.getServiceId().equals(request.getModifyParam1())) {
+                    updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
+                }
                 LogicalDevice ont = logicalDeviceRepository.findByDiscoveredName(ontName)
                         .orElseThrow(() -> new BadRequestException("No entry found to modify ONT"));
 
                 Map<String, Object> ontProps = ont.getProperties();
                 ontProps.put("potsPort1Number", request.getModifyParam1());
                 ont.setProperties(ontProps);
-
-                if (!request.getServiceId().equals(request.getModifyParam1())) {
-                    updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
-                }
-
                 logicalDeviceRepository.save(ont, 2);
                 return true;
             } catch (Exception e) {
