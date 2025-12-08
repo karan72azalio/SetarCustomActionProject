@@ -369,24 +369,6 @@ public class CreateServiceCbmVoice implements HttpAction {
                     return createErrorResponse(CODE_PERSISTENCE_ERROR, "Persistence error while updating CPE device: " + e.getMessage());
                 }
             }
-            //STB is created for local testing, this shouldn't be in the step.
-            String stbDeviceName = "STB"+Constants.UNDER_SCORE + request.getCbmSN();
-            Optional<LogicalDevice> stbOpt = cpeDeviceRepository.findByDiscoveredName(stbDeviceName);
-            LogicalDevice stbDevice;
-            if (stbOpt.isPresent()) {
-                log.error("Found existing ONT: {}", stbDeviceName);
-            } else {
-                Map<String,Object> stbProps = new HashMap<>();
-                stbProps.put("administrativeState","Available");
-                stbDevice = new LogicalDevice();
-                stbDevice.setProperties(stbProps);
-                stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
-                stbDevice.setDiscoveredName(stbDeviceName);
-                stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
-                stbDevice.addUsingService(rfs);
-                cpeDeviceRepository.save(stbDevice, 2);
-                log.error("Created ONT device: {}", stbDeviceName);
-            }
             log.error(Constants.ACTION_COMPLETED);
             // 10. Final success response
             CreateServiceCbmVoiceResponse response = new CreateServiceCbmVoiceResponse();
