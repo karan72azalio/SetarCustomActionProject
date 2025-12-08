@@ -58,6 +58,10 @@ public class ModifySPR implements HttpAction {
 
     @Autowired
     private ResourceFacingServiceCustomRepository rfsRepository;
+
+    @Autowired
+    private ProductCustomRepository productCustomRepository;
+
     @Override
     public Class getActionClass() {
         return ModifySPRRequest.class;
@@ -308,13 +312,14 @@ public class ModifySPR implements HttpAction {
         String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
         String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
 
-        logicalComponentRepository.findByDiscoveredName(productName).ifPresent(product -> {
+        productCustomRepository.findByDiscoveredName(productName).ifPresent(product -> {
             product.setDiscoveredName(productNameNew);
-            logicalComponentRepository.save(product, 2);
+            productCustomRepository.save(product, 2);
         });
 
         cfsRepository.findByDiscoveredName(cfsName).ifPresent(cfs -> {
             cfs.setDiscoveredName(cfsNameNew);
+            cfs.getProperties().put("serviceEndDate",getCurrentTimestamp());
             cfsRepository.save(cfs, 2);
         });
 
@@ -324,7 +329,6 @@ public class ModifySPR implements HttpAction {
             if (request.getFxOrderId() != null) {
                 rfs.getProperties().put("transactionId", request.getFxOrderId());
             }
-            rfs.getProperties().put("endData",getCurrentTimestamp());
             rfsRepository.save(rfs, 2);
         });
         subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
