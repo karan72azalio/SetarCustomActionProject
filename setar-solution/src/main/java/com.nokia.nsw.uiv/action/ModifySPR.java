@@ -156,6 +156,9 @@ public class ModifySPR implements HttpAction {
             subscriber = customerRepository.findByDiscoveredName(subscriber.getDiscoveredName()).get();
             subscriber.setProperties(subrProps);
             customerRepository.save(subscriber, 2);
+            subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+            subscription.setProperties(subProps);
+            subscriptionRepository.save(subscription);
             return true;
 
         } else if ("Password".equalsIgnoreCase(request.getModifyType())) {
@@ -197,6 +200,9 @@ public class ModifySPR implements HttpAction {
             if (!request.getServiceId().equals(request.getModifyParam1())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
             }
+            subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+            subscription.setProperties(subProps);
+            subscriptionRepository.save(subscription);
             return true;
 
         } else if ("Component".equalsIgnoreCase(request.getModifyType())) {
@@ -242,6 +248,9 @@ public class ModifySPR implements HttpAction {
                 ontProps.put("potsPort1Number", request.getModifyParam1());
                 ont.setProperties(ontProps);
                 logicalDeviceRepository.save(ont, 2);
+                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                subscription.setProperties(subProps);
+                subscriptionRepository.save(subscription);
                 return true;
             } catch (Exception e) {
                 throw new ModificationNotAllowedException("Failed to modify VOIP number: " + e.getMessage());
