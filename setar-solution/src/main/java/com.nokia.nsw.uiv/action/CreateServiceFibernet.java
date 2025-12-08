@@ -308,33 +308,6 @@ public class CreateServiceFibernet implements HttpAction {
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Created ONT device: {}", ontName);
             }
-
-            // 8. ONT device: find or create as LogicalDevice with kind=ONT
-            String stbDeviceName = "STB"+Constants.UNDER_SCORE + request.getOntSN();
-            Optional<LogicalDevice> stbOpt = logicalDeviceRepository.findByDiscoveredName(stbDeviceName);
-            LogicalDevice stbDevice;
-            if (stbOpt.isPresent()) {
-                log.error("Found existing ONT: {}", stbDeviceName);
-            } else {
-                stbDevice = new LogicalDevice();
-                stbDevice.setLocalName(Validations.encryptName(stbDeviceName));
-                stbDevice.setDiscoveredName(stbDeviceName);
-                stbDevice.setKind(Constants.SETAR_KIND_STB_AP_CM_DEVICE);
-                stbDevice.setContext(ontContext);
-                Map<String, Object> stbProps = new HashMap<>();
-                stbProps.put("serialNo", request.getOntSN());
-                stbProps.put("administrativeState","Available");
-                if (request.getOntModel() != null) stbProps.put("deviceModel", request.getOntModel());
-                if (request.getTemplateNameONT() != null) stbProps.put("ontTemplate", request.getTemplateNameONT());
-                if (request.getMenm() != null) stbProps.put("description", request.getMenm());
-                if (request.getVlanID() != null) stbProps.put("mgmtVlan", request.getVlanID());
-                stbDevice.addUsingService(rfs);
-                stbDevice.addManagingDevices(oltDevice);
-                logicalDeviceRepository.save(stbDevice, 2);
-                log.error("Created ONT device: {}", stbDeviceName);
-            }
-
-
             // 9. VLAN interface (LogicalInterface) creation if needed
             if (request.getMenm() != null && request.getVlanID() != null) {
                 String vlanName = request.getMenm() + Constants.UNDER_SCORE  + request.getVlanID();

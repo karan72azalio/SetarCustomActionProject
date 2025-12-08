@@ -387,22 +387,6 @@ public class CreateServiceCbmVoice implements HttpAction {
                 cpeDeviceRepository.save(stbDevice, 2);
                 log.error("Created ONT device: {}", stbDeviceName);
             }
-           //AP is created for local testing, this shouldn't be in the step.
-            String apDeviceName = "AP"+Constants.UNDER_SCORE + request.getCbmSN();
-            Optional<LogicalDevice> apOpt = cpeDeviceRepository.findByDiscoveredName(apDeviceName);
-            LogicalDevice apDevice;
-            if (apOpt.isPresent()) {
-                log.error("Found existing ONT: {}", apDeviceName);
-            } else {
-                apDevice = new LogicalDevice();
-                apDevice.setLocalName(Validations.encryptName(apDeviceName));
-                apDevice.setDiscoveredName(apDeviceName);
-                apDevice.setKind(Constants.SETAR_KIND_AP_CM_DEVICE);
-                apDevice.addUsingService(rfs);
-
-                cpeDeviceRepository.save(apDevice, 2);
-                log.error("Created ONT device: {}", apDeviceName);
-            }
             log.error(Constants.ACTION_COMPLETED);
             // 10. Final success response
             CreateServiceCbmVoiceResponse response = new CreateServiceCbmVoiceResponse();
