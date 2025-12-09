@@ -110,18 +110,7 @@ public class DeleteCBM implements HttpAction {
             Optional<CustomerFacingService> optCfs = Optional.empty();
             Optional<ResourceFacingService> optRfs = Optional.empty();
             int subscriptionCount = 0;
-            if (!optSubscription.isPresent() || !optProduct.isPresent()
-                    || !optCfs.isPresent()
-                    || !optRfs.isPresent()) {
 
-                return new DeleteCBMResponse(
-                        "404",
-                        ERROR_PREFIX + "SPR objects missing before deletion",
-                        Instant.now().toString(),
-                        cbmName,
-                        subscriptionName
-                );
-            }
 
 
             // --- 3. Fetch CBM Device ---
@@ -215,6 +204,20 @@ public class DeleteCBM implements HttpAction {
             } catch (Exception e) {
                 log.error("Error fetching RFS {}", rfsName, e);
             }
+            if (!optSubscription.isPresent()
+                    || !optProduct.isPresent()
+                    || !optCfs.isPresent()
+                    || !optRfs.isPresent()) {
+
+                return new DeleteCBMResponse(
+                        "404",
+                        ERROR_PREFIX + "SPR objects missing before deletion",
+                        Instant.now().toString(),
+                        cbmName,
+                        subscriptionName
+                );
+            }
+
 
             // --- 5. CPE Device logic (Voice/Broadband) ---
             if (optSubscription.isPresent() && optCbmDevice.isPresent()) {
