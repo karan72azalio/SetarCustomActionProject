@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -93,7 +94,7 @@ public class DeleteCBM implements HttpAction {
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceId();
-        String cbmName = "CBM" +request.getCbmSN();
+        String cbmName = "CBM" + request.getCbmSN();
         String subscriberName = request.getSubscriberName();
 
         // 6. Validate CBM name length early
@@ -109,6 +110,8 @@ public class DeleteCBM implements HttpAction {
             Optional<CustomerFacingService> optCfs = Optional.empty();
             Optional<ResourceFacingService> optRfs = Optional.empty();
             int subscriptionCount = 0;
+
+
 
             // --- 3. Fetch CBM Device ---
             try {
@@ -131,6 +134,8 @@ public class DeleteCBM implements HttpAction {
                         } else {
                             subscriptionCount = 0;
                         }
+                    } else if (!subOpt.isPresent()) {
+                        throw new BadRequestException("Subscriber not found: " + subscriberName);
                     } else {
                         log.error("Subscriber {} not found (IPTV)", subscriberName);
                         subscriptionCount = 0;
@@ -199,6 +204,20 @@ public class DeleteCBM implements HttpAction {
             } catch (Exception e) {
                 log.error("Error fetching RFS {}", rfsName, e);
             }
+            if (!optSubscription.isPresent()
+                    || !optProduct.isPresent()
+                    || !optCfs.isPresent()
+                    || !optRfs.isPresent()) {
+
+                return new DeleteCBMResponse(
+                        "404",
+                        ERROR_PREFIX + "SPR objects missing before deletion",
+                        Instant.now().toString(),
+                        cbmName,
+                        subscriptionName
+                );
+            }
+
 
             // --- 5. CPE Device logic (Voice/Broadband) ---
             if (optSubscription.isPresent() && optCbmDevice.isPresent()) {
