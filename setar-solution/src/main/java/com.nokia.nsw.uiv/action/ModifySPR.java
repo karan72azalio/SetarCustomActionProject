@@ -267,20 +267,22 @@ public class ModifySPR implements HttpAction {
                 .orElseThrow(() -> new BadRequestException("No entry found to modify ONT: "+ontName));
 
         // update subscriptions linked by simaCustomerId
-        List<LogicalComponent> allComponents = (List<LogicalComponent>) logicalComponentRepository.findAll();
-        for (LogicalComponent sub : allComponents) {
-            Map<String, Object> subProps = sub.getProperties();
-            if (subProps != null && request.getSubscriberName().equals(subProps.get("simaCustomerId"))) {
-                subProps.put("serviceSN", request.getModifyParam1());
-                sub.setProperties(subProps);
-                logicalComponentRepository.save(sub, 2);
+        List<Subscription> allComponents = (List<Subscription>) subscriptionRepository.findAll();
+        for (Subscription sub : allComponents) {
+            if(!sub.getDiscoveredName().contains("ALCL")) {
+                Map<String, Object> subProps = sub.getProperties();
+                if (subProps != null) {
+                    subProps.put("serviceSN", request.getModifyParam1());
+                    sub.setProperties(subProps);
+                    subscriptionRepository.save(sub, 2);
+                }
             }
         }
 
         // update ONT
         Map<String, Object> ontProps = ont.getProperties();
         ontProps.put("serialNo", request.getModifyParam1());
-        ont.setDiscoveredName("resourceName " + request.getModifyParam1());
+        ont.setDiscoveredName("ONT" + request.getModifyParam1());
         ont.setProperties(ontProps);
 
         // update VLAN interfaces
