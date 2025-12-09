@@ -343,9 +343,10 @@ public class ModifySPR implements HttpAction {
             }
             rfsRepository.save(rfs, 2);
         });
-        subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
-        subscription.setDiscoveredName(subscriptionNameNew);
-        subscriptionRepository.save(subscription);
+        Subscription tempSubscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+        tempSubscription.setProperties(subscription.getProperties());
+        tempSubscription.setDiscoveredName(subscriptionNameNew);
+        subscriptionRepository.save(tempSubscription);
     }
 
     private boolean isBroadband(ModifySPRRequest request) {
