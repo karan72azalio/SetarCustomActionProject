@@ -238,7 +238,7 @@ public class CreateServiceFibernet implements HttpAction {
                 Map<String, Object> rfsProps = new HashMap<>();
                 rfsProps.put("rfsType", request.getProductType());
                 rfsProps.put("rfsStatus", "Active");
-                if (request.getFxOrderID() != null) rfsProps.put("transactionId", request.getFxOrderID());
+//                if (request.getFxOrderID() != null) rfsProps.put("transactionId", request.getFxOrderID());
                 rfs.setProperties(rfsProps);
                 rfs.setContainingCfs(cfs);
                 rfsRepository.save(rfs, 2);
@@ -261,6 +261,8 @@ public class CreateServiceFibernet implements HttpAction {
                     props.put("localName", oltName);
                     if (request.getTemplateNameVEIP() != null) props.put("veipServiceTemplate", request.getTemplateNameVEIP());
                     if (request.getTemplateNameHSI() != null) props.put("veipHsiTemplate", request.getTemplateNameHSI());
+                    props.put("position", request.getOltName());
+                    props.put("OperationalState", "Active");
                     oltDevice.setProperties(props);
                     oltDevice.addUsingService(rfs);
                     logicalDeviceRepository.save(oltDevice, 2);
@@ -324,7 +326,7 @@ public class CreateServiceFibernet implements HttpAction {
                     vlanProps.put("state", "Active");
                     vlanProps.put("serviceId", request.getServiceID());
                     vlan.setProperties(vlanProps);
-                    vlan.setContainingLogicalDevice(oltDevice);
+//                    vlan.setContainingLogicalDevice(oltDevice);
                     logicalInterfaceRepository.save(vlan, 2);
                     log.error("Created VLAN interface: {}", vlanName);
                 }
