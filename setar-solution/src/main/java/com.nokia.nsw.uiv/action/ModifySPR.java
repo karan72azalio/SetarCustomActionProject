@@ -153,13 +153,14 @@ public class ModifySPR implements HttpAction {
 
             if (!request.getServiceId().equals(request.getModifyParam3())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam3());
+            }else{
+                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                subscription.setProperties(subProps);
+                subscriptionRepository.save(subscription);
             }
             subscriber = customerRepository.findByDiscoveredName(subscriber.getDiscoveredName()).get();
             subscriber.setProperties(subrProps);
             customerRepository.save(subscriber, 2);
-            subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
-            subscription.setProperties(subProps);
-            subscriptionRepository.save(subscription);
             return true;
 
         } else if ("Password".equalsIgnoreCase(request.getModifyType())) {
@@ -200,10 +201,11 @@ public class ModifySPR implements HttpAction {
 
             if (!request.getServiceId().equals(request.getModifyParam1())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
+            }else{
+                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                subscription.setProperties(subProps);
+                subscriptionRepository.save(subscription);
             }
-            subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
-            subscription.setProperties(subProps);
-            subscriptionRepository.save(subscription);
             return true;
 
         } else if ("Component".equalsIgnoreCase(request.getModifyType())) {
@@ -241,6 +243,10 @@ public class ModifySPR implements HttpAction {
 
                 if (!request.getServiceId().equals(request.getModifyParam1())) {
                     updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
+                }else{
+                    subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                    subscription.setProperties(subProps);
+                    subscriptionRepository.save(subscription);
                 }
                 LogicalDevice ont = logicalCustomDeviceRepository.findByDiscoveredName(ontName)
                         .orElseThrow(() -> new BadRequestException("No entry found to modify ONT"));
@@ -249,9 +255,6 @@ public class ModifySPR implements HttpAction {
                 ontProps.put("potsPort1Number", request.getModifyParam1());
                 ont.setProperties(ontProps);
                 logicalCustomDeviceRepository.save(ont, 2);
-                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
-                subscription.setProperties(subProps);
-                subscriptionRepository.save(subscription);
                 return true;
             } catch (Exception e) {
                 throw new ModificationNotAllowedException("Failed to modify VOIP number: " + e.getMessage());
@@ -438,9 +441,10 @@ public class ModifySPR implements HttpAction {
             }
             rfsRepository.save(rfs, 2);
         });
-        subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
-        subscription.setDiscoveredName(subscriptionNameNew);
-        subscriptionRepository.save(subscription);
+        Subscription tempSubscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+        tempSubscription.setProperties(subscription.getProperties());
+        tempSubscription.setDiscoveredName(subscriptionNameNew);
+        subscriptionRepository.save(tempSubscription);
     }
 
     private boolean isBroadband(ModifySPRRequest request) {
