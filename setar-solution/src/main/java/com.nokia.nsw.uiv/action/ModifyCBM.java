@@ -259,7 +259,7 @@ public class ModifyCBM implements HttpAction {
                             if (oldProps.containsKey("VOIP_PORT2")) newProps.put("VOIP_PORT2", oldProps.get("VOIP_PORT2"));
 
                             // Set new CBM fields
-                            newProps.put("administrativeState", "Allocated");
+                            newProps.put("AdministrativeState", "Allocated");
                             newProps.put("description", "Internet");
                             newProps.put("modelSubtype", "HFC");
                             String voip1 = (String) newProps.getOrDefault("VOIP_PORT1", "Available");

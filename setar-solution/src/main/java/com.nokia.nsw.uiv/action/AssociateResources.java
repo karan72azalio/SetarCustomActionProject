@@ -151,7 +151,7 @@ public class AssociateResources implements HttpAction {
                         LogicalDevice device = optDev.get();
                         device.getProperties().put("deviceGroupId", "GROUP" + (i + 1));
                         Map<String,Object>props=new HashMap<>();
-                        props.put("administrativeState","Allocated");
+                        props.put("AdministrativeState","Allocated");
                         if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
                             device.setDescription(request.getServiceId() + Constants.UNDER_SCORE  + request.getOntSN().replace("ONT", Constants.UNDER_SCORE ));
                         } else {
@@ -178,7 +178,7 @@ public class AssociateResources implements HttpAction {
                         }
                         LogicalDevice device = optDev.get();
                         Map<String,Object>props=new HashMap<>();
-                        props.put("administrativeState","Allocated");
+                        props.put("AdministrativeState","Allocated");
                         device.setDescription(request.getServiceId());
                         device.addUsingService(rfs);
                         deviceRepository.save(device);
@@ -207,7 +207,7 @@ public class AssociateResources implements HttpAction {
                     }
                     LogicalDevice device = optDev.get();
                     Map<String,Object>props=new HashMap<>();
-                    props.put("administrativeState","Allocated");
+                    props.put("AdministrativeState","Allocated");
                     device.setProperties(props);
                     device.setDescription(request.getServiceId());
                     device.addUsingService(rfs);

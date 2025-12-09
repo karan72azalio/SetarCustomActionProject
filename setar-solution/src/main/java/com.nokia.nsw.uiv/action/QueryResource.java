@@ -68,7 +68,7 @@ public class QueryResource implements HttpAction {
             String devSN = (String) device.getProperties().getOrDefault("serialNo", resourceSN);
             String devMAC = (String) device.getProperties().getOrDefault("macAddress", "");
             String gatewayMac = (String) device.getProperties().getOrDefault("gatewayMacAddress", "");
-            String devStatus = (String) device.getProperties().getOrDefault("administrativeState", "");
+            String devStatus = (String) device.getProperties().getOrDefault("AdministrativeState", "");
             String devKEY = (String) device.getProperties().getOrDefault("presharedKey", "");
             String devDesc = (String) device.getProperties().getOrDefault("description", "");
 

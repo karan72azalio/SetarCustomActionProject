@@ -96,7 +96,7 @@ public class ChangeResourceStatus implements HttpAction {
             }
 
             LogicalDevice device = devOpt.get();
-            String currentStatus = device.getProperties().get("administrativeState")!=null?device.getProperties().get("administrativeState").toString():null;
+            String currentStatus = device.getProperties().get("AdministrativeState")!=null?device.getProperties().get("AdministrativeState").toString():null;
             String model = device.getProperties().get("Model") == null ? "" : device.getProperties().get("Model").toString();
             String mac = device.getProperties().get("MacAddress") == null ? "" : device.getProperties().get("MacAddress").toString() ;
 

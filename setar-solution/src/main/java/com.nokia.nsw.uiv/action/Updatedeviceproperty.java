@@ -83,7 +83,7 @@ public class Updatedeviceproperty implements HttpAction {
             }
 
             LogicalDevice stb = stbOpt.get();
-            String currentState = stb.getProperties().get("administrativeState")!=null?stb.getProperties().get("administrativeState").toString():null;
+            String currentState = stb.getProperties().get("AdministrativeState")!=null?stb.getProperties().get("AdministrativeState").toString():null;
             log.error("------------Test Trace # 6--------------- STB found. Current state=" + currentState);
 
             // 4. Validate Allocated state
