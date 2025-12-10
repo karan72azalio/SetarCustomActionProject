@@ -455,7 +455,7 @@ public class CreateServiceEVPN implements HttpAction {
                                 vProps.put("vlanTemplate", req.getTemplateNameVlan());
                             }
                             v.setProperties(vProps);
-                            v.addManagingDevices(ont);
+                            ont.addContained(v);
                             return vlanRepo.save(v,2);
                         });
                 // if created and usedStandardEvpn -> ensure association entry on ONT exists

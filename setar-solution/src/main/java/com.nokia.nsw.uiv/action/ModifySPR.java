@@ -289,7 +289,6 @@ public class ModifySPR implements HttpAction {
                     if(!ontDevice.isPresent()){
                         ontExist = "fail";
                     }
-                    Optional<LogicalDevice> cpeDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontNameNew);
                     Set<Subscription> subscriptions = setarSubscriber1.get().getSubscription();
                     for(Subscription subs: subscriptions){
                         String serviceSubType = subs.getProperties().get("serviceSubType").toString();
@@ -307,11 +306,6 @@ public class ModifySPR implements HttpAction {
                         String subscriptionNameNew = subscriber + Constants.UNDER_SCORE + subs.getProperties().get("serviceId").toString() + Constants.UNDER_SCORE + request.getModifyParam1();
                         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
                         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-                        String productName = subscriber + Constants.UNDER_SCORE + subs.getProperties().get("serviceType").toString() + Constants.UNDER_SCORE + subs.getProperties().get("serviceId").toString();
-
-                        Product setarProduct = productCustomRepository.findByDiscoveredName(productName).get();
-
-
                         String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
                         String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
                         subs.setDiscoveredName(subscriberNewName);
