@@ -333,11 +333,11 @@ public class CreateServiceFibernet implements HttpAction {
             }
 
             // 10. Link RFS -> ONT or OLT (if model supports linking via properties)
-            Map<String, Object> rfsProps = rfs.getProperties() == null ? new HashMap<>() : rfs.getProperties();
-            rfsProps.put("serviceSN", request.getOntSN());
-            if (oltDevice != null) rfsProps.put("oltPosition", oltDevice.getDiscoveredName());
-            rfs.setProperties(rfsProps);
-            rfsRepository.save(rfs, 2);
+//            Map<String, Object> rfsProps = rfs.getProperties() == null ? new HashMap<>() : rfs.getProperties();
+//            rfsProps.put("serviceSN", request.getOntSN());
+//            if (oltDevice != null) rfsProps.put("oltPosition", oltDevice.getDiscoveredName());
+//            rfs.setProperties(rfsProps);
+//            rfsRepository.save(rfs, 2);
             log.error(Constants.ACTION_COMPLETED);
             // 11. Final response
             String ontNameResp = ontDevice != null ? ontDevice.getDiscoveredName() : "";
