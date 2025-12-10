@@ -296,9 +296,7 @@ public class CreateServiceFibernet implements HttpAction {
                 ontDevice.setContext(ontContext);
                 Map<String, Object> ontProps = new HashMap<>();
                 ontProps.put("serial", request.getOntSN());
-                ontProps.put("Model", request.getOntModel());
                 ontProps.put("oltPosition", request.getOltName());
-                ontProps.put("Template", request.getTemplateNameONT());
                 ontProps.put("OperationalState", "Active");
                 if (request.getOntModel() != null) ontProps.put("deviceModel", request.getOntModel());
                 if (request.getTemplateNameONT() != null) ontProps.put("ontTemplate", request.getTemplateNameONT());
