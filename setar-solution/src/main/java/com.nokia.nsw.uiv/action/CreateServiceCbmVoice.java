@@ -356,9 +356,9 @@ public class CreateServiceCbmVoice implements HttpAction {
                     }
 
                     if (Integer.valueOf(1).equals(request.getVoipPort())) {
-                        props.put("voipPort1Number", request.getVoipNumber1());
+                        props.put("voipPort1", request.getVoipNumber1());
                     } else if (Integer.valueOf(2).equals(request.getVoipPort())) {
-                        props.put("voipPort2Number", request.getVoipNumber1());
+                        props.put("voipPort2", request.getVoipNumber1());
                     }
 
 

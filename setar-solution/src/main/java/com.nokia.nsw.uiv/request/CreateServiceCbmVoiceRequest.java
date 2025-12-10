@@ -48,7 +48,7 @@ public class CreateServiceCbmVoiceRequest {
     private String simaEndpointId;     // M
     private String voipServiceCode;    // O
     private String cpeMacAddressMTA;   // O
-    private String voipPort;           // O
+    private Integer voipPort;           // O
     private String userName;           // O
     private String servicePackage;     // O
     private String kenanUidNo;         // O

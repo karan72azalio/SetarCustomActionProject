@@ -94,7 +94,7 @@ public class DeleteCBM implements HttpAction {
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceId();
-        String cbmName = "CBM" + request.getCbmSN();
+        String cbmName = "CBM_" + request.getCbmSN();
         String subscriberName = request.getSubscriberName();
 
         // 6. Validate CBM name length early
@@ -145,7 +145,7 @@ public class DeleteCBM implements HttpAction {
                     if (!optCbmDevice.isPresent()) {
                         log.error("CBM device required to derive subscriber name for non-IPTV product but CBM not found: {}", cbmName);
                         // If CBM required, return or continue depending on business decision.
-                        return new DeleteCBMResponse("404", ERROR_PREFIX + "CBM device not found for non-IPTV product",
+                        return new DeleteCBMResponse("404", ERROR_PREFIX + "No entry found for delete",
                                 java.time.Instant.now().toString(), cbmName, subscriptionName);
                     }
                     LogicalDevice cbm = optCbmDevice.get();
@@ -211,7 +211,7 @@ public class DeleteCBM implements HttpAction {
 
                 return new DeleteCBMResponse(
                         "404",
-                        ERROR_PREFIX + "SPR objects missing before deletion",
+                        ERROR_PREFIX + "No entry found for delete",
                         Instant.now().toString(),
                         cbmName,
                         subscriptionName
