@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Action
@@ -102,6 +103,9 @@ public class CreateServiceCbmVoice implements HttpAction {
             return createErrorResponse(CODE_MISSING_PARAMS,
                     "Missing mandatory parameter(s): " + bre.getMessage());
         }
+        AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
+        AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
+        AtomicBoolean isProductExist = new AtomicBoolean(true);
 
         // 2. Construct names
         String subscriberNameString;
@@ -130,14 +134,10 @@ public class CreateServiceCbmVoice implements HttpAction {
 
         try {
             // 3. Subscriber logic
-
             Customer subscriber = subscriberRepository.findByDiscoveredName(subscriberNameString)
-                    .map(existing -> {
-                        Customer s = new Customer();
-                        return s;
-                    })
                     .orElseGet(() -> {
                         Customer s = new Customer();
+                        isSubscriberExist.set(false);
                         try {
                             s.setLocalName(Validations.encryptName(subscriberNameString));
                             s.setDiscoveredName(subscriberNameString);
@@ -161,10 +161,6 @@ public class CreateServiceCbmVoice implements HttpAction {
                         return s;
                     });
 
-            if(subscriber.getDiscoveredName()==null){
-                return new CreateServiceCbmVoiceResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameString,"CBM"+ request.getCbmSN());
-            }
-
             // update optional subscriber fields properly
             try {
                 Map<String, Object> sp = subscriber.getProperties() == null ? new HashMap<>() : subscriber.getProperties();
@@ -183,6 +179,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             // 4. Subscription logic
             Subscription subscription = subscriptionRepository.findByDiscoveredName(subscriptionName)
                     .orElseGet(() -> {
+                        isSubscriptionExist.set(false);
                         Subscription sub = new Subscription();
                         try {
                             sub.setLocalName(Validations.encryptName(subscriptionName));
@@ -245,6 +242,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             }
             Product product = productRepository.findByDiscoveredName(productNameStr)
                     .orElseGet(() -> {
+                        isProductExist.set(false);
                         Product p = new Product();
                         try {
                             p.setLocalName(Validations.encryptName(productNameStr));
@@ -265,6 +263,10 @@ public class CreateServiceCbmVoice implements HttpAction {
                         productRepository.save(p, 2);
                         return p;
                     });
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceCbmVoice service already exist");
+                return new CreateServiceCbmVoiceResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,cbmName);
+            }
 
             // 6. CFS logic
             CustomerFacingService cfs = cfsRepository.findByDiscoveredName(cfsName)

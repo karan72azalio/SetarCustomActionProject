@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceVoIPRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
+import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.response.CreateServiceVoIPResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @RestController
@@ -94,6 +96,9 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
+            AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
+            AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
+            AtomicBoolean isProductExist = new AtomicBoolean(true);
 
             // Step 2 & 3: Subscriber
             String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
@@ -107,12 +112,10 @@ public class CreateServiceVoIP implements HttpAction {
                 );
             }
             Customer subscriber = customerRepo.findByDiscoveredName(subscriberNameStr)
-                    .map(existing -> {
-                        Customer s = new Customer();
-                        return s;
-                    })
+
                     .orElseGet(() -> {
                         Customer newSub = new Customer();
+                        isSubscriberExist.set(false);
                         try {
                             newSub.setLocalName(Validations.encryptName(subscriberNameStr));
                             newSub.setDiscoveredName(subscriberNameStr);
@@ -146,6 +149,7 @@ public class CreateServiceVoIP implements HttpAction {
             }
             Subscription subscription = subscriptionRepo.findByDiscoveredName(subscriptionName)
                     .orElseGet(() -> {
+                        isSubscriptionExist.set(false);
                         Subscription subs = new Subscription();
                         try {
                             subs.setLocalName(Validations.encryptName(subscriptionName));
@@ -208,6 +212,7 @@ public class CreateServiceVoIP implements HttpAction {
             Product product = productRepo.findByDiscoveredName(productNameStr)
                     .orElseGet(() -> {
                         Product prod = new Product();
+                        isProductExist.set(false);
                         try {
                             prod.setLocalName(Validations.encryptName(productNameStr));
                             prod.setDiscoveredName(productNameStr);
@@ -223,7 +228,10 @@ public class CreateServiceVoIP implements HttpAction {
                         prod.setSubscription(subscription);
                         return productRepo.save(prod);
                     });
-
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceCbmVoice service already exist");
+                return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + req.getOntSN());
+            }
             // Step 8: CFS
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             CustomerFacingService cfs = cfsRepo.findByDiscoveredName(cfsName)

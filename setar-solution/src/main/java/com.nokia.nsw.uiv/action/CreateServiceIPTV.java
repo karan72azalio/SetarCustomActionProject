@@ -12,6 +12,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
+import com.nokia.nsw.uiv.response.CreateServiceVoIPResponse;
 import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.Product;
@@ -35,6 +36,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @RestController
@@ -97,6 +99,9 @@ public class CreateServiceIPTV implements HttpAction {
                 return new CreateServiceIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
                         java.time.Instant.now().toString(), "","");
             }
+            AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
+            AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
+            AtomicBoolean isProductExist = new AtomicBoolean(true);
 
 
             // Construct entity names
@@ -117,6 +122,7 @@ public class CreateServiceIPTV implements HttpAction {
                 log.error("Subscriber already exists: {}", subscriberName);
                 return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry", Instant.now().toString(),subscriberName,ontName);
             } else {
+                isSubscriberExist.set(false);
                 subscriber = new Customer();
                 subscriber.setLocalName(Validations.encryptName(subscriberName));
                 subscriber.setDiscoveredName(subscriberName);
@@ -145,6 +151,7 @@ public class CreateServiceIPTV implements HttpAction {
                 subscription = optSubscription.get();
                 log.error("Subscription already exists: {}", subscriptionName);
             } else {
+                isSubscriptionExist.set(false);
                 subscription = new Subscription();
                 subscription.setLocalName(Validations.encryptName(subscriptionName));
                 subscription.setDiscoveredName(subscriptionName);
@@ -177,6 +184,7 @@ public class CreateServiceIPTV implements HttpAction {
                 product = optProduct.get();
                 log.error("Product already exists: {}", productName);
             } else {
+                isProductExist.set(false);
                 product = new Product();
                 product.setLocalName(Validations.encryptName(productName));
                 product.setDiscoveredName(productName);
@@ -192,6 +200,10 @@ public class CreateServiceIPTV implements HttpAction {
                 product.setSubscription(subscription);
                 productRepository.save(product, 2);
                 log.error("Created Product: {}", productName);
+            }
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceCbmVoice service already exist");
+                return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + request.getOntSN());
             }
 
             // ------------------- Customer Facing Service (CFS) -------------------
