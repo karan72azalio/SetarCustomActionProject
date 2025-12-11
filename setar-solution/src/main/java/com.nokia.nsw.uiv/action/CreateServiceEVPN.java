@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceEVPNRequest;
+import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.response.CreateServiceEVPNResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -35,6 +36,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 @Component
@@ -104,7 +106,9 @@ public class CreateServiceEVPN implements HttpAction {
                         null
                 );
             }
-
+            AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
+            AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
+            AtomicBoolean isProductExist = new AtomicBoolean(true);
             // 2) Prepare names
             String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
             if (subscriberNameStr.length() > 100) {
@@ -165,11 +169,8 @@ public class CreateServiceEVPN implements HttpAction {
 
             // 3) Subscriber: find or create (properties map)
             Customer subscriber = customerRepo.findByDiscoveredName(subscriberNameStr)
-                    .map(existing -> {
-                        Customer s = new Customer();
-                        return s;
-                    })
                     .orElseGet(() -> {
+                        isSubscriberExist.set(false);
                         log.error("------------Trace # 8--------------- Creating subscriber: " + subscriberNameStr);
                         Customer newSub = new Customer();
                         try {
@@ -193,12 +194,10 @@ public class CreateServiceEVPN implements HttpAction {
                         newSub.setProperties(subProps);
                         return customerRepo.save(newSub);
                     });
-            if(subscriber.getDiscoveredName()==null){
-                return new CreateServiceEVPNResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameStr,ontName);
-            }
             // 4) Subscription: find or create (properties map)
             Subscription subscription = subscriptionRepo.findByDiscoveredName(subscriptionName)
                     .orElseGet(() -> {
+                        isSubscriptionExist.set(true);
                         log.error("------------Trace # 9--------------- Creating subscription: " + subscriptionName);
                         Subscription subs = new Subscription();
                         try {
@@ -250,6 +249,7 @@ public class CreateServiceEVPN implements HttpAction {
             // 5) Product: find or create (properties map)
             Product product = productRepo.findByDiscoveredName(productNameStr)
                     .orElseGet(() -> {
+                        isProductExist.set(true);
                         log.error("------------Trace # 10--------------- Creating product: " + productNameStr);
                         Product prod = new Product();
                         try {
@@ -269,6 +269,10 @@ public class CreateServiceEVPN implements HttpAction {
                         prod.setSubscription(subscription);
                         return productRepo.save(prod,2);
                     });
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceEVPN service already exist");
+                return new CreateServiceEVPNResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameStr,ontName);
+            }
 
             // 6) CFS: find or create (properties map)
             CustomerFacingService cfs = cfsRepo.findByDiscoveredName(cfsName)

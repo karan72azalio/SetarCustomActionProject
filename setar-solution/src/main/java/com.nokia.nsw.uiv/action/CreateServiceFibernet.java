@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Action
@@ -100,7 +101,9 @@ public class CreateServiceFibernet implements HttpAction {
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             String ontName ="ONT" + request.getOntSN();
 
-
+            AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
+            AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
+            AtomicBoolean isProductExist = new AtomicBoolean(true);
             // Length checks
             if (productName.length() > 100) {
                 return createErrorResponse("Product name too long", "400", "", "");
@@ -125,6 +128,7 @@ public class CreateServiceFibernet implements HttpAction {
                 log.error("Found existing subscriber: {}", subscriberName);
                 return new CreateServiceFibernetResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,ontName);
             } else {
+                isSubscriberExist.set(false);
                 subscriber = new Customer();
                 subscriber.setDiscoveredName(subscriberName);
                 subscriber.setLocalName(Validations.encryptName(subscriberName));
@@ -154,6 +158,7 @@ public class CreateServiceFibernet implements HttpAction {
                 subscription = optSubscription.get();
                 log.error("Found existing subscription: {}", subscriptionName);
             } else {
+                isSubscriptionExist.set(false);
                 subscription = new Subscription();
                 subscription.setLocalName(Validations.encryptName(subscriptionName));
                 subscription.setDiscoveredName(subscriptionName);
@@ -184,6 +189,7 @@ public class CreateServiceFibernet implements HttpAction {
                 product = optProduct.get();
                 log.error("Found existing product: {}", productName);
             } else {
+                isProductExist.set(false);
                 product = new Product();
                 product.setLocalName(Validations.encryptName(productName));
                 product.setDiscoveredName(productName);
@@ -199,7 +205,10 @@ public class CreateServiceFibernet implements HttpAction {
                 productRepository.save(product, 2);
                 log.error("Created product: {}", productName);
             }
-
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceEVPN service already exist");
+                return new CreateServiceFibernetResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,ontName);
+            }
             // 5. CFS: create or fetch
             Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
             CustomerFacingService cfs;

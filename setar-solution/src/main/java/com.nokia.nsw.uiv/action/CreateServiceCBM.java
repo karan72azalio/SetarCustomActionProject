@@ -1,38 +1,27 @@
 package com.nokia.nsw.uiv.action;
 
-import co.elastic.clients.elasticsearch._types.analysis.IcuCollationStrength;
-import com.nokia.nsw.uiv.exception.AccessForbiddenException;
 import com.nokia.nsw.uiv.exception.BadRequestException;
-import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
-import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
-import com.nokia.nsw.uiv.model.resource.AdministrativeState;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceCBMRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
-import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
 import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
 import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.jcodings.util.Hash;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Action
@@ -90,6 +79,9 @@ public class CreateServiceCBM implements HttpAction {
                     java.time.Instant.now().toString(), "","");
         }
 
+        AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
+        AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
+        AtomicBoolean isProductExist = new AtomicBoolean(true);
         // --- 2. Subscriber Logic ---
         String subscriberName;
         if ("Broadband".equalsIgnoreCase(request.getProductSubtype())
@@ -119,11 +111,8 @@ public class CreateServiceCBM implements HttpAction {
             return createErrorResponse("Subscriber name too long", 400);
         }
         Customer subscriber = subscriberRepository.findByDiscoveredName(subscriberName)
-                .map(existing -> {
-                    Customer s = new Customer();
-                    return s;
-                })
                 .orElseGet(() -> {
+                    isSubscriberExist.set(false);
                     Customer s = new Customer();
                     try {
                         s.setLocalName(Validations.encryptName(subscriberName));
@@ -145,9 +134,6 @@ public class CreateServiceCBM implements HttpAction {
                     subscriberRepository.save(s, 2);
                     return s;
                 });
-        if(subscriber.getDiscoveredName()==null){
-            return new CreateServiceCBMResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,"CBM"+ request.getCbmSN());
-        }
         try {
             Map<String, Object> sp = subscriber.getProperties() == null ? new HashMap<>() : subscriber.getProperties();
             if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) sp.put("firstName", request.getFirstName());
@@ -171,6 +157,7 @@ public class CreateServiceCBM implements HttpAction {
         }
         Subscription subscription = subscriptionRepository.findByDiscoveredName(subscriptionName)
                 .orElseGet(() -> {
+                    isSubscriptionExist.set(false);
                     Subscription sub = new Subscription();
                     try {
                         sub.setLocalName(Validations.encryptName(subscriptionName));
@@ -208,6 +195,7 @@ public class CreateServiceCBM implements HttpAction {
 
         Product product = productRepository.findByDiscoveredName(productName)
                 .orElseGet(() -> {
+                    isProductExist.set(false);
                     Product p = new Product();
 
                     p.setDiscoveredName(productName);
@@ -227,6 +215,10 @@ public class CreateServiceCBM implements HttpAction {
                     productRepository.save(p, 2);
                     return p;
                 });
+        if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+            log.error("creatServiceCBM service already exist");
+            return new CreateServiceCBMResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,"CBM"+ request.getCbmSN());
+        }
 
         // --- 5. CFS Logic ---
         String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;
