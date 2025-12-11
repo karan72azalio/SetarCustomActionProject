@@ -141,7 +141,7 @@ public class ChangeState implements HttpAction {
                 Iterator<LogicalDevice> deviceIterator = devices.iterator();
                 while(deviceIterator.hasNext()){
                     LogicalDevice d = deviceIterator.next();
-                    if(d.getDiscoveredName().contains(req.getCbmMac().replace(":",""))){
+                    if(d.getDiscoveredName().contains(req.getCbmMac())){
                         optCbm = Optional.of(d);
                     }
                 }
