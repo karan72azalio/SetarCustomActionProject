@@ -97,7 +97,7 @@ public class ChangeState implements HttpAction {
                 rfsName = "RFS" + Constants.UNDER_SCORE + req.getSubscriberName()+ Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + nullSafe(req.getOntSN());
             } else { // Cable_Modem
                 subscriptionName = req.getSubscriberName() +Constants.UNDER_SCORE  + req.getServiceId();
-                rfsName = "RFS" + req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId();
+                rfsName = "RFS" + Constants.UNDER_SCORE + req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId();
             }
         }
         // fallback when ontSN present
