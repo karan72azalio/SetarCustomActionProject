@@ -139,9 +139,10 @@ public class ChangeState implements HttpAction {
                 // attempt find by GDN "CBM" + Constants.UNDER_SCORE +mac (as per naming in your system)
                 Iterable<LogicalDevice> devices = logicalDeviceRepository.findAll();
                 Iterator<LogicalDevice> deviceIterator = devices.iterator();
+
                 while(deviceIterator.hasNext()){
                     LogicalDevice d = deviceIterator.next();
-                    if(d.getDiscoveredName().contains(req.getCbmMac())){
+                    if(d.getProperties().get("macAddress").toString().contains(req.getCbmMac())){
                         optCbm = Optional.of(d);
                     }
                 }
