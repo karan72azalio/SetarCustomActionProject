@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Iterator;
 import java.util.Optional;
 
 @Component
@@ -46,7 +47,10 @@ public class ChangeState implements HttpAction {
     private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
-    private LogicalDeviceCustomRepository logicalDeviceRepository;
+    private LogicalDeviceCustomRepository logicalDeviceCustomRepository;
+
+    @Autowired
+    private LogicalDeviceRepository logicalDeviceRepository;
 
     @Autowired
     private CustomerCustomRepository customerRepository;
@@ -128,15 +132,21 @@ public class ChangeState implements HttpAction {
             Optional<LogicalDevice> optCbm = Optional.empty();
 
             if (!isEmpty(ontName)) {
-                optOnt = logicalDeviceRepository.findByDiscoveredName(ontName);
+                optOnt = logicalDeviceCustomRepository.findByDiscoveredName(ontName);
             }
 
             if (!isEmpty(req.getCbmMac())) {
                 // attempt find by GDN "CBM" + Constants.UNDER_SCORE +mac (as per naming in your system)
-                cbmName = "CBM" + Constants.UNDER_SCORE +req.getCbmMac();
-                optCbm = logicalDeviceRepository.findByDiscoveredName(cbmName);
+                Iterable<LogicalDevice> devices = logicalDeviceRepository.findAll();
+                Iterator<LogicalDevice> deviceIterator = devices.iterator();
+                while(deviceIterator.hasNext()){
+                    LogicalDevice d = deviceIterator.next();
+                    if(d.getDiscoveredName().contains(req.getCbmMac().replace(":",""))){
+                        optCbm = Optional.of(d);
+                    }
+                }
             }
-            if (!optSubscription.isPresent() || !optRfs.isPresent()) {
+            if (!optSubscription.isPresent() || !optRfs.isPresent() || !optCbm.isPresent() || !optOnt.isPresent()) {
                 return new ChangeStateResponse("500", ERROR_PREFIX + "No entry found for Suspend/Resume",
                         java.time.Instant.now().toString(), (cbmName == null ? "" : cbmName),
                         (ontName == null ? "" : ontName), subscriptionName);
