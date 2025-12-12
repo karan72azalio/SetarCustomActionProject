@@ -112,7 +112,6 @@ public class DeleteCBM implements HttpAction {
             int subscriptionCount = 0;
 
 
-
             // --- 3. Fetch CBM Device ---
             try {
                 optCbmDevice = cbmDeviceRepository.findByDiscoveredName(cbmName);
@@ -224,10 +223,39 @@ public class DeleteCBM implements HttpAction {
                 Subscription subscription = optSubscription.get();
                 LogicalDevice cbmDevice = optCbmDevice.get();
 
+                // --- 5. Correct CPE Device Logic for Voice ----
                 if ("Voice".equalsIgnoreCase(request.getProductSubtype())) {
-                    // reset voip ports if matching
-                    resetVoipPorts(subscription, cbmDevice);
-                } else if ("Broadband".equalsIgnoreCase(request.getProductSubtype())) {
+
+                    if (!optSubscription.isPresent()) {
+                        log.error("Subscription not found - cannot derive CPE device.");
+                    } else {
+                        Map<String, Object> subProps = subscription.getProperties();
+
+                        if (subProps == null || subProps.get("macAddress") == null) {
+                            log.error("Subscription missing macAddress - cannot derive CPE.");
+                        } else {
+
+                            String serviceMac = subProps.get("macAddress").toString();
+                            String cleanMac = serviceMac.replace(":", "");
+                            String cpeDeviceName = "CBM_" + cleanMac;
+
+                            log.error("Derived CPE device name from subscription = {}", cpeDeviceName);
+
+                            Optional<LogicalDevice> cpeOpt =
+                                    cbmDeviceRepository.findByDiscoveredName(cpeDeviceName);
+
+                            if (!cpeOpt.isPresent()) {
+                                log.error("CPE device {} not found", cpeDeviceName);
+                            } else {
+                                LogicalDevice cpeDevice = cpeOpt.get();
+                                log.error("CPE device {} found - applying VOIP reset", cpeDeviceName);
+
+                                resetVoipPorts(subscription, cpeDevice);
+                            }
+                        }
+                    }
+                }
+                else if ("Broadband".equalsIgnoreCase(request.getProductSubtype())) {
                     // clear description
                     cbmDevice.setDescription("");
                     // check voip ports availability - if both available set admin state available
@@ -365,45 +393,61 @@ public class DeleteCBM implements HttpAction {
         }
     }
 
-    private void resetVoipPorts(Subscription subscription, LogicalDevice cbmDevice) {
-        if (subscription == null || cbmDevice == null) {
-            return;
-        }
-        Map<String, Object> subProps = subscription.getProperties();
-        Map<String, Object> devProps = cbmDevice.getProperties();
-        if (devProps == null) {
-            devProps = new HashMap<>();
-            cbmDevice.setProperties(devProps);
-        }
-
+    private void resetVoipPorts(Subscription subscription, LogicalDevice cpeDevice) {
         try {
-            // Correct property names: "voipNumber1"/"voipNumber2" on subscription; "voipPort1"/"voipPort2" on device.
-            Object sVoip1 = subProps != null ? subProps.get("voipNumber1") : null;
-            Object sVoip2 = subProps != null ? subProps.get("voipNumber2") : null;
-            Object dPort1 = devProps.get("voipPort1");
-            Object dPort2 = devProps.get("voipPort2");
-
-            if (sVoip1 != null) {
-                if (sVoip1.equals(dPort1)) {
-                    devProps.put("voipPort1", "Available");
-                }
-                if (sVoip1.equals(dPort2)) {
-                    devProps.put("voipPort2", "Available");
-                }
+            if (subscription == null || cpeDevice == null) {
+                log.error("resetVoipPorts called with null params");
+                return;
             }
 
-            if (sVoip2 != null) {
-                if (sVoip2.equals(dPort1)) {
-                    devProps.put("voipPort1", "Available");
-                }
-                if (sVoip2.equals(dPort2)) {
-                    devProps.put("voipPort2", "Available");
-                }
+            Map<String, Object> subProps = subscription.getProperties();
+            if (subProps == null) {
+                log.error("Subscription has no properties");
+                return;
             }
 
-            cbmDeviceRepository.save(cbmDevice, 2);
+            Object voipNumber = subProps.get("voipNumber1");
+            if (voipNumber == null) {
+                log.error("Subscription has no voipNumber1");
+                return;
+            }
+
+            Map<String, Object> devProps = cpeDevice.getProperties();
+            if (devProps == null) {
+                devProps = new HashMap<>();
+                cpeDevice.setProperties(devProps);
+            }
+
+            Object port1 = devProps.get("voipPort1");
+            Object port2 = devProps.get("voipPort2");
+
+            boolean updated = false;
+
+            // Compare subscription VOIP number with CPE ports
+            if (voipNumber.equals(port1)) {
+                devProps.put("voipPort1", "Available");
+                updated = true;
+                log.error("Reset voipPort1 to Available on CPE {}", cpeDevice.getDiscoveredName());
+            }
+
+            if (voipNumber.equals(port2)) {
+                devProps.put("voipPort2", "Available");
+                updated = true;
+                log.error("Reset voipPort2 to Available on CPE {}", cpeDevice.getDiscoveredName());
+            }
+
+            if (updated) {
+                cbmDeviceRepository.save(cpeDevice, 2);
+                log.error("Saved updated CPE device {}", cpeDevice.getDiscoveredName());
+            } else {
+                log.error("No matching VOIP ports found on CPE {} - no reset performed",
+                        cpeDevice.getDiscoveredName());
+            }
+
         } catch (Exception e) {
-            log.error("Error resetting VOIP ports for device {}", cbmDevice != null ? cbmDevice.getDiscoveredName() : "unknown", e);
+            log.error("Error resetting VOIP ports for CPE device {}",
+                    cpeDevice != null ? cpeDevice.getDiscoveredName() : "UNKNOWN", e);
         }
     }
+
 }
