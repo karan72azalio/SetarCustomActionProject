@@ -369,6 +369,7 @@ public class ModifyCBM implements HttpAction {
                                     cfs.setDiscoveredName(cfsNameNew);
                                     Map<String, Object> cfsProps = Optional.ofNullable(cfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                     cfsProps.put("name", cfsNameNew);
+                                    cfsProps.put("endDate", Instant.now().toString());
                                     cfs.setProperties(cfsProps);
                                     cfsRepository.save(cfs);
                                 }
@@ -403,6 +404,16 @@ public class ModifyCBM implements HttpAction {
                                             logicalDeviceRepository.save(oldCbmDevice);
                                         }
                                     }
+                                    // Add missing VOIP_PORT2 update
+                                    if (cbmProps.containsKey("VOIP_PORT2")) {
+                                        String port2 = String.valueOf(cbmProps.get("VOIP_PORT2"));
+                                        if (port2 != null && port2.contains(input.getServiceId())) {
+                                            cbmProps.put("VOIP_PORT2", newServiceId);
+                                            oldCbmDevice.setProperties(cbmProps);
+                                            logicalDeviceRepository.save(oldCbmDevice);
+                                        }
+                                    }
+
                                 }
                             } else {
                                 subscriptionRepository.save(subscription);
