@@ -144,6 +144,7 @@ public class ChangeState implements HttpAction {
                     LogicalDevice d = deviceIterator.next();
                     if(d.getProperties().get("macAddress")!=null && d.getProperties().get("macAddress").toString().contains(req.getCbmMac())){
                         optCbm = Optional.of(d);
+                        cbmName = optCbm.get().getDiscoveredName();
                     }
                 }
             }
