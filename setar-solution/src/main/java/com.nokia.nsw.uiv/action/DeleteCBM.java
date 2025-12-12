@@ -297,12 +297,12 @@ public class DeleteCBM implements HttpAction {
                 if (setarRFS.getUsedResource() != null) {
                     setarRFS.getUsedResource().forEach(resource -> {
                         try {
-                            String localName = resource.getLocalName();
-                            if (localName == null) {
+                            String discoveredName = resource.getDiscoveredName();
+                            if (discoveredName == null) {
                                 return;
                             }
-                            boolean isAP = localName.startsWith("AP");
-                            boolean isSTB = localName.startsWith("STB");
+                            boolean isAP = discoveredName.startsWith("AP");
+                            boolean isSTB = discoveredName.startsWith("STB");
 
                             if (isAP || isSTB) {
                                 Map<String, Object> props = resource.getProperties() != null
@@ -320,11 +320,11 @@ public class DeleteCBM implements HttpAction {
                                 // Persist resource - resource may be LogicalDevice
                                 try {
                                     cbmDeviceRepository.save((LogicalDevice) resource, 2);
-                                    log.error("Updated resource {} administrative state to Available", localName);
+                                    log.error("Updated resource {} administrative state to Available", discoveredName);
                                 } catch (ClassCastException cce) {
-                                    log.error("Resource {} is not a LogicalDevice; skipping save via cbmDeviceRepository", localName);
+                                    log.error("Resource {} is not a LogicalDevice; skipping save via cbmDeviceRepository", discoveredName);
                                 } catch (Exception saveEx) {
-                                    log.error("Failed to save resource {}", localName, saveEx);
+                                    log.error("Failed to save resource {}", discoveredName, saveEx);
                                 }
                             }
                         } catch (Exception e) {
