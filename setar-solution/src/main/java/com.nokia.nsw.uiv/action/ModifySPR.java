@@ -239,8 +239,22 @@ public class ModifySPR implements HttpAction {
             try {
                 Map<String, Object> subProps = subscription.getProperties();
                 subProps.put("serviceID", request.getModifyParam1());
+                LogicalDevice ont = logicalCustomDeviceRepository.findByDiscoveredName(ontName)
+                        .orElseThrow(() -> new BadRequestException("No entry found to modify ONT"));
+                logicalCustomDeviceRepository.save(ont, 2);
+                String tempNumberOnt2 = ont.getProperties().get("potsPort2Number")!=null?ont.getProperties().get("potsPort2Number").toString():"";
+                if (tempNumberOnt2 == null || tempNumberOnt2 == "") {
+                    tempNumberOnt2 = "empty";
+                }
+                if (tempNumberOnt2.equals(request.getServiceId())) {
+                    subProps.put("voipNumber1",request.getModifyParam1());
+                    ont.getProperties().put("potsPort2Number",request.getModifyParam1());
+                } else {
+                    subProps.put("voipNumber1",request.getModifyParam1());
+                    ont.getProperties().put("potsPort1Number",request.getModifyParam1());
+                }
+                logicalCustomDeviceRepository.save(ont);
                 subscription.setProperties(subProps);
-
                 if (!request.getServiceId().equals(request.getModifyParam1())) {
                     updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
                 }else{
@@ -248,13 +262,6 @@ public class ModifySPR implements HttpAction {
                     subscription.setProperties(subProps);
                     subscriptionRepository.save(subscription);
                 }
-                LogicalDevice ont = logicalCustomDeviceRepository.findByDiscoveredName(ontName)
-                        .orElseThrow(() -> new BadRequestException("No entry found to modify ONT"));
-
-                Map<String, Object> ontProps = ont.getProperties();
-                ontProps.put("potsPort1Number", request.getModifyParam1());
-                ont.setProperties(ontProps);
-                logicalCustomDeviceRepository.save(ont, 2);
                 return true;
             } catch (Exception e) {
                 throw new ModificationNotAllowedException("Failed to modify VOIP number: " + e.getMessage());
