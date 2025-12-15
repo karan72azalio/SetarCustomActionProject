@@ -446,6 +446,21 @@ public class ModifySPR implements HttpAction {
         tempSubscription.setProperties(subscription.getProperties());
         tempSubscription.setDiscoveredName(subscriptionNameNew);
         subscriptionRepository.save(tempSubscription);
+        if("Modify_Number".equalsIgnoreCase(request.getModifyType())){
+           LogicalDevice cpeDevice = logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getOntSN()).get();
+
+            String voipNumber1 = cpeDevice.getProperties().get("voipPort1")!=null?cpeDevice.getProperties().get("voipPort1").toString():"";
+            String voipNumber2 = cpeDevice.getProperties().get("voipPort2")!=null?cpeDevice.getProperties().get("voipPort2").toString():"";
+
+            if(request.getServiceId().equalsIgnoreCase(voipNumber1)){
+                cpeDevice.getProperties().put("voipPort1",request.getModifyParam1());
+
+            }else if(request.getServiceId().equalsIgnoreCase(voipNumber2)){
+                cpeDevice.getProperties().put("voipPort2",request.getModifyParam1());
+            }
+            logicalCustomDeviceRepository.save(cpeDevice,2);
+        }
+
     }
 
     private boolean isBroadband(ModifySPRRequest request) {
