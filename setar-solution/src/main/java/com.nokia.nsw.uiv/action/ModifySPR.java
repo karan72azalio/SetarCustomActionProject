@@ -319,9 +319,6 @@ public class ModifySPR implements HttpAction {
                             subs.getProperties().put("evpnTemplateVLAN",request.getTemplateNameVLAN());
                         }
                         String subscriptionName = subs.getDiscoveredName();
-                        Map<String,Object> hm = subs.getProperties();
-                        Object o1 = subs.getProperties().get("serviceID");
-                        Object o2 = subs.getProperties().get("serviceID");
                         String serviceID = subs.getProperties().get("serviceID")!=null?subs.getProperties().get("serviceID").toString():"";
                         String subscriptionNameNew = subscriber + Constants.UNDER_SCORE + serviceID + Constants.UNDER_SCORE + request.getModifyParam1();
                         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
