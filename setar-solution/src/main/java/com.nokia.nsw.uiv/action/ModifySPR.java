@@ -25,6 +25,7 @@ import com.setar.uiv.model.product.CustomerFacingService;
 import com.setar.uiv.model.product.Product;
 import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
+import org.jcodings.util.Hash;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
@@ -74,6 +75,7 @@ public class ModifySPR implements HttpAction {
 
         ModifySPRRequest request = (ModifySPRRequest) actionContext.getObject();
         boolean success = false;
+        String flag = "";
 
         try {
             // 1. Mandatory Validations
@@ -96,9 +98,13 @@ public class ModifySPR implements HttpAction {
             }
 
             // 3. Fetch Entities
-            Customer subscriber = customerRepository.findByDiscoveredName(subscriberName)
-                    .orElseThrow(() -> new BadRequestException("No entry found to modify Subscriber: " + subscriberName));
-
+           Optional<Customer>  subscriberOpt = customerRepository.findByDiscoveredName(subscriberName);
+            Customer subscriber = null;
+            if(!subscriberOpt.isPresent()){
+                flag = "partly";
+            }else{
+                subscriber = subscriberOpt.get();
+            }
             Subscription subscription = subscriptionRepository.findByDiscoveredName(subscriptionName)
                     .orElseThrow(() -> new BadRequestException("No entry found to modify Subscription: " + subscriptionName));
 
@@ -110,7 +116,7 @@ public class ModifySPR implements HttpAction {
             } else if (isVoip(request)) {
                 success = handleVOIP(request, subscription, ontName);
             } else if (isOntModification(request)) {
-                success = handleModifyONT(request, ontName);
+                success = handleModifyONT(request, ontName,flag);
             }
 
             // 5. Response
@@ -270,7 +276,7 @@ public class ModifySPR implements HttpAction {
         return false;
     }
 
-    private boolean handleModifyONT(ModifySPRRequest request, String ontName) throws BadRequestException, AccessForbiddenException {
+    private boolean handleModifyONT(ModifySPRRequest request, String ontName, String flag) throws BadRequestException, AccessForbiddenException {
         LogicalDevice ont = logicalCustomDeviceRepository.findByDiscoveredName(ontName)
                 .orElseThrow(() -> new BadRequestException("No entry found to modify ONT: "+ontName));
         Customer iptvSubscriber = customerRepository.findByDiscoveredName(request.getSubscriberName()).get();
@@ -282,14 +288,16 @@ public class ModifySPR implements HttpAction {
         }
         Set<Service> services = ont.getUsingService();
         for(Service s:services){
+            Optional<Customer> setarSubscriber1 = Optional.empty();
+            String subscriberNewName="";
             try{
                 if(s instanceof ResourceFacingService){
                     ResourceFacingService rfs = (ResourceFacingService) s;
                     String[] rfsNameArray = rfs.getDiscoveredName().split("_");
                     String subscriber = rfsNameArray[1];
                     String subscriberNameForOnt = subscriber + Constants.UNDER_SCORE +request.getOntSN();
-                    Optional<Customer> setarSubscriber1 =customerRepository.findByDiscoveredName(subscriberNameForOnt);
-                    String subscriberNewName = subscriber + Constants.UNDER_SCORE +request.getModifyParam1();
+                    setarSubscriber1 =customerRepository.findByDiscoveredName(subscriberNameForOnt);
+                    subscriberNewName = subscriber + Constants.UNDER_SCORE +request.getModifyParam1();
                     String ontExist = "";
                     String ontNameNew = "ONT" + request.getModifyParam1();
                     Optional<LogicalDevice> ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontName);
@@ -298,6 +306,7 @@ public class ModifySPR implements HttpAction {
                     }
                     Set<Subscription> subscriptions = setarSubscriber1.get().getSubscription();
                     for(Subscription subs: subscriptions){
+                        subs = subscriptionRepository.findByDiscoveredName(subs.getDiscoveredName()).get();
                         String serviceSubType = subs.getProperties().get("serviceSubType").toString();
                         if((serviceSubType.equalsIgnoreCase("Bridged") && request.getOntModel().contains("XS-2426G-B"))){
 
@@ -310,7 +319,11 @@ public class ModifySPR implements HttpAction {
                             subs.getProperties().put("evpnTemplateVLAN",request.getTemplateNameVLAN());
                         }
                         String subscriptionName = subs.getDiscoveredName();
-                        String subscriptionNameNew = subscriber + Constants.UNDER_SCORE + subs.getProperties().get("serviceId").toString() + Constants.UNDER_SCORE + request.getModifyParam1();
+                        Map<String,Object> hm = subs.getProperties();
+                        Object o1 = subs.getProperties().get("serviceID");
+                        Object o2 = subs.getProperties().get("serviceID");
+                        String serviceID = subs.getProperties().get("serviceID")!=null?subs.getProperties().get("serviceID").toString():"";
+                        String subscriptionNameNew = subscriber + Constants.UNDER_SCORE + serviceID + Constants.UNDER_SCORE + request.getModifyParam1();
                         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
                         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
                         String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
@@ -402,10 +415,14 @@ public class ModifySPR implements HttpAction {
                 log.error("Exception occure while processing RFS: "+e.getMessage());
                 return false;
             }
-
+            if (flag != "partly") {
+                setarSubscriber1 = customerRepository.findByDiscoveredName(setarSubscriber1.get().getDiscoveredName());
+                setarSubscriber1.get().setDiscoveredName(subscriberNewName);
+                customerRepository.save(setarSubscriber1.get());
+            }
+            return true;
         }
-
-        return true;
+        return false;
     }
 
     // ------------------ HELPERS ------------------
