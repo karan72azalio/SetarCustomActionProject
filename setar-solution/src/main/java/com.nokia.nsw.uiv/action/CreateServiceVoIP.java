@@ -345,7 +345,8 @@ public class CreateServiceVoIP implements HttpAction {
             }
             oltProps.put("voipServiceTemplate", req.getVoipServiceTemplate());
 
-            ont.setProperties(oltProps);
+            ont.setProperties(ontProps);
+            olt.setProperties(oltProps);
 
 
             logicalDeviceRepo.save(ont);
