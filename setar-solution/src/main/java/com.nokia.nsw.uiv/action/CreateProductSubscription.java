@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @RestController
@@ -56,7 +57,9 @@ public class CreateProductSubscription implements HttpAction {
         log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
 
         CreateProductSubscriptionRequest request = (CreateProductSubscriptionRequest) actionContext.getObject();
-
+        AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
+        AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
+        AtomicBoolean isProductExist = new AtomicBoolean(true);
         try {
             log.error("Mandatory parameter validation started...");
             try{
@@ -86,6 +89,7 @@ public class CreateProductSubscription implements HttpAction {
                 subscriber = optSubscriber.get();
                 log.error("Found existing subscriber: {}", subscriberName);
             } else {
+                isSubscriberExist.set(false);
                 subscriber = new Customer();
                 subscriber.setLocalName(Validations.encryptName(subscriberName));
                 subscriber.setDiscoveredName(subscriberName);
@@ -112,6 +116,7 @@ public class CreateProductSubscription implements HttpAction {
                 subscription = optSubscription.get();
                 log.error("Found existing subscription: {}", subscriptionName);
             } else {
+                isSubscriptionExist.set(false);
                 subscription = new Subscription();
                 subscription.setLocalName(Validations.encryptName(subscriptionName));
                 subscription.setDiscoveredName(subscriptionName);
@@ -139,6 +144,7 @@ public class CreateProductSubscription implements HttpAction {
                 product = optProduct.get();
                 log.error("Found existing product: {}", productName);
             } else {
+                isProductExist.set(false);
                 product = new Product();
                 product.setLocalName(Validations.encryptName(productName));
                 product.setDiscoveredName(productName);
