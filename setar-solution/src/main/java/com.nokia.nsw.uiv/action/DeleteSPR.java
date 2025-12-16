@@ -437,7 +437,9 @@ public class DeleteSPR implements HttpAction {
     }
 
     private void safeSaveLogicalDevice(LogicalDevice d) {
-        logicalDeviceRepository.save(d, 2);
+        LogicalDevice tempDevice = logicalDeviceRepository.findByDiscoveredName(d.getDiscoveredName()).get();
+        tempDevice.setProperties(d.getProperties());
+        logicalDeviceRepository.save(tempDevice, 2);
     }
 
     private void safeSaveCustomer(Customer c) {
@@ -506,7 +508,7 @@ public class DeleteSPR implements HttpAction {
 
     private int countSubscriptionsByCustomer(Customer customer) {
         try {
-            Collection<Subscription> subs = (Collection<Subscription>) customer.getProperties().get("subscriptions");
+            Collection<Subscription> subs = customer.getSubscription();
             if (subs != null) return subs.size();
         } catch (Exception ignore) {}
         return 1;
