@@ -258,8 +258,6 @@ public class CreateServiceCbmVoice implements HttpAction {
                         p.setProperties(prodProps);
                         p.setCustomer(subscriber);
                         p.setSubscription(subscription);
-                        Subscription s1 = p.getSubscription();
-                        String localN = s1.getLocalName();
                         productRepository.save(p, 2);
                         return p;
                     });

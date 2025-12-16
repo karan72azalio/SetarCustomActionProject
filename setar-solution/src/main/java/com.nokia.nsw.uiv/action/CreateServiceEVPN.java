@@ -267,6 +267,7 @@ public class CreateServiceEVPN implements HttpAction {
                         prodProps.put("linkedSubscription", subscription.getLocalName());
                         prod.setProperties(prodProps);
                         prod.setSubscription(subscription);
+                        prod.setCustomer(subscriber);
                         return productRepo.save(prod,2);
                     });
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
@@ -374,6 +375,8 @@ public class CreateServiceEVPN implements HttpAction {
                         ontProps.put("linkedRFS", rfs.getLocalName());
                         dev.setProperties(ontProps);
                         dev.getProperties().put("containingDevice", olt.getLocalName());
+                        dev.addManagingDevices(olt);
+                        dev.addUsingService(rfs);
                         return logicalDeviceRepo.save(dev);
                     });
 

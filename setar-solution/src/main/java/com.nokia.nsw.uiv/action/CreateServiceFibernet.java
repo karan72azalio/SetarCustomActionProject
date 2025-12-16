@@ -126,7 +126,6 @@ public class CreateServiceFibernet implements HttpAction {
             if (optCustomer.isPresent()) {
                 subscriber = optCustomer.get();
                 log.error("Found existing subscriber: {}", subscriberName);
-                return new CreateServiceFibernetResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,ontName);
             } else {
                 isSubscriberExist.set(false);
                 subscriber = new Customer();

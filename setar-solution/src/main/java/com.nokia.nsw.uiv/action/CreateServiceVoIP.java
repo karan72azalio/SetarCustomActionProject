@@ -132,9 +132,6 @@ public class CreateServiceVoIP implements HttpAction {
                         newSub.setProperties(subProps);
                         return customerRepo.save(newSub);
                     });
-            if(subscriber.getDiscoveredName()==null){
-                return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN(),"ONT" + req.getOntSN());
-            }
 
             // Step 4: Subscription
             String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
@@ -225,6 +222,7 @@ public class CreateServiceVoIP implements HttpAction {
                         prodProps.put("productStatus", "Active");
                         prodProps.put("productType", req.getProductType());
                         prod.setProperties(prodProps);
+                        prod.setCustomer(subscriber);
                         prod.setSubscription(subscription);
                         return productRepo.save(prod);
                     });
@@ -327,6 +325,7 @@ public class CreateServiceVoIP implements HttpAction {
                         ontProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(ontProps);
                         dev.addManagingDevices(olt);
+                        dev.addUsingService(rfs);
                         return logicalDeviceRepo.save(dev);
                     });
 
