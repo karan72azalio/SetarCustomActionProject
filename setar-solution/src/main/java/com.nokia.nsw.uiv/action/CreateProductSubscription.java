@@ -15,6 +15,7 @@ import com.nokia.nsw.uiv.repository.ProductCustomRepository;
 import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.CreateProductSubscriptionRequest;
 import com.nokia.nsw.uiv.response.CreateProductSubscriptionResponse;
+import com.nokia.nsw.uiv.response.CreateServiceEVPNResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.setar.uiv.model.product.Product;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -162,6 +164,10 @@ public class CreateProductSubscription implements HttpAction {
                 product.setSubscription(subscription);
                 productRepository.save(product, 2);
                 log.error("Created new product: {}", productName);
+            }
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceEVPN service already exist");
+                return new CreateProductSubscriptionResponse("409","Service already exist/Duplicate entry", Instant.now().toString(),subscriptionName,productName);
             }
 
             // ================== Success Response ==================
