@@ -13,6 +13,8 @@ import com.nokia.nsw.uiv.request.QueryFlagsRequest;
 import com.nokia.nsw.uiv.response.QueryFlagsResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
+import com.setar.uiv.model.product.CustomerFacingService;
+import com.setar.uiv.model.product.Product;
 import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,11 +101,11 @@ public class QueryFlags implements HttpAction {
                 flags.put("SERVICE_VOIP_NUMBER1", "Available");
                 flags.put("SERVICE_VOIP_NUMBER2", "Available");
             }
-
+            ResourceFacingService rfs2=rfsRepository.findByDiscoveredName("RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID)).get();
             log.error("------------Test Trace # 4---------------");
             String serviceLink = "NA";
             if (ontSN != null) {
-                if (ontSN.startsWith("ALCL")) {
+                if (ontSN.startsWith("ALC")) {
                     serviceLink = "ONT";
                     log.error("Trace: ontSN startsWith ALCL -> serviceLink=ONT");
                 } else if (ontSN.startsWith("CW")) {
@@ -121,21 +123,23 @@ public class QueryFlags implements HttpAction {
                     && !"Configure".equalsIgnoreCase(actionType)) {
                 if (ontSN == null || ontSN.trim().isEmpty() || "NA".equalsIgnoreCase(ontSN)) {
                     try {
-                        String rfsLocalName = "RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
+                        String rfsName = "RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
                         Iterable<ResourceFacingService> allRfs = rfsRepository.findAll();
 
                         for (ResourceFacingService rfs : allRfs) {
                             if (rfs.getDiscoveredName() != null &&
-                                    rfs.getDiscoveredName().equalsIgnoreCase(rfsLocalName)) {
+                                    rfs.getDiscoveredName().equalsIgnoreCase(rfsName)) {
+                                ResourceFacingService rfs1=rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                                CustomerFacingService cfs=rfs1.getContainingCfs();
+                                cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                                Product product = cfs.getContainingProduct();
+                                product=productRepository.findByDiscoveredName(product.getDiscoveredName()).get();
+                                Subscription subscription=product.getSubscription();
 
-                                if (rfs.getContainingCfs() != null &&
-                                        rfs.getContainingCfs().getContainingProduct() != null &&
-                                        rfs.getContainingCfs().getContainingProduct().getSubscription() != null) {
+                                if (subscription!= null) {
 
-                                    Subscription sub = rfs.getContainingCfs()
-                                            .getContainingProduct()
-                                            .getSubscription();
-                                    String subServiceId = (String) safeProps(sub.getProperties())
+
+                                    String subServiceId = (String) safeProps(subscription.getProperties())
                                             .getOrDefault("serviceID", "");
 
                                     if (serviceID != null && serviceID.equals(subServiceId)) {
@@ -205,58 +209,126 @@ public class QueryFlags implements HttpAction {
             }
 
             log.error("------------Test Trace # 7---------------");
-            boolean subscriberExists = customerRepository.findByDiscoveredName(subscriber).isPresent();
+
             List<Subscription> subsForCustomer = new ArrayList<>();
-            List<Subscription> subs = (List<Subscription>) subscriptionRepository.findAll();
-            for (Subscription s:subs) {
-                if (s.getDiscoveredName() != null && s.getDiscoveredName().startsWith(subscriber))
+            for (Subscription s : subscriptionRepository.findAll()) {
+                if (s.getDiscoveredName() != null &&
+                        s.getDiscoveredName().contains(subscriber)) {
                     subsForCustomer.add(s);
+                }
             }
-            if (Arrays.asList("Unconfigure", "MoveOut", "ChangeTechnology", "AccountTransfer").contains(actionType)) {
-                log.error("Trace: Action in Unconfigure/MoveOut/ChangeTechnology/AccountTransfer");
-                if (subsForCustomer.size() <= 1) {
-                    flags.put("ACCOUNT_EXIST", "New");
+
+            if (Arrays.asList("Unconfigure", "MoveOut",
+                            "ChangeTechnology", "AccountTransfer")
+                    .contains(actionType)) {
+
+                if (subsForCustomer.isEmpty()) {
                     flags.put("SERVICE_FLAG", "New");
+                    flags.put("ACCOUNT_EXIST", "New");
+                    flags.put("CBM_ACCOUNT_EXIST", "New");
+
+                } else if (subsForCustomer.size() == 1) {
+                    flags.put("SERVICE_FLAG", "New");
+                    flags.put("ACCOUNT_EXIST", "New");
+
+                    Object link =
+                            safeProps(subsForCustomer.get(0).getProperties())
+                                    .get("serviceLink");
+
+                    if ("Cable_Modem".equalsIgnoreCase(String.valueOf(link))) {
+                        flags.put("CBM_ACCOUNT_EXIST", "New");
+                    }
+
                 } else {
-                    flags.put("ACCOUNT_EXIST", "Exist");
                     flags.put("SERVICE_FLAG", "Exist");
+                    flags.put("ACCOUNT_EXIST", "Exist");
+
+                    int cbmCount = 0;
+                    Set<String> macSet = new HashSet<>();
+
+                    for (Subscription s : subsForCustomer) {
+                        Map<String, Object> p = safeProps(s.getProperties());
+                        if ("Cable_Modem".equalsIgnoreCase(
+                                (String) p.get("serviceLink"))) {
+
+                            cbmCount++;
+                            Object mac = p.get("macAddress");
+                            if (mac != null) macSet.add(mac.toString());
+                        }
+                    }
+
+                    if (Arrays.asList("ChangeTechnology", "AccountTransfer")
+                            .contains(actionType)) {
+                        flags.put("CBM_ACCOUNT_EXIST",
+                                macSet.size() > 1 ? "Exist" : "New");
+                    } else {
+                        flags.put("CBM_ACCOUNT_EXIST",
+                                cbmCount > 1 ? "Exist" : "New");
+                    }
                 }
-                boolean anyCbm = subsForCustomer.stream().anyMatch(s -> {
-                    Object l = safeProps(s.getProperties()).get("serviceLink");
-                    return l != null && l.toString().contains("Cable_Modem");
-                });
-                flags.put("CBM_ACCOUNT_EXIST", anyCbm ? "Exist" : "New");
-            } else if (!equalsIgnoreCase(actionType, "Configure") && ontSN != null && ontSN.contains("ALCL")) {
-                log.error("Trace: Configure with ALCL ONT -> check subscriber_ONT existence");
-                String subscriberWithOnt = subscriber + Constants.UNDER_SCORE  + ontSN;
-                boolean exists = customerRepository.findByDiscoveredName(subscriberWithOnt).isPresent();
-                flags.put("ACCOUNT_EXIST", exists ? "Exist" : "New");
+
+            } else if ("Configure".equalsIgnoreCase(actionType)
+                    && ontSN != null && ontSN.contains("ALCL")) {
+
+                String subscriberWithOnt =
+                        subscriber + Constants.UNDER_SCORE + ontSN;
+
+                boolean exists =
+                        customerRepository
+                                .findByDiscoveredName(subscriberWithOnt)
+                                .isPresent();
+
                 flags.put("SERVICE_FLAG", exists ? "Exist" : "New");
-            } else if (equalsIgnoreCase(actionType, "Migrate") && ontSN != null && ontSN.contains("ALCL")) {
-                log.error("Trace: Migrate with ALCL ONT -> default flags New, check subscriptions for existence");
-                flags.put("ACCOUNT_EXIST", "New");
+                flags.put("ACCOUNT_EXIST", exists ? "Exist" : "New");
+
+            } else if ("Migrate".equalsIgnoreCase(actionType)
+                    && ontSN != null && ontSN.contains("ALCL")) {
+
                 flags.put("SERVICE_FLAG", "New");
-                String finalOntSN1 = ontSN;
-                boolean found = subsForCustomer.stream().anyMatch(s -> s.getDiscoveredName() != null && s.getDiscoveredName().contains(finalOntSN1));
-                if (found) {
-                    flags.put("ACCOUNT_EXIST", "Exist");
-                    flags.put("SERVICE_FLAG", "Exist");
-                    String finalOntSN = ontSN;
-                    subsForCustomer.stream().filter(s -> s.getDiscoveredName() != null && s.getDiscoveredName().contains(finalOntSN)).findFirst().ifPresent(s -> {
-                        Object sima = safeProps(s.getProperties()).get("simaCustomerId");
-                        flags.put("SIMA_CUST_ID", sima == null ? "" : sima.toString());
-                    });
+                flags.put("ACCOUNT_EXIST", "New");
+
+                for (Subscription s : subsForCustomer) {
+                    if (s.getDiscoveredName() != null &&
+                            s.getDiscoveredName().contains(ontSN)) {
+
+                        flags.put("SERVICE_FLAG", "Exist");
+
+                        if (subscriber.equalsIgnoreCase(
+                                s.getDiscoveredName())) {
+                            flags.put("ACCOUNT_EXIST", "Exist");
+                        }
+
+                        Object sima =
+                                safeProps(s.getProperties())
+                                        .get("simaCustomerId");
+                        if (sima != null && !sima.toString().isEmpty()) {
+                            flags.put("SIMA_CUST_ID", sima.toString());
+                        }
+                    }
                 }
+
             } else {
-                log.error("Trace: Default account/service flag handling");
-                flags.put("ACCOUNT_EXIST", subscriberExists ? "Exist" : "New");
+                boolean subscriberExists =
+                        customerRepository
+                                .findByDiscoveredName(subscriber)
+                                .isPresent();
+
+                flags.put("SERVICE_FLAG",
+                        subscriberExists ? "Exist" : "New");
+                flags.put("ACCOUNT_EXIST",
+                        subscriberExists ? "Exist" : "New");
+
                 boolean anyCbm = subsForCustomer.stream().anyMatch(s -> {
-                    Object l = safeProps(s.getProperties()).get("serviceLink");
-                    return l != null && l.toString().contains("Cable_Modem");
+                    Object l =
+                            safeProps(s.getProperties()).get("serviceLink");
+                    return l != null &&
+                            l.toString().contains("Cable_Modem");
                 });
-                flags.put("CBM_ACCOUNT_EXIST", anyCbm ? "Exist" : "New");
-                flags.put("SERVICE_FLAG", subscriberExists ? "Exist" : "New");
+
+                flags.put("CBM_ACCOUNT_EXIST",
+                        anyCbm ? "Exist" : "New");
             }
+
 
             log.error("------------Test Trace # 8---------------");
             if (ontSN != null && !"".equals(ontSN) && equalsIgnoreCase(productSubType, "IPTV") && equalsIgnoreCase(actionType, "Unconfigure")) {
@@ -567,23 +639,46 @@ public class QueryFlags implements HttpAction {
         return "Exist";
     }
 
-    private String deriveBridgeServiceForSubscriberRfs(Iterable<ResourceFacingService> allRfs, String ontSN, String subscriber) {
-        if (allRfs == null) return "NA";
+    private String deriveBridgeServiceForSubscriberRfs(
+            Iterable<ResourceFacingService> allRfs,
+            String ontSN,
+            String subscriber) {
+
+        String bridgeService = "NA";
+
+        if (allRfs == null || ontSN == null) {
+            return bridgeService;
+        }
+
         for (ResourceFacingService rfs : allRfs) {
             try {
-                if (rfs.getContainingCfs() == null || rfs.getContainingCfs().getContainingProduct() == null) continue;
-                Subscription sub = rfs.getContainingCfs().getContainingProduct().getSubscription();
-                if (sub == null) continue;
+                ResourceFacingService rfs1=rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                CustomerFacingService cfs=rfs1.getContainingCfs();
+                cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                Product product = cfs.getContainingProduct();
+                product=productRepository.findByDiscoveredName(product.getDiscoveredName()).get();
+                Subscription sub=product.getSubscription();
+
+                if (sub == null || sub.getDiscoveredName() == null) {
+                    continue;
+                }
+
                 Map<String, Object> sp = safeProps(sub.getProperties());
-                if ("Bridged".equalsIgnoreCase((String) sp.getOrDefault("serviceSubType", "")) &&
-                        sub.getDiscoveredName() != null && ontSN != null && sub.getDiscoveredName().contains(ontSN)) {
-                    return (String) sp.getOrDefault("serviceID", "NA");
+
+                if ("Bridged".equalsIgnoreCase(
+                        (String) sp.getOrDefault("serviceSubType", "")) &&
+                        sub.getDiscoveredName().contains(ontSN)) {
+
+                    // 🔥 DO NOT RETURN – last match wins
+                    bridgeService =
+                            (String) sp.getOrDefault("serviceID", "NA");
                 }
             } catch (Exception ignore) {
             }
         }
-        return "NA";
+        return bridgeService;
     }
+
 
     private String getCurrentTimestamp() {
         return Instant.now().toString();
