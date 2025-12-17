@@ -152,6 +152,7 @@ public class QueryFlags implements HttpAction {
                                                             .get("serialNo");
                                                     if (serial != null) {
                                                         ontSN = serial.toString();
+                                                        flags.put("ONT",ontSN);
                                                         flags.put("SERVICE_SN", ontSN);
                                                         flags.put("SERVICE_LINK", "ONT");
                                                     }
