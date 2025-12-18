@@ -397,6 +397,7 @@ public class DeleteSPR implements HttpAction {
         p.put("veipIptvTemplate", "");
         p.put("tempTemplateMGMT", "");
         p.put("vlanCreateTemplate", "");
+        ont.setProperties(p);
     }
 
     private void clearEvpnsOnPort(LogicalDevice olt, String port) {
@@ -404,6 +405,7 @@ public class DeleteSPR implements HttpAction {
         Map<String, Object> p = ensureProps(olt);
         // Map common EVPN OLT port templates (2..5)
         p.put("evpnEthPort" + port + "Template", "");
+        olt.setProperties(p);
         safeSaveLogicalDevice(olt);
     }
 
@@ -413,6 +415,7 @@ public class DeleteSPR implements HttpAction {
         // clear both create and active templates for the port
         p.put("evpnEthPort" + port + "Template", "");
         p.put("evpnEthPort" + port + "CreateTemplate", "");
+        ont.setProperties(p);
         safeSaveLogicalDevice(ont);
     }
 
