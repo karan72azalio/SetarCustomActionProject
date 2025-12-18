@@ -384,6 +384,7 @@ public class DeleteSPR implements HttpAction {
         Map<String, Object> p = ensureProps(olt);
         p.put("veipServiceTemplate", "");
         p.put("veipHsiTemplate", "");
+        olt.setProperties(p);
         safeSaveLogicalDevice(olt);
     }
 
