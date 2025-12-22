@@ -346,39 +346,43 @@ public class CreateServiceEVPN implements HttpAction {
                     });
 
             // 9) ONT: find or create, manage EVPN counters
-            LogicalDevice ont = logicalDeviceRepo.findByDiscoveredName(ontName)
-                    .orElseGet(() -> {
-                        log.error("------------Trace # 14--------------- Creating ONT: " + ontName);
-                        LogicalDevice dev = new LogicalDevice();
-                        try {
-                            dev.setLocalName(ontName);
-                            dev.setDiscoveredName(ontName);
-                            dev.setContext("Setar");
-                            dev.setKind("ONTDevice");
-                        }catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String,Object> ontProps = new HashMap<>();
-                        ontProps.put("serialNumber", req.getOntSN());
-                        ontProps.put("deviceModel", req.getOntModel());
-                        ontProps.put("OperationalState", "Active");
-                        if (req.getTemplateNameOnt() != null) ontProps.put("ontTemplate", req.getTemplateNameOnt());
-                        ontProps.put("oltPosition", req.getOltName());
-                        // initialize counters
-                        ontProps.put("port3Counter", "0");
-                        ontProps.put("port4Counter", "0");
-                        ontProps.put("port5Counter", "0");
-                        // management fields
-                        if (req.getTemplateNameVlanMgmnt() != null) ontProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
-                        if (req.getMgmntVlanId() != null) ontProps.put("mgmtVlan", req.getMgmntVlanId());
-                        // link RFS
-                        ontProps.put("linkedRFS", rfs.getLocalName());
-                        dev.setProperties(ontProps);
-                        dev.getProperties().put("containingDevice", olt.getLocalName());
-                        dev.addManagingDevices(olt);
-                        dev.addUsingService(rfs);
-                        return logicalDeviceRepo.save(dev);
-                    });
+            LogicalDevice ont = null;
+            Optional<LogicalDevice> ontOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
+            if(ontOpt.isPresent()){
+                ont = ontOpt.get();
+            }else{
+                log.error("------------Trace # 14--------------- Creating ONT: " + ontName);
+                LogicalDevice dev = new LogicalDevice();
+                try {
+                    dev.setLocalName(ontName);
+                    dev.setDiscoveredName(ontName);
+                    dev.setContext("Setar");
+                    dev.setKind("ONTDevice");
+                }catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String,Object> ontProps = new HashMap<>();
+                ontProps.put("serialNumber", req.getOntSN());
+                ontProps.put("deviceModel", req.getOntModel());
+                ontProps.put("OperationalState", "Active");
+                if (req.getTemplateNameOnt() != null) ontProps.put("ontTemplate", req.getTemplateNameOnt());
+                ontProps.put("oltPosition", req.getOltName());
+                // initialize counters
+                ontProps.put("port3Counter", "0");
+                ontProps.put("port4Counter", "0");
+                ontProps.put("port5Counter", "0");
+                // management fields
+                if (req.getTemplateNameVlanMgmnt() != null) ontProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
+                if (req.getMgmntVlanId() != null) ontProps.put("mgmtVlan", req.getMgmntVlanId());
+                // link RFS
+                ontProps.put("linkedRFS", rfs.getLocalName());
+                dev.setProperties(ontProps);
+                dev.getProperties().put("containingDevice", olt.getLocalName());
+                dev.addManagingDevices(olt);
+                dev.addUsingService(rfs);
+                logicalDeviceRepo.save(dev);
+                ont = dev;
+            }
 
             // If ONT existed, ensure it is linked and counters initialized properly
             if (!ont.getProperties().containsKey("port3Counter")) {
@@ -393,26 +397,31 @@ public class CreateServiceEVPN implements HttpAction {
 
             // 10) Management VLAN (for non-IPBH)
             if (!"IPBH".equalsIgnoreCase(req.getProductSubtype())) {
-                LogicalInterface mgmtVlan = vlanRepo.findByDiscoveredName(mgmtVlanName)
-                        .orElseGet(() -> {
-                            log.error("------------Trace # 15--------------- Creating mgmt VLAN: " + mgmtVlanName);
-                            LogicalInterface v = new LogicalInterface();
-                            try {
-                                v.setLocalName(Validations.encryptName(mgmtVlanName));
-                                v.setDiscoveredName(mgmtVlanName);
-                                v.setContext("Setar");
-                                v.setKind("VlanInterface");
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            Map<String,Object> vProps = new HashMap<>();
-                            vProps.put("vlanId", req.getMgmntVlanId());
-                            if (req.getTemplateNameVlanMgmnt() != null) vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
-                            vProps.put("OperationalState", "Active");
-                            v.setProperties(vProps);
-                            v.addManagingDevices(ont);
-                            return vlanRepo.save(v,2);
-                        });
+                LogicalInterface mgmtVlan = null;
+                Optional<LogicalInterface> mgmtVlanOpt = vlanRepo.findByDiscoveredName(mgmtVlanName);
+                if(mgmtVlanOpt.isPresent()){
+                    mgmtVlan = mgmtVlanOpt.get();
+                }else{
+                    log.error("------------Trace # 15--------------- Creating mgmt VLAN: " + mgmtVlanName);
+                    LogicalInterface v = new LogicalInterface();
+                    try {
+                        v.setLocalName(Validations.encryptName(mgmtVlanName));
+                        v.setDiscoveredName(mgmtVlanName);
+                        v.setContext("Setar");
+                        v.setKind("VlanInterface");
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    Map<String,Object> vProps = new HashMap<>();
+                    vProps.put("vlanId", req.getMgmntVlanId());
+                    if (req.getTemplateNameVlanMgmnt() != null) vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
+                    vProps.put("OperationalState", "Active");
+                    v.setProperties(vProps);
+                    vlanRepo.save(v);
+                    ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
+                    ont.addContained(v);
+                    logicalDeviceRepo.save(ont);
+                }
                 // no direct association required here beyond existence
             }
 
@@ -430,41 +439,46 @@ public class CreateServiceEVPN implements HttpAction {
             } else {
                 usedStandardEvpn = true;
             }
-
+            LogicalInterface serviceVlan = null;
             if (req.getVlanId() != null) {
-                LogicalInterface serviceVlan = vlanRepo.findByDiscoveredName(vlanName)
-                        .orElseGet(() -> {
-                            log.error("------------Trace # 16--------------- Creating service VLAN: " + vlanName);
-                            LogicalInterface v = new LogicalInterface();
-                            try {
-                                v.setLocalName(Validations.encryptName(vlanName));
-                                v.setDiscoveredName(vlanName);
-                                v.setContext("Setar");
-                                v.setKind("VlanInterface");
-                            }catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            Map<String,Object> vProps = new HashMap<>();
-                            vProps.put("vlanId", req.getVlanId());
-                            vProps.put("OperationalState", "Active");
-                            if (usedStandardEvpn) {
-                                vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
-                                vProps.put("configuredOntSN", req.getOntSN());
-                                vProps.put("configuredPort", req.getOntPort());
-                                vProps.put("vlanTemplate", req.getTemplateNameVlan());
-                                vProps.put("serviceId", req.getServiceId());
-                                vProps.put("vlanCreateTemplate", req.getTemplateNameVlanCreate());
-                                vProps.put("vplsTemplate", req.getTemplateNameVpls());
-                                // associate with ONT
-                                vProps.put("linkedOnt", ont.getLocalName());
-                            } else {
-                                // generic (no ONT association)
-                                vProps.put("vlanTemplate", req.getTemplateNameVlan());
-                            }
-                            v.setProperties(vProps);
-                            ont.addContained(v);
-                            return vlanRepo.save(v,2);
-                        });
+                Optional<LogicalInterface> serviceVlanOpt = vlanRepo.findByDiscoveredName(vlanName);
+                if(serviceVlanOpt.isPresent()){
+                    serviceVlan=serviceVlanOpt.get();
+                }else{
+                    log.error("------------Trace # 16--------------- Creating service VLAN: " + vlanName);
+                    LogicalInterface v = new LogicalInterface();
+                    try {
+                        v.setLocalName(Validations.encryptName(vlanName));
+                        v.setDiscoveredName(vlanName);
+                        v.setContext("Setar");
+                        v.setKind("VlanInterface");
+                    }catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    Map<String,Object> vProps = new HashMap<>();
+                    vProps.put("vlanId", req.getVlanId());
+                    vProps.put("OperationalState", "Active");
+                    if (usedStandardEvpn) {
+                        vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
+                        vProps.put("configuredOntSN", req.getOntSN());
+                        vProps.put("configuredPort", req.getOntPort());
+                        vProps.put("vlanTemplate", req.getTemplateNameVlan());
+                        vProps.put("serviceId", req.getServiceId());
+                        vProps.put("vlanCreateTemplate", req.getTemplateNameVlanCreate());
+                        vProps.put("vplsTemplate", req.getTemplateNameVpls());
+                        // associate with ONT
+                        vProps.put("linkedOnt", ont.getLocalName());
+                    } else {
+                        // generic (no ONT association)
+                        vProps.put("vlanTemplate", req.getTemplateNameVlan());
+                    }
+                    v.setProperties(vProps);
+                    vlanRepo.save(v,2);
+                    ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
+                    ont.addContained(v);
+                    logicalDeviceRepo.save(ont);
+                    serviceVlan = v;
+                }
                 // if created and usedStandardEvpn -> ensure association entry on ONT exists
                 if (usedStandardEvpn) {
                     ont.getProperties().put("lastServiceVlan", serviceVlan.getLocalName());
@@ -556,6 +570,7 @@ public class CreateServiceEVPN implements HttpAction {
 
             // persist updates to ONT and OLT
             logicalDeviceRepo.save(ont);
+            olt = logicalDeviceRepo.findByDiscoveredName(olt.getDiscoveredName()).get();
             logicalDeviceRepo.save(olt);
 
             // 15) Single-tagged VLAN interface creation logic (spec) - simplified: create one matching
@@ -567,7 +582,7 @@ public class CreateServiceEVPN implements HttpAction {
                     if (!vlanRepo.findByDiscoveredName(singleName).isPresent()) {
                         LogicalInterface singleVlan = new LogicalInterface();
                         singleVlan.setLocalName(singleName);
-                        singleVlan.setName(singleName);
+                        singleVlan.setDiscoveredName(singleName);
                         singleVlan.setContext("Setar");
                         Map<String,Object> svProps = new HashMap<>();
                         svProps.put("kind", "VlanInterface");
@@ -582,18 +597,21 @@ public class CreateServiceEVPN implements HttpAction {
                         svProps.put("linkedOnt", ont.getLocalName());
                         singleVlan.setProperties(svProps);
                         vlanRepo.save(singleVlan);
+                        ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
+                        ont.addContained(singleVlan);
+                        logicalDeviceRepo.save(ont);
                         break;
                     }
                 }
             }
-
             // 16) Ensure associations & final persist for RFS/ONT/OLT
             // - add linked RFS on ONT and OLT properties
+            ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
             ont.getProperties().put("linkedRFS", rfs.getLocalName());
-            olt.getProperties().put("linkedRFS", rfs.getLocalName());
-
             // persist again
             logicalDeviceRepo.save(ont);
+            olt = logicalDeviceRepo.findByDiscoveredName(olt.getDiscoveredName()).get();
+            olt.getProperties().put("linkedRFS", rfs.getLocalName());
             logicalDeviceRepo.save(olt);
 
             // final response

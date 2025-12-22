@@ -326,7 +326,6 @@ public class CreateServiceIPTV implements HttpAction {
                 vlanProps.put("vlanId", request.getVlanID());
                 vlanProps.put("OperationalState", "Active");
                 vlanInterface.setProperties(vlanProps);
-
                 vlanRepository.save(vlanInterface, 2);
                 log.error("Created VLAN Interface: {}", mgmtVlanName);
             }
