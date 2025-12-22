@@ -4,6 +4,7 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
@@ -79,6 +80,8 @@ public class QueryFlags implements HttpAction {
         String ontSN = request.getOntSN();
         String ontPort = request.getOntPort();
         String serviceID = request.getServiceId();
+        String subName =
+                subscriber + Constants.UNDER_SCORE + serviceID;
 
         try {
             log.error("------------Test Trace # 2---------------");
@@ -242,8 +245,7 @@ public class QueryFlags implements HttpAction {
                     && serviceID != null
                     && subscriber != null) {
 
-                String subName =
-                        subscriber + Constants.UNDER_SCORE + serviceID;
+
 
                 log.error("Trace: Modify MAC assignment, searching subscription {}", subName);
 
@@ -302,6 +304,53 @@ public class QueryFlags implements HttpAction {
                     subsForCustomer.add(s);
                 }
             }
+            // ================= MULTIPLE MATCHING SUBSCRIBERS LOGIC =================
+            List<Customer> matchingSubscribers = new ArrayList<>();
+
+            for (Customer cust : customerRepository.findAll()) {
+                if (cust.getDiscoveredName() != null
+                        && cust.getDiscoveredName().contains(subscriber)) {
+                    matchingSubscribers.add(cust);
+                }
+            }
+
+            if (matchingSubscribers.size() > 1) {
+
+                log.error("Trace: Multiple matching subscribers found for {}", subscriber);
+
+                // Initial values as per spec
+                flags.put("SERVICE_FLAG", "Exist");
+                flags.put("ACCOUNT_EXIST", "New");
+                flags.put("CBM_ACCOUNT_EXIST", "New");
+
+                boolean cbmFound = false;
+
+                // List subscriptions whose name contains subscriber
+                for (Subscription s : subscriptionRepository.findAll()) {
+
+                    if (s.getDiscoveredName() == null
+                            || !s.getDiscoveredName().contains(subscriber)) {
+                        continue;
+                    }
+
+                    Map<String, Object> sp = safeProps(s.getProperties());
+                    Object link = sp.get("serviceLink");
+
+                    if ("Cable_Modem".equalsIgnoreCase(String.valueOf(link))) {
+                        cbmFound = true;
+                        break;
+                    }
+                }
+
+                if (cbmFound) {
+                    flags.put("CBM_ACCOUNT_EXIST", "Exist");
+                    log.error("Trace: Cable_Modem subscription found → CBM_ACCOUNT_EXIST=Exist");
+                } else {
+                    flags.put("ACCOUNT_EXIST", "Exist");
+                    log.error("Trace: No Cable_Modem subscription → ACCOUNT_EXIST=Exist");
+                }
+            }
+
 
             if (Arrays.asList("Unconfigure", "MoveOut",
                             "ChangeTechnology", "AccountTransfer")
@@ -378,14 +427,14 @@ public class QueryFlags implements HttpAction {
 
                         flags.put("SERVICE_FLAG", "Exist");
 
-                        if (subscriber.equalsIgnoreCase(
+                        if (subName.equalsIgnoreCase(
                                 s.getDiscoveredName())) {
                             flags.put("ACCOUNT_EXIST", "Exist");
                         }
 
                         Object sima =
                                 safeProps(s.getProperties())
-                                        .get("simaCustomerId");
+                                        .get("subscriberIDForCableModem");
                         if (sima != null && !sima.toString().isEmpty()) {
                             flags.put("SIMA_CUST_ID", sima.toString());
                         }
@@ -650,8 +699,8 @@ public class QueryFlags implements HttpAction {
             log.error("------------Test Trace # 11---------------");
             customerRepository.findByDiscoveredName(subscriber).ifPresent(cust -> {
                 Map<String, Object> cp = safeProps(cust.getProperties());
-                flags.put("FIRST_NAME", (String) cp.getOrDefault("subscriberFirstName", ""));
-                flags.put("LAST_NAME", (String) cp.getOrDefault("subscriberLastName", ""));
+                flags.put("FIRST_NAME", (String) cp.getOrDefault("firstName", ""));
+                flags.put("LAST_NAME", (String) cp.getOrDefault("lastName", ""));
                 log.error("Trace: Subscriber info: " + flags.get("FIRST_NAME") + " " + flags.get("LAST_NAME"));
             });
 
@@ -665,6 +714,56 @@ public class QueryFlags implements HttpAction {
                 if (optOntDev.isPresent()) {
                     LogicalDevice ontDev = optOntDev.get();
                     Map<String, Object> ontProps = safeProps(ontDev.getProperties());
+                    // ================= ENTERPRISE: derive ontPort from RFS =================
+                    if (equalsIgnoreCase(productType, "ENTERPRISE")
+                            && serviceID != null
+                            && ontSN != null) {
+
+                        log.error("Trace: ENTERPRISE flow - deriving ontPort from RFS");
+
+                        for (ResourceFacingService rfs : rfsRepository.findAll()) {
+
+                            if (rfs.getDiscoveredName() == null
+                                    || !rfs.getDiscoveredName().contains(serviceID)) {
+                                continue;
+                            }
+
+                            try {
+                                ResourceFacingService rfs1 =
+                                        rfsRepository.findByDiscoveredName(
+                                                rfs.getDiscoveredName()).orElse(null);
+
+                                if (rfs1 == null || rfs1.getContainingCfs() == null) continue;
+
+                                CustomerFacingService cfs =
+                                        cfsRepository.findByDiscoveredName(
+                                                rfs1.getContainingCfs().getDiscoveredName()).orElse(null);
+
+                                if (cfs == null || cfs.getContainingProduct() == null) continue;
+
+                                Product product =
+                                        productRepository.findByDiscoveredName(
+                                                cfs.getContainingProduct().getDiscoveredName()).orElse(null);
+
+                                if (product == null || product.getSubscription() == null) continue;
+
+                                Subscription sub = product.getSubscription();
+                                Map<String, Object> sp = safeProps(sub.getProperties());
+
+                                Object port = sp.get("ontPort");
+                                if (port != null) {
+                                    ontPort = port.toString();
+                                    flags.put("SERVICE_ONT_PORT", ontPort);
+                                    log.error("Trace: ontPort derived from ENTERPRISE RFS = {}", ontPort);
+                                    break;
+                                }
+
+                            } catch (Exception e) {
+                                log.error("Trace: ENTERPRISE ontPort derivation failed", e);
+                            }
+                        }
+                    }
+
                     flags.put("ONT_MODEL", (String) ontProps.getOrDefault("deviceModel", ""));
                     flags.put("SERVICE_SN", (String) ontProps.getOrDefault("serialNo", ""));
                     flags.put("SERVICE_MAC", (String) ontProps.getOrDefault("macAddress", ""));
