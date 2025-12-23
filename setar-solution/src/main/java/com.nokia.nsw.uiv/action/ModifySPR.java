@@ -307,7 +307,7 @@ public class ModifySPR implements HttpAction {
                     Set<Subscription> subscriptions = setarSubscriber1.get().getSubscription();
                     for(Subscription subs: subscriptions){
                         subs = subscriptionRepository.findByDiscoveredName(subs.getDiscoveredName()).get();
-                        String serviceSubType = subs.getProperties().get("serviceSubType").toString();
+                        String serviceSubType = subs.getProperties().get("serviceSubType")!=null?subs.getProperties().get("serviceSubType").toString():"";
                         if((serviceSubType.equalsIgnoreCase("Bridged") && request.getOntModel().contains("XS-2426G-B"))){
 
                             LogicalDevice oltDevice = ontDevice.get().getManagingDevices().stream().findFirst().get();
@@ -341,9 +341,13 @@ public class ModifySPR implements HttpAction {
                         }
                         rfsOld.getProperties().put("transactionType",request.getModifyType());
                         if (ontExist != "fail") {
-                            Set<LogicalResource> devices = ontDevice.get().getContained();
-                            if (!devices.isEmpty()) {
-                                for(LogicalResource d:devices) {
+                            ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontDevice.get().getDiscoveredName());
+                            if(!ontDevice.isPresent()){
+                                ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontNameNew);
+                            }
+                            Set<LogicalResource> tempInterfaces = ontDevice.get().getContained();
+                            if (!tempInterfaces.isEmpty()) {
+                                for(LogicalResource d:tempInterfaces) {
                                     LogicalInterface temp = (LogicalInterface)d;
                                     temp = logicalInterfaceRepository.findByDiscoveredName(temp.getDiscoveredName()).get();
                                     String vlanName = temp.getDiscoveredName();
@@ -367,8 +371,8 @@ public class ModifySPR implements HttpAction {
 
                                 }
                             }
-                            LogicalDevice tempOnt = logicalCustomDeviceRepository.findByDiscoveredName(ontDevice.get().getDiscoveredName()).get();
-                            if (tempOnt.getDiscoveredName().contains(request.getOntSN())) {
+                            if (ontDevice.get().getDiscoveredName().contains(request.getOntSN())) {
+                                LogicalDevice tempOnt = logicalCustomDeviceRepository.findByDiscoveredName(ontDevice.get().getDiscoveredName()).get();
                                 log.error("++++++  ontModel  ++++++" +request.getOntModel());
                                 tempOnt.setDiscoveredName(ontNameNew);
                                 tempOnt.getProperties().put("serialNo",request.getModifyParam1());
@@ -389,21 +393,27 @@ public class ModifySPR implements HttpAction {
 
                     if(cpeDeviceOldOpt.isPresent() && cpeDeviceNewOpt.isPresent()){
                         cpeDeviceNew = cpeDeviceNewOpt.get();
-                        String voipPort1 = (cpeDeviceOld.getProperties().get("voipPort1")!=null)?cpeDeviceOld.getProperties().get("voipPort1").toString():null;
-                        String voipPort2 = (cpeDeviceOld.getProperties().get("voipPort2")!=null)?cpeDeviceOld.getProperties().get("voipPort1").toString():null;
-                        cpeDeviceNew.getProperties().put("AdministrativeState","Allocated");
-                        cpeDeviceNew.getProperties().put("description","Internet");
-                        cpeDeviceNew.getProperties().put("modelSubType","HFC");
-                        cpeDeviceNew.getProperties().put("voipPort1",voipPort1);
-                        cpeDeviceNew.getProperties().put("voipPort2",voipPort2);
+                        cpeDeviceOld = cpeDeviceOldOpt.get();
+                        String voipPort1 = (cpeDeviceOld.getProperties().get("voipPort1")!=null)?cpeDeviceOld.getProperties().get("voipPort1").toString():"";
+                        String voipPort2 = (cpeDeviceOld.getProperties().get("voipPort2")!=null)?cpeDeviceOld.getProperties().get("voipPort1").toString():"";
+                        Map<String,Object> cpeNewProps = cpeDeviceNew.getProperties();
+                        cpeNewProps.put("AdministrativeState","Allocated");
+                        cpeNewProps.put("description","Internet");
+                        cpeNewProps.put("modelSubType","HFC");
+                        cpeNewProps.put("voipPort1",voipPort1);
+                        cpeNewProps.put("voipPort2",voipPort2);
+                        cpeDeviceNew.setProperties(cpeNewProps);
                         logicalCustomDeviceRepository.save(cpeDeviceNew,2);
 
                         cpeDeviceOld = logicalCustomDeviceRepository.findByDiscoveredName(cpeDeviceOldOpt.get().getDiscoveredName()).get();
-                        cpeDeviceOld.getProperties().put("AdministrativeState","Available");
-                        cpeDeviceOld.getProperties().put("description","");
-                        cpeDeviceOld.getProperties().put("modelSubType","");
-                        cpeDeviceOld.getProperties().put("voipPort1","Available");
-                        cpeDeviceOld.getProperties().put("voipPort2","Available");
+                        Map<String,Object> cpeOldProps = cpeDeviceOld.getProperties();
+                        cpeOldProps.put("AdministrativeState","Available");
+                        cpeOldProps.put("description","");
+                        cpeOldProps.put("modelSubType","");
+                        cpeOldProps.put("voipPort1","Available");
+                        cpeOldProps.put("voipPort2","Available");
+                        cpeDeviceOld.setProperties(cpeOldProps);
+                        logicalCustomDeviceRepository.save(cpeDeviceOld,2);
                     }
                 }catch (Exception e){
                     log.error("Exception while retrieving cpeDevice: "+e.getMessage());
