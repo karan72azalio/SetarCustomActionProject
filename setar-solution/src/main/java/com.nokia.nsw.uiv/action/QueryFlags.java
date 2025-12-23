@@ -147,64 +147,106 @@ public class QueryFlags implements HttpAction {
             flags.put("SERVICE_LINK", serviceLink);
 
             log.error("------------Test Trace # 5---------------");
-            boolean subtypeMatches = equalsAnyIgnoreCase(productSubType, "Broadband", "Voice", "Cloudstarter", "Bridged");
-            if ((subtypeMatches || equalsIgnoreCase(productType, "ENTERPRISE"))
-                    && !"Configure".equalsIgnoreCase(actionType)) {
-                if (ontSN == null || ontSN.trim().isEmpty() || "NA".equalsIgnoreCase(ontSN)) {
-                    try {
-                        String rfsName = "RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
-                        Iterable<ResourceFacingService> allRfs = rfsRepository.findAll();
+            // =======================================================
+// Discover RFS for Broadband / Voice / Enterprise / Bridged
+// =======================================================
+            List<ResourceFacingService> rfsRecords = new ArrayList<>();
 
-                        for (ResourceFacingService rfs : allRfs) {
-                            if (rfs.getDiscoveredName() != null &&
-                                    rfs.getDiscoveredName().equalsIgnoreCase(rfsName)) {
-                                ResourceFacingService rfs1=rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
-                                CustomerFacingService cfs=rfs1.getContainingCfs();
-                                cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
-                                Product product = cfs.getContainingProduct();
-                                product=productRepository.findByDiscoveredName(product.getDiscoveredName()).get();
-                                Subscription subscription=product.getSubscription();
+            boolean eligibleForRfsDiscovery =
+                    equalsAnyIgnoreCase(productSubType,
+                            "Broadband", "Voice", "Cloudstarter", "Bridged")
+                            || equalsIgnoreCase(productType, "ENTERPRISE");
 
-                                if (subscription!= null) {
+            if (eligibleForRfsDiscovery
+                    && !"Configure".equalsIgnoreCase(actionType)
+                    && (ontSN == null || ontSN.trim().isEmpty() || "NA".equalsIgnoreCase(ontSN))
+                    && serviceID != null && subscriber != null) {
+
+                log.error("Trace: RFS discovery started for subscriber={} serviceID={}",
+                        subscriber, serviceID);
+
+                String expectedRfsName =
+                        "RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE + serviceID;
 
 
-                                    String subServiceId = (String) safeProps(subscription.getProperties())
-                                            .getOrDefault("serviceID", "");
 
-                                    if (serviceID != null && serviceID.equals(subServiceId)) {
-                                        Set<Resource> used = rfs.getUsedResource();
-                                        if (used != null) {
-                                            for (Resource res : used) {
-                                                if (res.getDiscoveredName() != null &&
-                                                        res.getDiscoveredName().contains("ONT")) {
-                                                    Object serial = safeProps(res.getProperties())
-                                                            .get("serialNo");
-                                                    if (serial != null) {
-                                                        ontSN = serial.toString();
-                                                        flags.put("ONT",ontSN);
-                                                        flags.put("SERVICE_SN", ontSN);
-                                                        flags.put("SERVICE_LINK", "ONT");
-                                                    }
-                                                } else if (res.getDiscoveredName() != null &&
-                                                        res.getDiscoveredName().contains("CBM")) {
-                                                    flags.put("SERVICE_LINK", "Cable_Modem");
-                                                }
-                                            }
-                                        }
-
-                                        String bridgeService =
-                                                deriveBridgeServiceForSubscriberRfs(allRfs, ontSN, subscriber);
-                                        flags.put("BRIDGE_SERVICE",
-                                                bridgeService == null ? "NA" : bridgeService);
-                                    }
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        log.error("RFS discovery best-effort failed: {}", e.getMessage());
+                // ---------------------------------------------------
+                // Step 1: Collect ONLY matching RFS records
+                // ---------------------------------------------------
+                for (ResourceFacingService rfs : rfsRepository.findAll()) {
+                    if (rfs.getDiscoveredName() != null
+                            && rfs.getDiscoveredName().equalsIgnoreCase(expectedRfsName)) {
+                        rfsRecords.add(rfs);
                     }
                 }
+
+                log.error("Trace: Matching RFS count = {}", rfsRecords.size());
+
+                // ---------------------------------------------------
+                // Step 2: Scan resources in each RFS
+                // ---------------------------------------------------
+                for (ResourceFacingService rfs : rfsRecords) {
+
+                    CustomerFacingService cfs = rfs.getContainingCfs();
+                    cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                    if (cfs == null || cfs.getContainingProduct() == null)
+                        continue;
+
+                    Product product = cfs.getContainingProduct();
+                    product=productRepository.findByDiscoveredName(product.getDiscoveredName()).get();
+                    Subscription sub = product.getSubscription();
+                    if (sub == null) continue;
+
+                    String subServiceId =
+                            (String) safeProps(sub.getProperties()).get("serviceID");
+                    if (!serviceID.equals(subServiceId)) continue;
+
+                    Set<Resource> usedResources = rfs.getUsedResource();
+                    if (usedResources == null) continue;
+
+                    for (Resource res : usedResources) {
+
+                        if (res == null) continue;
+
+                        String resName = res.getDiscoveredName();
+                        Map<String, Object> resProps = safeProps(res.getProperties());
+
+                        // ---------------- ONT RESOURCE ----------------
+                        if (resName != null && resName.startsWith("ONT")) {
+
+                            Object serialObj = resProps.get("serialNo");
+                            if (serialObj != null) {
+                                ontSN = serialObj.toString();
+
+                                flags.put("SERVICE_LINK", "ONT");
+                                flags.put("SERVICE_SN", ontSN);
+                                flags.put("ONT", ontSN);
+
+                                log.error("Trace: ONT discovered from RFS, ontSN={}", ontSN);
+                            }
+                        }
+
+                        // ---------------- CBM RESOURCE ----------------
+                        else if (resName != null && resName.startsWith("CBM")) {
+
+                            flags.put("SERVICE_LINK", "Cable_Modem");
+                            log.error("Trace: CBM resource discovered from RFS");
+                        }
+                    }
+                }
+
+                // ---------------------------------------------------
+                // Step 3: Derive BridgeServiceId (LAST MATCH WINS)
+                // ---------------------------------------------------
+                String bridgeService =
+                        deriveBridgeServiceForSubscriberRfs(rfsRecords, ontSN);
+
+                flags.put("BRIDGE_SERVICE",
+                        bridgeService == null ? "NA" : bridgeService);
+
+                log.error("Trace: BridgeService derived = {}", bridgeService);
             }
+
 
             log.error("------------Test Trace # 6---------------");
             if (equalsIgnoreCase(productType, "VOIP") && equalsIgnoreCase(actionType, "Configure") && serviceID != null) {
@@ -314,42 +356,7 @@ public class QueryFlags implements HttpAction {
                 }
             }
 
-            if (matchingSubscribers.size() > 1) {
 
-                log.error("Trace: Multiple matching subscribers found for {}", subscriber);
-
-                // Initial values as per spec
-                flags.put("SERVICE_FLAG", "Exist");
-                flags.put("ACCOUNT_EXIST", "New");
-                flags.put("CBM_ACCOUNT_EXIST", "New");
-
-                boolean cbmFound = false;
-
-                // List subscriptions whose name contains subscriber
-                for (Subscription s : subscriptionRepository.findAll()) {
-
-                    if (s.getDiscoveredName() == null
-                            || !s.getDiscoveredName().contains(subscriber)) {
-                        continue;
-                    }
-
-                    Map<String, Object> sp = safeProps(s.getProperties());
-                    Object link = sp.get("serviceLink");
-
-                    if ("Cable_Modem".equalsIgnoreCase(String.valueOf(link))) {
-                        cbmFound = true;
-                        break;
-                    }
-                }
-
-                if (cbmFound) {
-                    flags.put("CBM_ACCOUNT_EXIST", "Exist");
-                    log.error("Trace: Cable_Modem subscription found → CBM_ACCOUNT_EXIST=Exist");
-                } else {
-                    flags.put("ACCOUNT_EXIST", "Exist");
-                    log.error("Trace: No Cable_Modem subscription → ACCOUNT_EXIST=Exist");
-                }
-            }
 
 
             if (Arrays.asList("Unconfigure", "MoveOut",
@@ -462,6 +469,42 @@ public class QueryFlags implements HttpAction {
                 flags.put("CBM_ACCOUNT_EXIST",
                         anyCbm ? "Exist" : "New");
             }
+            if (matchingSubscribers.size() > 1) {
+
+                log.error("Trace: Multiple matching subscribers found for {}", subscriber);
+
+                // Initial values as per spec
+                flags.put("SERVICE_FLAG", "Exist");
+                flags.put("ACCOUNT_EXIST", "New");
+                flags.put("CBM_ACCOUNT_EXIST", "New");
+
+                boolean cbmFound = false;
+
+                // List subscriptions whose name contains subscriber
+                for (Subscription s : subscriptionRepository.findAll()) {
+
+                    if (s.getDiscoveredName() == null
+                            || !s.getDiscoveredName().contains(subscriber)) {
+                        continue;
+                    }
+
+                    Map<String, Object> sp = safeProps(s.getProperties());
+                    Object link = sp.get("serviceLink");
+
+                    if ("Cable_Modem".equalsIgnoreCase(String.valueOf(link))) {
+                        cbmFound = true;
+                        break;
+                    }
+                }
+
+                if (cbmFound) {
+                    flags.put("CBM_ACCOUNT_EXIST", "Exist");
+                    log.error("Trace: Cable_Modem subscription found → CBM_ACCOUNT_EXIST=Exist");
+                } else {
+                    flags.put("ACCOUNT_EXIST", "Exist");
+                    log.error("Trace: No Cable_Modem subscription → ACCOUNT_EXIST=Exist");
+                }
+            }
 
 
             log.error("------------Test Trace # 8---------------");
@@ -512,20 +555,31 @@ public class QueryFlags implements HttpAction {
                             && equalsIgnoreCase(productSubType, "Bridged"));
 
             if (eligible) {
+                // 🔧 FIX: Rebuild RFS records for ALCL-based search
+                List<ResourceFacingService> localRfsRecords = new ArrayList<>();
+
+                if (ontSN != null && ontSN.contains("ALCL")) {
+                    for (ResourceFacingService rfs : rfsRepository.findAll()) {
+                        if (rfs.getDiscoveredName() != null
+                                && rfs.getDiscoveredName().contains(ontSN)) {
+                            localRfsRecords.add(rfs);
+                        }
+                    }
+                }
 
                 boolean ontBasedSearch =
                         ontSN != null && ontSN.contains("ALCL");
 
                 // 🔁 Re-derive Bridge Service ID on these records
                 String bridgeService = "NA";
-                if (ontBasedSearch) {
+                if (ontBasedSearch && !localRfsRecords.isEmpty()) {
                     bridgeService =
                             deriveBridgeServiceForSubscriberRfs(
-                                    rfsRepository.findAll(),
-                                    ontSN,
-                                    subscriber
+                                    localRfsRecords,
+                                    ontSN
                             );
                 }
+
 
                 for (Subscription s : subscriptionRepository.findAll()) {
 
@@ -562,9 +616,7 @@ public class QueryFlags implements HttpAction {
                                 (String) sp.getOrDefault("serviceSubType", ""))
                                 && name.contains(ontSN)) {
 
-                            String qos =
-                                    (String) sp.getOrDefault(
-                                            "evpnQosSessionProfile", "");
+                            String qos =(String) sp.getOrDefault("QosSessionProfile", "");
 
                             if (qos != null && !qos.isEmpty()) {
                                 flags.put("QOS_PROFILE_BRIDGE", qos);
@@ -938,44 +990,64 @@ public class QueryFlags implements HttpAction {
     }
 
     private String deriveBridgeServiceForSubscriberRfs(
-            Iterable<ResourceFacingService> allRfs,
-            String ontSN,
-            String subscriber) {
+            Iterable<ResourceFacingService> rfsRecords,
+            String ontSN) {
 
         String bridgeService = "NA";
 
-        if (allRfs == null || ontSN == null) {
+        if (rfsRecords == null || ontSN == null || ontSN.isEmpty()) {
             return bridgeService;
         }
 
-        for (ResourceFacingService rfs : allRfs) {
+        for (ResourceFacingService rfs : rfsRecords) {
             try {
-                ResourceFacingService rfs1=rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
-                CustomerFacingService cfs=rfs1.getContainingCfs();
-                cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
-                Product product = cfs.getContainingProduct();
-                product=productRepository.findByDiscoveredName(product.getDiscoveredName()).get();
-                Subscription sub=product.getSubscription();
+                if (rfs.getContainingCfs() == null) continue;
 
-                if (sub == null || sub.getDiscoveredName() == null) {
-                    continue;
-                }
+                CustomerFacingService cfs =
+                        cfsRepository
+                                .findByDiscoveredName(
+                                        rfs.getContainingCfs().getDiscoveredName())
+                                .orElse(null);
+
+                if (cfs == null || cfs.getContainingProduct() == null) continue;
+
+                Product product =
+                        productRepository
+                                .findByDiscoveredName(
+                                        cfs.getContainingProduct().getDiscoveredName())
+                                .orElse(null);
+
+                if (product == null || product.getSubscription() == null) continue;
+
+                Subscription sub = product.getSubscription();
+                if (sub.getDiscoveredName() == null) continue;
 
                 Map<String, Object> sp = safeProps(sub.getProperties());
 
+                // -------------------------------------------------
+                // BridgeServiceId logic (SPEC COMPLIANT)
+                // -------------------------------------------------
                 if ("Bridged".equalsIgnoreCase(
-                        (String) sp.getOrDefault("serviceSubType", "")) &&
-                        sub.getDiscoveredName().contains(ontSN)) {
+                        (String) sp.getOrDefault("serviceSubType", ""))
+                        && sub.getDiscoveredName().contains(ontSN)) {
 
-                    // 🔥 DO NOT RETURN – last match wins
                     bridgeService =
                             (String) sp.getOrDefault("serviceID", "NA");
+
+                    log.error("Trace: BridgeService candidate found = {} (last wins)",
+                            bridgeService);
                 }
-            } catch (Exception ignore) {
+
+            } catch (Exception e) {
+                log.error("Trace: BridgeService derivation failed for RFS={}",
+                        rfs.getDiscoveredName(), e);
             }
         }
+
         return bridgeService;
     }
+
+
 
     private Map<String, String> executeStep6Flags(
             String ontSN,
