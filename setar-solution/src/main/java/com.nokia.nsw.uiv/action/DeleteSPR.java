@@ -512,7 +512,7 @@ public class DeleteSPR implements HttpAction {
 
     private int countSubscriptionsByCustomer(Customer customer) {
         try {
-            Collection<Subscription> subs = customer.getSubscription();
+            Collection<Subscription> subs = (Collection<Subscription>) customer.getSubscription();
             if (subs != null) return subs.size();
         } catch (Exception ignore) {}
         return 1;

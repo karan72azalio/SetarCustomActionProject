@@ -6,21 +6,26 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.repository.*;
+import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
+import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
+import com.nokia.nsw.uiv.repository.ProductCustomRepository;
+import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.CreateServiceCBMRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -39,10 +44,8 @@ public class CreateServiceCBM implements HttpAction {
     private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
+    private ServiceCustomRepository serviceRepository;
 
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository cbmDeviceRepository;
@@ -76,7 +79,7 @@ public class CreateServiceCBM implements HttpAction {
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         }catch (BadRequestException bre) {
             return new CreateServiceCBMResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                    java.time.Instant.now().toString(), "","");
+                    Instant.now().toString(), "","");
         }
 
         AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
@@ -211,10 +214,15 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("productType",request.getProductType());
                     p.setProperties(prop);
                     p.setCustomer(subscriber);
-                    p.setSubscription(subscription);
                     productRepository.save(p, 2);
                     return p;
                 });
+
+        product.setCustomer(subscriber);
+        productRepository.save(product, 2);
+
+        subscription.addService(product);
+        subscriptionRepository.save(subscription, 2);
         if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
             log.error("creatServiceCBM service already exist");
             return new CreateServiceCBMResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,"CBM"+ request.getCbmSN());
@@ -222,9 +230,9 @@ public class CreateServiceCBM implements HttpAction {
 
         // --- 5. CFS Logic ---
         String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;
-        CustomerFacingService cfs = cfsRepository.findByDiscoveredName(cfsName)
+        Service cfs = serviceRepository.findByDiscoveredName(cfsName)
                 .orElseGet(() -> {
-                    CustomerFacingService c = new CustomerFacingService();
+                    Service c = new Service();
                     try {
                         c.setLocalName(Validations.encryptName(cfsName));
                         c.setKind(Constants.SETAR_KIND_SETAR_CFS);
@@ -243,8 +251,8 @@ public class CreateServiceCBM implements HttpAction {
                     }
                     prop.put("startDate",new Date());
                     c.setProperties(prop);
-                    c.setContainingProduct(product);
-                    cfsRepository.save(c, 2);
+                    c.addUsingService(product);
+                    serviceRepository.save(c, 2);
                     return c;
                 });
         // --- 7. CBM Device Logic ---
@@ -254,9 +262,9 @@ public class CreateServiceCBM implements HttpAction {
         }
         // --- 6. RFS Logic ---
         String rfsName = "RFS" +Constants.UNDER_SCORE + subscriptionName;
-        ResourceFacingService rfs = rfsRepository.findByDiscoveredName(rfsName)
+        Service rfs = serviceRepository.findByDiscoveredName(rfsName)
                 .orElseGet(() -> {
-                    ResourceFacingService r = new ResourceFacingService();
+                    Service r = new Service();
                     try {
                         r.setLocalName(Validations.encryptName(rfsName));
                         r.setKind(Constants.SETAR_KIND_SETAR_RFS);
@@ -271,8 +279,8 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("serviceType",request.getProductType());
                     prop.put("CFSReference",cfs.getDiscoveredName());
                     r.setProperties(prop);
-                    r.setContainingCfs(cfs);
-                    rfsRepository.save(r, 2);
+                    r.addUsedService(cfs);
+                    serviceRepository.save(r, 2);
                     return r;
                 });
 
@@ -296,10 +304,11 @@ public class CreateServiceCBM implements HttpAction {
                     deviceProps.put("deviceModel", request.getCbmModel());
                     deviceProps.put("OperationalState", "Active");
                     d.setProperties(deviceProps);
-                    d.addUsingService(rfs);
+                    d.addContainedservice(rfs);
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });
+
         log.error(Constants.ACTION_COMPLETED);
         // --- 8. Final Response ---
         CreateServiceCBMResponse response = new CreateServiceCBMResponse();

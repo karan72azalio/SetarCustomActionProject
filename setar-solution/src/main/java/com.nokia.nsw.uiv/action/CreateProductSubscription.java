@@ -7,19 +7,15 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
-import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
+import com.nokia.nsw.uiv.model.service.Product;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
 import com.nokia.nsw.uiv.repository.ProductCustomRepository;
 import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.CreateProductSubscriptionRequest;
 import com.nokia.nsw.uiv.response.CreateProductSubscriptionResponse;
-import com.nokia.nsw.uiv.response.CreateServiceEVPNResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -64,7 +60,7 @@ public class CreateProductSubscription implements HttpAction {
         AtomicBoolean isProductExist = new AtomicBoolean(true);
         try {
             log.error("Mandatory parameter validation started...");
-            try{
+            try {
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getProductType(), "productType");
                 Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
@@ -72,9 +68,9 @@ public class CreateProductSubscription implements HttpAction {
                 Validations.validateMandatoryParams(request.getProductVariant(), "productVariant");
                 Validations.validateMandatoryParams(request.getProduct(), "product");
                 Validations.validateMandatoryParams(request.getReferenceID(), "referenceID");
-            }catch (BadRequestException bre) {
+            } catch (BadRequestException bre) {
                 return new CreateProductSubscriptionResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        java.time.Instant.now().toString(), "","");
+                        Instant.now().toString(), "", "");
             }
 
             log.error("Mandatory parameter validation completed");
@@ -107,7 +103,7 @@ public class CreateProductSubscription implements HttpAction {
             }
 
             // ================== Subscription ==================
-            String subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceID();
+            String subscriptionName = subscriberName + Constants.UNDER_SCORE + request.getServiceID();
             if (subscriptionName.length() > 100) {
                 throw new BadRequestException("Subscription name too long");
             }
@@ -135,7 +131,7 @@ public class CreateProductSubscription implements HttpAction {
             }
 
             // ================== Product ==================
-            String productName = request.getServiceID() + Constants.UNDER_SCORE  + request.getComponentName();
+            String productName = request.getServiceID() + Constants.UNDER_SCORE + request.getComponentName();
             if (productName.length() > 100) {
                 throw new BadRequestException("Product name too long");
             }
@@ -161,34 +157,41 @@ public class CreateProductSubscription implements HttpAction {
                 props.put("catalogItemVersion", request.getProductVariant());
                 product.setProperties(props);
                 product.setCustomer(subscriber);
-                product.setSubscription(subscription);
                 productRepository.save(product, 2);
                 log.error("Created new product: {}", productName);
             }
-            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+            try {
+                subscription.addService(product);
+                subscriptionRepository.save(subscription,2);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+
+            if (isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()) {
                 log.error("createServiceEVPN service already exist");
-                return new CreateProductSubscriptionResponse("409","Service already exist/Duplicate entry", Instant.now().toString(),subscriptionName,productName);
+                return new CreateProductSubscriptionResponse("409", "Service already exist/Duplicate entry", Instant.now().toString(), subscriptionName, productName);
             }
 
             // ================== Success Response ==================
             return new CreateProductSubscriptionResponse(
                     "201",
                     "ProductSubscription created",
-                    java.time.Instant.now().toString(),
+                    Instant.now().toString(),
                     subscriptionName,
                     productName
             );
 
         } catch (BadRequestException bre) {
             String msg = "UIV action CreateProductSubscription execution failed - " + bre.getMessage();
-            return new CreateProductSubscriptionResponse("400", msg, java.time.Instant.now().toString(), "", "");
+            return new CreateProductSubscriptionResponse("400", msg, Instant.now().toString(), "", "");
         } catch (AccessForbiddenException | ModificationNotAllowedException ex) {
             String msg = "UIV action CreateProductSubscription execution failed - " + ex.getMessage();
-            return new CreateProductSubscriptionResponse("403", msg, java.time.Instant.now().toString(), "", "");
+            return new CreateProductSubscriptionResponse("403", msg, Instant.now().toString(), "", "");
         } catch (Exception ex) {
             String msg = "UIV action CreateProductSubscription execution failed - Internal server error occurred";
             return new CreateProductSubscriptionResponse("500", msg + " - " + ex.getMessage(),
-                    java.time.Instant.now().toString(), "", "");
+                    Instant.now().toString(), "", "");
         }
     }
 }

@@ -1,10 +1,5 @@
 package com.nokia.nsw.uiv.action;
 
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
 import com.nokia.nsw.uiv.exception.AccessForbiddenException;
 import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
@@ -12,16 +7,12 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponent;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalComponentRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.repository.LogicalComponentCustomRepository;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.repository.LogicalInterfaceCustomRepository;
 import com.nokia.nsw.uiv.request.ImportCPEDeviceRequest;
-import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.response.ImportCPEDeviceResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -29,6 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RestController
@@ -68,7 +64,7 @@ public class ImportCPEDevice implements HttpAction {
                 Validations.validateMandatoryParams(request.getCpeGwMacAddress(), "cpeGwMacAddress");
             } catch (BadRequestException bre) {
                 return new ImportCPEDeviceResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        java.time.Instant.now().toString());
+                        Instant.now().toString());
             }
 
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
@@ -228,7 +224,7 @@ public class ImportCPEDevice implements HttpAction {
                         vlanProps.put("vlanStatus", "Available");
                         vlan.setProperties(vlanProps);
                         logicalInterfaceRepository.save(vlan, 2);
-                        ethPort.addContained(vlan);
+                        ethPort.addUsedResource(vlan);
                     }
                 }
                 try {
@@ -265,6 +261,6 @@ public class ImportCPEDevice implements HttpAction {
     }
 
     private String getCurrentTimestamp() {
-        return java.time.Instant.now().toString();
+        return Instant.now().toString();
     }
 }
