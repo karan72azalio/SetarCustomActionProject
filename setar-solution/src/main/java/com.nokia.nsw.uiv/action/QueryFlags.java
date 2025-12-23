@@ -707,42 +707,44 @@ public class QueryFlags implements HttpAction {
                 if (optFound.isPresent()) {
                     Subscription found = optFound.get();
                     Map<String, Object> p = safeProps(found.getProperties());
-                    Object link = p.get("serviceLink");
                     Object sSN = p.get("serviceSN");
-                    Object sMAC = p.get("macAddress");
-                    Object qos = p.get("veipQosSessionProfile");
-                    Object kenan = p.get("kenanSubscriberId");
+                    if (sSN != null) {
 
-                    if (link != null) flags.put("SERVICE_LINK", link.toString());
-                    if (sSN != null) flags.put("SERVICE_SN", sSN.toString());
-                    if (sMAC != null) flags.put("SERVICE_MAC", sMAC.toString());
-                    if (qos != null) flags.put("QOS_PROFILE", qos.toString());
-                    if (kenan != null) flags.put("KENAN_UIDNO", kenan.toString());
+                        Object link = p.get("serviceLink");
+                        Object sMAC = p.get("macAddress");
+                        Object qos = p.get("veipQosSessionProfile");
+                        Object kenan = p.get("kenanSubscriberId");
+                        if (link != null) flags.put("SERVICE_LINK", link.toString());
+                        if (sSN != null) flags.put("SERVICE_SN", sSN.toString());
+                        if (sMAC != null) flags.put("SERVICE_MAC", sMAC.toString());
+                        if (qos != null) flags.put("QOS_PROFILE", qos.toString());
+                        if (kenan != null) flags.put("KENAN_UIDNO", kenan.toString());
 
-                    if ("Cable_Modem".equalsIgnoreCase(String.valueOf(link))) {
-                        String cbmName = "CBM" + Constants.UNDER_SCORE +(sMAC == null ? "" : sMAC.toString());
-                        Optional<LogicalDevice> optCbm = deviceRepository.findByDiscoveredName(cbmName);
-                        if (optCbm.isPresent()) {
-                            LogicalDevice cbm = optCbm.get();
-                            Map<String, Object> cbmProps = safeProps(cbm.getProperties());
-                            flags.put("CBM_MAC", (String) cbmProps.getOrDefault("macAddress", ""));
-                            String n1 = (String) cbmProps.getOrDefault("voipPort1", "Available");
-                            String n2 = (String) cbmProps.getOrDefault("voipPort2", "Available");
-                            flags.put("SERVICE_VOIP_NUMBER1", n1 == null ? "" : n1);
-                            flags.put("SERVICE_VOIP_NUMBER2", n2 == null ? "" : n2);
-                            flags.put("ONT_MODEL", (String) cbmProps.getOrDefault("deviceModel", ""));
-                            if (!"Available".equalsIgnoreCase(n1) || !"Available".equalsIgnoreCase(n2)) {
-                                flags.put("SERVICE_TEMPLATE_VOIP", "Exist");
+                        if ("Cable_Modem".equalsIgnoreCase(String.valueOf(link)) ) {
+                            String cbmName = "CBM" + Constants.UNDER_SCORE +(sMAC == null ? "" : sMAC.toString());
+                            Optional<LogicalDevice> optCbm = deviceRepository.findByDiscoveredName(cbmName);
+                            if (optCbm.isPresent()) {
+                                LogicalDevice cbm = optCbm.get();
+                                Map<String, Object> cbmProps = safeProps(cbm.getProperties());
+                                flags.put("CBM_MAC", (String) cbmProps.getOrDefault("macAddress", ""));
+                                String n1 = (String) cbmProps.getOrDefault("voipPort1", "Available");
+                                String n2 = (String) cbmProps.getOrDefault("voipPort2", "Available");
+                                flags.put("SERVICE_VOIP_NUMBER1", n1 == null ? "" : n1);
+                                flags.put("SERVICE_VOIP_NUMBER2", n2 == null ? "" : n2);
+                                flags.put("ONT_MODEL", (String) cbmProps.getOrDefault("deviceModel", ""));
+                                if (!"Available".equalsIgnoreCase(n1) || !"Available".equalsIgnoreCase(n2)) {
+                                    flags.put("SERVICE_TEMPLATE_VOIP", "Exist");
+                                } else {
+                                    flags.put("SERVICE_TEMPLATE_VOIP", "New");
+                                }
+                                log.error("Trace: CBM inspected: mac=" + flags.get("CBM_MAC") + " voip1=" + flags.get("SERVICE_VOIP_NUMBER1"));
                             } else {
-                                flags.put("SERVICE_TEMPLATE_VOIP", "New");
+                                String alt = "CBM" +(serviceID == null ? "" : serviceID);
+                                deviceRepository.findByDiscoveredName(alt).ifPresent(dev -> {
+                                    Map<String, Object> dp = safeProps(dev.getProperties());
+                                    flags.put("ONT_MODEL", (String) dp.getOrDefault("deviceModel", ""));
+                                });
                             }
-                            log.error("Trace: CBM inspected: mac=" + flags.get("CBM_MAC") + " voip1=" + flags.get("SERVICE_VOIP_NUMBER1"));
-                        } else {
-                            String alt = "CBM" +(serviceID == null ? "" : serviceID);
-                            deviceRepository.findByDiscoveredName(alt).ifPresent(dev -> {
-                                Map<String, Object> dp = safeProps(dev.getProperties());
-                                flags.put("ONT_MODEL", (String) dp.getOrDefault("deviceModel", ""));
-                            });
                         }
                     }
                 }
