@@ -80,4 +80,5 @@ public class Constants {
     public static final String UNDER_SCORE = "_" ;
     public static final String COMMA = ",";
     public static final String SETAR = "Setar";
+    public static final String CFS = "CFS";
 }

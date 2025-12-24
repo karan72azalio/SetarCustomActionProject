@@ -6,15 +6,11 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
@@ -51,10 +47,7 @@ public class ModifyIPTV implements HttpAction {
     private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository stbApCmDeviceRepository;
@@ -100,8 +93,8 @@ public class ModifyIPTV implements HttpAction {
             Optional<Customer> optSubscriber = customerRepository.findByDiscoveredName(subscriberName);
             Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
             Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
-            Optional<CustomerFacingService> optCFS = cfsRepository.findByDiscoveredName(cfsName);
-            Optional<ResourceFacingService> optRFS = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<Service> optCFS = serviceCustomRepository.findByDiscoveredName(cfsName);
+            Optional<Service> optRFS = serviceCustomRepository.findByDiscoveredName(rfsName);
 
             if (optSubscriber.isEmpty() || optSubscription.isEmpty() || optProduct.isEmpty() || optCFS.isEmpty() || optRFS.isEmpty()) {
                 return new ModifyIPTVResponse(
@@ -115,7 +108,7 @@ public class ModifyIPTV implements HttpAction {
 
             Customer subscriber = optSubscriber.get();
             Subscription subscription = optSubscription.get();
-            ResourceFacingService rfs = optRFS.get();
+            Service rfs = optRFS.get();
 
             // -------------------- Update transaction details --------------------
             if (request.getFxOrderID() != null && !request.getFxOrderID().isEmpty()) {
@@ -124,7 +117,7 @@ public class ModifyIPTV implements HttpAction {
                 rfsProps.put("transactionId", request.getFxOrderID());
                 rfsProps.put("transactionType", request.getModifyType());
                 rfs.setProperties(rfsProps);
-                rfsRepository.save(rfs, 2);
+                serviceCustomRepository.save(rfs, 2);
             }
 
             // -------------------- Modify based on type --------------------

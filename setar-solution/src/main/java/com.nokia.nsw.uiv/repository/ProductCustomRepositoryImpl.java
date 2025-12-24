@@ -1,8 +1,8 @@
 package com.nokia.nsw.uiv.repository;
 
 import com.nokia.nsw.uiv.datatype.Neo4jDomainObject;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.ProductRepository;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;

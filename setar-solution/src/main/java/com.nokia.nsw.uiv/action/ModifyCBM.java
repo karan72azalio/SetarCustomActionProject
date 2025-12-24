@@ -6,11 +6,10 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ResourceFacingService;
 import com.nokia.nsw.uiv.request.ModifyCBMRequest;
 import com.nokia.nsw.uiv.response.ModifyCBMResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -35,11 +34,10 @@ public class ModifyCBM implements HttpAction {
     @Autowired private CustomerCustomRepository customerCustomRepository;
     @Autowired private SubscriptionCustomRepository subscriptionRepository;
     @Autowired private ProductCustomRepository productRepository;
-    @Autowired private CustomerFacingServiceCustomRepository cfsRepository;
-    @Autowired private ResourceFacingServiceCustomRepository rfsRepository;
     @Autowired private LogicalDeviceCustomRepository logicalDeviceRepository;
     @Autowired private LogicalComponentCustomRepository logicalComponentRepository;
     @Autowired private LogicalInterfaceCustomRepository logicalInterfaceRepository;
+    @Autowired private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -121,17 +119,17 @@ public class ModifyCBM implements HttpAction {
             }
             Subscription subscription = optSubsc.get();
 
-            Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
+            Optional<Service> optCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
             if (optCfs.isEmpty()) {
                 return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify CFS: "+cfsName, String.valueOf(System.currentTimeMillis()), "", "");
             }
-            CustomerFacingService cfs = optCfs.get();
+            Service cfs = optCfs.get();
 
-            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (optRfs.isEmpty()) {
                 return new ModifyCBMResponse("409", ERROR_PREFIX + "No entry found to modify RFS: "+rfsName, String.valueOf(System.currentTimeMillis()), "", "");
             }
-            ResourceFacingService rfs = optRfs.get();
+            Service rfs = optRfs.get();
 
             Optional<LogicalDevice> optCbm = logicalDeviceRepository.findByDiscoveredName(cbmDeviceName);
             if (optCbm.isEmpty()) {
@@ -146,7 +144,7 @@ public class ModifyCBM implements HttpAction {
                 rfsProps.put("transactionType", input.getModifyType());
                 rfsProps.put("endDate",getCurrentTimestamp());
                 rfs.setProperties(rfsProps);
-                rfsRepository.save(rfs);
+                serviceCustomRepository.save(rfs);
             }
             if(!"IPTV".equalsIgnoreCase(input.getProductType())){
                 // Update Service MAC / Gateway MAC flows (ModifyCableModem / Cable_Modem)
@@ -365,24 +363,24 @@ public class ModifyCBM implements HttpAction {
 
                                 // rename CFS
                                 if (cfs != null) {
-                                    cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                                    cfs = serviceCustomRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
                                     cfs.setDiscoveredName(cfsNameNew);
                                     Map<String, Object> cfsProps = Optional.ofNullable(cfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                     cfsProps.put("name", cfsNameNew);
                                     cfsProps.put("endDate", Instant.now().toString());
                                     cfs.setProperties(cfsProps);
-                                    cfsRepository.save(cfs);
+                                    serviceCustomRepository.save(cfs);
                                 }
 
                                 // rename RFS
                                 if (rfs != null) {
-                                    rfs = rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                                    rfs = serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
                                     rfs.setDiscoveredName(rfsNameNew);
                                     Map<String, Object> rfsProps = Optional.ofNullable(rfs.getProperties()).map(HashMap::new).orElse(new HashMap<>());
                                     rfsProps.put("name", rfsNameNew);
                                     if (fxOrderId != null) rfsProps.put("transactionId", fxOrderId);
                                     rfs.setProperties(rfsProps);
-                                    rfsRepository.save(rfs);
+                                    serviceCustomRepository.save(rfs);
                                 }
 
                                 // rename CBM device if found by old name
@@ -485,6 +483,6 @@ public class ModifyCBM implements HttpAction {
         return (s == null) ? null : (s.trim().isEmpty() ? null : s.trim());
     }
     private String getCurrentTimestamp() {
-        return java.time.Instant.now().toString();
+        return Instant.now().toString();
     }
 }

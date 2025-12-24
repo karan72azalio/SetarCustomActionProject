@@ -6,18 +6,14 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.utils.Constants;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import com.nokia.nsw.uiv.request.DeleteIPTVRequest;
 import com.nokia.nsw.uiv.response.DeleteIPTVResponse;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -40,8 +36,7 @@ public class DeleteIPTV implements HttpAction {
     @Autowired private CustomerCustomRepository customerRepository;
     @Autowired private SubscriptionCustomRepository subscriptionRepository;
     @Autowired private ProductCustomRepository productRepository;
-    @Autowired private CustomerFacingServiceCustomRepository cfsRepository;
-    @Autowired private ResourceFacingServiceCustomRepository rfsRepository;
+    @Autowired private ServiceCustomRepository serviceCustomRepository;
     @Autowired private LogicalDeviceCustomRepository deviceRepository;
 
     @Override
@@ -90,8 +85,8 @@ public class DeleteIPTV implements HttpAction {
             Optional<Customer> optCust = customerRepository.findByDiscoveredName(subscriberName);
             Optional<Subscription> optSub = subscriptionRepository.findByDiscoveredName(subscriptionName);
             Optional<Product> optProd = productRepository.findByDiscoveredName(productName);
-            Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<Service> optCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
+            Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             Optional<LogicalDevice> optOnt = deviceRepository.findByDiscoveredName(ontName);
 
             if (optCust.isEmpty() || optSub.isEmpty()) {
@@ -115,7 +110,7 @@ public class DeleteIPTV implements HttpAction {
 
             // Step 5: Reset STB/AP devices
             if (optRfs.isPresent()) {
-                ResourceFacingService rfs = optRfs.get();
+                Service rfs = optRfs.get();
                 rfs.getUsedResource().forEach(res -> {
                     if (res.getDiscoveredName().startsWith("STB") || res.getDiscoveredName().startsWith("AP")) {
                         try {
@@ -130,8 +125,8 @@ public class DeleteIPTV implements HttpAction {
             }
 
             // Step 6: Delete RFS, CFS, Product
-            optRfs.ifPresent(rfsRepository::delete);
-            optCfs.ifPresent(cfsRepository::delete);
+            optRfs.ifPresent(serviceCustomRepository::delete);
+            optCfs.ifPresent(serviceCustomRepository::delete);
             optProd.ifPresent(productRepository::delete);
 
             // Step 7: Conditional deletion of devices

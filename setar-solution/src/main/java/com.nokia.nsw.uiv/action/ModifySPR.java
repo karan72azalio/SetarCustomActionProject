@@ -21,9 +21,6 @@ import com.nokia.nsw.uiv.request.ModifySPRRequest;
 import com.nokia.nsw.uiv.response.ModifySPRResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
 import org.jcodings.util.Hash;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,10 +53,8 @@ public class ModifySPR implements HttpAction {
     @Autowired
     private SubscriptionCustomRepository subscriptionRepository;
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
 
     @Autowired
     private ProductCustomRepository productCustomRepository;
@@ -291,8 +286,8 @@ public class ModifySPR implements HttpAction {
             Optional<Customer> setarSubscriber1 = Optional.empty();
             String subscriberNewName="";
             try{
-                if(s instanceof ResourceFacingService){
-                    ResourceFacingService rfs = (ResourceFacingService) s;
+                if(s instanceof Service){
+                    Service rfs = (Service) s;
                     String[] rfsNameArray = rfs.getDiscoveredName().split("_");
                     String subscriber = rfsNameArray[1];
                     String subscriberNameForOnt = subscriber + Constants.UNDER_SCORE +request.getOntSN();
@@ -330,11 +325,11 @@ public class ModifySPR implements HttpAction {
                         subs.getProperties().put("gatewayMacAddress",request.getModifyParam2());
                         subscriptionRepository.save(subs,2);
 
-                        CustomerFacingService cfsOld = cfsRepository.findByDiscoveredName(cfsName).get();
+                        Service cfsOld = serviceCustomRepository.findByDiscoveredName(cfsName).get();
                         cfsOld.setDiscoveredName(cfsNameNew);
                         cfsOld.getProperties().put("serviceEndDate",getCurrentTimestamp());
-                        cfsRepository.save(cfsOld,2);
-                        ResourceFacingService rfsOld = rfsRepository.findByDiscoveredName(rfsName).get();
+                        serviceCustomRepository.save(cfsOld,2);
+                        Service rfsOld = serviceCustomRepository.findByDiscoveredName(rfsName).get();
                         rfsOld.setDiscoveredName(rfsNameNew);
                         if (request.getFxOrderId() != null) {
                             rfsOld.getProperties().put("transactionId",request.getFxOrderId());
@@ -452,19 +447,19 @@ public class ModifySPR implements HttpAction {
             productCustomRepository.save(product, 2);
         });
 
-        cfsRepository.findByDiscoveredName(cfsName).ifPresent(cfs -> {
+        serviceCustomRepository.findByDiscoveredName(cfsName).ifPresent(cfs -> {
             cfs.setDiscoveredName(cfsNameNew);
             cfs.getProperties().put("serviceEndDate",getCurrentTimestamp());
-            cfsRepository.save(cfs, 2);
+            serviceCustomRepository.save(cfs, 2);
         });
 
-        rfsRepository.findByDiscoveredName(rfsName).ifPresent(rfs -> {
+        serviceCustomRepository.findByDiscoveredName(rfsName).ifPresent(rfs -> {
             rfs.setDiscoveredName(rfsNameNew);
             rfs.getProperties().put("transactionType", request.getModifyType());
             if (request.getFxOrderId() != null) {
                 rfs.getProperties().put("transactionId", request.getFxOrderId());
             }
-            rfsRepository.save(rfs, 2);
+            serviceCustomRepository.save(rfs, 2);
         });
         Subscription tempSubscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
         tempSubscription.setProperties(subscription.getProperties());

@@ -9,10 +9,7 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.service.Product;
 import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
-import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
-import com.nokia.nsw.uiv.repository.ProductCustomRepository;
-import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
+import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceCBMRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -217,10 +214,6 @@ public class CreateServiceCBM implements HttpAction {
                     productRepository.save(p, 2);
                     return p;
                 });
-
-        product.setCustomer(subscriber);
-        productRepository.save(product, 2);
-
         subscription.addService(product);
         subscriptionRepository.save(subscription, 2);
         if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){

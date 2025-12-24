@@ -5,6 +5,9 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceVoIPRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
@@ -15,14 +18,6 @@ import com.nokia.nsw.uiv.utils.Validations;
 
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
@@ -48,9 +43,8 @@ public class CreateServiceVoIP implements HttpAction {
     @Autowired private CustomerCustomRepository customerRepo;
     @Autowired private SubscriptionCustomRepository subscriptionRepo;
     @Autowired private ProductCustomRepository productRepo;
-    @Autowired private CustomerFacingServiceCustomRepository cfsRepo;
-    @Autowired private ResourceFacingServiceCustomRepository rfsRepo;
     @Autowired private LogicalDeviceCustomRepository logicalDeviceRepo;
+    @Autowired private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -223,18 +217,19 @@ public class CreateServiceVoIP implements HttpAction {
                         prodProps.put("productType", req.getProductType());
                         prod.setProperties(prodProps);
                         prod.setCustomer(subscriber);
-                        prod.setSubscription(subscription);
                         return productRepo.save(prod);
                     });
+            subscription.addService(product);
+            subscriptionRepo.save(subscription,2);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceCbmVoice service already exist");
                 return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + req.getOntSN());
             }
             // Step 8: CFS
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
-            CustomerFacingService cfs = cfsRepo.findByDiscoveredName(cfsName)
+            Service cfs = serviceCustomRepository.findByDiscoveredName(cfsName)
                     .orElseGet(() -> {
-                        CustomerFacingService newCfs = new CustomerFacingService();
+                        Service newCfs = new Service();
                         try {
                             newCfs.setLocalName(Validations.encryptName(cfsName));
                             newCfs.setDiscoveredName(cfsName);
@@ -247,15 +242,15 @@ public class CreateServiceVoIP implements HttpAction {
                         cfsProps.put("cfsStatus", "Active");
                         cfsProps.put("cfsType", req.getProductType());
                         newCfs.setProperties(cfsProps);
-                        newCfs.setContainingProduct(product);
-                        return cfsRepo.save(newCfs);
+                        newCfs.addUsingService(product);
+                        return serviceCustomRepository.save(newCfs);
                     });
 
             // Step 9: RFS
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            ResourceFacingService rfs = rfsRepo.findByDiscoveredName(rfsName)
+            Service rfs = serviceCustomRepository.findByDiscoveredName(rfsName)
                     .orElseGet(() -> {
-                        ResourceFacingService newRfs = new ResourceFacingService();
+                        Service newRfs = new Service();
                         try {
                             newRfs.setLocalName(Validations.encryptName(rfsName));
                             newRfs.setDiscoveredName(rfsName);
@@ -268,8 +263,8 @@ public class CreateServiceVoIP implements HttpAction {
                         rfsProps.put("rfsStatus", "Active");
                         rfsProps.put("rfsType", req.getProductType());
                         newRfs.setProperties(rfsProps);
-                        newRfs.setContainingCfs(cfs);
-                        return rfsRepo.save(newRfs);
+                        newRfs.addUsingService(cfs);
+                        return serviceCustomRepository.save(newRfs);
                     });
 
             // Step 10: ONT & OLT
@@ -301,7 +296,7 @@ public class CreateServiceVoIP implements HttpAction {
                         oltProps.put("oltPosition", req.getOltName());
                         oltProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(oltProps);
-                        dev.addUsingService(rfs);
+                        dev.addContainedservice(rfs);
                         return logicalDeviceRepo.save(dev);
                     });
 
@@ -324,8 +319,8 @@ public class CreateServiceVoIP implements HttpAction {
                         ontProps.put("oltPosition", req.getOltName());
                         ontProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(ontProps);
-                        dev.addManagingDevices(olt);
-                        dev.addUsingService(rfs);
+                        dev.addUsedResource(olt);
+                        dev.addContainedservice(rfs);
                         return logicalDeviceRepo.save(dev);
                     });
 

@@ -8,17 +8,13 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.response.CreateServiceFibernetResponse;
 import com.nokia.nsw.uiv.response.CreateServiceVoIPResponse;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
@@ -57,16 +53,13 @@ public class CreateServiceIPTV implements HttpAction {
     private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
-
-    @Autowired
     private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Autowired
     private LogicalInterfaceCustomRepository vlanRepository;
+
+    @Autowired
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class getActionClass() {
@@ -97,7 +90,7 @@ public class CreateServiceIPTV implements HttpAction {
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
                 return new CreateServiceIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                        java.time.Instant.now().toString(), "","");
+                        Instant.now().toString(), "","");
             }
             AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
             AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
@@ -197,48 +190,49 @@ public class CreateServiceIPTV implements HttpAction {
 
                 product.setProperties(productProps);
                 product.setCustomer(subscriber);
-                product.setSubscription(subscription);
                 productRepository.save(product, 2);
                 log.error("Created Product: {}", productName);
             }
+            subscription.addService(product);
+            subscriptionRepository.save(subscription,2);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceCbmVoice service already exist");
                 return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + request.getOntSN());
             }
 
             // ------------------- Customer Facing Service (CFS) -------------------
-            Optional<CustomerFacingService> optCFS = cfsRepository.findByDiscoveredName(cfsName);
-            CustomerFacingService cfs;
+            Optional<Service> optCFS = serviceCustomRepository.findByDiscoveredName(cfsName);
+            Service cfs;
             if (optCFS.isPresent()) {
                 cfs = optCFS.get();
                 log.error("CFS already exists: {}", cfsName);
             } else {
-                cfs = new CustomerFacingService();
+                cfs = new Service();
                 cfs.setLocalName(Validations.encryptName(cfsName));
                 cfs.setDiscoveredName(cfsName);
                 cfs.setKind("SetarCFS");
                 cfs.setContext(Constants.SETAR);
 
                 Map<String, Object> cfsProps = new HashMap<>();
-                cfsProps.put("serviceStartDate", java.time.Instant.now().toString());
+                cfsProps.put("serviceStartDate", Instant.now().toString());
                 cfsProps.put("transactionID", request.getFxOrderID());
                 cfsProps.put("serviceStatus", "ACTIVE");
                 cfsProps.put("serviceType", request.getProductType());
 
                 cfs.setProperties(cfsProps);
-                cfs.setContainingProduct(product);
-                cfsRepository.save(cfs, 2);
+                cfs.addUsingService(product);
+                serviceCustomRepository.save(cfs, 2);
                 log.error("Created CFS: {}", cfsName);
             }
 
             // ------------------- Resource Facing Service (RFS) -------------------
-            Optional<ResourceFacingService> optRFS = rfsRepository.findByDiscoveredName(rfsName);
-            ResourceFacingService rfs;
+            Optional<Service> optRFS = serviceCustomRepository.findByDiscoveredName(rfsName);
+            Service rfs;
             if (optRFS.isPresent()) {
                 rfs = optRFS.get();
                 log.error("RFS already exists: {}", rfsName);
             } else {
-                rfs = new ResourceFacingService();
+                rfs = new Service();
                 rfs.setLocalName(Validations.encryptName(rfsName));
                 rfs.setDiscoveredName(rfsName);
                 rfs.setKind("SetarRFS");
@@ -249,8 +243,8 @@ public class CreateServiceIPTV implements HttpAction {
                 rfsProps.put("serviceType", request.getProductType());
 
                 rfs.setProperties(rfsProps);
-                rfs.setContainingCfs(cfs);
-                rfsRepository.save(rfs, 2);
+                rfs.addUsedService(cfs);
+                serviceCustomRepository.save(rfs, 2);
                 log.error("Created RFS: {}", rfsName);
             }
 
@@ -279,7 +273,7 @@ public class CreateServiceIPTV implements HttpAction {
                 oltProps.put("igmpTemplate", request.getTemplateNameIGMP());
 
                 oltDevice.setProperties(oltProps);
-                oltDevice.addUsingService(rfs);
+                oltDevice.addContainedservice(rfs);
                 logicalDeviceRepository.save(oltDevice, 2);
                 log.error("Created OLT Device: {}", request.getOltName());
             }
@@ -303,8 +297,8 @@ public class CreateServiceIPTV implements HttpAction {
                 ontProps.put("OperationalState", "Active");
                 ontProps.put("iptvVlan", request.getVlanID());
                 ontDevice.setProperties(ontProps);
-                ontDevice.addUsingService(rfs);
-                ontDevice.addManagingDevices(oltDevice);
+                ontDevice.addContainedservice(rfs);
+                ontDevice.addUsedResource(oltDevice);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Created ONT Device: {}", ontName);
             }
@@ -335,7 +329,7 @@ public class CreateServiceIPTV implements HttpAction {
             return new CreateServiceIPTVResponse(
                     "201",
                     "IPTV service created",
-                    java.time.Instant.now().toString(),
+                    Instant.now().toString(),
                     subscriptionName,
                     ontName
             );

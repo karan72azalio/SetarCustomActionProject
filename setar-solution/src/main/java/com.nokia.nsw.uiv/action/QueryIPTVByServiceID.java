@@ -4,16 +4,12 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryIPTVByServiceIDRequest;
 import com.nokia.nsw.uiv.response.QueryIPTVByServiceIDResponse;
 import com.nokia.nsw.uiv.utils.Constants;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ProductRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
@@ -26,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Migrated QueryIPTVByServiceID action (UIV)
@@ -51,10 +48,7 @@ import java.util.*;
 public class QueryIPTVByServiceID implements HttpAction {
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepo;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepo;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private ProductCustomRepository productRepo;
@@ -98,8 +92,8 @@ public class QueryIPTVByServiceID implements HttpAction {
             // 2. Identify target CFS names
             Set<String> matchingCfsNames = new TreeSet<>();
 
-            Iterable<CustomerFacingService> allCfs = cfsRepo.findAll();
-            for (CustomerFacingService cfs : allCfs) {
+            Iterable<Service> allCfs = serviceCustomRepository.findAll();
+            for (Service cfs : allCfs) {
                 String cfsName = cfs.getDiscoveredName();
                 if (cfsName == null) continue;
                 // Middle portion (text between first '_' and last '_'), if present
@@ -140,21 +134,21 @@ public class QueryIPTVByServiceID implements HttpAction {
             // 4. Retrieve related entities for each CFS
             for (String cfsName : matchingCfsNames) {
                 // try to load CFS by exact name (global name lookup may be required; using name directly)
-                Optional<CustomerFacingService> optCfs;
+                Optional<Service> optCfs;
                 try {
-                    optCfs = cfsRepo.findByDiscoveredName(cfsName);
+                    optCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
                 } catch (Exception e) {
                     // fallback to find by iterating (we already have cfsName); try to get from repo.findAll
                     optCfs = findCfsByNameFromAll(cfsName);
                 }
                 if (!optCfs.isPresent()) continue;
-                CustomerFacingService cfs = optCfs.get();
+                Service cfs = optCfs.get();
 
                 // Determine corresponding RFS name by replacing CFS -> RFS in name
                 String rfsName = cfsName.replaceFirst("^CFS", "RFS"); // only first occurrence
-                Optional<ResourceFacingService> optRfs = Optional.empty();
+                Optional<Service> optRfs = Optional.empty();
                 try {
-                    optRfs = rfsRepo.findByDiscoveredName(rfsName);
+                    optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
                 } catch (Exception e) {
                     // fallback: find by iterating
                     optRfs = findRfsByNameFromAll(rfsName);
@@ -163,7 +157,8 @@ public class QueryIPTVByServiceID implements HttpAction {
                 // From CFS get Product -> Subscription -> Subscriber
                 Product product = null;
                 try {
-                    product = cfs.getContainingProduct();
+                    String productDiscName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                    product = productRepo.findByDiscoveredName(productDiscName).get();
                 } catch (Exception e) {
                     // defensive - attempt property-based retrieval if needed
                     product = null;
@@ -175,7 +170,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                     try {
                         String productDiscoveredName = product.getDiscoveredName();
                         product = productRepo.findByDiscoveredName(productDiscoveredName).get();
-                        subscription = product.getSubscription();
+                        subscription = product.getSubscription().stream().findFirst().get();
                     } catch (Exception e) {
                         subscription = null;
                     }
@@ -224,9 +219,9 @@ public class QueryIPTVByServiceID implements HttpAction {
 
                     // 6. Capture service components (products under subscription)
                     try {
-                        Set<Product> prodSet = subscription.getProduct(); // assumed getter (adapt if different)
+                        Set<Service> prodSet = subscription.getService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).collect(Collectors.toSet());
                         if (prodSet != null && !prodSet.isEmpty()) {
-                            for (Product prodItem : prodSet) {
+                            for (Service prodItem : prodSet) {
                                 String prodName = prodItem.getDiscoveredName();
                                 if (prodName != null && prodName.startsWith(serviceId)) {
                                     String comp = prodName.replaceFirst("^" + serviceId, "");
@@ -257,7 +252,7 @@ public class QueryIPTVByServiceID implements HttpAction {
 
                 // 7. Capture resource details from RFS, if RFS exists
                 if (optRfs.isPresent()) {
-                    ResourceFacingService rfs = optRfs.get();
+                    Service rfs = optRfs.get();
                     try {
                         // Expecting rfs.getResource() or rfs.getResources() -> collection
                         Collection<?> resources = null;
@@ -447,15 +442,15 @@ public class QueryIPTVByServiceID implements HttpAction {
     // Helper / utility methods
     // -------------------------
 
-    private Optional<CustomerFacingService> findCfsByNameFromAll(String name) {
-        for (CustomerFacingService cfs : cfsRepo.findAll()) {
+    private Optional<Service> findCfsByNameFromAll(String name) {
+        for (Service cfs : serviceCustomRepository.findAll()) {
             if (name.equals(cfs.getName())) return Optional.of(cfs);
         }
         return Optional.empty();
     }
 
-    private Optional<ResourceFacingService> findRfsByNameFromAll(String name) {
-        for (ResourceFacingService rfs : rfsRepo.findAll()) {
+    private Optional<Service> findRfsByNameFromAll(String name) {
+        for (Service rfs : serviceCustomRepository.findAll()) {
             if (name.equals(rfs.getName())) return Optional.of(rfs);
         }
         return Optional.empty();

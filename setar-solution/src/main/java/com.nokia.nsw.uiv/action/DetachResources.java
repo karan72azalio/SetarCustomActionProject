@@ -8,6 +8,8 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
@@ -15,7 +17,6 @@ import com.nokia.nsw.uiv.request.DetachResourcesRequest;
 import com.nokia.nsw.uiv.response.DetachResourcesResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,8 +40,7 @@ public class DetachResources implements HttpAction {
     @Autowired private CustomerCustomRepository subscriberRepository;
     @Autowired private SubscriptionCustomRepository subscriptionRepository;
     @Autowired private ProductCustomRepository productRepository;
-    @Autowired private CustomerFacingServiceCustomRepository cfsRepository;
-    @Autowired private ResourceFacingServiceCustomRepository rfsRepository;
+    @Autowired private ServiceCustomRepository serviceCustomRepository;
     @Autowired private LogicalDeviceCustomRepository deviceRepository;
 
     @Override
@@ -70,15 +70,15 @@ public class DetachResources implements HttpAction {
             Optional<Customer> subscriber = subscriberRepository.findByDiscoveredName(request.getSubscriberName());
             Optional<Subscription> subscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
             Optional<Product> product = productRepository.findByDiscoveredName(productName);
-            Optional<CustomerFacingService> cfs = cfsRepository.findByDiscoveredName(cfsName);
-            Optional<ResourceFacingService> rfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<Service> cfs = serviceCustomRepository.findByDiscoveredName(cfsName);
+            Optional<Service> rfs = serviceCustomRepository.findByDiscoveredName(rfsName);
 
             if (!subscriber.isPresent() || !subscription.isPresent() || !product.isPresent() || !cfs.isPresent() || !rfs.isPresent()) {
                 return new DetachResourcesResponse("404", ERROR_PREFIX + "No entry found for Delete.",
                         getCurrentTimestamp(), subscriptionName);
             }
 
-            ResourceFacingService rfsEntity = rfs.get();
+            Service rfsEntity = rfs.get();
             boolean deviceUpdated = false;
 
             // 3. Handle devices
@@ -102,10 +102,10 @@ public class DetachResources implements HttpAction {
             }
 
             if (deviceUpdated) {
-                rfsEntity = rfsRepository.findByDiscoveredName(rfsEntity.getDiscoveredName()).get();
+                rfsEntity = serviceCustomRepository.findByDiscoveredName(rfsEntity.getDiscoveredName()).get();
                 Map<String,Object> rfsProps = rfsEntity.getProperties();
                 rfsProps.put("transactionId",request.getFxOrderId());
-                rfsRepository.save(rfsEntity,2);
+                serviceCustomRepository.save(rfsEntity,2);
                 return new DetachResourcesResponse("200",
                         "UIV action DetachResources executed successfully.",
                         getCurrentTimestamp(),
@@ -126,7 +126,7 @@ public class DetachResources implements HttpAction {
         }
     }
 
-    private boolean detachDevice(String devName, ResourceFacingService rfsEntity, boolean isSTB) {
+    private boolean detachDevice(String devName, Service rfsEntity, boolean isSTB) {
         Optional<LogicalDevice> optDevice = deviceRepository.findByDiscoveredName(devName);
         if (optDevice.isPresent()) {
             LogicalDevice device = optDevice.get();

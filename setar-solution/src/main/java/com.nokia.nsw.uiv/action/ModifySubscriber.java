@@ -3,6 +3,8 @@ package com.nokia.nsw.uiv.action;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifySubscriberRequest;
 import com.nokia.nsw.uiv.response.ModifySubscriberResponse;
@@ -11,12 +13,6 @@ import com.nokia.nsw.uiv.utils.Validations;
 
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 
@@ -43,10 +39,7 @@ public class ModifySubscriber implements HttpAction {
     private ProductCustomRepository productCustomRepo;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepo;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepo;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private CustomerCustomRepository customerRepo;
@@ -83,9 +76,9 @@ public class ModifySubscriber implements HttpAction {
             boolean updatesApplied = false;
 
             // 3. Locate CFS containing old subscriber
-            List<CustomerFacingService> cfsList1 = (List<CustomerFacingService>) cfsRepo.findAll();
-            List<CustomerFacingService> cfsList = new ArrayList<>();
-            for(CustomerFacingService cfs:cfsList1)
+            List<Service> cfsList1 = (List<Service>) serviceCustomRepository.findAll();
+            List<Service> cfsList = new ArrayList<>();
+            for(Service cfs:cfsList1)
             {
                 if(cfs.getDiscoveredName().contains(oldSubscriberName))
                 {
@@ -94,7 +87,7 @@ public class ModifySubscriber implements HttpAction {
             }
             log.error("------------Test Trace # 4--------------- CFS candidates found: " + cfsList.size());
 
-            for (CustomerFacingService cfs : cfsList) {
+            for (Service cfs : cfsList) {
                 String cfsName = cfs.getDiscoveredName();
                 if (!cfsName.contains(oldSubscriberName)) continue;
 
@@ -102,16 +95,17 @@ public class ModifySubscriber implements HttpAction {
                 log.error("CFS found with old subscriber name: "+cfsName);
                 // Derive RFS name
                 String rfsName = cfsName.replace("CFS", "RFS");
-                Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
+                Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
 
                 // Retrieve product linked (via properties or association)
-                Optional<Product> productOpt = Optional.of(cfs.getContainingProduct()); // adjust to actual association
+                String productName = cfs.getUsedService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                Optional<Product> productOpt = productCustomRepo.findByDiscoveredName(productName); // adjust to actual association
                 Optional<Subscription> subsOpt = Optional.empty();
                 Optional<Customer> oldCustOpt = Optional.empty();
 
                 if (productOpt.isPresent()) {
                     productOpt = productCustomRepo.findByDiscoveredName(productOpt.get().getDiscoveredName());
-                    subsOpt = subscriptionCustomRepo.findByDiscoveredName(productOpt.get().getSubscription().getDiscoveredName());
+                    subsOpt = subscriptionCustomRepo.findByDiscoveredName(productOpt.get().getSubscription().stream().findFirst().get().getDiscoveredName());
                     // adjust to actual association
                     oldCustOpt = customerRepo.findByDiscoveredName(subsOpt.get().getCustomer().getDiscoveredName()); // adjust to actual association
                 }
@@ -191,23 +185,23 @@ public class ModifySubscriber implements HttpAction {
                     }
                 }
                 // Update CFS
-                cfs = cfsRepo.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                cfs = serviceCustomRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
                 String newCfsName = cfs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                 cfs.setDiscoveredName(newCfsName);
                 log.error("CFS updated successfully with the updated name: "+newCfsName);
-                cfsRepo.save(cfs);
+                serviceCustomRepository.save(cfs);
                 updatesApplied = true;
                 log.error("update applied successfully");
                 log.error("------------Test Trace # 14--------------- CFS updated: " + newCfsName);
 
                 // Update RFS
                 if (rfsOpt.isPresent()) {
-                    ResourceFacingService rfs = rfsOpt.get();
-                    rfs = rfsRepo.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                    Service rfs = rfsOpt.get();
+                    rfs = serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
                     String newRfsName = rfs.getDiscoveredName().replace(oldSubscriberName, newSubscriberName);
                     rfs.setDiscoveredName(newRfsName);
                     log.error("RFS updated successfully with the updated name: "+newRfsName);
-                    rfsRepo.save(rfs);
+                    serviceCustomRepository.save(rfs);
                     updatesApplied = true;
                     log.error("------------Test Trace # 13--------------- RFS updated: " + newRfsName);
                 }

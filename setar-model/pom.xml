@@ -185,6 +185,10 @@
                                     <database>Neo4j</database>
 			    	</model>
                                 <model>
+                                    <filename>${project.basedir}/src/main/resources/model/ExtensionModel.mdj</filename>
+                                    <database>Neo4j</database>
+                                </model>
+                                <model>
                                     <filename>${project.basedir}/src/main/resources/model/SetarModel.mdj</filename>
                                     <database>Neo4j</database>
                                 </model>

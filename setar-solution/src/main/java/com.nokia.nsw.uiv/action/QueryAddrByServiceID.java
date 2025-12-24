@@ -5,15 +5,14 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryAddrByServiceIDRequest;
 import com.nokia.nsw.uiv.response.QueryAddrByServiceIDResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,10 +32,8 @@ public class QueryAddrByServiceID implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action QueryAddrByServiceID execution failed - ";
 
     @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
-    @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
     @Autowired
     private CustomerCustomRepository customerRepository;
 
@@ -71,8 +68,8 @@ public class QueryAddrByServiceID implements HttpAction {
             log.error("Looking up RFS entries containing service id '{}'", serviceId);
 
             // 2) Locate the target service (RFS) using SERVICE_ID
-            List<ResourceFacingService> rfsListAll = (List<ResourceFacingService>) rfsRepository.findAll();
-            List<ResourceFacingService> rfsList =new ArrayList<>();
+            List<Service> rfsListAll = (List<Service>) serviceCustomRepository.findAll();
+            List<Service> rfsList =new ArrayList<>();
             rfsListAll.forEach(rFS -> {
                 if (rFS.getDiscoveredName().contains(serviceId)) {
                     rfsList.add(rFS);
@@ -82,12 +79,12 @@ public class QueryAddrByServiceID implements HttpAction {
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
 
-            ResourceFacingService matchedRfs = null;
-            for (ResourceFacingService rfs : rfsList) {
+            Service matchedRfs = null;
+            for (Service rfs : rfsList) {
                 String name = rfs.getDiscoveredName() == null ? "" : rfs.getDiscoveredName();
                 String[] tokens = name.split(Constants.UNDER_SCORE , -1);
                 if (tokens.length >= 3 && serviceId.equals(tokens[2])) {
-                    matchedRfs = rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                    matchedRfs = serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
                     log.error("Matched RFS by token check: {}", name);
                     break;
                 }
@@ -99,9 +96,9 @@ public class QueryAddrByServiceID implements HttpAction {
             }
 
             // 3) Resolve related data: product <- cfs <- rfs ; subscription <- product ; subscriber <- subscription
-            CustomerFacingService cfs = cfsRepository.findByDiscoveredName(matchedRfs.getDiscoveredName().replace("RFS","CFS")).get(); // assume this getter exists (as used in CreateServiceFibernet)
+            Service cfs = serviceCustomRepository.findByDiscoveredName(matchedRfs.getDiscoveredName().replace("RFS","CFS")).get(); // assume this getter exists (as used in CreateServiceFibernet)
             if(cfs!=null){
-                cfs = cfsRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();  
+                cfs = serviceCustomRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
             }
             if (cfs == null) {
                 log.error("Matched RFS does not reference a CustomerFacingService");
@@ -109,15 +106,12 @@ public class QueryAddrByServiceID implements HttpAction {
             }
 
             // From CFS to Product
-            Product product = cfs.getContainingProduct(); // assume this exists (CreateServiceFibernet set containingProduct)
-            if(product!=null){
-                product = productRepository.findByDiscoveredName(product.getDiscoveredName()).get();
-            }
+            String productDiscoveredName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+            Product product = productRepository.findByDiscoveredName(productDiscoveredName).get();
             if (product == null) {
                 log.error("CustomerFacingService does not reference Product");
                 return createErrorResponse("404", ERROR_PREFIX + "No Service Details Found");
             }
-
             // Product name: Try typed access then fallback to properties map
             String productName = null;
             try {
@@ -136,7 +130,7 @@ public class QueryAddrByServiceID implements HttpAction {
             }
 
             // Subscription: try typed getter, fallback to product.properties
-            Subscription subscription = product.getSubscription();
+            Subscription subscription = product.getSubscription().stream().findFirst().get();
             if(subscription!=null){
                 subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
             }

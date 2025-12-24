@@ -5,12 +5,13 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.Resource;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryServiceRequest;
 import com.nokia.nsw.uiv.response.QueryServiceResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.*;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
@@ -32,8 +33,7 @@ public class QueryService implements HttpAction {
     @Autowired private CustomerCustomRepository customerRepository;
     @Autowired private SubscriptionCustomRepository subscriptionRepository;
     @Autowired private ProductCustomRepository productRepository;
-    @Autowired private CustomerFacingServiceCustomRepository cfsRepository;
-    @Autowired private ResourceFacingServiceCustomRepository rfsRepository;
+    @Autowired private ServiceCustomRepository serviceCustomRepository;
     @Autowired private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Override
@@ -61,10 +61,10 @@ public class QueryService implements HttpAction {
             log.error("Processing QueryService for SERVICE_ID: {}", serviceId);
 
             // Step 2: Find Candidate CFS Names
-            List<CustomerFacingService> cfsList = (List<CustomerFacingService>) cfsRepository.findAll();
+            List<Service> cfsList = (List<Service>) serviceCustomRepository.findAll();
             Set<String> cfsNameSet = new LinkedHashSet<>();
 
-            for (CustomerFacingService cfs : cfsList) {
+            for (Service cfs : cfsList) {
                 if(cfs.getDiscoveredName().contains(serviceId)) {
                     String cfsName = cfs.getDiscoveredName();
                     if (cfsName == null) continue;
@@ -83,22 +83,22 @@ public class QueryService implements HttpAction {
 
             // Step 3: For each CFS, fetch linked data
             for (String cfsName : cfsNameSet) {
-                Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
+                Optional<Service> optCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
                 if (!optCfs.isPresent()) continue;
-                CustomerFacingService cfs = optCfs.get();
-
+                Service cfs = optCfs.get();
+                String productName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                 String rfsName = cfsName.replace("CFS", "RFS");
-                Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
-                Optional<Product> optProd = Optional.ofNullable(cfs.getContainingProduct());
+                Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
+                Optional<Product> optProd = productRepository.findByDiscoveredName(productName);
                 Optional<Subscription> optSub = Optional.empty();
                 Optional<Customer> optCust = Optional.empty();
 
                 if (optProd.isPresent()) {
                     Product prod = optProd.get();
                     if (prod.getSubscription() != null)
-                        optSub = Optional.ofNullable(prod.getSubscription());
-                    if (prod.getSubscription() != null && prod.getSubscription().getCustomer() != null)
-                        optCust = Optional.ofNullable(prod.getSubscription().getCustomer());
+                        optSub = prod.getSubscription().stream().findFirst();
+                    if (prod.getSubscription() != null && prod.getCustomer() != null)
+                        optCust = Optional.ofNullable(prod.getCustomer());
                 }
 
                 // Step 4: Populate Subscription details
@@ -129,7 +129,7 @@ public class QueryService implements HttpAction {
 
                 // Step 6: Fetch Devices from RFS
                 if (optRfs.isPresent()) {
-                    ResourceFacingService rfs = optRfs.get();
+                    Service rfs = optRfs.get();
 
                     Set<Resource> ls = rfs.getUsedResource();
                     ls.forEach(res -> {

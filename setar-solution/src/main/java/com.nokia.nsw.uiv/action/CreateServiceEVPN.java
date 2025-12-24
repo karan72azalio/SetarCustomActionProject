@@ -6,6 +6,8 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceEVPNRequest;
 import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
@@ -18,12 +20,6 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 
@@ -58,16 +54,13 @@ public class CreateServiceEVPN implements HttpAction {
     private ProductCustomRepository productRepo;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepo;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepo;
-
-    @Autowired
     private LogicalDeviceCustomRepository logicalDeviceRepo;
 
     @Autowired
     private LogicalInterfaceCustomRepository vlanRepo;
+
+    @Autowired
+    private ServiceCustomRepository serviceCustomRepository;
 
 
     @Override
@@ -266,20 +259,21 @@ public class CreateServiceEVPN implements HttpAction {
                         prodProps.put("linkedSubscriber", subscriber.getLocalName());
                         prodProps.put("linkedSubscription", subscription.getLocalName());
                         prod.setProperties(prodProps);
-                        prod.setSubscription(subscription);
                         prod.setCustomer(subscriber);
                         return productRepo.save(prod,2);
                     });
+            subscription.addService(product);
+            subscriptionRepo.save(subscription);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceEVPN service already exist");
                 return new CreateServiceEVPNResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameStr,ontName);
             }
 
             // 6) CFS: find or create (properties map)
-            CustomerFacingService cfs = cfsRepo.findByDiscoveredName(cfsName)
+            Service cfs = serviceCustomRepository.findByDiscoveredName(cfsName)
                     .orElseGet(() -> {
                         log.error("------------Trace # 11--------------- Creating CFS: " + cfsName);
-                        CustomerFacingService newCfs = new CustomerFacingService();
+                        Service newCfs = new Service();
                         try {
                             newCfs.setLocalName(Validations.encryptName(cfsName));
                             newCfs.setDiscoveredName(cfsName);
@@ -296,15 +290,15 @@ public class CreateServiceEVPN implements HttpAction {
                         if (req.getFxOrderID() != null) cfsProps.put("transactionId", req.getFxOrderID());
                         cfsProps.put("linkedProduct", product.getLocalName());
                         newCfs.setProperties(cfsProps);
-                        newCfs.setContainingProduct(product);
-                        return cfsRepo.save(newCfs,2);
+                        newCfs.addUsingService(product);
+                        return serviceCustomRepository.save(newCfs,2);
                     });
 
             // 7) RFS: find or create (properties map)
-            ResourceFacingService rfs = rfsRepo.findByDiscoveredName(rfsName)
+            Service rfs = serviceCustomRepository.findByDiscoveredName(rfsName)
                     .orElseGet(() -> {
                         log.error("------------Trace # 12--------------- Creating RFS: " + rfsName);
-                        ResourceFacingService newRfs = new ResourceFacingService();
+                        Service newRfs = new Service();
                         try {
                             newRfs.setLocalName(Validations.encryptName(rfsName));
                             newRfs.setDiscoveredName(rfsName);
@@ -317,8 +311,8 @@ public class CreateServiceEVPN implements HttpAction {
                         rfsProps.put("rfsStatus", "Active");
                         rfsProps.put("rfsType", req.getProductType());
                         rfsProps.put("linkedCFS", cfs.getLocalName());
-                        newRfs.setContainingCfs(cfs);
-                        return rfsRepo.save(newRfs);
+                        newRfs.addUsedService(cfs);
+                        return serviceCustomRepository.save(newRfs);
                     });
 
             // 8) OLT: find or create
@@ -341,7 +335,7 @@ public class CreateServiceEVPN implements HttpAction {
                         dev.setProperties(oltProps);
                         // link RFS reference if exists
                         dev.getProperties().put("linkedRFS", rfs.getLocalName());
-                        dev.addUsingService(rfs);
+                        dev.addContainedservice(rfs);
                         return logicalDeviceRepo.save(dev,2);
                     });
 
@@ -378,8 +372,8 @@ public class CreateServiceEVPN implements HttpAction {
                 ontProps.put("linkedRFS", rfs.getLocalName());
                 dev.setProperties(ontProps);
                 dev.getProperties().put("containingDevice", olt.getLocalName());
-                dev.addManagingDevices(olt);
-                dev.addUsingService(rfs);
+                dev.addUsedResource(olt);
+                dev.addContainedservice(rfs);
                 logicalDeviceRepo.save(dev);
                 ont = dev;
             }
@@ -419,7 +413,7 @@ public class CreateServiceEVPN implements HttpAction {
                     v.setProperties(vProps);
                     vlanRepo.save(v);
                     ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                    ont.addContained(v);
+                    ont.addContainedinterface(v);
                     logicalDeviceRepo.save(ont);
                 }
                 // no direct association required here beyond existence
@@ -475,7 +469,7 @@ public class CreateServiceEVPN implements HttpAction {
                     v.setProperties(vProps);
                     vlanRepo.save(v,2);
                     ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                    ont.addContained(v);
+                    ont.addContainedinterface(v);
                     logicalDeviceRepo.save(ont);
                     serviceVlan = v;
                 }
@@ -598,7 +592,7 @@ public class CreateServiceEVPN implements HttpAction {
                         singleVlan.setProperties(svProps);
                         vlanRepo.save(singleVlan);
                         ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                        ont.addContained(singleVlan);
+                        ont.addContainedinterface(singleVlan);
                         logicalDeviceRepo.save(ont);
                         break;
                     }

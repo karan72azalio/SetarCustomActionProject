@@ -9,7 +9,6 @@ import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryAllServicesByCPERequest;
 import com.nokia.nsw.uiv.response.QueryAllServicesByCPEResponse;
 import com.nokia.nsw.uiv.utils.Constants;
-import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,9 +32,6 @@ public class QueryAllServicesByCPE implements HttpAction {
     private LogicalDeviceCustomRepository logicalDeviceRepo;
 
     @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepo;
-
-    @Autowired
     private SubscriptionCustomRepository subscriptionRepo;
 
     @Autowired
@@ -45,7 +41,7 @@ public class QueryAllServicesByCPE implements HttpAction {
     private CustomerCustomRepository subscriberRepo;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepo;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -75,10 +71,10 @@ public class QueryAllServicesByCPE implements HttpAction {
 
             // Collect linked RFS entries
             Set<Service> linkedServiceList = ont.getUsingService();
-            List<ResourceFacingService> linkedRfsList = new ArrayList<>();
+            List<Service> linkedRfsList = new ArrayList<>();
             for(Service s: linkedServiceList){
-                if(s instanceof ResourceFacingService){
-                    linkedRfsList.add((ResourceFacingService) s);
+                if(s.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS)){
+                    linkedRfsList.add(s);
                 }
             }
 
@@ -96,7 +92,7 @@ public class QueryAllServicesByCPE implements HttpAction {
             resp.setTimestamp(Instant.now().toString());
 
             // 4) Traverse services linked to ONT
-            for (ResourceFacingService rfs : linkedRfsList) {
+            for (Service rfs : linkedRfsList) {
                 String prodType = (String) rfs.getProperties().get("rfsType");
                 if (prodType == null) continue;
 

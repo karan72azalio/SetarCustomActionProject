@@ -6,16 +6,14 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.ProductCustomRepository;
-import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
+import com.nokia.nsw.uiv.repository.ServiceCustomRepository;
 import com.nokia.nsw.uiv.request.DeleteProductSubscriptionRequest;
 import com.nokia.nsw.uiv.response.DeleteProductSubscriptionResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,7 +35,7 @@ public class DeleteProductSubscription implements HttpAction {
     private ProductCustomRepository productRepository;
 
     @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -74,13 +72,13 @@ public class DeleteProductSubscription implements HttpAction {
             // ========== RFS Update ==========
             if (request.getFxOrderID() != null && !request.getFxOrderID().isEmpty()) {
                 String rfsName = "RFS" + Constants.UNDER_SCORE + request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceID();
-                Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+                Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
 
                 if (optRfs.isPresent()) {
-                    ResourceFacingService rfs = optRfs.get();
+                    Service rfs = optRfs.get();
                     rfs.getProperties().put("transactionType", "DeleteProductSubscription");
                     rfs.getProperties().put("transactionId", request.getFxOrderID());
-                    rfsRepository.save(rfs);
+                    serviceCustomRepository.save(rfs);
                     log.error("RFS updated successfully for {}", rfsName);
                 } else {
                     log.error("No RFS found for name {}", rfsName);

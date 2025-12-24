@@ -1,7 +1,9 @@
 package com.nokia.nsw.uiv.repository;
 
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.ProductRepository;
+import com.nokia.nsw.uiv.model.service.Service;
+import com.nokia.nsw.uiv.model.service.ServiceRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

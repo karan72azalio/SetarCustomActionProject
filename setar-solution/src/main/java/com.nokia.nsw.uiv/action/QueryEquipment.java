@@ -8,6 +8,8 @@ import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
@@ -15,12 +17,6 @@ import com.nokia.nsw.uiv.request.QueryEquipmentRequest;
 import com.nokia.nsw.uiv.response.QueryEquipmentResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -45,10 +41,7 @@ public class QueryEquipment implements HttpAction {
     private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository logicalDeviceRepository;
@@ -98,13 +91,13 @@ public class QueryEquipment implements HttpAction {
                 return createErrorResponse(CODE_NO_ENTRY, "Subscription not found for subscriber/service");
             }
 
-            Optional<CustomerFacingService> cfsOpt = cfsRepository.findByDiscoveredName(cfsName);
+            Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);
             if (cfsOpt.isEmpty()) {
                 log.error("CFS not found: {}", cfsName);
             }
 
             String rfsGdn = Validations.getGlobalName(rfsName);
-            ResourceFacingService rfs = rfsRepository.findByDiscoveredName(rfsName).orElse(null);
+            Service rfs = serviceCustomRepository.findByDiscoveredName(rfsName).orElse(null);
             if (rfs == null) {
                 return createErrorResponse(CODE_NO_ENTRY, "No RFS entry found for subscriber/service");
             }

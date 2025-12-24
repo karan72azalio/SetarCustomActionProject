@@ -10,6 +10,8 @@ import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.AdministrativeState;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
@@ -18,12 +20,6 @@ import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -59,10 +55,7 @@ public class CreateServiceCbmVoice implements HttpAction {
     private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository cbmDeviceRepository;
@@ -257,19 +250,20 @@ public class CreateServiceCbmVoice implements HttpAction {
                         prodProps.put("productType",request.getProductType());
                         p.setProperties(prodProps);
                         p.setCustomer(subscriber);
-                        p.setSubscription(subscription);
                         productRepository.save(p, 2);
                         return p;
                     });
+            subscription.addService(product);
+            subscriptionRepository.save(subscription,2);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceCbmVoice service already exist");
                 return new CreateServiceCbmVoiceResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,cbmName);
             }
 
             // 6. CFS logic
-            CustomerFacingService cfs = cfsRepository.findByDiscoveredName(cfsName)
+            Service cfs = serviceCustomRepository.findByDiscoveredName(cfsName)
                     .orElseGet(() -> {
-                        CustomerFacingService c = new CustomerFacingService();
+                        Service c = new Service();
                         try {
                             c.setLocalName(cfsName);
                             c.setDiscoveredName(cfsName);
@@ -279,7 +273,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                             throw new RuntimeException(e);
                         }
-                        c.setContainingProduct(product);
+                        c.addUsingService(product);
                         Map<String, Object> cfsProps = new HashMap<>();
                         cfsProps.put("serviceStatus", "Active");
                         cfsProps.put("serviceType", request.getProductType());
@@ -287,14 +281,14 @@ public class CreateServiceCbmVoice implements HttpAction {
                         cfsProps.put("serviceStartDate", Instant.now().toString());
                         if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
                         c.setProperties(cfsProps);
-                        cfsRepository.save(c, 2);
+                        serviceCustomRepository.save(c, 2);
                         return c;
                     });
 
             // 7. RFS logic
-            ResourceFacingService rfs = rfsRepository.findByDiscoveredName(rfsName)
+            Service rfs = serviceCustomRepository.findByDiscoveredName(rfsName)
                     .orElseGet(() -> {
-                        ResourceFacingService r = new ResourceFacingService();
+                        Service r = new Service();
                         try {
                             r.setLocalName(Validations.encryptName(rfsName));
                             r.setDiscoveredName(rfsName);
@@ -303,13 +297,12 @@ public class CreateServiceCbmVoice implements HttpAction {
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                             throw new RuntimeException(e);
                         }
-                        r.setContainingCfs(cfs);
                         Map<String, Object> rfsProps = new HashMap<>();
                         rfsProps.put("serviceStatus", "Active");
                         rfsProps.put("serviceType", request.getProductType());
                         r.setProperties(rfsProps);
-                        r.setContainingCfs(cfs);
-                        rfsRepository.save(r, 2);
+                        r.addUsedService(cfs);
+                        serviceCustomRepository.save(r, 2);
                         return r;
                     });
 

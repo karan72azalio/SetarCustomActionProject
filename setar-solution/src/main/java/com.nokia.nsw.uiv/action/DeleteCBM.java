@@ -11,6 +11,7 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
+import com.nokia.nsw.uiv.model.service.*;
 import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
@@ -18,16 +19,12 @@ import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponent;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponentRepository;
-import com.nokia.nsw.uiv.model.service.ServiceRepository;
-import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
 import com.nokia.nsw.uiv.request.DeleteCBMRequest;
 import com.nokia.nsw.uiv.response.DeleteCBMResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,16 +48,13 @@ public class DeleteCBM implements HttpAction {
     private ProductCustomRepository productRepository;
 
     @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
-
-    @Autowired
     private ServiceRepository serviceRepository;
 
     @Autowired
     private CustomerCustomRepository subscriberRepository;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class getActionClass() {
@@ -86,7 +80,7 @@ public class DeleteCBM implements HttpAction {
             // serviceFlag was previously validated in your code; it's optional in spec — validate only if required.
         } catch (BadRequestException bre) {
             return new DeleteCBMResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
-                    java.time.Instant.now().toString(), "", "");
+                    Instant.now().toString(), "", "");
         }
 
         // 2. Construct names
@@ -100,15 +94,15 @@ public class DeleteCBM implements HttpAction {
         // 6. Validate CBM name length early
         if (cbmName.length() > 100) {
             return new DeleteCBMResponse("400", ERROR_PREFIX + "CBM name too long",
-                    java.time.Instant.now().toString(), cbmName, subscriptionName);
+                    Instant.now().toString(), cbmName, subscriptionName);
         }
 
         try {
             Optional<LogicalDevice> optCbmDevice = Optional.empty();
             Optional<Subscription> optSubscription = Optional.empty();
             Optional<Product> optProduct = Optional.empty();
-            Optional<CustomerFacingService> optCfs = Optional.empty();
-            Optional<ResourceFacingService> optRfs = Optional.empty();
+            Optional<Service> optCfs = Optional.empty();
+            Optional<Service> optRfs = Optional.empty();
             int subscriptionCount = 0;
 
 
@@ -145,14 +139,14 @@ public class DeleteCBM implements HttpAction {
                         log.error("CBM device required to derive subscriber name for non-IPTV product but CBM not found: {}", cbmName);
                         // If CBM required, return or continue depending on business decision.
                         return new DeleteCBMResponse("404", ERROR_PREFIX + "No entry found for delete",
-                                java.time.Instant.now().toString(), cbmName, subscriptionName);
+                                Instant.now().toString(), cbmName, subscriptionName);
                     }
                     LogicalDevice cbm = optCbmDevice.get();
                     Object macObj = cbm.getProperties() != null ? cbm.getProperties().get("macAddress") : null;
                     if (macObj == null) {
                         log.error("CBM {} has no macAddress property", cbmName);
                         return new DeleteCBMResponse("400", ERROR_PREFIX + "CBM missing macAddress",
-                                java.time.Instant.now().toString(), cbmName, subscriptionName);
+                                Instant.now().toString(), cbmName, subscriptionName);
                     }
                     String cbmMacAddr = macObj.toString();
                     String macWithoutColons = cbmMacAddr.replaceAll(":", "");
@@ -190,13 +184,13 @@ public class DeleteCBM implements HttpAction {
             }
 
             try {
-                optCfs = cfsRepository.findByDiscoveredName(cfsName);
+                optCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
             } catch (Exception e) {
                 log.error("Error fetching CFS {}", cfsName, e);
             }
 
             try {
-                optRfs = rfsRepository.findByDiscoveredName(rfsName);
+                optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
                 if (!optRfs.isPresent()) {
                     log.error("RFS {} not found; continuing but skipping RFS-specific updates", rfsName);
                 }
@@ -293,7 +287,7 @@ public class DeleteCBM implements HttpAction {
 
             // --- 8. Reset and Update RFS-Linked Resources ---
             if (optRfs.isPresent()) {
-                ResourceFacingService setarRFS = optRfs.get();
+                Service setarRFS = optRfs.get();
                 if (setarRFS.getUsedResource() != null) {
                     setarRFS.getUsedResource().forEach(resource -> {
                         try {
@@ -334,7 +328,7 @@ public class DeleteCBM implements HttpAction {
                 }
                 // Delete RFS after resources processed
                 try {
-                    rfsRepository.delete(setarRFS);
+                    serviceCustomRepository.delete(setarRFS);
                     log.error("Deleted RFS {}", rfsName);
                 } catch (Exception e) {
                     log.error("Error deleting RFS {}", rfsName, e);
@@ -357,7 +351,7 @@ public class DeleteCBM implements HttpAction {
             }
 
             try {
-                optCfs.ifPresent(cfsRepository::delete);
+                optCfs.ifPresent(serviceCustomRepository::delete);
             } catch (Exception e) {
                 log.error("Error deleting CFS {}", cfsName, e);
             }
@@ -384,7 +378,7 @@ public class DeleteCBM implements HttpAction {
             }
             log.error(Constants.ACTION_COMPLETED);
             // --- 11. Return success response ---
-            return new DeleteCBMResponse("200", "CBM objects Deleted", java.time.Instant.now().toString(),
+            return new DeleteCBMResponse("200", "CBM objects Deleted", Instant.now().toString(),
                     cbmName, subscriptionName);
 
         } catch (Exception e) {

@@ -5,14 +5,13 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.Resource;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
-import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
+import com.nokia.nsw.uiv.repository.ServiceCustomRepository;
 import com.nokia.nsw.uiv.request.AssociateResourcesRequest;
 import com.nokia.nsw.uiv.response.AssociateResourcesResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 
@@ -36,7 +35,7 @@ public class AssociateResources implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action AssociateResources execution failed - ";
 
     @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository deviceRepository;
@@ -98,7 +97,7 @@ public class AssociateResources implements HttpAction {
 
             // Step 3: Retrieve RFS and Admin State
             log.error("----Trace #4: Retrieving RFS and AdminState ----");
-            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (!optRfs.isPresent()) {
                 return new AssociateResourcesResponse(
                         "404",
@@ -107,7 +106,7 @@ public class AssociateResources implements HttpAction {
                         ""
                 );
             }
-            ResourceFacingService rfs = optRfs.get();
+            Service rfs = optRfs.get();
             // Step 4: IPTV logic
             boolean deviceUpdated = false;
             if ("IPTV".equalsIgnoreCase(request.getProductSubType())) {
@@ -218,10 +217,10 @@ public class AssociateResources implements HttpAction {
 
             // Step 7: Persist RFS changes
             if (deviceUpdated) {
-                rfs = rfsRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                rfs = serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
                 Map<String,Object> rfsProps = rfs.getProperties();
                 rfsProps.put("transactionId",request.getFxOrderID());
-                rfsRepository.save(rfs,2);
+                serviceCustomRepository.save(rfs,2);
                 log.error("----Trace #9: Saving RFS changes ----");
                 log.error(Constants.ACTION_COMPLETED);
                 return new AssociateResourcesResponse(

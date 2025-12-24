@@ -196,7 +196,9 @@ public class CreateServiceFibernet implements HttpAction {
                 productRepository.save(product, 2);
                 log.error("Created product: {}", productName);
             }
-
+            if(isSubscriptionExist.get()){
+                subscription = subscriptionRepository.findByDiscoveredName(subscriptionName).get();
+            }
             subscription.addService(product);
             subscriptionRepository.save(subscription, 2);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){

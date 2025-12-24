@@ -7,6 +7,7 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 
@@ -15,15 +16,13 @@ import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 
 import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
 import com.nokia.nsw.uiv.repository.LogicalDeviceCustomRepository;
-import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
+import com.nokia.nsw.uiv.repository.ServiceCustomRepository;
 import com.nokia.nsw.uiv.repository.SubscriptionCustomRepository;
 import com.nokia.nsw.uiv.request.ChangeStateRequest;
 import com.nokia.nsw.uiv.response.ChangeStateResponse;
 
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -44,7 +43,7 @@ public class ChangeState implements HttpAction {
     private SubscriptionCustomRepository subscriptionRepository;
 
     @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository logicalDeviceCustomRepository;
@@ -127,7 +126,7 @@ public class ChangeState implements HttpAction {
         try {
 
             Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             Optional<LogicalDevice> optOnt = Optional.empty();
             Optional<LogicalDevice> optCbm = Optional.empty();
 
@@ -155,7 +154,7 @@ public class ChangeState implements HttpAction {
             }
 
             Subscription subscription = optSubscription.get();
-            ResourceFacingService rfs = optRfs.get();
+            Service rfs = optRfs.get();
 
             // 5. Perform state change
             String actionType = req.getActionType().trim();
@@ -183,7 +182,7 @@ public class ChangeState implements HttpAction {
 
             // Persist changes
             subscriptionRepository.save(subscription, 2);
-            rfsRepository.save(rfs, 2);
+            serviceCustomRepository.save(rfs, 2);
 
             // Also persist ONT/CBM if we located and want to reflect state (optional)
 //            if (optOnt.isPresent()) {

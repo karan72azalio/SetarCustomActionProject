@@ -4,13 +4,12 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
-import com.nokia.nsw.uiv.repository.ResourceFacingServiceCustomRepository;
+import com.nokia.nsw.uiv.model.service.Service;
+import com.nokia.nsw.uiv.repository.ServiceCustomRepository;
 import com.nokia.nsw.uiv.request.QueryAllEquipmentRequest;
 import com.nokia.nsw.uiv.response.QueryAllEquipmentResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +30,7 @@ public class QueryAllEquipment implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action QueryAllEquipment execution failed - ";
 
     @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -68,7 +67,7 @@ public class QueryAllEquipment implements HttpAction {
             String rfsName = "RFS" + Constants.UNDER_SCORE + request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId();
 
             // Step 4: Fetch RFS
-            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (!optRfs.isPresent()) {
                 return new QueryAllEquipmentResponse(
                         "404",
@@ -80,7 +79,7 @@ public class QueryAllEquipment implements HttpAction {
                         null, null, null, null,null,null,null,null
                 );
             }
-            ResourceFacingService rfs = optRfs.get();
+            Service rfs = optRfs.get();
 
             boolean successFlag = false;
             int stbCounter = 1;

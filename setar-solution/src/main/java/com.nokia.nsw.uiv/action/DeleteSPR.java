@@ -26,6 +26,8 @@ import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 
 
 import com.nokia.nsw.uiv.model.resource.logical.*;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 
@@ -35,7 +37,6 @@ import com.nokia.nsw.uiv.response.DeleteSPRResponse;
 
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -56,10 +57,9 @@ public class DeleteSPR implements HttpAction {
     @Autowired private CustomerCustomRepository customerRepository;
     @Autowired private SubscriptionCustomRepository subscriptionRepository;
     @Autowired private ProductCustomRepository productRepository;
-    @Autowired private CustomerFacingServiceCustomRepository cfsRepository;
-    @Autowired private ResourceFacingServiceCustomRepository rfsRepository;
     @Autowired private LogicalDeviceCustomRepository logicalDeviceRepository;
     @Autowired private LogicalInterfaceCustomRepository logicalInterfaceRepository;
+    @Autowired private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -136,8 +136,8 @@ public class DeleteSPR implements HttpAction {
             // -----------------------------
             Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
             Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
-            Optional<CustomerFacingService> optCfs = cfsRepository.findByDiscoveredName(cfsName);
-            Optional<ResourceFacingService> optRfs = rfsRepository.findByDiscoveredName(rfsName);
+            Optional<Service> optCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
+            Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             Optional<LogicalDevice> optOnt = logicalDeviceRepository.findByDiscoveredName(ontName);
 
             // From ONT, try to retrieve parent OLT (if your data model links it via "parent" or property)
@@ -492,22 +492,25 @@ public class DeleteSPR implements HttpAction {
         safeSaveLogicalDevice(cpe);
     }
 
-    private void cleanupServiceObjects(Optional<ResourceFacingService> optRfs,
-                                       Optional<CustomerFacingService> optCfs,
+    private void cleanupServiceObjects(Optional<Service> optRfs,
+                                       Optional<Service> optCfs,
                                        Optional<Product> optProduct,
                                        Optional<Subscription> optSubscription) {
 
         // Remove RFS
-        optRfs.ifPresent(rfsRepository::delete);
+        optRfs.ifPresent(serviceCustomRepository::delete);
 
         // Remove CFS
-        optCfs.ifPresent(cfsRepository::delete);
-
-        // Remove Product (we cannot check attached CFS count generically here; delete directly as per requirement note)
-        optProduct.ifPresent(productRepository::delete);
+        optCfs.ifPresent(serviceCustomRepository::delete);
 
         // Remove Subscription
         optSubscription.ifPresent(subscriptionRepository::delete);
+        // Remove Product (we cannot check attached CFS count generically here; delete directly as per requirement note)
+        Service tempProduct = productRepository.findByDiscoveredName(optProduct.get().getDiscoveredName()).get();
+        Set<Service> connectedCFSs = tempProduct.getUsedService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_CFS)).collect(Collectors.toSet());
+        if(connectedCFSs.size()==0){
+            optProduct.ifPresent(productRepository::delete);
+        }
     }
 
     private int countSubscriptionsByCustomer(Customer customer) {

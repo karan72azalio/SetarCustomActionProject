@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.AssociateResourcesRequest;
 import com.nokia.nsw.uiv.request.ChangeTechnologyRequest;
@@ -17,17 +18,7 @@ import com.nokia.nsw.uiv.utils.Validations;
 
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.ResourceFacingService;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-
-import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
-import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
-import com.setar.uiv.model.product.ProductRepository;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,10 +49,7 @@ public class ChangeTechnology implements HttpAction {
     private ProductCustomRepository productRepo;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepo;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepo;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository logicalDeviceRepo;
@@ -194,24 +182,24 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 6. Update existing CFS (if exists)
-            Optional<CustomerFacingService> maybeCfs = cfsRepo.findByDiscoveredName(cfsName);
+            Optional<Service> maybeCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
             if (maybeCfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
-                CustomerFacingService cfs = maybeCfs.get();
+                Service cfs = maybeCfs.get();
                 cfs.setDiscoveredName(cfs.getLocalName() + Constants.UNDER_SCORE  + ontSN);
                 if (fxOrderId != null) {
                     Map<String, Object> p = cfs.getProperties() != null ? cfs.getProperties() : new HashMap<>();
                     p.put("transactionId", fxOrderId);
                     cfs.setProperties(p);
                 }
-                cfsRepo.save(cfs);
+                serviceCustomRepository.save(cfs);
             }
 
             // 7. Update existing RFS (if exists)
-            Optional<ResourceFacingService> maybeRfs = rfsRepo.findByDiscoveredName(rfsName);
+            Optional<Service> maybeRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (maybeRfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
-                ResourceFacingService rfs = maybeRfs.get();
+                Service rfs = maybeRfs.get();
                 rfs.setDiscoveredName(rfs.getName() + Constants.UNDER_SCORE  + ontSN);
-                rfsRepo.save(rfs);
+                serviceCustomRepository.save(rfs);
             }
 
             // 8. Prepare OLT device (create if missing)

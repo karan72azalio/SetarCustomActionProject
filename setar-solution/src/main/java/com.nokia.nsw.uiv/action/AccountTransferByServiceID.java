@@ -6,18 +6,14 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.AccountTransferByServiceIDRequest;
 import com.nokia.nsw.uiv.response.AccountTransferByServiceIDResponse;
 
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.common.party.Customer;
@@ -30,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Component
 @RestController
@@ -39,12 +37,11 @@ public class AccountTransferByServiceID implements HttpAction {
     protected static final String ACTION_LABEL = Constants.ACCOUNT_TRANSFER_BY_SERVICE_ID;
     private static final String ERROR_PREFIX = "UIV action AccountTransferByServiceID execution failed - ";
 
-    @Autowired private CustomerFacingServiceCustomRepository cfsRepo;
-    @Autowired private ResourceFacingServiceCustomRepository rfsRepo;
     @Autowired private SubscriptionCustomRepository subsRepo;
     @Autowired private ProductCustomRepository prodRepo;
     @Autowired private CustomerCustomRepository custRepo;
     @Autowired private LogicalDeviceCustomRepository cbmDeviceRepository;
+    @Autowired private ServiceCustomRepository serviceRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -69,13 +66,13 @@ public class AccountTransferByServiceID implements HttpAction {
             String oldSubscriberName = req.getSubscriberNameOld();
             String subscriberName = req.getSubscriberName();
             // Step 2: Search for CFS containing old subscriber and service ID
-            Iterable<CustomerFacingService> cfsList1 = cfsRepo.findAll();
-            List<CustomerFacingService> cfsList = new ArrayList<>();
-            for(CustomerFacingService cfs:cfsList1)
+            List<Service> serviceList = StreamSupport
+                    .stream(serviceRepository.findAll().spliterator(), false).filter(service->service.getDiscoveredName().contains(Constants.CFS))
+                    .collect(Collectors.toList());
+            List<Service> cfsList = new ArrayList<>();
+            for(Service cfs:serviceList)
             {
-                Product p = cfs.getContainingProduct();
-                p = prodRepo.findByDiscoveredName(p.getDiscoveredName()).get();
-                if(p.getCustomer().getDiscoveredName().contains(oldSubscriberName))
+                if(cfs.getDiscoveredName().contains(oldSubscriberName))
                 {
                     log.error("Cfs found containing oldSuscriberName: "+cfs.getDiscoveredName());
                     cfsList.add(cfs);
@@ -91,19 +88,20 @@ public class AccountTransferByServiceID implements HttpAction {
             boolean updated = false;
             Product childProd = null;
             Subscription childSubs = null;
-            CustomerFacingService childCfs = null;
-            ResourceFacingService childRfs = null;
+            Service childCfs = null;
+            Service childRfs = null;
             LogicalDevice childDevice = null;
 
             // Step 3: Iterate matching CFS
-            for (CustomerFacingService cfs : cfsList) {
+            for (Service cfs : cfsList) {
                 String cfsName = cfs.getDiscoveredName();
                 String rfsName = cfsName.replace("CFS", "RFS");
-                Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
-                ResourceFacingService rfs = rfsOpt.get();
-                Product prod = cfs.getContainingProduct();
+                Optional<Service> rfsOpt = serviceRepository.findByDiscoveredName(rfsName);
+                Service rfs = rfsOpt.get();
+//                Product prod = (Product)cfs.getUsingService().stream().findFirst().get();
+                Service prod = cfs.getUsingService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get();
                 prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
-                Subscription subs = prod.getSubscription();
+                Subscription subs = prod.getSubscription().stream().findFirst().get();
                 Customer oldCust = custRepo.findByDiscoveredName(oldSubscriberName).orElse(null);
 //                Customer oldCust1 = customerCustomRepository.findByDiscoveredName(oldSubscriberName);
 
@@ -128,7 +126,7 @@ public class AccountTransferByServiceID implements HttpAction {
                         prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
                         prod.setDiscoveredName(prod.getDiscoveredName().replace(oldSubscriberName,subscriberName));
                         log.error("Product updated: "+prod.getDiscoveredName());
-                        prodRepo.save(prod,2);
+                        serviceRepository.save(prod,2);
                     }
                     if(oldCust!=null){
                         oldCust = custRepo.findByDiscoveredName(oldCust.getDiscoveredName()).get();
@@ -173,20 +171,20 @@ public class AccountTransferByServiceID implements HttpAction {
                         prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
                         prod.setDiscoveredName(prod.getDiscoveredName().replace(oldSubscriberName,subscriberName));
                         log.error("Product updated: "+prod.getDiscoveredName());
-                        prodRepo.save(prod,2);
+                        serviceRepository.save(prod,2);
                     }
                 }
                 if(cfs!=null){
-                    cfs = cfsRepo.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                    cfs = serviceRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
                     cfs.setDiscoveredName(cfs.getDiscoveredName().replace(oldSubscriberName,subscriberName));
                     log.error("CFS updated: "+cfs.getDiscoveredName());
-                    cfsRepo.save(cfs,2);
+                    serviceRepository.save(cfs,2);
                 }
                 if(rfs!=null){
-                    rfs = rfsRepo.findByDiscoveredName(rfs.getDiscoveredName()).get();
+                    rfs = serviceRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
                     rfs.setDiscoveredName(rfs.getDiscoveredName().replace(oldSubscriberName,subscriberName));
                     log.error("RFS updated: "+rfs.getDiscoveredName());
-                    rfsRepo.save(rfs,2);
+                    serviceRepository.save(rfs,2);
                 }
                 updated = true;
             }

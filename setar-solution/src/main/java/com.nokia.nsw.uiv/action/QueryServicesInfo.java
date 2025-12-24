@@ -8,14 +8,14 @@ import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryServicesInfoRequest;
 import com.nokia.nsw.uiv.response.QueryServicesInfoResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ResourceFacingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -41,16 +41,16 @@ public class QueryServicesInfo implements HttpAction {
     private ProductCustomRepository productRepository;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepository;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepository;
+    private ServiceCustomRepository cfsRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Autowired
     private LogicalInterfaceCustomRepository logicalInterfaceRepository;
+
+    @Autowired
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -73,16 +73,16 @@ public class QueryServicesInfo implements HttpAction {
             log.error("QueryServicesInfo start: subscriberName='{}', ontSN='{}'", accno, ontSN);
 
             // 2) Find initial candidate services
-            List<ResourceFacingService> setarsRFS = new ArrayList<>();
+            List<Service> setarsRFS = new ArrayList<>();
             boolean isAccno = false;
-            ResourceFacingService iptvrfsname = null; // candidate to add later
+            Service iptvrfsname = null; // candidate to add later
 
             if (accno != null && !accno.trim().isEmpty()) {
                 isAccno = true;
                 log.debug("Searching RFS by subscriber/account number '{}'", accno);
-                List<ResourceFacingService> resourceFacingServices = (List<ResourceFacingService>) rfsRepository.findAll();
+                List<Service> resourceFacingServices = (List<Service>) serviceCustomRepository.findAll();
                 if(!resourceFacingServices.isEmpty()){
-                    for(ResourceFacingService rfs:resourceFacingServices)
+                    for(Service rfs:resourceFacingServices)
                     {
                         if(rfs.getDiscoveredName().contains(accno))
                         {
@@ -94,10 +94,10 @@ public class QueryServicesInfo implements HttpAction {
             } else {
                 // ontSN branch
                 log.debug("Searching RFS by ontSN '{}'", ontSN);
-                List<ResourceFacingService> rfsByOnt = new ArrayList<>();
-                List<ResourceFacingService> resourceFacingServicesONT = (List<ResourceFacingService>) rfsRepository.findAll();
+                List<Service> rfsByOnt = new ArrayList<>();
+                List<Service> resourceFacingServicesONT = (List<Service>) serviceCustomRepository.findAll();
                 if(!resourceFacingServicesONT.isEmpty()){
-                    for(ResourceFacingService rfs:resourceFacingServicesONT)
+                    for(Service rfs:resourceFacingServicesONT)
                     {
                         if(rfs.getDiscoveredName().contains(ontSN))
                         {
@@ -114,10 +114,10 @@ public class QueryServicesInfo implements HttpAction {
                             String[] parts = rfsName2.split(Constants.UNDER_SCORE , -1);
                             if (parts.length >= 2) {
                                 String anchorAccNo = parts[1];
-                                List<ResourceFacingService> candidates = new ArrayList<>();
-                                List<ResourceFacingService> resourceFacingServicesCand = (List<ResourceFacingService>) rfsRepository.findAll();
+                                List<Service> candidates = new ArrayList<>();
+                                List<Service> resourceFacingServicesCand = (List<Service>) serviceCustomRepository.findAll();
                                 if(!resourceFacingServicesCand.isEmpty()){
-                                    for(ResourceFacingService rfs:resourceFacingServicesCand)
+                                    for(Service rfs:resourceFacingServicesCand)
                                     {
                                         if(rfs.getDiscoveredName().contains(anchorAccNo))
                                         {
@@ -128,7 +128,7 @@ public class QueryServicesInfo implements HttpAction {
                                 if (candidates != null && !candidates.isEmpty()) {
                                     // iptvrfsname = last candidate whose Name does NOT contain ontSN
                                     for (int i = candidates.size() - 1; i >= 0; i--) {
-                                        ResourceFacingService c = candidates.get(i);
+                                        Service c = candidates.get(i);
                                         if (c.getDiscoveredName() == null || !c.getDiscoveredName().contains(ontSN)) {
                                             iptvrfsname = c;
                                             break;
@@ -142,7 +142,7 @@ public class QueryServicesInfo implements HttpAction {
             }
 
             // 3) Decide which services to process
-            List<ResourceFacingService> setarRFSs = new ArrayList<>();
+            List<Service> setarRFSs = new ArrayList<>();
             if (setarsRFS != null && !setarsRFS.isEmpty()) setarRFSs.addAll(setarsRFS);
             if (iptvrfsname != null) setarRFSs.add(iptvrfsname);
 
@@ -157,7 +157,7 @@ public class QueryServicesInfo implements HttpAction {
             Map<String, Object> allvalues = new LinkedHashMap<>();
 
             // 5) For each service
-            for (ResourceFacingService rfs : setarRFSs) {
+            for (Service rfs : setarRFSs) {
                 try {
                     String rfsnameget = rfs.getDiscoveredName() == null ? "" : rfs.getDiscoveredName();
                     String serviceType = rfs.getProperties().get("ServiceTypeName") == null ? "" : rfs.getProperties().get("ServiceTypeName").toString();

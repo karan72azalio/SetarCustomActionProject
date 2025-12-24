@@ -4,18 +4,13 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifyServiceIdRequest;
 import com.nokia.nsw.uiv.response.ModifyServiceIdResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.model.common.party.Customer;
@@ -38,10 +33,7 @@ public class ModifyServiceId implements HttpAction {
     private static final String ERROR_PREFIX = "UIV action ModifyServiceId execution failed - ";
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepo;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepo;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private ProductCustomRepository productRepo;
@@ -89,9 +81,9 @@ public class ModifyServiceId implements HttpAction {
             log.error("------------Test Trace # 3--------------- old=" + oldServiceId + ", new=" + newServiceId);
 
             // 2. Locate CFS candidates
-            List<CustomerFacingService> cfsList1 = (List<CustomerFacingService>) cfsRepo.findAll();
-            List<CustomerFacingService> cfsList = new ArrayList<>();
-            for(CustomerFacingService cfs:cfsList1)
+            List<Service> cfsList1 = (List<Service>) serviceCustomRepository.findAll();
+            List<Service> cfsList = new ArrayList<>();
+            for(Service cfs:cfsList1)
             {
                 if(cfs.getDiscoveredName().contains(oldServiceId))
                 {
@@ -100,7 +92,7 @@ public class ModifyServiceId implements HttpAction {
             }
             log.error("------------Test Trace # 4--------------- Found CFS candidates: " + cfsList.size());
 
-            for (CustomerFacingService cfs : cfsList) {
+            for (Service cfs : cfsList) {
                 String cfsName = cfs.getDiscoveredName();
 
                 // Matching Rule A/B
@@ -127,16 +119,17 @@ public class ModifyServiceId implements HttpAction {
 
                 // Locate RFS
                 String rfsName = cfsName.replace("CFS", "RFS");
-                Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
+                Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
 
                 // Retrieve product
-                Optional<Product> productOpt =productRepo.findByDiscoveredName(cfs.getContainingProduct().getDiscoveredName()); // adjust association
+                String productDiscoveredName = cfs.getUsedService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                Optional<Product> productOpt =productRepo.findByDiscoveredName(productDiscoveredName); // adjust association
                 Optional<Subscription> subsOpt = Optional.empty();
                 Optional<Customer> custOpt = Optional.empty();
 
                 if (productOpt.isPresent()) {
                     Product prod = productOpt.get();
-                    subsOpt = Optional.of(prod.getSubscription());
+                    subsOpt = prod.getSubscription().stream().findFirst();
                     subsOpt = subscriptionRepo.findByDiscoveredName(subsOpt.get().getDiscoveredName());
                             // adjust association
                     custOpt = Optional.of(subsOpt.get().getCustomer()); // adjust association
@@ -185,7 +178,7 @@ public class ModifyServiceId implements HttpAction {
 
                 // Update RFS + resources
                 if (rfsOpt.isPresent()) {
-                    ResourceFacingService rfs = rfsRepo.findByDiscoveredName(rfsOpt.get().getDiscoveredName()).get();
+                    Service rfs = serviceCustomRepository.findByDiscoveredName(rfsOpt.get().getDiscoveredName()).get();
 
                     rfs.getUsedResource().forEach(res -> {
                         if (res instanceof LogicalDevice) {
@@ -215,17 +208,17 @@ public class ModifyServiceId implements HttpAction {
 
                     String newRfsName = rfs.getDiscoveredName().replace(oldServiceId, newServiceId);
                     rfs.setDiscoveredName(newRfsName);
-                    rfsRepo.save(rfs);
+                    serviceCustomRepository.save(rfs);
                     updatesApplied = true;
                     log.error("------------Test Trace # 11--------------- RFS updated: " + newRfsName);
                 }
 
                 // Update CFS
-                cfs = cfsRepo.findByDiscoveredName(cfs.getDiscoveredName()).get();
+                cfs = serviceCustomRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
                 String newCfsName = cfs.getDiscoveredName().replace(oldServiceId, newServiceId);
                 cfs.setDiscoveredName(newCfsName);
                 log.error("CFS updated successfully with the updated name: "+newCfsName);
-                cfsRepo.save(cfs);
+                serviceCustomRepository.save(cfs);
                 updatesApplied = true;
                 log.error("------------Test Trace # 12--------------- CFS updated: " + newCfsName);
             }

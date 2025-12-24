@@ -3,6 +3,7 @@ package com.nokia.nsw.uiv.action;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ChangeTechnologyVoiceRequest;
 import com.nokia.nsw.uiv.response.ChangeTechnologyVoiceResponse;
@@ -12,13 +13,6 @@ import com.nokia.nsw.uiv.utils.Validations;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
-import com.setar.uiv.model.product.Product;
-import com.setar.uiv.model.product.ProductRepository;
-import com.setar.uiv.model.product.CustomerFacingService;
-import com.setar.uiv.model.product.CustomerFacingServiceRepository;
-import com.setar.uiv.model.product.ResourceFacingService;
-import com.setar.uiv.model.product.ResourceFacingServiceRepository;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 
@@ -50,10 +44,7 @@ public class ChangeTechnologyVoice implements HttpAction {
     private ProductCustomRepository productRepo;
 
     @Autowired
-    private CustomerFacingServiceCustomRepository cfsRepo;
-
-    @Autowired
-    private ResourceFacingServiceCustomRepository rfsRepo;
+    private ServiceCustomRepository serviceCustomRepository;
 
     @Autowired
     private LogicalDeviceCustomRepository logicalDeviceRepo;
@@ -203,9 +194,9 @@ public class ChangeTechnologyVoice implements HttpAction {
             // 6. Update CFS (if exists)
             log.error("------------Test Trace # 18--------------- Checking CFS: " + cfsName);
             String cfsGdn = Validations.getGlobalName(cfsName);
-            Optional<CustomerFacingService> cfsOpt = cfsRepo.findByDiscoveredName(cfsName);
+            Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);
             if (cfsOpt.isPresent()) {
-                CustomerFacingService cfs = cfsOpt.get();
+                Service cfs = cfsOpt.get();
                 String newCfsName = cfs.getLocalName() + Constants.UNDER_SCORE  + req.getOntSN();
                 cfs.setDiscoveredName(newCfsName);
                 if (req.getFxOrderId() != null && !req.getFxOrderId().trim().isEmpty()) {
@@ -213,7 +204,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                     cfsProps.put("transactionId", req.getFxOrderId());
                     cfs.setProperties(cfsProps);
                 }
-                cfsRepo.save(cfs);
+                serviceCustomRepository.save(cfs);
                 log.error("------------Test Trace # 19--------------- CFS renamed/saved: " + newCfsName);
             } else {
                 log.error("------------Test Trace # 20--------------- CFS not found: " + cfsName);
@@ -221,12 +212,12 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             // 7. Update RFS (if exists)
             log.error("------------Test Trace # 21--------------- Checking RFS: " + rfsName);
-            Optional<ResourceFacingService> rfsOpt = rfsRepo.findByDiscoveredName(rfsName);
+            Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (rfsOpt.isPresent()) {
-                ResourceFacingService rfs = rfsOpt.get();
+                Service rfs = rfsOpt.get();
                 String newRfsName = rfs.getLocalName() + Constants.UNDER_SCORE  + req.getOntSN();
                 rfs.setDiscoveredName(newRfsName);
-                rfsRepo.save(rfs);
+                serviceCustomRepository.save(rfs);
                 log.error("------------Test Trace # 22--------------- RFS renamed/saved: " + newRfsName);
             } else {
                 log.error("------------Test Trace # 23--------------- RFS not found: " + rfsName);
