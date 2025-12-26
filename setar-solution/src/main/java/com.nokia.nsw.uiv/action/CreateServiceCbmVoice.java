@@ -25,10 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -253,8 +250,8 @@ public class CreateServiceCbmVoice implements HttpAction {
                         productRepository.save(p, 2);
                         return p;
                     });
-            subscription.addService(product);
-            subscriptionRepository.save(subscription,2);
+            subscription.setService(new HashSet<>(List.of(product)));
+            subscriptionRepository.save(subscription, 2);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceCbmVoice service already exist");
                 return new CreateServiceCbmVoiceResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,cbmName);
@@ -273,7 +270,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                             throw new RuntimeException(e);
                         }
-                        c.addUsingService(product);
+
                         Map<String, Object> cfsProps = new HashMap<>();
                         cfsProps.put("serviceStatus", "Active");
                         cfsProps.put("serviceType", request.getProductType());
@@ -281,6 +278,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         cfsProps.put("serviceStartDate", Instant.now().toString());
                         if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
                         c.setProperties(cfsProps);
+                        c.setUsingService(new HashSet<>(List.of(product)));
                         serviceCustomRepository.save(c, 2);
                         return c;
                     });
@@ -301,7 +299,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         rfsProps.put("serviceStatus", "Active");
                         rfsProps.put("serviceType", request.getProductType());
                         r.setProperties(rfsProps);
-                        r.addUsedService(cfs);
+                        r.setUsedService(new HashSet<>(List.of(cfs)));
                         serviceCustomRepository.save(r, 2);
                         return r;
                     });
@@ -327,7 +325,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         if (request.getCbmModel() != null) deviceProps.put("deviceModel", request.getCbmModel());
                         deviceProps.put("operationalState", "Active");
                         d.setProperties(deviceProps);
-                        d.addUsingService(rfs);
+                        d.setContainedservice(new HashSet<>(List.of(rfs)));
                         cbmDeviceRepository.save(d, 2);
                         return d;
                     });
