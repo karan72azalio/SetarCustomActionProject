@@ -191,7 +191,7 @@ public class CreateServiceEVPN implements HttpAction {
             if(subscriptionOpt.isPresent()){
                 subscription = subscriptionOpt.get();
             }else{
-                isSubscriptionExist.set(true);
+                isSubscriptionExist.set(false);
                 log.error("------------Trace # 9--------------- Creating subscription: " + subscriptionName);
                 Subscription subs = new Subscription();
                 try {
@@ -246,7 +246,7 @@ public class CreateServiceEVPN implements HttpAction {
             if(productOpt.isPresent()){
                 product = productOpt.get();
             }else{
-                isProductExist.set(true);
+                isProductExist.set(false);
                 log.error("------------Trace # 10--------------- Creating product: " + productNameStr);
                 Product prod = new Product();
                 try {

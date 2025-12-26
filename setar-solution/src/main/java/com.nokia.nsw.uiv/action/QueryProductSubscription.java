@@ -92,8 +92,7 @@ public class QueryProductSubscription implements HttpAction {
             }
 
         } catch (BadRequestException bre) {
-            String msg = "UIV action QueryProductSubscription execution failed - Missing mandatory parameter : " + bre.getMessage();
-            return new QueryProductSubscriptionResponse("400", msg,
+            return new QueryProductSubscriptionResponse("400",bre.getMessage(),
                     java.time.Instant.now().toString(), "", "");
         } catch (Exception ex) {
             log.error("Unhandled exception during QueryProductSubscription", ex);

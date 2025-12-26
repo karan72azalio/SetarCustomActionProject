@@ -281,13 +281,12 @@ public class ModifySPR implements HttpAction {
             subscription.getProperties().put("serviceSN",request.getModifyParam1());
             subscriptionRepository.save(subscription,2);
         }
-        Set<Service> services = ont.getUsingService();
+        Set<Service> services = ont.getContainedservice();
         for(Service s:services){
             Optional<Customer> setarSubscriber1 = Optional.empty();
             String subscriberNewName="";
             try{
-                if(s instanceof Service){
-                    Service rfs = (Service) s;
+                    Service rfs = s;
                     String[] rfsNameArray = rfs.getDiscoveredName().split("_");
                     String subscriber = rfsNameArray[1];
                     String subscriberNameForOnt = subscriber + Constants.UNDER_SCORE +request.getOntSN();
@@ -305,7 +304,7 @@ public class ModifySPR implements HttpAction {
                         String serviceSubType = subs.getProperties().get("serviceSubType")!=null?subs.getProperties().get("serviceSubType").toString():"";
                         if((serviceSubType.equalsIgnoreCase("Bridged") && request.getOntModel().contains("XS-2426G-B"))){
 
-                            LogicalDevice oltDevice = ontDevice.get().getManagingDevices().stream().findFirst().get();
+                            LogicalDevice oltDevice = (LogicalDevice) ontDevice.get().getUsedResource().stream().findFirst().get();
                             oltDevice = logicalCustomDeviceRepository.findByDiscoveredName(oltDevice.getDiscoveredName()).get();
                             oltDevice.getProperties().put("veipServiceTemplate",request.getTemplateNameVEIP());
                             oltDevice.getProperties().put("veipHsiTemplate",request.getTemplateNameVLAN());
@@ -377,8 +376,6 @@ public class ModifySPR implements HttpAction {
 
                         }
                     }
-
-                }
                 try{
                     Optional<LogicalDevice> cpeDeviceOldOpt =  logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getOntSN());
                     Optional<LogicalDevice> cpeDeviceNewOpt =  logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getModifyParam1());

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Action
@@ -311,7 +312,7 @@ public class QueryServicesInfo implements HttpAction {
                                     nameONT = optOnt.get();
                                     // try retrieving the OLT device via containing/managing relationships
                                     // assume nameONT.getManagingDevices() returns list or properties contain oltPosition
-                                    Set<LogicalDevice> mng =  nameONT.getManagingDevices();
+                                    Set<LogicalDevice> mng =  nameONT.getUsedResource().stream().map(res->(LogicalDevice)res).collect(Collectors.toSet());
                                     if (mng != null && !mng.isEmpty()) {
                                         for(LogicalDevice device:mng){
                                             oltDevice = device;

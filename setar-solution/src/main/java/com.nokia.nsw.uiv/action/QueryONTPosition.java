@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RestController
@@ -91,7 +92,7 @@ public class QueryONTPosition implements HttpAction {
             LogicalDevice ont = ontOpt.get();
             log.error("------------Trace # 7--------------- ONT found, checking linked OLT");
 
-            Set<LogicalDevice> managingDevices =  ont.getManagingDevices();
+            Set<LogicalDevice> managingDevices =  ont.getUsedResource().stream().map(r->(LogicalDevice)r).collect(Collectors.toSet());
             LogicalDevice olt = managingDevices.stream().findFirst().get();
             if (olt == null) {
                 log.error("------------Trace # 8--------------- No OLT linked to ONT=" + ontName);

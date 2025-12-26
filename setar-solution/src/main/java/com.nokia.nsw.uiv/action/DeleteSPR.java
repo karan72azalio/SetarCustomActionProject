@@ -38,6 +38,7 @@ import com.nokia.nsw.uiv.response.DeleteSPRResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.bsd.RLoginClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
@@ -144,7 +145,7 @@ public class DeleteSPR implements HttpAction {
             Optional<LogicalDevice> optOlt = Optional.empty();
             if (optOnt.isPresent()) {
                 LogicalDevice ont = optOnt.get();
-                optOlt = ont.getManagingDevices().stream().findFirst();
+                optOlt = ont.getUsedResource().stream().map(r->(LogicalDevice)r).findFirst();
             }
             // Attempt to retrieve a CPE device named"ONT" + ontSN (optional)
             String optCpeName="ONT" + req.getOntSN();

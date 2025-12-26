@@ -95,7 +95,7 @@ public class DeleteIPTV implements HttpAction {
 
 
             LogicalDevice olt = optOnt
-                    .map(ont -> ont.getManagingDevices().stream().findFirst().orElse(null))
+                    .map(ont -> (LogicalDevice)ont.getUsedResource().stream().findFirst().orElse(null))
                     .orElse(null);
 
 
