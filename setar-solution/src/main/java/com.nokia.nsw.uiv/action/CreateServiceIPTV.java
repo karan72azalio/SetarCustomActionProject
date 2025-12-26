@@ -29,9 +29,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -113,7 +111,6 @@ public class CreateServiceIPTV implements HttpAction {
             if (optSubscriber.isPresent()) {
                 subscriber = optSubscriber.get();
                 log.error("Subscriber already exists: {}", subscriberName);
-                return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry", Instant.now().toString(),subscriberName,ontName);
             } else {
                 isSubscriberExist.set(false);
                 subscriber = new Customer();
@@ -193,7 +190,14 @@ public class CreateServiceIPTV implements HttpAction {
                 productRepository.save(product, 2);
                 log.error("Created Product: {}", productName);
             }
-            subscription.addService(product);
+            if(isSubscriptionExist.get()){
+                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                Set<Service> existingServices = subscription.getService();
+                existingServices.add(product);
+                subscription.setService(existingServices);
+            }else{
+                subscription.setService(new HashSet<>(List.of(product)));
+            }
             subscriptionRepository.save(subscription,2);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceCbmVoice service already exist");
@@ -220,7 +224,7 @@ public class CreateServiceIPTV implements HttpAction {
                 cfsProps.put("serviceType", request.getProductType());
 
                 cfs.setProperties(cfsProps);
-                cfs.addUsingService(product);
+                cfs.setUsedService(new HashSet<>(List.of(product)));
                 serviceCustomRepository.save(cfs, 2);
                 log.error("Created CFS: {}", cfsName);
             }
@@ -243,7 +247,7 @@ public class CreateServiceIPTV implements HttpAction {
                 rfsProps.put("serviceType", request.getProductType());
 
                 rfs.setProperties(rfsProps);
-                rfs.addUsedService(cfs);
+                rfs.setUsedService(new HashSet<>(List.of(cfs)));
                 serviceCustomRepository.save(rfs, 2);
                 log.error("Created RFS: {}", rfsName);
             }
@@ -273,7 +277,7 @@ public class CreateServiceIPTV implements HttpAction {
                 oltProps.put("igmpTemplate", request.getTemplateNameIGMP());
 
                 oltDevice.setProperties(oltProps);
-                oltDevice.addContainedservice(rfs);
+                oltDevice.setContainedservice(new HashSet<>(List.of(rfs)));
                 logicalDeviceRepository.save(oltDevice, 2);
                 log.error("Created OLT Device: {}", request.getOltName());
             }
@@ -297,8 +301,8 @@ public class CreateServiceIPTV implements HttpAction {
                 ontProps.put("OperationalState", "Active");
                 ontProps.put("iptvVlan", request.getVlanID());
                 ontDevice.setProperties(ontProps);
-                ontDevice.addContainedservice(rfs);
-                ontDevice.addUsedResource(oltDevice);
+                ontDevice.setContainedservice(new HashSet<>(List.of(rfs)));
+                ontDevice.setUsedResource(new HashSet<>(List.of(oltDevice)));
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Created ONT Device: {}", ontName);
             }

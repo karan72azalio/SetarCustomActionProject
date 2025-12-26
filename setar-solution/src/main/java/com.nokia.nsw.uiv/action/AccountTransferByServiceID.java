@@ -99,8 +99,8 @@ public class AccountTransferByServiceID implements HttpAction {
                 Optional<Service> rfsOpt = serviceRepository.findByDiscoveredName(rfsName);
                 Service rfs = rfsOpt.get();
 //                Product prod = (Product)cfs.getUsingService().stream().findFirst().get();
-                Service prod = cfs.getUsingService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get();
-                prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
+                String productDiscName  = cfs.getUsedService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                Product prod = prodRepo.findByDiscoveredName(productDiscName).get();
                 Subscription subs = prod.getSubscription().stream().findFirst().get();
                 Customer oldCust = custRepo.findByDiscoveredName(oldSubscriberName).orElse(null);
 //                Customer oldCust1 = customerCustomRepository.findByDiscoveredName(oldSubscriberName);
@@ -126,7 +126,7 @@ public class AccountTransferByServiceID implements HttpAction {
                         prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
                         prod.setDiscoveredName(prod.getDiscoveredName().replace(oldSubscriberName,subscriberName));
                         log.error("Product updated: "+prod.getDiscoveredName());
-                        serviceRepository.save(prod,2);
+                        prodRepo.save(prod,2);
                     }
                     if(oldCust!=null){
                         oldCust = custRepo.findByDiscoveredName(oldCust.getDiscoveredName()).get();

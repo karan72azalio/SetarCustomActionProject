@@ -8,6 +8,7 @@ import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.service.Product;
+import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.CustomerCustomRepository;
 import com.nokia.nsw.uiv.repository.ProductCustomRepository;
@@ -22,9 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -160,14 +159,15 @@ public class CreateProductSubscription implements HttpAction {
                 productRepository.save(product, 2);
                 log.error("Created new product: {}", productName);
             }
-            try {
-                subscription.addService(product);
-                subscriptionRepository.save(subscription,2);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            if(isSubscriptionExist.get()){
+                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                Set<Service> existingServices = subscription.getService();
+                existingServices.add(product);
+                subscription.setService(existingServices);
+            }else{
+                subscription.setService(new HashSet<>(List.of(product)));
             }
-
-
+            subscriptionRepository.save(subscription, 2);
             if (isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()) {
                 log.error("createServiceEVPN service already exist");
                 return new CreateProductSubscriptionResponse("409", "Service already exist/Duplicate entry", Instant.now().toString(), subscriptionName, productName);

@@ -19,10 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -214,7 +211,20 @@ public class CreateServiceCBM implements HttpAction {
                     productRepository.save(p, 2);
                     return p;
                 });
-        subscription.addService(product);
+
+        product.setCustomer(subscriber);
+        productRepository.save(product, 2);
+
+//        subscription.addService(product);
+//        subscriptionRepository.save(subscription, 2);
+        if(isSubscriptionExist.get()){
+            subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+            Set<Service> existingServices = subscription.getService();
+            existingServices.add(product);
+            subscription.setService(existingServices);
+        }else{
+            subscription.setService(new HashSet<>(List.of(product)));
+        }
         subscriptionRepository.save(subscription, 2);
         if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
             log.error("creatServiceCBM service already exist");
@@ -244,7 +254,9 @@ public class CreateServiceCBM implements HttpAction {
                     }
                     prop.put("startDate",new Date());
                     c.setProperties(prop);
-                    c.addUsingService(product);
+//                    c.addUsingService(product);
+//                    serviceRepository.save(c, 2);
+                    c.setUsingService(new HashSet<>(List.of(product)));
                     serviceRepository.save(c, 2);
                     return c;
                 });
@@ -272,7 +284,8 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("serviceType",request.getProductType());
                     prop.put("CFSReference",cfs.getDiscoveredName());
                     r.setProperties(prop);
-                    r.addUsedService(cfs);
+//                    r.addUsedService(cfs);
+                    r.setUsedService(new HashSet<>(List.of(cfs)));
                     serviceRepository.save(r, 2);
                     return r;
                 });
@@ -297,7 +310,8 @@ public class CreateServiceCBM implements HttpAction {
                     deviceProps.put("deviceModel", request.getCbmModel());
                     deviceProps.put("OperationalState", "Active");
                     d.setProperties(deviceProps);
-                    d.addContainedservice(rfs);
+//                    d.addContainedservice(rfs);
+                    d.setContainedservice(new HashSet<>(List.of(rfs)));
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });

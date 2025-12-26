@@ -28,8 +28,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -219,7 +218,14 @@ public class CreateServiceVoIP implements HttpAction {
                         prod.setCustomer(subscriber);
                         return productRepo.save(prod);
                     });
-            subscription.addService(product);
+            if(isSubscriptionExist.get()){
+                subscription = subscriptionRepo.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                Set<Service> existingServices = subscription.getService();
+                existingServices.add(product);
+                subscription.setService(existingServices);
+            }else{
+                subscription.setService(new HashSet<>(List.of(product)));
+            }
             subscriptionRepo.save(subscription,2);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceCbmVoice service already exist");
@@ -242,7 +248,7 @@ public class CreateServiceVoIP implements HttpAction {
                         cfsProps.put("cfsStatus", "Active");
                         cfsProps.put("cfsType", req.getProductType());
                         newCfs.setProperties(cfsProps);
-                        newCfs.addUsingService(product);
+                        newCfs.setUsingService(new HashSet<>(List.of(product)));
                         return serviceCustomRepository.save(newCfs);
                     });
 
@@ -263,7 +269,7 @@ public class CreateServiceVoIP implements HttpAction {
                         rfsProps.put("rfsStatus", "Active");
                         rfsProps.put("rfsType", req.getProductType());
                         newRfs.setProperties(rfsProps);
-                        newRfs.addUsingService(cfs);
+                        newRfs.setUsingService(new HashSet<>(List.of(cfs)));
                         return serviceCustomRepository.save(newRfs);
                     });
 
@@ -296,7 +302,7 @@ public class CreateServiceVoIP implements HttpAction {
                         oltProps.put("oltPosition", req.getOltName());
                         oltProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(oltProps);
-                        dev.addContainedservice(rfs);
+                        dev.setContainedservice(new HashSet<>(List.of(rfs)));
                         return logicalDeviceRepo.save(dev);
                     });
 
@@ -319,7 +325,7 @@ public class CreateServiceVoIP implements HttpAction {
                         ontProps.put("oltPosition", req.getOltName());
                         ontProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(ontProps);
-                        dev.addUsedResource(olt);
+                        dev.setUsedResource(new HashSet<>(List.of(olt)));
                         dev.addContainedservice(rfs);
                         return logicalDeviceRepo.save(dev);
                     });

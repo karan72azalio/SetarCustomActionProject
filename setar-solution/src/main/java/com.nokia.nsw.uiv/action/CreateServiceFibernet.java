@@ -20,9 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
@@ -197,9 +195,13 @@ public class CreateServiceFibernet implements HttpAction {
                 log.error("Created product: {}", productName);
             }
             if(isSubscriptionExist.get()){
-                subscription = subscriptionRepository.findByDiscoveredName(subscriptionName).get();
+                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                Set<Service> existingServices = subscription.getService();
+                existingServices.add(product);
+                subscription.setService(existingServices);
+            }else{
+                subscription.setService(new HashSet<>(List.of(product)));
             }
-            subscription.addService(product);
             subscriptionRepository.save(subscription, 2);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceEVPN service already exist");
@@ -223,7 +225,7 @@ public class CreateServiceFibernet implements HttpAction {
                 cfsProps.put("cfsType", request.getProductType());
                 cfsProps.put("cfsStatus", "Active");
                 if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
-                cfs.addUsingService(product);
+                cfs.setUsingService(new HashSet<>(List.of(product)));
                 serviceRepository.save(cfs, 2);
                 log.error("Created CFS: {}", cfsName);
             }
@@ -245,7 +247,7 @@ public class CreateServiceFibernet implements HttpAction {
                 rfsProps.put("rfsStatus", "Active");
 //                if (request.getFxOrderID() != null) rfsProps.put("transactionId", request.getFxOrderID());
                 rfs.setProperties(rfsProps);
-                rfs.addUsedService(cfs);
+                rfs.setUsedService(new HashSet<>(List.of(cfs)));
                 serviceRepository.save(rfs, 2);
                 log.error("Created RFS: {}", rfsName);
             }
@@ -269,7 +271,7 @@ public class CreateServiceFibernet implements HttpAction {
                     props.put("position", request.getOltName());
                     props.put("OperationalState", "Active");
                     oltDevice.setProperties(props);
-                    oltDevice.addContainedservice(rfs);
+                    oltDevice.setContainedservice(new HashSet<>(List.of(rfs)));
                     logicalDeviceRepository.save(oltDevice, 2);
                     log.error("Created OLT device: {}", oltName);
                 }
@@ -290,7 +292,7 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
 //                Set<Service> used = new HashSet<>();
 //                used.add(rfs);
-                ontDevice.addContainedservice(rfs);
+                ontDevice.setContainedservice(new HashSet<>(List.of(rfs)));
                 ontDevice.setProperties(ontProps);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Found existing ONT: {}", ontName);
@@ -309,13 +311,13 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getMenm() != null) ontProps.put("description", request.getMenm());
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
 
-                ontDevice.addContainedservice(rfs);
+                ontDevice.setContainedservice(new HashSet<>(List.of(rfs)));
                 ontDevice.setProperties(ontProps);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Created ONT device: {}", ontName);
             }
 
-            ontDevice.addUsedResource(oltDevice);
+            ontDevice.setUsedResource(new HashSet<>(List.of(oltDevice)));
             logicalDeviceRepository.save(ontDevice, 2);
 
             // 9. VLAN interface (LogicalInterface) creation if needed
@@ -338,7 +340,7 @@ public class CreateServiceFibernet implements HttpAction {
                     logicalInterfaceRepository.save(vlan, 2);
                     log.error("Created VLAN interface: {}", vlanName);
                     if (oltDevice != null) {
-                        oltDevice.addContainedinterface(vlan);
+                        oltDevice.setContainedinterface(new HashSet<>(List.of(vlan)));
                         logicalDeviceRepository.save(oltDevice);
                     }
 

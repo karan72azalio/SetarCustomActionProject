@@ -29,9 +29,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -188,51 +186,54 @@ public class CreateServiceEVPN implements HttpAction {
                         return customerRepo.save(newSub);
                     });
             // 4) Subscription: find or create (properties map)
-            Subscription subscription = subscriptionRepo.findByDiscoveredName(subscriptionName)
-                    .orElseGet(() -> {
-                        isSubscriptionExist.set(true);
-                        log.error("------------Trace # 9--------------- Creating subscription: " + subscriptionName);
-                        Subscription subs = new Subscription();
-                        try {
-                            subs.setLocalName(Validations.encryptName(subscriptionName));
-                            subs.setDiscoveredName(subscriptionName);
-                            subs.setContext("Setar");
-                            subs.setKind("SetarSubscription");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String,Object> subsProps = new HashMap<>();
-                        subsProps.put("subscriptionStatus", "Active");
-                        subsProps.put("serviceSubtype", req.getProductSubtype());
-                        if (req.getQosProfile() != null) subsProps.put("evpnQosProfile", req.getQosProfile());
-                        if (req.getOntPort() != null) subsProps.put("evpnPort", req.getOntPort());
-                        if (req.getTemplateNameVlanCreate() != null) subsProps.put("evpnTemplateCreate", req.getTemplateNameVlanCreate());
-                        if (req.getTemplateNameVlan() != null) subsProps.put("evpnTemplateVLAN", req.getTemplateNameVlan());
-                        if (req.getTemplateNameVpls() != null) subsProps.put("evpnTemplateVPLS", req.getTemplateNameVpls());
-                        if (req.getVlanId() != null) subsProps.put("evpnVLAN", req.getVlanId());
-                        subsProps.put("serviceId", req.getServiceId());
-                        subsProps.put("householdId", req.getHhid());
-                        subsProps.put("serviceLink", ("IPBH".equalsIgnoreCase(req.getProductSubtype()) ? "SRX" : "ONT"));
-                        // compute OLT position string per spec
-                        String oltPos;
-                        String p = req.getOntPort();
-                        if ("5".equals(p)) {
-                            oltPos = req.getOltName() + "-10-5";
-                        } else {
-                            // default fallback
-                            String portVal = (p == null ? "1" : p);
-                            oltPos = req.getOltName() + "-1-" + portVal;
-                        }
-                        subsProps.put("oltPosition", oltPos);
-                        subsProps.put("kenanSubscriberId", req.getKenanUidNo());
-                        subsProps.put("subscriberIdCbm", req.getSubscriberId());
-                        subs.setProperties(subsProps);
-                        subs.setCustomer(subscriber);
-                        // association to subscriber (store link name so external process can link)
-                        subsProps.put("linkedSubscriber", subscriber.getLocalName());
-                        return subscriptionRepo.save(subs,2);
-                    });
-
+            Optional<Subscription> subscriptionOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
+            Subscription subscription = null;
+            if(subscriptionOpt.isPresent()){
+                subscription = subscriptionOpt.get();
+            }else{
+                isSubscriptionExist.set(true);
+                log.error("------------Trace # 9--------------- Creating subscription: " + subscriptionName);
+                Subscription subs = new Subscription();
+                try {
+                    subs.setLocalName(Validations.encryptName(subscriptionName));
+                    subs.setDiscoveredName(subscriptionName);
+                    subs.setContext("Setar");
+                    subs.setKind("SetarSubscription");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String,Object> subsProps = new HashMap<>();
+                subsProps.put("subscriptionStatus", "Active");
+                subsProps.put("serviceSubtype", req.getProductSubtype());
+                if (req.getQosProfile() != null) subsProps.put("evpnQosProfile", req.getQosProfile());
+                if (req.getOntPort() != null) subsProps.put("evpnPort", req.getOntPort());
+                if (req.getTemplateNameVlanCreate() != null) subsProps.put("evpnTemplateCreate", req.getTemplateNameVlanCreate());
+                if (req.getTemplateNameVlan() != null) subsProps.put("evpnTemplateVLAN", req.getTemplateNameVlan());
+                if (req.getTemplateNameVpls() != null) subsProps.put("evpnTemplateVPLS", req.getTemplateNameVpls());
+                if (req.getVlanId() != null) subsProps.put("evpnVLAN", req.getVlanId());
+                subsProps.put("serviceId", req.getServiceId());
+                subsProps.put("householdId", req.getHhid());
+                subsProps.put("serviceLink", ("IPBH".equalsIgnoreCase(req.getProductSubtype()) ? "SRX" : "ONT"));
+                // compute OLT position string per spec
+                String oltPos;
+                String p = req.getOntPort();
+                if ("5".equals(p)) {
+                    oltPos = req.getOltName() + "-10-5";
+                } else {
+                    // default fallback
+                    String portVal = (p == null ? "1" : p);
+                    oltPos = req.getOltName() + "-1-" + portVal;
+                }
+                subsProps.put("oltPosition", oltPos);
+                subsProps.put("kenanSubscriberId", req.getKenanUidNo());
+                subsProps.put("subscriberIdCbm", req.getSubscriberId());
+                subs.setProperties(subsProps);
+                subs.setCustomer(subscriber);
+                // association to subscriber (store link name so external process can link)
+                subsProps.put("linkedSubscriber", subscriber.getLocalName());
+                subscription = subs;
+                subscriptionRepo.save(subs,2);
+            }
             // ensure we keep subscriber-subscription link when we didn't create subs
             if (!subscription.getProperties().containsKey("linkedSubscriber")) {
                 subscription.getProperties().put("linkedSubscriber", subscriber.getLocalName());
@@ -240,29 +241,40 @@ public class CreateServiceEVPN implements HttpAction {
             }
 
             // 5) Product: find or create (properties map)
-            Product product = productRepo.findByDiscoveredName(productNameStr)
-                    .orElseGet(() -> {
-                        isProductExist.set(true);
-                        log.error("------------Trace # 10--------------- Creating product: " + productNameStr);
-                        Product prod = new Product();
-                        try {
-                            prod.setLocalName(Validations.encryptName(productNameStr));
-                            prod.setDiscoveredName(productNameStr);
-                            prod.setContext("Setar");
-                            prod.setKind("SetarProduct");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String,Object> prodProps = new HashMap<>();
-                        prodProps.put("productType", req.getProductType());
-                        prodProps.put("productStatus", "Active");
-                        prodProps.put("linkedSubscriber", subscriber.getLocalName());
-                        prodProps.put("linkedSubscription", subscription.getLocalName());
-                        prod.setProperties(prodProps);
-                        prod.setCustomer(subscriber);
-                        return productRepo.save(prod,2);
-                    });
-            subscription.addService(product);
+            Optional<Product> productOpt = productRepo.findByDiscoveredName(productNameStr);
+            Product product = null;
+            if(productOpt.isPresent()){
+                product = productOpt.get();
+            }else{
+                isProductExist.set(true);
+                log.error("------------Trace # 10--------------- Creating product: " + productNameStr);
+                Product prod = new Product();
+                try {
+                    prod.setLocalName(Validations.encryptName(productNameStr));
+                    prod.setDiscoveredName(productNameStr);
+                    prod.setContext("Setar");
+                    prod.setKind("SetarProduct");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String,Object> prodProps = new HashMap<>();
+                prodProps.put("productType", req.getProductType());
+                prodProps.put("productStatus", "Active");
+                prodProps.put("linkedSubscriber", subscriber.getLocalName());
+                prodProps.put("linkedSubscription", subscription.getLocalName());
+                prod.setProperties(prodProps);
+                prod.setCustomer(subscriber);
+                product = prod;
+                productRepo.save(prod,2);
+            }
+            if(isSubscriptionExist.get()){
+                subscription = subscriptionRepo.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                Set<Service> existingServices = subscription.getService();
+                existingServices.add(product);
+                subscription.setService(existingServices);
+            }else{
+                subscription.setService(new HashSet<>(List.of(product)));
+            }
             subscriptionRepo.save(subscription);
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceEVPN service already exist");
@@ -270,74 +282,86 @@ public class CreateServiceEVPN implements HttpAction {
             }
 
             // 6) CFS: find or create (properties map)
-            Service cfs = serviceCustomRepository.findByDiscoveredName(cfsName)
-                    .orElseGet(() -> {
-                        log.error("------------Trace # 11--------------- Creating CFS: " + cfsName);
-                        Service newCfs = new Service();
-                        try {
-                            newCfs.setLocalName(Validations.encryptName(cfsName));
-                            newCfs.setDiscoveredName(cfsName);
-                            newCfs.setContext("Setar");
-                            newCfs.setKind("SetarCFS");
-                        }catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String,Object> cfsProps = new HashMap<>();
-                        cfsProps.put("serviceStatus", "Active");
-                        cfsProps.put("serviceType", req.getProductType());
-                        cfsProps.put("cfsType",req.getProductSubtype());
-                        cfsProps.put("serviceStartDate", Instant.now().toString());
-                        if (req.getFxOrderID() != null) cfsProps.put("transactionId", req.getFxOrderID());
-                        cfsProps.put("linkedProduct", product.getLocalName());
-                        newCfs.setProperties(cfsProps);
-                        newCfs.addUsingService(product);
-                        return serviceCustomRepository.save(newCfs,2);
-                    });
+            Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);
+            Service cfs = null;
+            if(cfsOpt.isPresent()){
+                cfs = cfsOpt.get();
+            }else{
+                log.error("------------Trace # 11--------------- Creating CFS: " + cfsName);
+                Service newCfs = new Service();
+                try {
+                    newCfs.setLocalName(Validations.encryptName(cfsName));
+                    newCfs.setDiscoveredName(cfsName);
+                    newCfs.setContext("Setar");
+                    newCfs.setKind("SetarCFS");
+                }catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String,Object> cfsProps = new HashMap<>();
+                cfsProps.put("serviceStatus", "Active");
+                cfsProps.put("serviceType", req.getProductType());
+                cfsProps.put("cfsType",req.getProductSubtype());
+                cfsProps.put("serviceStartDate", Instant.now().toString());
+                if (req.getFxOrderID() != null) cfsProps.put("transactionId", req.getFxOrderID());
+                cfsProps.put("linkedProduct", product.getLocalName());
+                newCfs.setProperties(cfsProps);
+                newCfs.addUsingService(product);
+                cfs=newCfs;
+                serviceCustomRepository.save(newCfs,2);
+            }
 
             // 7) RFS: find or create (properties map)
-            Service rfs = serviceCustomRepository.findByDiscoveredName(rfsName)
-                    .orElseGet(() -> {
-                        log.error("------------Trace # 12--------------- Creating RFS: " + rfsName);
-                        Service newRfs = new Service();
-                        try {
-                            newRfs.setLocalName(Validations.encryptName(rfsName));
-                            newRfs.setDiscoveredName(rfsName);
-                            newRfs.setContext("Setar");
-                            newRfs.setKind("SetarRFS");
-                        }catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String,Object> rfsProps = new HashMap<>();
-                        rfsProps.put("rfsStatus", "Active");
-                        rfsProps.put("rfsType", req.getProductType());
-                        rfsProps.put("linkedCFS", cfs.getLocalName());
-                        newRfs.addUsedService(cfs);
-                        return serviceCustomRepository.save(newRfs);
-                    });
+            Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
+            Service rfs = null;
+            if(rfsOpt.isPresent()){
+                rfs = rfsOpt.get();
+            }else{
+                log.error("------------Trace # 12--------------- Creating RFS: " + rfsName);
+                Service newRfs = new Service();
+                try {
+                    newRfs.setLocalName(Validations.encryptName(rfsName));
+                    newRfs.setDiscoveredName(rfsName);
+                    newRfs.setContext("Setar");
+                    newRfs.setKind("SetarRFS");
+                }catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String,Object> rfsProps = new HashMap<>();
+                rfsProps.put("rfsStatus", "Active");
+                rfsProps.put("rfsType", req.getProductType());
+                rfsProps.put("linkedCFS", cfs.getLocalName());
+                newRfs.addUsedService(cfs);
+                rfs = newRfs;
+                serviceCustomRepository.save(newRfs);
+            }
 
             // 8) OLT: find or create
-            LogicalDevice olt = logicalDeviceRepo.findByDiscoveredName(req.getOltName())
-                    .orElseGet(() -> {
-                        log.error("------------Trace # 13--------------- Creating OLT: " + req.getOltName());
-                        LogicalDevice dev = new LogicalDevice();
-                        try {
-                            dev.setLocalName(Validations.encryptName(req.getOltName()));
-                            dev.setDiscoveredName(req.getOltName());
-                            dev.setContext("Setar");
-                            dev.setKind("OLTDevice");
-                        }catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String,Object> oltProps = new HashMap<>();
-                        oltProps.put("operationalState", "Active");
-                        oltProps.put("oltPosition", req.getOltName());
-                        if (req.getTemplateNameOnt() != null) oltProps.put("ontTemplate", req.getTemplateNameOnt());
-                        dev.setProperties(oltProps);
-                        // link RFS reference if exists
-                        dev.getProperties().put("linkedRFS", rfs.getLocalName());
-                        dev.addContainedservice(rfs);
-                        return logicalDeviceRepo.save(dev,2);
-                    });
+            Optional<LogicalDevice> oltOpt = logicalDeviceRepo.findByDiscoveredName(req.getOltName());
+            LogicalDevice olt = null;
+            if(oltOpt.isPresent()){
+                olt = oltOpt.get();
+            }else{
+                log.error("------------Trace # 13--------------- Creating OLT: " + req.getOltName());
+                LogicalDevice dev = new LogicalDevice();
+                try {
+                    dev.setLocalName(Validations.encryptName(req.getOltName()));
+                    dev.setDiscoveredName(req.getOltName());
+                    dev.setContext("Setar");
+                    dev.setKind("OLTDevice");
+                }catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String,Object> oltProps = new HashMap<>();
+                oltProps.put("operationalState", "Active");
+                oltProps.put("oltPosition", req.getOltName());
+                if (req.getTemplateNameOnt() != null) oltProps.put("ontTemplate", req.getTemplateNameOnt());
+                dev.setProperties(oltProps);
+                // link RFS reference if exists
+                dev.getProperties().put("linkedRFS", rfs.getLocalName());
+                dev.addContainedservice(rfs);
+                olt =dev;
+                logicalDeviceRepo.save(dev,2);
+            }
 
             // 9) ONT: find or create, manage EVPN counters
             LogicalDevice ont = null;
