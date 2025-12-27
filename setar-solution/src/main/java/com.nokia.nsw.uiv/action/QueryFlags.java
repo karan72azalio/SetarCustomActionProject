@@ -876,38 +876,100 @@ public class QueryFlags implements HttpAction {
 
 
             log.error("------------Test Trace # 13---------------");
-            if (Arrays.asList("AccountTransfer", "MoveOut", "ChangeTechnology", "Unconfigure").contains(actionType) || (actionType != null && actionType.contains("Modify_CPE"))) {
+            log.error("------------Test Trace # 13---------------");
+            if (Arrays.asList("AccountTransfer", "MoveOut", "ChangeTechnology", "Unconfigure")
+                    .contains(actionType)
+                    || (actionType != null && actionType.contains("Modify_CPE"))) {
+
                 log.error("Trace: IPTV service ID list discovery path");
+
                 List<String> iptvIds = new ArrayList<>();
+
                 if ("ONT".equalsIgnoreCase(serviceLink)) {
+
+                    log.error("Trace: IPTV discovery using subscriber + serviceSN (ONT path)");
+
                     for (Subscription s : subscriptionRepository.findAll()) {
+                        if (iptvIds.size() >= 5) break;
+
+                        if (s.getDiscoveredName() == null ||
+                                !s.getDiscoveredName().contains(subscriber)) {
+                            continue;   // must belong to same subscriber
+                        }
+
                         Map<String, Object> p = safeProps(s.getProperties());
-                        if ("IPTV".equalsIgnoreCase((String) p.getOrDefault("serviceSubType", ""))) {
-                            Object sid = p.get("serviceID");
-                            if (sid != null) iptvIds.add(sid.toString());
+
+                        // must be IPTV
+                        if (!"IPTV".equalsIgnoreCase(
+                                (String) p.getOrDefault("serviceSubType", ""))) {
+                            continue;
+                        }
+
+                        // match by serviceSN
+                        Object sn = p.get("serviceSN");
+                        if (sn == null || sn.toString().isEmpty()) continue;
+
+                        if (!sn.toString().equalsIgnoreCase(
+                                flags.getOrDefault("SERVICE_SN", ontSN))) {
+                            continue;
+                        }
+
+                        Object sid = p.get("serviceID");
+                        if (sid != null && !sid.toString().isEmpty()) {
+                            iptvIds.add(sid.toString());
+                            log.error("Trace: IPTV ID added (ONT path) = {}", sid);
                         }
                     }
-                } else {
+                }
+                else {
                     String cbmMac = flags.getOrDefault("CBM_MAC", "");
+
                     if (cbmMac != null && !cbmMac.isEmpty()) {
+
                         for (Subscription s : subscriptionRepository.findAll()) {
+                            if (iptvIds.size() >= 5) break;   // limit to 5
+
                             Map<String, Object> p = safeProps(s.getProperties());
-                            if ("IPTV".equalsIgnoreCase((String) p.getOrDefault("serviceSubType", "")) && cbmMac.equals(p.getOrDefault("macAddress", ""))) {
+
+                            if ("IPTV".equalsIgnoreCase(
+                                    (String) p.getOrDefault("serviceSubType", "")) &&
+                                    cbmMac.equals(p.getOrDefault("macAddress", ""))) {
+
                                 Object sid = p.get("serviceID");
-                                if (sid != null) iptvIds.add(sid.toString());
+                                if (sid != null && !sid.toString().isEmpty()) {
+                                    iptvIds.add(sid.toString());
+                                }
                             }
                         }
-                        String cbmGdn = "CBM" + Constants.UNDER_SCORE +cbmMac;
+
+                        String cbmGdn = "CBM" + Constants.UNDER_SCORE + cbmMac;
+
                         deviceRepository.findByDiscoveredName(cbmGdn).ifPresent(cpe -> {
                             Map<String, Object> cp = safeProps(cpe.getProperties());
-                            flags.put("RESOURCE_MAC_MTA_OLD", (String) cp.getOrDefault("macAddressMta", ""));
-                            flags.put("RESOURCE_MODEL_MTA_OLD", (String) cp.getOrDefault("deviceModelMta", ""));
+                            flags.put("RESOURCE_MAC_MTA_OLD",
+                                    (String) cp.getOrDefault("macAddressMta", ""));
+                            flags.put("RESOURCE_MODEL_MTA_OLD",
+                                    (String) cp.getOrDefault("deviceModelMta", ""));
                         });
                     }
                 }
+
+                // ===== STORE INDEXED IPTV IDS =====
+                for (int i = 0; i < 5; i++) {
+                    String key = "IPTV_SERVICE_ID" + (i + 1);
+
+                    if (i < iptvIds.size()) {
+                        flags.put(key, iptvIds.get(i));
+                    } else {
+                        flags.put(key, "");   // ensure always present
+                    }
+                }
+
                 flags.put("IPTV_COUNT", String.valueOf(iptvIds.size()));
+
                 log.error("Trace: IPTV IDs discovered count = " + iptvIds.size());
             }
+
 
             log.error("------------Test Trace # 14---------------");
             if ((equalsAnyIgnoreCase(productType, "EVPN", "ENTERPRISE") || equalsAnyIgnoreCase(productSubType, "Cloudstarter", "Bridged"))
@@ -931,6 +993,275 @@ public class QueryFlags implements HttpAction {
                     } else if ("2".equals(ontPort)) {
                         flags.put("SERVICE_TEMPLATE_PORT", "New");
                     }
+                }
+                // ---------- CASE A : ADD RFS SINGLE CHECK ----------
+                int rfsCountForOnt = 0;
+                for (Service rfs : serviceCustomRepository.findAll()) {
+                    if (rfs.getDiscoveredName() != null &&
+                            rfs.getDiscoveredName().contains(ontSN)) {
+                        rfsCountForOnt++;
+                    }
+                }
+                flags.put("SERVICE_RFS_SINGLE", rfsCountForOnt == 1 ? "YES" : "NO");
+
+// ---------- CASE A : WIFI Maintenance check for port 3/4/5 ----------
+                if (equalsAnyIgnoreCase(ontPort,"3","4","5")) {
+                    String wifiFlag = "NO";
+
+                    for (Subscription s : subscriptionRepository.findAll()) {
+                        Map<String,Object> sp = safeProps(s.getProperties());
+
+                        if ("WIFI Maintenance".equalsIgnoreCase(
+                                (String) sp.getOrDefault("serviceSubType","")) &&
+                                ontSN.equals(sp.getOrDefault("serviceSN",""))) {
+
+                            wifiFlag = "YES";
+                            break;
+                        }
+                    }
+
+                    flags.put("SERVICE_EVPN_WIFIM_FIRST", wifiFlag);
+                }
+
+// ---------- CASE A : CARD TEMPLATE SELECTION ----------
+                if (ontSN != null) {
+
+                    String ontGdn = "ONT" + ontSN;
+                    Optional<LogicalDevice> optOnt = deviceRepository.findByDiscoveredName(ontGdn);
+
+                    if (optOnt.isPresent()) {
+
+                        Map<String,Object> ontProps = safeProps(optOnt.get().getProperties());
+                        Object parentOlt = ontProps.get("parentOlt");
+
+                        if (parentOlt != null) {
+
+                            Optional<LogicalDevice> optOlt = deviceRepository.findByDiscoveredName(parentOlt.toString());
+
+                            if (optOlt.isPresent()) {
+
+                                Map<String,Object> oltProps = safeProps(optOlt.get().getProperties());
+
+                                String evpnOntPort = (ontPort == null ? "" : ontPort.trim());
+
+                                Object cardTemplate =
+                                        "5".equals(evpnOntPort)
+                                                ? oltProps.get("oltCard5Template")
+                                                : oltProps.get("oltCardTemplate");
+
+                                flags.put("SERVICE_TEMPLATE_CARD", existsString(cardTemplate));
+                            }
+                        }
+                    }
+                }
+
+
+            }
+            // ======================= EVPN / ENTERPRISE Extended Logic =======================
+// ---------------------- Case B : UnconfigureIPBH + IPBH -------------------------
+            if ("UnconfigureIPBH".equalsIgnoreCase(actionType)
+                    && equalsIgnoreCase(productSubType, "IPBH")
+                    && subscriber != null
+                    && serviceID != null) {
+
+                log.error("Trace: Case-B UnconfigureIPBH + IPBH triggered");
+
+                try {
+                    String rfsName = "RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE + serviceID;
+
+                    Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
+                    if (optRfs.isPresent()) {
+
+                        Service rfs = optRfs.get();
+                        Set<Resource> usedRes = rfs.getUsedResource();
+
+                        if (usedRes != null) {
+                            for (Resource res : usedRes) {
+                                if (res.getDiscoveredName() != null
+                                        && res.getDiscoveredName().contains("ONT")) {
+
+                                    Map<String, Object> rp = safeProps(res.getProperties());
+
+                                    ontSN = (String) rp.getOrDefault("serialNo", ontSN);
+
+                                    flags.put("SERVICE_SN", (String) rp.getOrDefault("serialNo", ""));
+                                    flags.put("ONT_MODEL", (String) rp.getOrDefault("deviceModel", ""));
+                                    flags.put("SERVICE_LINK", "ONT");
+
+                                    break;
+                                }
+                            }
+                        }
+
+                        // derive subscription
+                        String subName1 = subscriber + Constants.UNDER_SCORE + serviceID;
+                        subscriptionRepository.findByDiscoveredName(subName1).ifPresent(sub -> {
+                            Map<String, Object> sp = safeProps(sub.getProperties());
+                            flags.put("SERVICE_LINK", (String) sp.getOrDefault("serviceLink", ""));
+                            flags.put("FIRST_NAME", (String) sp.getOrDefault("firstName", ""));
+                            flags.put("LAST_NAME", (String) sp.getOrDefault("lastName", ""));
+                        });
+                    }
+                } catch (Exception e) {
+                    log.error("Trace: Case-B failed {}", e.getMessage());
+                }
+            }
+            // ---------------------- Case C : Unconfigure EVPN / Enterprise ------------------
+            if ((containsIgnoreCase(productType, "EVPN") || containsIgnoreCase(productType, "ENTERPRISE"))
+                    && equalsIgnoreCase(actionType, "Unconfigure")
+                    && !equalsIgnoreCase(productSubType, "WIFI Maintenance")
+                    && ontSN != null) {
+
+                log.error("Trace: Case-C EVPN Unconfigure Non-WIFI flow triggered");
+
+                try {
+                    int rfsCount = 0;
+                    List<Service> rfsMatched = new ArrayList<>();
+
+                    for (Service rfs : serviceCustomRepository.findAll()) {
+                        if (rfs.getDiscoveredName() != null
+                                && rfs.getDiscoveredName().contains(ontSN)) {
+                            rfsMatched.add(rfs);
+                            rfsCount++;
+                        }
+                    }
+
+                    if (rfsCount == 2) {
+                        log.error("Trace: ONT has exactly 2 RFS - WIFI/MGMT scan starting");
+
+                        for (Service rfs : rfsMatched) {
+
+                            Service resolved = serviceCustomRepository
+                                    .findByDiscoveredName(rfs.getDiscoveredName())
+                                    .orElse(null);
+
+                            if (resolved == null) continue;
+
+                            Service cfs = resolved.getUsedService().stream().findFirst().orElse(null);
+                            if (cfs == null) continue;
+
+                            Product prod = productRepository
+                                    .findByDiscoveredName(
+                                            cfs.getUsedService().stream().findFirst().get().getDiscoveredName())
+                                    .orElse(null);
+                            if (prod == null) continue;
+
+                            Subscription sub = prod.getSubscription().stream().findFirst().orElse(null);
+                            if (sub == null) continue;
+
+                            Map<String, Object> sp = safeProps(sub.getProperties());
+
+                            String sType = (String) sp.getOrDefault("serviceSubType", "");
+
+                            if ("WIFI Maintenance".equalsIgnoreCase(sType)) {
+                                flags.put("SERVICE_EVPN_WIFIM_FIRST", "YES");
+                            }
+
+                            flags.put("SERVICE_ONT_PORT", (String) sp.getOrDefault("ontPort", ""));
+                            flags.put("SERVICE_LINK", (String) sp.getOrDefault("serviceLink", ""));
+                        }
+                    }
+
+                } catch (Exception e) {
+                    log.error("Trace: Case-C failed {}", e.getMessage());
+                }
+            }
+            // ---------------------- Case D : Non EVPN + Not Configure -----------------------
+            if (!(equalsIgnoreCase(productType, "EVPN") || equalsIgnoreCase(productType, "ENTERPRISE"))
+                    && (actionType == null || !actionType.contains("Configure"))
+                    && subscriber != null && serviceID != null && ontSN != null) {
+
+                log.error("Trace: Case-D Non-EVPN Not-Configure Triggered");
+
+                String subName1 = subscriber + Constants.UNDER_SCORE + serviceID + Constants.UNDER_SCORE + ontSN;
+
+                subscriptionRepository.findByDiscoveredName(subName1).ifPresent(sub -> {
+                    Map<String, Object> sp = safeProps(sub.getProperties());
+
+                    String evpnPort = (String) sp.getOrDefault("ontPort", "");
+                    flags.put("SERVICE_ONT_PORT", evpnPort);
+
+                    String vlan = (String) sp.getOrDefault("veipQosSessionProfile", "");
+                    flags.put("QOS_PROFILE", vlan);
+
+                    // ---------- CASE D MISSING LOGIC ----------
+                    if ("4".equals(flags.get("SERVICE_ONT_PORT"))) {
+                        flags.put("SERVICE_PORT4_EXIST","New");
+                    }
+                    if ("3".equals(flags.get("SERVICE_ONT_PORT"))) {
+                        flags.put("SERVICE_PORT3_EXIST","New");
+                    }
+                    if ("2".equals(flags.get("SERVICE_ONT_PORT"))) {
+                        flags.put("SERVICE_PORT2_EXIST","New");
+                    }
+
+                    String pp2 = flags.getOrDefault("SERVICE_PORT2_EXIST","New");
+                    String pp3 = flags.getOrDefault("SERVICE_PORT3_EXIST","New");
+                    String pp4 = flags.getOrDefault("SERVICE_PORT4_EXIST","New");
+
+                    flags.put("SERVICE_TEMPLATE_CARD",
+                            ("Exist".equals(pp2) || "Exist".equals(pp3) || "Exist".equals(pp4))
+                                    ? "Exist" : "New");
+
+                });
+            }
+            // ---------------------- Case E : Fallback Logic ---------------------------------
+            // ---------------------- Case E : Fallback Logic ---------------------------------
+            else {
+                log.error("Trace: Case-E Fallback executed");
+
+                try {
+                    if (ontSN != null) {
+
+                        String ontGdn = "ONT" + ontSN;
+
+                        deviceRepository.findByDiscoveredName(ontGdn).ifPresent(ont -> {
+
+                            Map<String, Object> ontProps = safeProps(ont.getProperties());
+                            Object parentOltObj = ontProps.get("parentOlt");
+
+                            if (parentOltObj != null) {
+
+                                String oltGdn = parentOltObj.toString();
+
+                                deviceRepository.findByDiscoveredName(oltGdn).ifPresent(olt -> {
+
+                                    Map<String, Object> oltProps = safeProps(olt.getProperties());
+
+                                    // Card template
+                                    flags.put("SERVICE_TEMPLATE_CARD",
+                                            existsString(oltProps.get("oltCardTemplate")));
+
+                                    // Only for Unconfigure case
+                                    if ("Unconfigure".equalsIgnoreCase(actionType)) {
+
+                                        flags.put("SERVICE_TEMPLATE_VEIP",
+                                                existsString(oltProps.get("veipServiceTemplate")));
+
+                                        flags.put("SERVICE_TEMPLATE_HSI",
+                                                existsString(oltProps.get("veipHsiTemplate")));
+
+                                        flags.put("SERVICE_TEMPLATE_VOIP",
+                                                existsString(oltProps.get("voipServiceTemplate")));
+
+                                        flags.put("SERVICE_TEMPLATE_POTS1",
+                                                existsString(oltProps.get("voipPots1Template")));
+
+                                        flags.put("SERVICE_TEMPLATE_POTS2",
+                                                existsString(oltProps.get("voipPots2Template")));
+
+                                        flags.put("SERVICE_TEMPLATE_IPTV",
+                                                existsString(oltProps.get("iptvServiceTemplate")));
+                                    }
+
+                                    log.error("Trace: Case-E fallback OLT template evaluation completed");
+                                });
+                            }
+                        });
+                    }
+
+                } catch (Exception e) {
+                    log.error("Trace: Case-E fallback failed {}", e.getMessage());
                 }
             }
 
