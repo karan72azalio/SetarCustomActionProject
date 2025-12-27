@@ -190,6 +190,10 @@ public class CreateServiceIPTV implements HttpAction {
                 productRepository.save(product, 2);
                 log.error("Created Product: {}", productName);
             }
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceCbmVoice service already exist");
+                return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + request.getOntSN());
+            }
             if(isSubscriptionExist.get()){
                 subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 Set<Service> existingServices = subscription.getService();
@@ -199,10 +203,6 @@ public class CreateServiceIPTV implements HttpAction {
                 subscription.setService(new HashSet<>(List.of(product)));
             }
             subscriptionRepository.save(subscription,2);
-            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
-                log.error("createServiceCbmVoice service already exist");
-                return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + request.getOntSN());
-            }
 
             // ------------------- Customer Facing Service (CFS) -------------------
             Optional<Service> optCFS = serviceCustomRepository.findByDiscoveredName(cfsName);

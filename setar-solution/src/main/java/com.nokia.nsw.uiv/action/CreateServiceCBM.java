@@ -217,6 +217,10 @@ public class CreateServiceCBM implements HttpAction {
 
 //        subscription.addService(product);
 //        subscriptionRepository.save(subscription, 2);
+        if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+            log.error("creatServiceCBM service already exist");
+            return new CreateServiceCBMResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,"CBM"+ request.getCbmSN());
+        }
         if(isSubscriptionExist.get()){
             subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
             Set<Service> existingServices = subscription.getService();
@@ -226,10 +230,6 @@ public class CreateServiceCBM implements HttpAction {
             subscription.setService(new HashSet<>(List.of(product)));
         }
         subscriptionRepository.save(subscription, 2);
-        if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
-            log.error("creatServiceCBM service already exist");
-            return new CreateServiceCBMResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberName,"CBM"+ request.getCbmSN());
-        }
 
         // --- 5. CFS Logic ---
         String cfsName = "CFS" +Constants.UNDER_SCORE + subscriptionName;

@@ -267,6 +267,10 @@ public class CreateServiceEVPN implements HttpAction {
                 product = prod;
                 productRepo.save(prod,2);
             }
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceEVPN service already exist");
+                return new CreateServiceEVPNResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameStr,ontName);
+            }
             if(isSubscriptionExist.get()){
                 subscription = subscriptionRepo.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 Set<Service> existingServices = subscription.getService();
@@ -276,10 +280,6 @@ public class CreateServiceEVPN implements HttpAction {
                 subscription.setService(new HashSet<>(List.of(product)));
             }
             subscriptionRepo.save(subscription);
-            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
-                log.error("createServiceEVPN service already exist");
-                return new CreateServiceEVPNResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameStr,ontName);
-            }
 
             // 6) CFS: find or create (properties map)
             Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);

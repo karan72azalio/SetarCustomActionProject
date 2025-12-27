@@ -194,6 +194,10 @@ public class CreateServiceFibernet implements HttpAction {
                 productRepository.save(product, 2);
                 log.error("Created product: {}", productName);
             }
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceEVPN service already exist");
+                return new CreateServiceFibernetResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,ontName);
+            }
             if(isSubscriptionExist.get()){
                 subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 Set<Service> existingServices = subscription.getService();
@@ -203,10 +207,6 @@ public class CreateServiceFibernet implements HttpAction {
                 subscription.setService(new HashSet<>(List.of(product)));
             }
             subscriptionRepository.save(subscription, 2);
-            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
-                log.error("createServiceEVPN service already exist");
-                return new CreateServiceFibernetResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,ontName);
-            }
 
             // 5. CFS: create or fetch
             Optional<Service> optCfs = serviceRepository.findByDiscoveredName(cfsName);

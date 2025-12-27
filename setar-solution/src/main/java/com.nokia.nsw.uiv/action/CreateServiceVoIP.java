@@ -218,6 +218,10 @@ public class CreateServiceVoIP implements HttpAction {
                         prod.setCustomer(subscriber);
                         return productRepo.save(prod);
                     });
+            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+                log.error("createServiceCbmVoice service already exist");
+                return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + req.getOntSN());
+            }
             if(isSubscriptionExist.get()){
                 subscription = subscriptionRepo.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 Set<Service> existingServices = subscription.getService();
@@ -227,10 +231,6 @@ public class CreateServiceVoIP implements HttpAction {
                 subscription.setService(new HashSet<>(List.of(product)));
             }
             subscriptionRepo.save(subscription,2);
-            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
-                log.error("createServiceCbmVoice service already exist");
-                return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + req.getOntSN());
-            }
             // Step 8: CFS
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             Service cfs = serviceCustomRepository.findByDiscoveredName(cfsName)

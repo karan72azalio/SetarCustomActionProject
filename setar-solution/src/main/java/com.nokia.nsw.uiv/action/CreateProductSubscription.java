@@ -159,6 +159,10 @@ public class CreateProductSubscription implements HttpAction {
                 productRepository.save(product, 2);
                 log.error("Created new product: {}", productName);
             }
+            if (isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()) {
+                log.error("createServiceEVPN service already exist");
+                return new CreateProductSubscriptionResponse("409", "Service already exist/Duplicate entry", Instant.now().toString(), subscriptionName, productName);
+            }
             if(isSubscriptionExist.get()){
                 subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 Set<Service> existingServices = subscription.getService();
@@ -168,10 +172,6 @@ public class CreateProductSubscription implements HttpAction {
                 subscription.setService(new HashSet<>(List.of(product)));
             }
             subscriptionRepository.save(subscription, 2);
-            if (isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()) {
-                log.error("createServiceEVPN service already exist");
-                return new CreateProductSubscriptionResponse("409", "Service already exist/Duplicate entry", Instant.now().toString(), subscriptionName, productName);
-            }
 
             // ================== Success Response ==================
             return new CreateProductSubscriptionResponse(

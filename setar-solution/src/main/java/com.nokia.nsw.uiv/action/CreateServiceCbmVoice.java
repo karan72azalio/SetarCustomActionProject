@@ -256,6 +256,14 @@ public class CreateServiceCbmVoice implements HttpAction {
                 log.error("createServiceCbmVoice service already exist");
                 return new CreateServiceCbmVoiceResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,cbmName);
             }
+            if(isSubscriptionExist.get()){
+                subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
+                Set<Service> existingServices = subscription.getService();
+                existingServices.add(product);
+                subscription.setService(existingServices);
+            }else{
+                subscription.setService(new HashSet<>(List.of(product)));
+            }
 
             // 6. CFS logic
             Service cfs = serviceCustomRepository.findByDiscoveredName(cfsName)
