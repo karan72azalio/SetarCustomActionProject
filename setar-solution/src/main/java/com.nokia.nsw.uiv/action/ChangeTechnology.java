@@ -28,8 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Component
 @RestController
@@ -306,11 +309,12 @@ public class ChangeTechnology implements HttpAction {
             }
 
             // 12. Reassign CPE devices
-            String cpeDeviceName ="ONT" + ontSN;
-            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn();
-
+            String cpeDeviceName ="ONT"+ Constants.UNDER_SCORE + ontSN;
             Optional<LogicalDevice> maybeCpeNew = cpeRepo.findByDiscoveredName(cpeDeviceName);
-            Optional<LogicalDevice> maybeCpeOld = cpeRepo.findByDiscoveredName(cpeDeviceOldName);
+            //Fetching cpeDevice with macAddress
+            Optional<LogicalDevice> maybeCpeOld = StreamSupport
+                    .stream(logicalDeviceRepo.findAll().spliterator(), false).filter(device->device.getKind().equalsIgnoreCase(Constants.SETAR_KIND_CPE_DEVICE) && device.getProperties().get("macAddress").toString().equalsIgnoreCase(req.getCbmMac()))
+                    .findFirst();
 
             if (maybeCpeNew.isPresent() && maybeCpeOld.isPresent()) {
                 LogicalDevice cpeNew = maybeCpeNew.get();

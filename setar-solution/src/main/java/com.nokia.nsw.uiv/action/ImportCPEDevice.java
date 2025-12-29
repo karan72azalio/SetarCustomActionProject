@@ -117,7 +117,7 @@ public class ImportCPEDevice implements HttpAction {
             }
 
             log.error(Constants.ACTION_COMPLETED);
-            return new ImportCPEDeviceResponse("201", "CPE Details Found", getCurrentTimestamp());
+            return new ImportCPEDeviceResponse("201", "CPE Device created: "+cpeDevice.getDiscoveredName(), getCurrentTimestamp());
 
         } catch (BadRequestException bre) {
             log.error("Validation error: {}", bre.getMessage(), bre);
