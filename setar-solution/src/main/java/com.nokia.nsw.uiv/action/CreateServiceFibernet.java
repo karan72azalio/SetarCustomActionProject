@@ -313,12 +313,10 @@ public class CreateServiceFibernet implements HttpAction {
 
                 ontDevice.setContainedservice(new HashSet<>(List.of(rfs)));
                 ontDevice.setProperties(ontProps);
+                ontDevice.setUsedResource(new HashSet<>(List.of(oltDevice)));
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Created ONT device: {}", ontName);
             }
-
-            ontDevice.setUsedResource(new HashSet<>(List.of(oltDevice)));
-            logicalDeviceRepository.save(ontDevice, 2);
 
             // 9. VLAN interface (LogicalInterface) creation if needed
             if (request.getMenm() != null && request.getVlanID() != null) {
@@ -340,6 +338,7 @@ public class CreateServiceFibernet implements HttpAction {
                     logicalInterfaceRepository.save(vlan, 2);
                     log.error("Created VLAN interface: {}", vlanName);
                     if (oltDevice != null) {
+                        oltDevice = logicalDeviceRepository.findByDiscoveredName(oltDevice.getDiscoveredName()).get();
                         oltDevice.setContainedinterface(new HashSet<>(List.of(vlan)));
                         logicalDeviceRepository.save(oltDevice);
                     }
