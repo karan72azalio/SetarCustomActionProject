@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Component
 @RestController
@@ -106,8 +108,11 @@ public class QueryFlags implements HttpAction {
             if (serviceID != null && !serviceID.trim().isEmpty()) {
 
                 List<Service> rfsList = new ArrayList<>();
-
-                for (Service rfs : serviceCustomRepository.findAll()) {
+                List<Service> rfsServices =
+                        StreamSupport.stream(serviceCustomRepository.findAll().spliterator(), false)
+                                .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
+                                .collect(Collectors.toList());
+                for (Service rfs : rfsServices) {
                     String rfsName = rfs.getDiscoveredName();
 
                     if (rfsName != null && rfsName.contains(serviceID)) {
@@ -149,9 +154,12 @@ public class QueryFlags implements HttpAction {
                 if (ontSN == null || ontSN.trim().isEmpty() || "NA".equalsIgnoreCase(ontSN)) {
                     try {
                         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
-                        Iterable<Service> allRfs = serviceCustomRepository.findAll();
+                        List<Service> rfsServices =
+                                StreamSupport.stream(serviceCustomRepository.findAll().spliterator(), false)
+                                        .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
+                                        .collect(Collectors.toList());
 
-                        for (Service rfs : allRfs) {
+                        for (Service rfs : rfsServices) {
                             if (rfs.getDiscoveredName() == null
                                     || serviceID == null
                                     || !rfs.getDiscoveredName().contains(
@@ -214,7 +222,7 @@ public class QueryFlags implements HttpAction {
 
                                         String bridgeService =
                                                 deriveBridgeServiceForSubscriberRfs(
-                                                        allRfs,
+                                                        rfsServices,
                                                         effectiveOntSN,
                                                         subscriber
                                                 );
@@ -546,9 +554,13 @@ public class QueryFlags implements HttpAction {
                 // 🔁 Re-derive Bridge Service ID on these records
                 String bridgeService = "NA";
                 if (ontBasedSearch) {
+                    List<Service> rfsServices =
+                            StreamSupport.stream(serviceCustomRepository.findAll().spliterator(), false)
+                                    .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
+                                    .collect(Collectors.toList());
                     bridgeService =
                             deriveBridgeServiceForSubscriberRfs(
-                                    serviceCustomRepository.findAll(),
+                                    rfsServices,
                                     ontSN,
                                     subscriber
                             );
@@ -1327,7 +1339,7 @@ public class QueryFlags implements HttpAction {
     }
 
     private String deriveBridgeServiceForSubscriberRfs(
-            Iterable<Service> allRfs,
+            List<Service> allRfs,
             String ontSN,
             String subscriber) {
 

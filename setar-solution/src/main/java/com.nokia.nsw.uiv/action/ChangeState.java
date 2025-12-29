@@ -147,7 +147,7 @@ public class ChangeState implements HttpAction {
                     }
                 }
             }
-            if (!optSubscription.isPresent() || !optRfs.isPresent() || !optCbm.isPresent() || !optOnt.isPresent()) {
+            if (!optSubscription.isPresent() || !optRfs.isPresent()) {
                 return new ChangeStateResponse("500", ERROR_PREFIX + "No entry found for Suspend/Resume",
                         java.time.Instant.now().toString(), (cbmName == null ? "" : cbmName),
                         (ontName == null ? "" : ontName), subscriptionName);
@@ -170,18 +170,19 @@ public class ChangeState implements HttpAction {
             }
 
             // Update subscription property - store as subscriptionStatus
+            subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
             if (subscription.getProperties() == null) subscription.setProperties(new java.util.HashMap<>());
             subscription.getProperties().put("subscriptionStatus", newStatus);
+            // Persist changes
+            subscriptionRepository.save(subscription, 2);
 
             // 6. Update RFS transaction info if fxOrderId present
+            rfs = serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
             if (!isEmpty(req.getFxOrderId())) {
                 if (rfs.getProperties() == null) rfs.setProperties(new java.util.HashMap<>());
                 rfs.getProperties().put("transactionId", req.getFxOrderId());
                 rfs.getProperties().put("transactionType", actionType);
             }
-
-            // Persist changes
-            subscriptionRepository.save(subscription, 2);
             serviceCustomRepository.save(rfs, 2);
 
             // Also persist ONT/CBM if we located and want to reflect state (optional)
