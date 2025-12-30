@@ -122,7 +122,7 @@ public class ModifyServiceId implements HttpAction {
                 Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
 
                 // Retrieve product
-                String productDiscoveredName = cfs.getUsedService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                String productDiscoveredName = cfs.getUsingService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                 Optional<Product> productOpt =productRepo.findByDiscoveredName(productDiscoveredName); // adjust association
                 Optional<Subscription> subsOpt = Optional.empty();
                 Optional<Customer> custOpt = Optional.empty();

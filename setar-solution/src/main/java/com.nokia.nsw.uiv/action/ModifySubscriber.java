@@ -98,7 +98,7 @@ public class ModifySubscriber implements HttpAction {
                 Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
 
                 // Retrieve product linked (via properties or association)
-                String productName = cfs.getUsedService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                String productName = cfs.getUsingService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                 Optional<Product> productOpt = productCustomRepo.findByDiscoveredName(productName); // adjust to actual association
                 Optional<Subscription> subsOpt = Optional.empty();
                 Optional<Customer> oldCustOpt = Optional.empty();

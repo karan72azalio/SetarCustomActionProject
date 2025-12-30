@@ -157,7 +157,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                 // From CFS get Product -> Subscription -> Subscriber
                 Product product = null;
                 try {
-                    String productDiscName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                    String productDiscName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                     product = productRepo.findByDiscoveredName(productDiscName).get();
                 } catch (Exception e) {
                     // defensive - attempt property-based retrieval if needed

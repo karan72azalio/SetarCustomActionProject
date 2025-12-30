@@ -773,7 +773,7 @@ public class QueryFlags implements HttpAction {
 
                         log.error("Trace: ENTERPRISE flow - deriving ontPort from RFS");
 
-                        for (Service rfs : serviceCustomRepository.findAll()) {
+                        for (Service rfs : StreamSupport.stream(serviceCustomRepository.findAll().spliterator(),false).filter(service -> service.getDiscoveredName().contains(Constants.RFS)).toList()) {
 
                             if (rfs.getDiscoveredName() == null
                                     || !rfs.getDiscoveredName().contains(serviceID)) {
@@ -790,7 +790,7 @@ public class QueryFlags implements HttpAction {
                                 Service cfs =
                                         serviceCustomRepository.findByDiscoveredName(
                                                 rfs1.getUsedService().stream().findFirst().get().getDiscoveredName()).orElse(null);
-                                String productName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                                String productName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                                 if (cfs == null || productName.isBlank()) continue;
 
                                 Product product =
@@ -801,7 +801,7 @@ public class QueryFlags implements HttpAction {
                                 Subscription sub = product.getSubscription().stream().findFirst().get();
                                 Map<String, Object> sp = safeProps(sub.getProperties());
 
-                                Object port = sp.get("ontPort");
+                                Object port = sp.get("evpnPort");
                                 if (port != null) {
                                     ontPort = port.toString();
                                     flags.put("SERVICE_ONT_PORT", ontPort);
@@ -820,12 +820,12 @@ public class QueryFlags implements HttpAction {
                     flags.put("SERVICE_MAC", (String) ontProps.getOrDefault("macAddress", ""));
                     log.error("Trace: ONT found: model=" + flags.get("ONT_MODEL") + " sn=" + flags.get("SERVICE_SN"));
 
-                    Object parentOltObj = ontProps.get("parentOlt");
+                    Object parentOltObj = ontProps.get("oltPosition");
                     if (parentOltObj != null) {
                         String oltGdn = parentOltObj.toString();
                         deviceRepository.findByDiscoveredName(oltGdn).ifPresent(olt -> {
                             Map<String, Object> oltProps = safeProps(olt.getProperties());
-                            flags.put("OLT_POSITION", (String) oltProps.getOrDefault("position", ""));
+                            flags.put("OLT_POSITION", existsString(oltProps.get("oltPosition")));
                             flags.put("SERVICE_TEMPLATE_ONT", existsString(oltProps.get("ontTemplate")));
                             flags.put("SERVICE_TEMPLATE_IPTV", existsString(oltProps.get("iptvServiceTemplate")));
 
@@ -848,7 +848,7 @@ public class QueryFlags implements HttpAction {
                     for (String vl : vlanSet) {
                         logicalInterfaceRepository.findByDiscoveredName(vl).ifPresent(vif -> {
                             Map<String, Object> vp = safeProps(vif.getProperties());
-                            Object tmpl = vp.get("template");
+                            Object tmpl = vp.get("vlanTemplate");
                             if ("4.3B EVPN SINGLETAGGED VLAN v2".equalsIgnoreCase(String.valueOf(tmpl))) {
                                 flags.put("SERVICE_TEMPLATE_MGMT", "4.3B EVPN SINGLETAGGED VLAN v2");
                                 log.error("Trace: VLAN " + vl + " uses management template " + vp.get("template"));
@@ -1354,7 +1354,7 @@ public class QueryFlags implements HttpAction {
                 Service rfs1=serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
                 Service cfs=rfs1.getUsedService().stream().findFirst().get();
                 cfs = serviceCustomRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
-                String productName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                String productName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                 Product product=productRepository.findByDiscoveredName(productName).get();
                 Subscription sub=product.getSubscription().stream().findFirst().get();
 
