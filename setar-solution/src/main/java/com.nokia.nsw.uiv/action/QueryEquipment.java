@@ -4,6 +4,7 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
 import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Action
@@ -86,6 +88,17 @@ public class QueryEquipment implements HttpAction {
 
         try {
             // 3️⃣ Locate entities
+// Locate Subscriber
+            Optional<Customer> subscriberOpt =
+                    subscriberRepository.findByDiscoveredName(request.getSubscriberName());
+
+            if (subscriberOpt.isEmpty()) {
+                return createErrorResponse(CODE_NO_ENTRY,
+                        "Subscriber not found for subscriberName: " + request.getSubscriberName());
+            }
+            Customer subscriber = subscriberOpt.get();
+
+            // 3️⃣ Locate entities
             Optional<Subscription> subscriptionOpt = subscriptionRepository.findByDiscoveredName(subscriptionName);
             if (subscriptionOpt.isEmpty()) {
                 return createErrorResponse(CODE_NO_ENTRY, "Subscription not found for subscriber/service");
@@ -113,7 +126,11 @@ public class QueryEquipment implements HttpAction {
             log.error("Product Name: {}", productName);
 
             //retrieved linked devices
-            Set<Resource> linkedResources = rfs.getUsedResource();
+            Set<Resource> linkedResources = rfs.getContaingservice()
+                    .stream()
+                    .filter(r -> r instanceof LogicalDevice)
+                    .collect(Collectors.toSet());
+
             List<String> apSns = new ArrayList<>();
             List<String> stbSns = new ArrayList<>();
 
@@ -179,8 +196,18 @@ public class QueryEquipment implements HttpAction {
                 response.setStatus(CODE_SUCCESS);
                 response.setMessage("Equipment Queried.");
             } else {
+                StringBuilder reason = new StringBuilder("Error, Equipment Not Queried. ");
+
+                if (apSns.isEmpty() && stbSns.isEmpty()) {
+                    reason.append("No AP or STB devices found.");
+                } else if (apSns.isEmpty()) {
+                    reason.append("AP devices not found.");
+                } else if (stbSns.isEmpty()) {
+                    reason.append("STB devices not found.");
+                }
+
                 response.setStatus(CODE_EQUIP_NOT_FOUND);
-                response.setMessage("Error, Equipment Not Queried.");
+                response.setMessage(reason.toString());
             }
             log.error(Constants.ACTION_COMPLETED);
             return response;

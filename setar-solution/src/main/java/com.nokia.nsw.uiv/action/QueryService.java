@@ -86,7 +86,7 @@ public class QueryService implements HttpAction {
                 Optional<Service> optCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
                 if (!optCfs.isPresent()) continue;
                 Service cfs = optCfs.get();
-                String productName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                String productName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                 String rfsName = cfsName.replace("CFS", "RFS");
                 Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
                 Optional<Product> optProd = productRepository.findByDiscoveredName(productName);

@@ -81,5 +81,6 @@ public class Constants {
     public static final String COMMA = ",";
     public static final String SETAR = "Setar";
     public static final String CFS = "CFS";
+    public static final String RFS = "RFS";
     public static final String CBM = "CBM";
 }

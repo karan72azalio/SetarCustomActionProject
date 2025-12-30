@@ -115,7 +115,7 @@ public class CreateServiceEVPN implements HttpAction {
 
             String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
             if (subscriptionName.length() > 100) {
-                log.error("------------Trace # 4--------------- Subscription name too long");
+                log.error("------------Trace # 4-------V-------- Subscription name too long");
                 return new CreateServiceEVPNResponse(
                         "400",
                         ERROR_PREFIX + "Subscription name too long",

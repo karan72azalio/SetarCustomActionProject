@@ -224,7 +224,7 @@ public class CreateServiceIPTV implements HttpAction {
                 cfsProps.put("serviceType", request.getProductType());
 
                 cfs.setProperties(cfsProps);
-                cfs.setUsedService(new HashSet<>(List.of(product)));
+                cfs.setUsingService(new HashSet<>(List.of(product)));
                 serviceCustomRepository.save(cfs, 2);
                 log.error("Created CFS: {}", cfsName);
             }
@@ -247,7 +247,7 @@ public class CreateServiceIPTV implements HttpAction {
                 rfsProps.put("serviceType", request.getProductType());
 
                 rfs.setProperties(rfsProps);
-                rfs.setUsedService(new HashSet<>(List.of(cfs)));
+                rfs.setUsingService(new HashSet<>(List.of(cfs)));
                 serviceCustomRepository.save(rfs, 2);
                 log.error("Created RFS: {}", rfsName);
             }

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @Component
 @Action
@@ -68,7 +69,7 @@ public class QueryAddrByServiceID implements HttpAction {
             log.error("Looking up RFS entries containing service id '{}'", serviceId);
 
             // 2) Locate the target service (RFS) using SERVICE_ID
-            List<Service> rfsListAll = (List<Service>) serviceCustomRepository.findAll();
+            List<Service> rfsListAll = StreamSupport.stream(serviceCustomRepository.findAll().spliterator(),false).filter(service -> service.getDiscoveredName().contains(Constants.RFS)).toList();
             List<Service> rfsList =new ArrayList<>();
             rfsListAll.forEach(rFS -> {
                 if (rFS.getDiscoveredName().contains(serviceId)) {
@@ -106,7 +107,7 @@ public class QueryAddrByServiceID implements HttpAction {
             }
 
             // From CFS to Product
-            String productDiscoveredName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+            String productDiscoveredName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
             Product product = productRepository.findByDiscoveredName(productDiscoveredName).get();
             if (product == null) {
                 log.error("CustomerFacingService does not reference Product");
