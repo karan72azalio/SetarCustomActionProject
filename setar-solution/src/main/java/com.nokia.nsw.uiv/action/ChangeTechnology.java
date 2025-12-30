@@ -313,7 +313,7 @@ public class ChangeTechnology implements HttpAction {
             Optional<LogicalDevice> maybeCpeNew = cpeRepo.findByDiscoveredName(cpeDeviceName);
             //Fetching cpeDevice with macAddress
             Optional<LogicalDevice> maybeCpeOld = StreamSupport
-                    .stream(logicalDeviceRepo.findAll().spliterator(), false).filter(device->device.getKind().equalsIgnoreCase(Constants.SETAR_KIND_CPE_DEVICE) && device.getProperties().get("macAddress").toString().equalsIgnoreCase(req.getCbmMac()))
+                    .stream(logicalDeviceRepo.findAll().spliterator(), false).filter(device-> device.getDiscoveredName().contains(Constants.CBM) && device.getKind().equalsIgnoreCase(Constants.SETAR_KIND_CPE_DEVICE) && device.getProperties().get("macAddress").toString().equalsIgnoreCase(req.getCbmMac()))
                     .findFirst();
 
             if (maybeCpeNew.isPresent() && maybeCpeOld.isPresent()) {
