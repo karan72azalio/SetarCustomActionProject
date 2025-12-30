@@ -426,7 +426,7 @@ public class CreateServiceEVPN implements HttpAction {
                         v.setLocalName(Validations.encryptName(mgmtVlanName));
                         v.setDiscoveredName(mgmtVlanName);
                         v.setContext("Setar");
-                        v.setKind("VlanInterface");
+                        v.setKind("VLANInterface");
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -469,7 +469,7 @@ public class CreateServiceEVPN implements HttpAction {
                         v.setLocalName(Validations.encryptName(vlanName));
                         v.setDiscoveredName(vlanName);
                         v.setContext("Setar");
-                        v.setKind("VlanInterface");
+                        v.setKind("VLANInterface");
                     }catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -602,8 +602,8 @@ public class CreateServiceEVPN implements HttpAction {
                         singleVlan.setLocalName(singleName);
                         singleVlan.setDiscoveredName(singleName);
                         singleVlan.setContext("Setar");
+                        singleVlan.setKind("VLANInterface");
                         Map<String,Object> svProps = new HashMap<>();
-                        svProps.put("kind", "VlanInterface");
                         svProps.put("vlanId", req.getVlanId());
                         svProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
                         svProps.put("configuredOntSN", req.getOntSN());
