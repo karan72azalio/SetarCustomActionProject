@@ -107,7 +107,7 @@ public class DeleteProductSubscription implements HttpAction {
             }
 
         } catch (BadRequestException bre) {
-            String msg = "UIV action DeleteProductSubscription execution failed - Missing mandatory parameter : " + bre.getMessage();
+            String msg = "UIV action DeleteProductSubscription execution failed - " + bre.getMessage();
             return new DeleteProductSubscriptionResponse("400", msg,
                     Instant.now().toString(), "");
         } catch (Exception ex) {
