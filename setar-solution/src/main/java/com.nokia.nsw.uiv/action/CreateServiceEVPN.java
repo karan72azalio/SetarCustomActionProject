@@ -204,7 +204,7 @@ public class CreateServiceEVPN implements HttpAction {
                 }
                 Map<String,Object> subsProps = new HashMap<>();
                 subsProps.put("subscriptionStatus", "Active");
-                subsProps.put("serviceSubtype", req.getProductSubtype());
+                subsProps.put("serviceSubType", req.getProductSubtype());
                 if (req.getQosProfile() != null) subsProps.put("evpnQosProfile", req.getQosProfile());
                 if (req.getOntPort() != null) subsProps.put("evpnPort", req.getOntPort());
                 if (req.getTemplateNameVlanCreate() != null) subsProps.put("evpnTemplateCreate", req.getTemplateNameVlanCreate());
@@ -529,18 +529,18 @@ public class CreateServiceEVPN implements HttpAction {
             Map<String,Object> ontProps = ont.getProperties();
 
             if ("4".equals(selectedPort)) {
-                oltProps.put("port4ServiceTemplate", req.getTemplateNamePort());
+                oltProps.put("port4Template", req.getTemplateNamePort());
                 ontProps.put("port4Counter", servCounter);
             } else if ("5".equals(selectedPort)) {
-                oltProps.put("port5ServiceTemplate", req.getTemplateNamePort());
+                oltProps.put("port5Template", req.getTemplateNamePort());
                 ontProps.put("port5Counter", servCounter);
             } else if ("3".equals(selectedPort)) {
-                oltProps.put("port3ServiceTemplate", req.getTemplateNamePort());
+                oltProps.put("port3Template", req.getTemplateNamePort());
                 ontProps.put("port3Counter", servCounter);
             } else if ("2".equals(selectedPort)) {
                 // spec asked: port2 uses original pre-increment value
                 ontProps.put("port2Counter", String.valueOf(currentCounter));
-                oltProps.put("port2ServiceTemplate", req.getTemplateNamePort());
+                oltProps.put("port2Template", req.getTemplateNamePort());
             } else { // port 1
                 // port 1: set ONT port-1 EVPN VLAN template
                 ontProps.put("port1EvpnVlanTemplate", req.getTemplateNameVlan());

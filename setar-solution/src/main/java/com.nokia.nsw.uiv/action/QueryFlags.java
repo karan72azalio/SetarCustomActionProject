@@ -1025,10 +1025,9 @@ public class QueryFlags implements HttpAction {
 
                     for (Subscription s : subscriptionRepository.findAll()) {
                         Map<String,Object> sp = safeProps(s.getProperties());
-
                         if ("WIFI Maintenance".equalsIgnoreCase(
                                 (String) sp.getOrDefault("serviceSubType","")) &&
-                                ontSN.equals(sp.getOrDefault("serviceSN",""))) {
+                                ontSN.equals(sp.getOrDefault("serviceSN","").toString())) {
 
                             wifiFlag = "YES";
                             break;

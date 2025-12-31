@@ -151,7 +151,7 @@ public class CreateServiceVoIP implements HttpAction {
                         }
                         Map<String, Object> subProps = new HashMap<>();
                         subProps.put("subscriptionStatus", "Active");
-                        subProps.put("serviceSubtype", req.getProductSubtype());
+                        subProps.put("serviceSubType", req.getProductSubtype());
                         subProps.put("serviceID", req.getServiceId());
                         subProps.put("oltPosition", req.getOltName());
                         subProps.put("householdId", req.getHhid());

@@ -171,7 +171,7 @@ public class ChangeTechnology implements HttpAction {
                 subProps.put("serviceLink", "ONT");
                 subProps.put("macAddress", ontMacAddr);
                 subProps.put("serviceSN", ontSN);
-                subProps.put("serviceSubtype", "Broadband");
+                subProps.put("serviceSubType", "Broadband");
                 if ("Fibernet".equalsIgnoreCase(productSubtype)) {
                     if (qosProfile != null) subProps.put("veipQosSessionProfile", qosProfile);
                     subscription.setDiscoveredName(subscriptionName + Constants.UNDER_SCORE  + ontSN);

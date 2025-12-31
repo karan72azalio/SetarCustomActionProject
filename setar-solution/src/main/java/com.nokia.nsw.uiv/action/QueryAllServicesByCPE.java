@@ -104,7 +104,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                         bbCount++;
                         resp.setBbCount(String.valueOf(bbCount));
                         resp.setBroadband1ServiceId((String) rfs.getProperties().get("serviceId"));
-                        resp.setBroadband1ServiceSubtype((String) rfs.getProperties().get("serviceSubtype"));
+                        resp.setBroadband1ServiceSubtype((String) rfs.getProperties().get("serviceSubType"));
                         resp.setBroadband1ServiceType("Broadband");
                         resp.setBroadband1QosProfile((String) rfs.getProperties().get("qosProfile"));
                         resp.setBroadband1OntTemplate((String) rfs.getProperties().get("ontTemplate"));
@@ -128,7 +128,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                         voiceCount++;
                         resp.setVoiceCount(String.valueOf(voiceCount));
                         resp.setVoice1ServiceId((String) rfs.getProperties().get("serviceId"));
-                        resp.setVoice1ServiceSubtype((String) rfs.getProperties().get("serviceSubtype"));
+                        resp.setVoice1ServiceSubtype((String) rfs.getProperties().get("serviceSubType"));
                         resp.setVoice1ServiceType("Voice");
                         resp.setVoice1CustomerId((String) rfs.getProperties().get("customerId"));
                         resp.setVoice1SimaSubsId((String) rfs.getProperties().get("simaSubsId"));
@@ -150,7 +150,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                         entCount++;
                         resp.setEntCount(String.valueOf(entCount));
                         resp.setEnterprise1ServiceId((String) rfs.getProperties().get("serviceId"));
-                        resp.setEnterprise1ServiceSubtype((String) rfs.getProperties().get("serviceSubtype"));
+                        resp.setEnterprise1ServiceSubtype((String) rfs.getProperties().get("serviceSubType"));
                         resp.setEnterprise1ServiceType("Enterprise");
                         resp.setEnterprise1QosProfile((String) rfs.getProperties().get("qosProfile"));
                         resp.setEnterprise1KenanSubsId((String) rfs.getProperties().get("kenanSubsId"));
@@ -169,7 +169,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                         prodIndex = 1;
                         resp.setIptvCount(String.valueOf(iptvCount));
                         resp.setIptv1ServiceId((String) rfs.getProperties().get("serviceId"));
-                        resp.setIptv1ServiceSubtype((String) rfs.getProperties().get("serviceSubtype"));
+                        resp.setIptv1ServiceSubtype((String) rfs.getProperties().get("serviceSubType"));
                         resp.setIptv1ServiceType("IPTV");
                         resp.setIptv1QosProfile((String) rfs.getProperties().get("qosProfile"));
                         resp.setIptv1CustomerGroupId((String) rfs.getProperties().get("customerGroupId"));
