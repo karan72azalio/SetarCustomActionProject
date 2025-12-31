@@ -231,6 +231,7 @@ public class CreateServiceEVPN implements HttpAction {
                 subs.setCustomer(subscriber);
                 // association to subscriber (store link name so external process can link)
                 subsProps.put("linkedSubscriber", subscriber.getLocalName());
+                subsProps.put("serviceSN", req.getOntSN());
                 subscription = subs;
                 subscriptionRepo.save(subs,2);
             }
@@ -389,6 +390,7 @@ public class CreateServiceEVPN implements HttpAction {
                 ontProps.put("port3Counter", "0");
                 ontProps.put("port4Counter", "0");
                 ontProps.put("port5Counter", "0");
+                ontProps.put("oltPosition",req.getOltName());
                 // management fields
                 if (req.getTemplateNameVlanMgmnt() != null) ontProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
                 if (req.getMgmntVlanId() != null) ontProps.put("mgmtVlan", req.getMgmntVlanId());

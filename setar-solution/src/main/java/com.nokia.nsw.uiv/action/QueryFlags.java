@@ -131,7 +131,6 @@ public class QueryFlags implements HttpAction {
             flags.put("SERVICE_ID_FLAG", serviceIdFlag);
 // --------------------------------------------------------
 
-            Service rfs2=serviceCustomRepository.findByDiscoveredName("RFS" + Constants.UNDER_SCORE + subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID)).get();
             log.error("------------Test Trace # 4---------------");
             String serviceLink = "NA";
             if (ontSN != null) {
@@ -822,8 +821,8 @@ public class QueryFlags implements HttpAction {
 
                     Object parentOltObj = ontProps.get("oltPosition");
                     if (parentOltObj != null) {
-                        String oltGdn = parentOltObj.toString();
-                        deviceRepository.findByDiscoveredName(oltGdn).ifPresent(olt -> {
+                        String oltDiscoveredName = parentOltObj.toString();
+                        deviceRepository.findByDiscoveredName(oltDiscoveredName).ifPresent(olt -> {
                             Map<String, Object> oltProps = safeProps(olt.getProperties());
                             flags.put("OLT_POSITION", existsString(oltProps.get("oltPosition")));
                             flags.put("SERVICE_TEMPLATE_ONT", existsString(oltProps.get("ontTemplate")));
@@ -834,7 +833,7 @@ public class QueryFlags implements HttpAction {
                             flags.put("SERVICE_TEMPLATE_VOIP", existsString(oltProps.get("voipServiceTemplate")));
                             flags.put("SERVICE_TEMPLATE_POTS1", existsString(oltProps.get("voipPots1Template")));
                             flags.put("SERVICE_TEMPLATE_POTS2", existsString(oltProps.get("voipPots2Template")));
-                            log.error("Trace: OLT templates checked for OLT=" + oltGdn);
+                            log.error("Trace: OLT templates checked for OLT=" + oltDiscoveredName);
                         });
                     }
 
