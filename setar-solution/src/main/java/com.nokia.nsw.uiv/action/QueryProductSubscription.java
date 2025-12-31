@@ -92,7 +92,8 @@ public class QueryProductSubscription implements HttpAction {
             }
 
         } catch (BadRequestException bre) {
-            return new QueryProductSubscriptionResponse("400",bre.getMessage(),
+            String msg = "UIV action QueryProductSubscription execution failed - "+bre.getMessage();
+            return new QueryProductSubscriptionResponse("400",msg,
                     java.time.Instant.now().toString(), "", "");
         } catch (Exception ex) {
             log.error("Unhandled exception during QueryProductSubscription", ex);
