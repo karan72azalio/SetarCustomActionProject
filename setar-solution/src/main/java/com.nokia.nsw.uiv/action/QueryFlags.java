@@ -824,7 +824,7 @@ public class QueryFlags implements HttpAction {
                         String oltDiscoveredName = parentOltObj.toString();
                         deviceRepository.findByDiscoveredName(oltDiscoveredName).ifPresent(olt -> {
                             Map<String, Object> oltProps = safeProps(olt.getProperties());
-                            flags.put("OLT_POSITION", existsString(oltProps.get("oltPosition")));
+                            flags.put("SERVICE_OLT_POSITION", oltProps.get("oltPosition").toString());
                             flags.put("SERVICE_TEMPLATE_ONT", existsString(oltProps.get("ontTemplate")));
                             flags.put("SERVICE_TEMPLATE_IPTV", existsString(oltProps.get("iptvServiceTemplate")));
 
@@ -986,7 +986,7 @@ public class QueryFlags implements HttpAction {
             if ((equalsAnyIgnoreCase(productType, "EVPN", "ENTERPRISE") || equalsAnyIgnoreCase(productSubType, "Cloudstarter", "Bridged"))
                     && (equalsAnyIgnoreCase(actionType, "Configure", "Migrate"))) {
                 log.error("Trace: Evaluating template requirements for EVPN/Enterprise/Cloudstarter/Bridged");
-                String oltPos = flags.getOrDefault("OLT_POSITION", "");
+                String oltPos = flags.getOrDefault("SERVICE_OLT_POSITION", "");
                 if (!oltPos.isEmpty()) {
                     String oltPosGdn = Validations.getGlobalName(oltPos);
                     deviceRepository.findByDiscoveredName(oltPos).ifPresent(olt -> {
@@ -1007,7 +1007,11 @@ public class QueryFlags implements HttpAction {
                 }
                 // ---------- CASE A : ADD RFS SINGLE CHECK ----------
                 int rfsCountForOnt = 0;
-                for (Service rfs : serviceCustomRepository.findAll()) {
+                List<Service> rfsServices =
+                        StreamSupport.stream(serviceCustomRepository.findAll().spliterator(), false)
+                                .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
+                                .collect(Collectors.toList());
+                for (Service rfs : rfsServices) {
                     if (rfs.getDiscoveredName() != null &&
                             rfs.getDiscoveredName().contains(ontSN)) {
                         rfsCountForOnt++;
@@ -1303,7 +1307,7 @@ public class QueryFlags implements HttpAction {
                 "SERVICE_TEMPLATE_VEIP","SERVICE_TEMPLATE_HSI","SERVICE_TEMPLATE_ONT","SERVICE_TEMPLATE_VOIP","SERVICE_TEMPLATE_POTS1",
                 "SERVICE_TEMPLATE_POTS2","SERVICE_HSI_EXIST","SERVICE_LINK","SERVICE_SN","SERVICE_MAC","ONT_MODEL","SERVICE_PORT5_EXIST",
                 "SERVICE_TEMPLATE_VPLS","SERVICE_TEMPLATE_IPTV","SERVICE_IPTV_EXIST","SERVICE_ID","SERVICE_EVPN_WIFIM_FIRST",
-                "OLT_POSITION","ONT_TEMPLATE","SERVICE_OLT_POSITION","CBM_MAC","IPTV_COUNT","FIBERNET_COUNT","QOS_PROFILE",
+                "SERVICE_OLT_POSITION","ONT_TEMPLATE","SERVICE_OLT_POSITION","CBM_MAC","IPTV_COUNT","FIBERNET_COUNT","QOS_PROFILE",
                 "FIRST_NAME","LAST_NAME","ACCOUNT_EXIST","SERVICE_FLAG","SERVICE_ONT_PORT","KENAN_UIDNO","SIMA_CUST_ID",
                 "CBM_ACCOUNT_EXIST","VOICE_POTS_PORT","RESOURCE_MAC_MTA_OLD","RESOURCE_MODEL_MTA_OLD","BRIDGE_SERVICE",
                 "QOS_PROFILE_BRIDGE"
