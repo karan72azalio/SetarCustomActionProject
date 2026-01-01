@@ -905,6 +905,7 @@ public class QueryFlags implements HttpAction {
 
                         if (s.getDiscoveredName() == null ||
                                 !s.getDiscoveredName().contains(subscriber)) {
+                            flags.getOrDefault("Subscriber", subscriber);
                             continue;   // must belong to same subscriber
                         }
 
@@ -1046,7 +1047,7 @@ public class QueryFlags implements HttpAction {
                     if (optOnt.isPresent()) {
 
                         Map<String,Object> ontProps = safeProps(optOnt.get().getProperties());
-                        Object parentOlt = ontProps.get("parentOlt");
+                        Object parentOlt = ontProps.get("oltPosition");
 
                         if (parentOlt != null) {
 
