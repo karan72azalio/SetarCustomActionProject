@@ -210,6 +210,7 @@ public class CreateServiceIPTV implements HttpAction {
             if (optCFS.isPresent()) {
                 cfs = optCFS.get();
                 log.error("CFS already exists: {}", cfsName);
+                return new CreateServiceIPTVResponse("409","CFS already exists/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + request.getOntSN());
             } else {
                 cfs = new Service();
                 cfs.setLocalName(Validations.encryptName(cfsName));
@@ -235,6 +236,7 @@ public class CreateServiceIPTV implements HttpAction {
             if (optRFS.isPresent()) {
                 rfs = optRFS.get();
                 log.error("RFS already exists: {}", rfsName);
+                return new CreateServiceIPTVResponse("409","RFS already exists/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + request.getOntSN());
             } else {
                 rfs = new Service();
                 rfs.setLocalName(Validations.encryptName(rfsName));
@@ -294,7 +296,9 @@ public class CreateServiceIPTV implements HttpAction {
                 ontDevice.setDiscoveredName(ontName);
                 ontDevice.setKind("ONTDevice");
                 ontDevice.setContext(Constants.SETAR);
-
+                if (request.getMenm() != "" && request.getMenm() !=null && request.getMenm() != "NA"){
+                    ontDevice.setDescription(request.getMenm());
+                }
                 Map<String, Object> ontProps = new HashMap<>();
                 ontProps.put("serialNo", request.getOntSN());
                 ontProps.put("deviceModel", request.getOntModel());
