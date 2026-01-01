@@ -1,11 +1,14 @@
 package com.nokia.nsw.uiv.utils;
 
 import com.nokia.nsw.uiv.exception.BadRequestException;
+import com.nokia.nsw.uiv.response.CreateServiceEVPNResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Base64;
-
+@Slf4j
 public class Validations {
 
     public static void validateMandatoryParams(String ParamValue, String ParamName) throws BadRequestException {
@@ -46,5 +49,10 @@ public class Validations {
             return null;
         }
         return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+    public static void validateLength(String str, String type) throws BadRequestException {
+        if (str.length() > 100) {
+           throw new BadRequestException(type+" length is too long");
+        }
     }
 }

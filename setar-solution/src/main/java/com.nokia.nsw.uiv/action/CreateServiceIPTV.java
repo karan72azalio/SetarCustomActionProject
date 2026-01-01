@@ -103,8 +103,14 @@ public class CreateServiceIPTV implements HttpAction {
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             String ontName ="ONT" + request.getOntSN();
             String mgmtVlanName = request.getMenm() + Constants.UNDER_SCORE  + request.getVlanID();
-
-
+            try{
+                Validations.validateLength(subscriberName,"Subscriber");
+                Validations.validateLength(subscriptionName,"Subscription");
+                Validations.validateLength(productName, "Product");
+            }catch (BadRequestException bre){
+                return new CreateServiceIPTVResponse("400", ERROR_PREFIX +  bre.getMessage(),
+                        Instant.now().toString(), "","");
+            }
             // ------------------- Subscriber -------------------
             Optional<Customer> optSubscriber = customerRepository.findByDiscoveredName(subscriberName);
             Customer subscriber;
