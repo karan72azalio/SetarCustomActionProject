@@ -195,7 +195,7 @@ public class CreateServiceFibernet implements HttpAction {
                 log.error("Created product: {}", productName);
             }
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
-                log.error("createServiceEVPN service already exist");
+                log.error("createServiceFibernate service already exist");
                 return new CreateServiceFibernetResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,ontName);
             }
             if(isSubscriptionExist.get()){

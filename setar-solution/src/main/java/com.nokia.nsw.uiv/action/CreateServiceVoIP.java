@@ -219,7 +219,7 @@ public class CreateServiceVoIP implements HttpAction {
                         return productRepo.save(prod);
                     });
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
-                log.error("createServiceCbmVoice service already exist");
+                log.error("createServiceVOIP service already exist");
                 return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + req.getOntSN());
             }
             if(isSubscriptionExist.get()){

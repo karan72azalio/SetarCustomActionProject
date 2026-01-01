@@ -144,6 +144,7 @@ public class ModifyIPTV implements HttpAction {
                     LogicalDevice cbmDevice = optCbM.orElse(null);
 
                     if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                        subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                         Map<String, Object> subProps = subscription.getProperties();
                         if (subProps == null) subProps = new HashMap<>();
                         subProps.put("serviceMAC", request.getModifyParam1());
@@ -151,7 +152,8 @@ public class ModifyIPTV implements HttpAction {
                         subscriptionRepository.save(subscription, 2);
 
                         if (cbmDevice != null) {
-                            Map<String, Object> cbmProps = stbApCmDeviceRepository.findByDiscoveredName(cbmDevice.getDiscoveredName()).get().getProperties();
+                            cbmDevice = stbApCmDeviceRepository.findByDiscoveredName(cbmDevice.getDiscoveredName()).get();
+                            Map<String, Object> cbmProps = cbmDevice.getProperties();
                             if (cbmProps == null) cbmProps = new HashMap<>();
                             cbmProps.put("macAddress", request.getModifyParam1());
                             cbmDevice.setProperties(cbmProps);
@@ -160,6 +162,7 @@ public class ModifyIPTV implements HttpAction {
                     }
 
                     if (request.getModifyParam2() != null && !request.getModifyParam2().equalsIgnoreCase("NA") && cbmDevice != null) {
+                        cbmDevice = stbApCmDeviceRepository.findByDiscoveredName(cbmDevice.getDiscoveredName()).get();
                         Map<String, Object> cbmProps = cbmDevice.getProperties();
                         if (cbmProps == null) cbmProps = new HashMap<>();
                         cbmProps.put("gatewayMacAddress", request.getModifyParam2());
@@ -171,6 +174,7 @@ public class ModifyIPTV implements HttpAction {
                 // Modify Customer Group
                 if (modifyType.contains("ModifyCustomerGroup")) {
                     if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                        subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                         Map<String, Object> subProps = subscription.getProperties();
                         if (subProps == null) subProps = new HashMap<>();
                         subProps.put("customerGroupId", request.getModifyParam1());
@@ -181,6 +185,7 @@ public class ModifyIPTV implements HttpAction {
 
                 // Create User
                 if (modifyType.contains("CreateUser")) {
+                    subscriber=customerRepository.findByDiscoveredName(subscriber.getDiscoveredName()).get();
                     Map<String, Object> subProps = subscriber.getProperties();
                     if (subProps == null) subProps = new HashMap<>();
                     if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
@@ -195,6 +200,7 @@ public class ModifyIPTV implements HttpAction {
 
                 // Delete User
                 if (modifyType.contains("DeleteUser")) {
+                    subscriber=customerRepository.findByDiscoveredName(subscriber.getDiscoveredName()).get();
                     Map<String, Object> subProps = subscriber.getProperties();
                     if (subProps == null) subProps = new HashMap<>();
                     subProps.put("miSetarUserName", "");
@@ -205,6 +211,7 @@ public class ModifyIPTV implements HttpAction {
 
                 // Reset Password
                 if (modifyType.contains("ResetPassword")) {
+                    subscriber=customerRepository.findByDiscoveredName(subscriber.getDiscoveredName()).get();
                     if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
                         Map<String, Object> subProps = subscriber.getProperties();
                         if (subProps == null) subProps = new HashMap<>();

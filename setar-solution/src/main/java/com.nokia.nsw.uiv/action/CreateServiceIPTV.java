@@ -191,7 +191,7 @@ public class CreateServiceIPTV implements HttpAction {
                 log.error("Created Product: {}", productName);
             }
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
-                log.error("createServiceCbmVoice service already exist");
+                log.error("createServiceIPTV service already exist");
                 return new CreateServiceIPTVResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + request.getOntSN());
             }
             if(isSubscriptionExist.get()){
