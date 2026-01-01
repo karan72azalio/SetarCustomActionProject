@@ -107,6 +107,8 @@ public class CreateServiceIPTV implements HttpAction {
                 Validations.validateLength(subscriberName,"Subscriber");
                 Validations.validateLength(subscriptionName,"Subscription");
                 Validations.validateLength(productName, "Product");
+                Validations.validateLength(ontName, "ONTDevice");
+                Validations.validateLength(mgmtVlanName, "MgmtVlanName");
             }catch (BadRequestException bre){
                 return new CreateServiceIPTVResponse("400", ERROR_PREFIX +  bre.getMessage(),
                         Instant.now().toString(), "","");
@@ -134,6 +136,7 @@ public class CreateServiceIPTV implements HttpAction {
                 subscriberProps.put("subscriberLastName", request.getLastName());
                 subscriberProps.put("companyName", request.getCompanyName());
                 subscriberProps.put("contactPhoneNumber", request.getContactPhone());
+                subscriberProps.put("subscriberAddress",request.getSubsAddress());
 
                 subscriber.setProperties(subscriberProps);
                 customerRepository.save(subscriber, 2);
@@ -274,7 +277,7 @@ public class CreateServiceIPTV implements HttpAction {
                 oltDevice.setLocalName(Validations.encryptName(oltName));
                 oltDevice.setDiscoveredName(oltName);
                 oltDevice.setKind("OLTDevice");
-                oltDevice.setContext("");
+                oltDevice.setContext(Constants.SETAR_KIND_OLT_DEVICE);
 
                 Map<String, Object> oltProps = new HashMap<>();
                 oltProps.put("oltPosition", request.getOltName());
