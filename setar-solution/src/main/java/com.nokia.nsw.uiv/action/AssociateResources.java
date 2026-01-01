@@ -68,6 +68,11 @@ public class AssociateResources implements HttpAction {
                     Validations.validateMandatoryParams(request.getApSN3(), "apSN3");
                     Validations.validateMandatoryParams(request.getApSN4(), "apSN4");
                     Validations.validateMandatoryParams(request.getApSN5(), "apSN5");
+                    Validations.validateMandatoryParams(request.getStbSN1(), "stbSN1");
+                    Validations.validateMandatoryParams(request.getStbSN2(), "stbSN2");
+                    Validations.validateMandatoryParams(request.getStbSN3(), "stbSN3");
+                    Validations.validateMandatoryParams(request.getStbSN4(), "stbSN4");
+                    Validations.validateMandatoryParams(request.getStbSN5(), "stbSN5");
                 }
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
