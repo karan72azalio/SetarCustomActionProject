@@ -127,6 +127,7 @@ public class ModifyIPTV implements HttpAction {
                 // Modify ONT MAC
                 if (modifyType.contains("ModifyONT")) {
                     if (request.getModifyParam1() != null && !request.getModifyParam1().equalsIgnoreCase("NA")) {
+                        subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                         Map<String, Object> subProps = subscription.getProperties();
                         if (subProps == null) subProps = new HashMap<>();
                         subProps.put("serviceMAC", request.getModifyParam1());
