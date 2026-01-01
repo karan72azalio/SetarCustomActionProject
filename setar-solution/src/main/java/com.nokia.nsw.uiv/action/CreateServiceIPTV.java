@@ -277,7 +277,7 @@ public class CreateServiceIPTV implements HttpAction {
                 oltDevice.setLocalName(Validations.encryptName(oltName));
                 oltDevice.setDiscoveredName(oltName);
                 oltDevice.setKind("OLTDevice");
-                oltDevice.setContext(Constants.SETAR_KIND_OLT_DEVICE);
+                oltDevice.setContext(Constants.SETAR);
 
                 Map<String, Object> oltProps = new HashMap<>();
                 oltProps.put("oltPosition", request.getOltName());
