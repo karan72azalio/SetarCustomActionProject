@@ -62,6 +62,13 @@ public class AssociateResources implements HttpAction {
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
+                if(request.getProductSubType().equalsIgnoreCase("IPTV")){
+                    Validations.validateMandatoryParams(request.getApSN1(), "apSN1");
+                    Validations.validateMandatoryParams(request.getApSN2(), "apSN2");
+                    Validations.validateMandatoryParams(request.getApSN3(), "apSN3");
+                    Validations.validateMandatoryParams(request.getApSN4(), "apSN4");
+                    Validations.validateMandatoryParams(request.getApSN5(), "apSN5");
+                }
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 return new AssociateResourcesResponse(
