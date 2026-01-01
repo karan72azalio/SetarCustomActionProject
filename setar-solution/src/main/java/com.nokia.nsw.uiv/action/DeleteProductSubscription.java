@@ -70,20 +70,22 @@ public class DeleteProductSubscription implements HttpAction {
             }
 
             // ========== RFS Update ==========
-            if (request.getFxOrderID() != null && !request.getFxOrderID().isEmpty()) {
+
                 String rfsName = "RFS" + Constants.UNDER_SCORE + request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceID();
                 Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
 
                 if (optRfs.isPresent()) {
                     Service rfs = optRfs.get();
                     rfs.getProperties().put("transactionType", "DeleteProductSubscription");
-                    rfs.getProperties().put("transactionId", request.getFxOrderID());
+                    if (request.getFxOrderID() != null && !request.getFxOrderID().isEmpty()) {
+                        rfs.getProperties().put("transactionId", request.getFxOrderID());
+                    }
                     serviceCustomRepository.save(rfs);
                     log.error("RFS updated successfully for {}", rfsName);
                 } else {
                     log.error("No RFS found for name {}", rfsName);
                 }
-            }
+
 
             // ========== Delete Product ==========
             Optional<Product> optProduct = productRepository.findByDiscoveredName(productName);
