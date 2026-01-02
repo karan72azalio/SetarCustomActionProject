@@ -61,8 +61,8 @@ public class AssociateResources implements HttpAction {
             try {
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
-                Validations.validateMandatoryParams(request.getProductSubType(), "productSubtype");
-                if(request.getProductSubType().equalsIgnoreCase("IPTV")){
+                Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
+                if(request.getProductSubtype().equalsIgnoreCase("IPTV")){
                     Validations.validateMandatoryParams(request.getApSN1(), "apSN1");
                     Validations.validateMandatoryParams(request.getApSN2(), "apSN2");
                     Validations.validateMandatoryParams(request.getApSN3(), "apSN3");
@@ -89,7 +89,7 @@ public class AssociateResources implements HttpAction {
             String subscriptionName;
             String rfsName;
             log.error("----Trace #3: Preparing entity names ----");
-            if ("IPTV".equalsIgnoreCase(request.getProductSubType())) {
+            if ("IPTV".equalsIgnoreCase(request.getProductSubtype())) {
                 subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceId();
                 rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             } else if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
@@ -121,7 +121,7 @@ public class AssociateResources implements HttpAction {
             Service rfs = optRfs.get();
             // Step 4: IPTV logic
             boolean deviceUpdated = false;
-            if ("IPTV".equalsIgnoreCase(request.getProductSubType())) {
+            if ("IPTV".equalsIgnoreCase(request.getProductSubtype())) {
                 log.error("----Trace #5: Executing IPTV device association ----");
 
                 // STBs

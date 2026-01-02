@@ -73,7 +73,7 @@ public class QueryFlags implements HttpAction {
 
         String subscriber = request.getSubscriberName();
         String productType = request.getProductType();
-        String productSubtype = request.getProductSubType();
+        String productSubtype = request.getProductSubtype();
         String actionType = request.getActionType();
         String ontSN = request.getOntSN();
         String ontPort = request.getOntPort();

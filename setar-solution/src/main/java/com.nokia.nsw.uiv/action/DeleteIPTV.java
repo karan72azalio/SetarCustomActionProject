@@ -50,7 +50,7 @@ public class DeleteIPTV implements HttpAction {
         DeleteIPTVRequest request = (DeleteIPTVRequest) actionContext.getObject();
         String subscriberName = request.getSubscriberName();
         String productType = request.getProductType();
-        String productSubtype = request.getProductSubType();
+        String productSubtype = request.getProductSubtype();
         String serviceId = request.getServiceId();
         String serviceFlag = request.getServiceFlag();
         String ontSN = request.getOntSN();

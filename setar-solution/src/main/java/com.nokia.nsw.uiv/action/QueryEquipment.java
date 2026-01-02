@@ -69,7 +69,7 @@ public class QueryEquipment implements HttpAction {
             Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
             Validations.validateMandatoryParams(request.getResourceSn(), "resourceSn");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
-            Validations.validateMandatoryParams(request.getProductSubType(), "productSubtype");
+            Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return createErrorResponse(CODE_MISSING_PARAMS,
@@ -80,7 +80,7 @@ public class QueryEquipment implements HttpAction {
         String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId();
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-        String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubType() + Constants.UNDER_SCORE + request.getServiceId();
+        String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceId();
 
         boolean successFlag = false;
         int apCounter = 1;

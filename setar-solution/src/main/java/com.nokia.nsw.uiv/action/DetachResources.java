@@ -56,7 +56,7 @@ public class DetachResources implements HttpAction {
         String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceID();
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-        String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubType() + Constants.UNDER_SCORE+ request.getServiceID();
+        String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE+ request.getServiceID();
 
         try {
             // 1. Mandatory validation
@@ -64,7 +64,7 @@ public class DetachResources implements HttpAction {
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getOntSN(), "ontSN");
             Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
-            Validations.validateMandatoryParams(request.getProductSubType(), "productSubtype");
+            Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
 
             // 2. Fetch entities
             Optional<Customer> subscriber = subscriberRepository.findByDiscoveredName(request.getSubscriberName());
