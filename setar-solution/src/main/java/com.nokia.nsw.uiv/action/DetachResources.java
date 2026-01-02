@@ -64,7 +64,7 @@ public class DetachResources implements HttpAction {
             Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
             Validations.validateMandatoryParams(request.getOntSN(), "ontSN");
             Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
-            Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
+            Validations.validateMandatoryParams(request.getProductSubType(), "productSubtype");
 
             // 2. Fetch entities
             Optional<Customer> subscriber = subscriberRepository.findByDiscoveredName(request.getSubscriberName());

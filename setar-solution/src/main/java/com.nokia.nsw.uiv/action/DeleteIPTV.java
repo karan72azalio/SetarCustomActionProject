@@ -50,7 +50,7 @@ public class DeleteIPTV implements HttpAction {
         DeleteIPTVRequest request = (DeleteIPTVRequest) actionContext.getObject();
         String subscriberName = request.getSubscriberName();
         String productType = request.getProductType();
-        String productSubType = request.getProductSubType();
+        String productSubtype = request.getProductSubType();
         String serviceId = request.getServiceId();
         String serviceFlag = request.getServiceFlag();
         String ontSN = request.getOntSN();
@@ -61,7 +61,7 @@ public class DeleteIPTV implements HttpAction {
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
                 Validations.validateMandatoryParams(subscriberName, "subscriberName");
                 Validations.validateMandatoryParams(productType, "productType");
-                Validations.validateMandatoryParams(productSubType, "productSubType");
+                Validations.validateMandatoryParams(productSubtype, "productSubtype");
                 Validations.validateMandatoryParams(serviceId, "serviceId");
                 Validations.validateMandatoryParams(ontSN, "ontSN");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
@@ -72,7 +72,7 @@ public class DeleteIPTV implements HttpAction {
             }
             // Step 2: Prepare entity names
             String subscriptionName = subscriberName + Constants.UNDER_SCORE  + serviceId;
-            String productName = subscriberName+ Constants.UNDER_SCORE + productSubType+Constants.UNDER_SCORE + serviceId;
+            String productName = subscriberName+ Constants.UNDER_SCORE + productSubtype+Constants.UNDER_SCORE + serviceId;
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             String ontName ="ONT" + ontSN;

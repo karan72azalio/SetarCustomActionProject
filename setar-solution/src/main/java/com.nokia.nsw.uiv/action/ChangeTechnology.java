@@ -140,7 +140,7 @@ public class ChangeTechnology implements HttpAction {
             String subscriberNameFibernet = subscriberName + Constants.UNDER_SCORE  + ontSN;
             String subscriberNameCbmKey = subscriberName + Constants.UNDER_SCORE  + cbmMac.replace(":", "");
 
-            // 4. Update existing subscriber (only when productSubType == Fibernet)
+            // 4. Update existing subscriber (only when productSubtype == Fibernet)
             if ("Fibernet".equalsIgnoreCase(productSubtype)) {
                 if (subscriberNameFibernet.length() > 100) {
                     return new ChangeTechnologyResponse("400", ERROR_PREFIX + "Subscriber name too long", Instant.now().toString(),"","");

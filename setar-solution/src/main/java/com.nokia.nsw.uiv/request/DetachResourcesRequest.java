@@ -18,7 +18,7 @@ public class DetachResourcesRequest {
     private String serviceID;
 
     @NotNull
-    private String productSubType;
+    private String productSubtype;
 
     @NotNull
     private String stbSN1;

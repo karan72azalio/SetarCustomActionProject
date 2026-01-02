@@ -13,7 +13,7 @@ public class QueryFlagsRequest {
     @NotNull
     private String productType;
     @NotNull
-    private String productSubType;
+    private String productSubtype;
     private String actionType;
     @NotNull
     private String ontSN;

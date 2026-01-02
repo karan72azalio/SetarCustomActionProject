@@ -8,7 +8,7 @@ import lombok.Setter;
 public class DeleteIPTVRequest {
     private String subscriberName;   // Mandatory
     private String productType;      // Mandatory
-    private String productSubType;   // Mandatory
+    private String productSubtype;   // Mandatory
     private String serviceId;        // Mandatory
     private String serviceFlag;      // Optional
     private String ontSN;            // Mandatory

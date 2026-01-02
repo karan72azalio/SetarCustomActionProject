@@ -73,7 +73,7 @@ public class QueryFlags implements HttpAction {
 
         String subscriber = request.getSubscriberName();
         String productType = request.getProductType();
-        String productSubType = request.getProductSubType();
+        String productSubtype = request.getProductSubType();
         String actionType = request.getActionType();
         String ontSN = request.getOntSN();
         String ontPort = request.getOntPort();
@@ -87,7 +87,7 @@ public class QueryFlags implements HttpAction {
             try {
                 Validations.validateMandatory(subscriber, "subscriberName");
                 Validations.validateMandatory(productType, "productType");
-                Validations.validateMandatory(productSubType, "productSubType");
+                Validations.validateMandatory(productSubtype, "productSubtype");
                 Validations.validateMandatory(ontSN, "ontSN");
                 Validations.validateMandatory(ontPort, "ontPort");
             } catch (BadRequestException bre) {
@@ -147,7 +147,7 @@ public class QueryFlags implements HttpAction {
             flags.put("SERVICE_LINK", serviceLink);
 
             log.error("------------Test Trace # 5---------------");
-            boolean subtypeMatches = equalsAnyIgnoreCase(productSubType, "Broadband", "Voice", "Cloudstarter", "Bridged");
+            boolean subtypeMatches = equalsAnyIgnoreCase(productSubtype, "Broadband", "Voice", "Cloudstarter", "Bridged");
             if ((subtypeMatches || equalsIgnoreCase(productType, "ENTERPRISE"))
                     && !"Configure".equalsIgnoreCase(actionType)) {
                 if (ontSN == null || ontSN.trim().isEmpty() || "NA".equalsIgnoreCase(ontSN)) {
@@ -307,7 +307,7 @@ public class QueryFlags implements HttpAction {
                                 serviceID,
                                 subscriber,
                                 actionType,
-                                productSubType
+                                productSubtype
                         );
 
                 if (!step6Result.isEmpty()) {
@@ -499,7 +499,7 @@ public class QueryFlags implements HttpAction {
 
 
             log.error("------------Test Trace # 8---------------");
-            if (ontSN != null && !"".equals(ontSN) && equalsIgnoreCase(productSubType, "IPTV") && equalsIgnoreCase(actionType, "Unconfigure")) {
+            if (ontSN != null && !"".equals(ontSN) && equalsIgnoreCase(productSubtype, "IPTV") && equalsIgnoreCase(actionType, "Unconfigure")) {
                 log.error("Trace: IPTV Unconfigure path - searching subscription");
                 String subGdn = subscriber + Constants.UNDER_SCORE  + (serviceID == null ? "" : serviceID);
                 Optional<Subscription> optSub = subscriptionRepository.findByDiscoveredName(subGdn);
@@ -540,10 +540,10 @@ public class QueryFlags implements HttpAction {
             List<String> subscount = new ArrayList<>();
 
             boolean eligible =
-                    equalsAnyIgnoreCase(productSubType,
+                    equalsAnyIgnoreCase(productSubtype,
                             "Fibernet", "Broadband", "Voice", "Bridged")
                             || (equalsIgnoreCase(productType, "Broadband")
-                            && equalsIgnoreCase(productSubType, "Bridged"));
+                            && equalsIgnoreCase(productSubtype, "Bridged"));
 
             if (eligible) {
 
@@ -622,7 +622,7 @@ public class QueryFlags implements HttpAction {
 
             log.error("------------Test Trace # 10---------------");
 
-            if (equalsIgnoreCase(productSubType, "IPTV")
+            if (equalsIgnoreCase(productSubtype, "IPTV")
                     && !equalsIgnoreCase(actionType, "Configure")
                     && subscriber != null
                     && serviceID != null) {
@@ -984,7 +984,7 @@ public class QueryFlags implements HttpAction {
 
 
             log.error("------------Test Trace # 14---------------");
-            if ((equalsAnyIgnoreCase(productType, "EVPN", "ENTERPRISE") || equalsAnyIgnoreCase(productSubType, "Cloudstarter", "Bridged"))
+            if ((equalsAnyIgnoreCase(productType, "EVPN", "ENTERPRISE") || equalsAnyIgnoreCase(productSubtype, "Cloudstarter", "Bridged"))
                     && (equalsAnyIgnoreCase(actionType, "Configure", "Migrate"))) {
                 log.error("Trace: Evaluating template requirements for EVPN/Enterprise/Cloudstarter/Bridged");
                 String oltPos = flags.getOrDefault("SERVICE_OLT_POSITION", "");
@@ -1075,7 +1075,7 @@ public class QueryFlags implements HttpAction {
             // ======================= EVPN / ENTERPRISE Extended Logic =======================
 // ---------------------- Case B : UnconfigureIPBH + IPBH -------------------------
             if ("UnconfigureIPBH".equalsIgnoreCase(actionType)
-                    && equalsIgnoreCase(productSubType, "IPBH")
+                    && equalsIgnoreCase(productSubtype, "IPBH")
                     && subscriber != null
                     && serviceID != null) {
 
@@ -1124,7 +1124,7 @@ public class QueryFlags implements HttpAction {
             // ---------------------- Case C : Unconfigure EVPN / Enterprise ------------------
             if ((containsIgnoreCase(productType, "EVPN") || containsIgnoreCase(productType, "ENTERPRISE"))
                     && equalsIgnoreCase(actionType, "Unconfigure")
-                    && !equalsIgnoreCase(productSubType, "WIFI Maintenance")
+                    && !equalsIgnoreCase(productSubtype, "WIFI Maintenance")
                     && ontSN != null) {
 
                 log.error("Trace: Case-C EVPN Unconfigure Non-WIFI flow triggered");
@@ -1386,7 +1386,7 @@ public class QueryFlags implements HttpAction {
             String serviceID,
             String subscriber,
             String actionType,
-            String productSubType) {
+            String productSubtype) {
 
         Map<String, String> result = new HashMap<>();
 

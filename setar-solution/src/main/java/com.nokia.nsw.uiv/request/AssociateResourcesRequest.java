@@ -18,7 +18,7 @@ public class AssociateResourcesRequest {
     private String serviceId;
 
     @NotNull
-    private String productSubType;
+    private String productSubtype;
 
     private String ontSN; // optional
     private String cbmSN; // optional

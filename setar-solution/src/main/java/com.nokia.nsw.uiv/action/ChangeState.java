@@ -83,7 +83,7 @@ public class ChangeState implements HttpAction {
         String ontName = null;
         String cbmName = null;
         String productType = nullSafe(req.getProductType());
-        String productSubType = nullSafe(req.getProductSubtype());
+        String productSubtype = nullSafe(req.getProductSubtype());
         String serviceLink = nullSafe(req.getServiceLink());
 
         // IPTV case
@@ -92,7 +92,7 @@ public class ChangeState implements HttpAction {
             rfsName = "RFS" + Constants.UNDER_SCORE + req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId();
         }
         // Broadband/Voice with serviceLink provided and not Cloudstarter/Bridged
-        else if ((equalsAny(productType, "Broadband", "Voice") && !equalsAny(productSubType, "Cloudstarter", "Bridged"))
+        else if ((equalsAny(productType, "Broadband", "Voice") && !equalsAny(productSubtype, "Cloudstarter", "Bridged"))
                 && !isEmpty(serviceLink)) {
 
             if (serviceLink.equalsIgnoreCase("ONT")) {

@@ -61,7 +61,7 @@ public class AssociateResources implements HttpAction {
             try {
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
-                Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
+                Validations.validateMandatoryParams(request.getProductSubType(), "productSubtype");
                 if(request.getProductSubType().equalsIgnoreCase("IPTV")){
                     Validations.validateMandatoryParams(request.getApSN1(), "apSN1");
                     Validations.validateMandatoryParams(request.getApSN2(), "apSN2");

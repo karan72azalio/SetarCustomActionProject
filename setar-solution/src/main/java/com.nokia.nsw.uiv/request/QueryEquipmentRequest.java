@@ -21,7 +21,7 @@ public class QueryEquipmentRequest {
     private String productType;       // M
 
     @NotNull
-    private String productSubType;    // M
+    private String productSubtype;    // M
 
     private String serviceLink;       // O
 }

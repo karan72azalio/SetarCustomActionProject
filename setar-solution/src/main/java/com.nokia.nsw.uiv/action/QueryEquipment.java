@@ -69,7 +69,7 @@ public class QueryEquipment implements HttpAction {
             Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
             Validations.validateMandatoryParams(request.getResourceSn(), "resourceSn");
             Validations.validateMandatoryParams(request.getProductType(), "productType");
-            Validations.validateMandatoryParams(request.getProductSubType(), "productSubType");
+            Validations.validateMandatoryParams(request.getProductSubType(), "productSubtype");
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return createErrorResponse(CODE_MISSING_PARAMS,
