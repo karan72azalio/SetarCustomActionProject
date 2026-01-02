@@ -164,7 +164,7 @@ public class AssociateResources implements HttpAction {
                         Map<String,Object>props=new HashMap<>();
                         props.put("AdministrativeState","Allocated");
                         if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
-                            device.setDescription(request.getServiceId() + Constants.UNDER_SCORE  + request.getOntSN().replace("ONT", Constants.UNDER_SCORE ));
+                            device.setDescription(request.getServiceId()  + request.getOntSN().replace("ONT", Constants.UNDER_SCORE ));
                         } else {
                             device.setDescription(request.getServiceId());
                         }
