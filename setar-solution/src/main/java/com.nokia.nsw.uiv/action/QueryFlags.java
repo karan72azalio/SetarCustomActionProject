@@ -1208,6 +1208,19 @@ public class QueryFlags implements HttpAction {
                             deviceRepository.findByDiscoveredName(ontGdn).ifPresent(ont -> {
 
                                 Map<String,Object> ontProps = safeProps(ont.getProperties());
+
+                                Object ontMgmtTemplate   = ontProps.get("mgmtTemplate");
+                                Object ontCreateTemplate = ontProps.get("ontTemplate");
+
+                                flags.put("SERVICE_TEMPLATE_MGMT",
+                                        existsString(ontMgmtTemplate));
+
+                                flags.put("SERVICE_TEMPLATE_MGMT_CREATE",
+                                        existsString(ontCreateTemplate));
+
+                                log.error("Trace: Case-C ONT templates: MGMT={} CREATE={}",
+                                        flags.get("SERVICE_TEMPLATE_MGMT"),
+                                        flags.get("SERVICE_TEMPLATE_MGMT_CREATE"));
                                 Object parentOltObj = ontProps.get("oltPosition");
 
                                 if (parentOltObj == null) {
