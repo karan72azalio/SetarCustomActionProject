@@ -182,7 +182,7 @@ public class QueryFlags implements HttpAction {
                                             .getOrDefault("serviceID", "");
 
                                     if (serviceID != null && serviceID.equals(subServiceId)) {
-                                        Set<Resource> used = rfs1.getUsedResource();
+                                        Set<LogicalDevice> used = rfs1.getContaingservice();
                                         if (used != null) {
                                             for (Resource res : used) {
                                                 if (res.getDiscoveredName() != null &&
@@ -193,7 +193,7 @@ public class QueryFlags implements HttpAction {
                                                         String derivedOntSN = serial.toString();
                                                         ontSN = derivedOntSN;
 
-                                                        flags.put("ONT", derivedOntSN);
+                                                        flags.put("ONTSN", derivedOntSN);
                                                         flags.put("SERVICE_SN", derivedOntSN);
                                                         flags.put("SERVICE_LINK", "ONT");
                                                         serviceLink = "ONT";
