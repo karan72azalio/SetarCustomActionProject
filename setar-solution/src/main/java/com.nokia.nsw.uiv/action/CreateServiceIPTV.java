@@ -258,7 +258,7 @@ public class CreateServiceIPTV implements HttpAction {
                 rfsProps.put("serviceType", request.getProductType());
 
                 rfs.setProperties(rfsProps);
-                rfs.setUsingService(new HashSet<>(List.of(cfs)));
+                rfs.setUsedService(new HashSet<>(List.of(cfs)));
                 serviceCustomRepository.save(rfs, 2);
                 log.error("Created RFS: {}", rfsName);
             }

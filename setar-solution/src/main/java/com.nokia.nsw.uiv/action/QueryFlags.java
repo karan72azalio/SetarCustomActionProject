@@ -182,7 +182,7 @@ public class QueryFlags implements HttpAction {
                                             .getOrDefault("serviceID", "");
 
                                     if (serviceID != null && serviceID.equals(subServiceId)) {
-                                        Set<Resource> used = rfs1.getUsedResource();
+                                        Set<LogicalDevice> used = rfs1.getContaingservice();
                                         if (used != null) {
                                             for (Resource res : used) {
                                                 if (res.getDiscoveredName() != null &&
@@ -193,7 +193,7 @@ public class QueryFlags implements HttpAction {
                                                         String derivedOntSN = serial.toString();
                                                         ontSN = derivedOntSN;
 
-                                                        flags.put("ONT", derivedOntSN);
+                                                        flags.put("ONTSN", derivedOntSN);
                                                         flags.put("SERVICE_SN", derivedOntSN);
                                                         flags.put("SERVICE_LINK", "ONT");
                                                         serviceLink = "ONT";
@@ -1208,6 +1208,19 @@ public class QueryFlags implements HttpAction {
                             deviceRepository.findByDiscoveredName(ontGdn).ifPresent(ont -> {
 
                                 Map<String,Object> ontProps = safeProps(ont.getProperties());
+
+                                Object ontMgmtTemplate   = ontProps.get("mgmtTemplate");
+                                Object ontCreateTemplate = ontProps.get("ontTemplate");
+
+                                flags.put("SERVICE_TEMPLATE_MGMT",
+                                        existsString(ontMgmtTemplate));
+
+                                flags.put("SERVICE_TEMPLATE_MGMT_CREATE",
+                                        existsString(ontCreateTemplate));
+
+                                log.error("Trace: Case-C ONT templates: MGMT={} CREATE={}",
+                                        flags.get("SERVICE_TEMPLATE_MGMT"),
+                                        flags.get("SERVICE_TEMPLATE_MGMT_CREATE"));
                                 Object parentOltObj = ontProps.get("oltPosition");
 
                                 if (parentOltObj == null) {
