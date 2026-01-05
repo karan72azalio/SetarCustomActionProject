@@ -126,6 +126,8 @@ public class AssociateResources implements HttpAction {
 
             // Step 4: IPTV logic
             boolean deviceUpdated = false;
+            int stbSerialsCount = 0;
+            int apSerialsCount = 0;
             if ("IPTV".equalsIgnoreCase(request.getProductSubtype())) {
                 log.error("----Trace #5: Executing IPTV device association ----");
 
@@ -149,9 +151,14 @@ public class AssociateResources implements HttpAction {
                         request.getApSN16(), request.getApSN17(), request.getApSN18(),
                         request.getApSN19(), request.getApSN20()
                 };
+                stbSerialsCount = 0;
+                apSerialsCount = 0;
 
                 for (int i = 0; i < stbSerials.length; i++) {
                     String sn = stbSerials[i];
+                    if(sn!=null){
+                        stbSerialsCount++;
+                    }
                     if (sn != null && !"NA".equalsIgnoreCase(sn) && !sn.isEmpty()) {
                         String devName = "STB_" + sn;
                         log.error("----Trace #6: Processing STB device: " + devName + " ----");
@@ -180,6 +187,9 @@ public class AssociateResources implements HttpAction {
                 }
 
                 for (String sn : apSerials) {
+                    if(sn!=null){
+                        apSerialsCount++;
+                    }
                     if (sn != null && !"NA".equalsIgnoreCase(sn) && !sn.isEmpty()) {
                         String devName = "AP_" + sn;
                         log.error("----Trace #7: Processing AP device: " + devName + " ----");
@@ -246,7 +256,14 @@ public class AssociateResources implements HttpAction {
                         Instant.now().toString(),
                         subscriptionName
                 );
-            } else {
+            } else if(apSerialsCount<20 || stbSerialsCount<20) {
+                return new AssociateResourcesResponse(
+                        "400",
+                        ERROR_PREFIX + "Resource not attached",
+                        Instant.now().toString(),
+                        ""
+                );
+            }else{
                 return new AssociateResourcesResponse(
                         "400",
                         ERROR_PREFIX + "No valid devices provided",
