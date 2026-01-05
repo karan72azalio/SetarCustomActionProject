@@ -93,10 +93,10 @@ public class AssociateResources implements HttpAction {
                 subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceId();
                 rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             } else if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
-                subscriptionName = subscriberName + request.getServiceId() + request.getOntSN();
+                subscriptionName = subscriberName +Constants.UNDER_SCORE+ request.getServiceId() +Constants.UNDER_SCORE+ request.getOntSN();
                 rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             } else if (request.getCbmSN() != null && !"NA".equalsIgnoreCase(request.getCbmSN())) {
-                subscriptionName = subscriberName + request.getServiceId() + request.getCbmSN();
+                subscriptionName = subscriberName +Constants.UNDER_SCORE+ request.getServiceId() +Constants.UNDER_SCORE+ request.getCbmSN();
                 rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             } else {
                 return new AssociateResourcesResponse(
@@ -118,7 +118,12 @@ public class AssociateResources implements HttpAction {
                         ""
                 );
             }
-            Service rfs = optRfs.get();
+                Service rfs = optRfs.get();
+                Map<String,Object> rfsProps = rfs.getProperties();
+                rfsProps.put("transactionId",request.getFxOrderID());
+                serviceCustomRepository.save(rfs,2);
+                log.error("----Trace #9: Saving RFS changes ----");
+
             // Step 4: IPTV logic
             boolean deviceUpdated = false;
             if ("IPTV".equalsIgnoreCase(request.getProductSubtype())) {
@@ -230,8 +235,8 @@ public class AssociateResources implements HttpAction {
             // Step 7: Persist RFS changes
             if (deviceUpdated) {
                 rfs = serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
-                Map<String,Object> rfsProps = rfs.getProperties();
-                rfsProps.put("transactionId",request.getFxOrderID());
+                Map<String,Object> rfsProp = rfs.getProperties();
+                rfsProp.put("transactionId",request.getFxOrderID());
                 serviceCustomRepository.save(rfs,2);
                 log.error("----Trace #9: Saving RFS changes ----");
                 log.error(Constants.ACTION_COMPLETED);
