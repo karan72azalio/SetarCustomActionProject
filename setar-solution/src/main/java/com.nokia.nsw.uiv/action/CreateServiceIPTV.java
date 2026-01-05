@@ -311,6 +311,7 @@ public class CreateServiceIPTV implements HttpAction {
                 Map<String, Object> ontProps = new HashMap<>();
                 ontProps.put("serialNo", request.getOntSN());
                 ontProps.put("deviceModel", request.getOntModel());
+                ontProps.put("oltPosition",request.getOltName());
                 ontProps.put("OperationalState", "Active");
                 ontProps.put("iptvVlan", request.getVlanID());
                 ontDevice.setProperties(ontProps);

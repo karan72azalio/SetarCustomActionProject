@@ -211,7 +211,7 @@ public class CreateServiceEVPN implements HttpAction {
                 if (req.getTemplateNameVlan() != null) subsProps.put("evpnTemplateVLAN", req.getTemplateNameVlan());
                 if (req.getTemplateNameVpls() != null) subsProps.put("evpnTemplateVPLS", req.getTemplateNameVpls());
                 if (req.getVlanId() != null) subsProps.put("evpnVLAN", req.getVlanId());
-                subsProps.put("serviceId", req.getServiceId());
+                subsProps.put("serviceID", req.getServiceId());
                 subsProps.put("householdId", req.getHhid());
                 subsProps.put("serviceLink", ("IPBH".equalsIgnoreCase(req.getProductSubtype()) ? "SRX" : "ONT"));
                 // compute OLT position string per spec

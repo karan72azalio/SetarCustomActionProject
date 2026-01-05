@@ -184,7 +184,6 @@ public class CreateServiceVoIP implements HttpAction {
             subsProps.put("voipServiceCode", req.getVoipServiceCode());
             subsProps.put("serviceLink",(req.getOntSN()!=null && req.getOntSN().startsWith("ALCL"))?"ONT":"Cable_Modem");
             subscription.setProperties(subsProps);
-
             customerRepo.save(subscriber);
             subscriptionRepo.save(subscription);
 

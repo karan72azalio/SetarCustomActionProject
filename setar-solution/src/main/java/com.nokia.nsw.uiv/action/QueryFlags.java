@@ -170,7 +170,7 @@ public class QueryFlags implements HttpAction {
                                 Service rfs1=serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
                                 Service cfs=rfs1.getUsedService().stream().findFirst().get();
                                 cfs = serviceCustomRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
-                                String productName = cfs.getUsedService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                                String productName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                                 Product product = productRepository.findByDiscoveredName(productName).get();
                                 product=productRepository.findByDiscoveredName(product.getDiscoveredName()).get();
                                 Subscription subscription=product.getSubscription().stream().findFirst().get();
@@ -693,8 +693,8 @@ public class QueryFlags implements HttpAction {
                     Object link = p.get("serviceLink");
                     Object sSN = p.get("serviceSN");
                     Object sMAC = p.get("macAddress");
-                    Object qos = p.get("veipQosSessionProfile");
-                    Object kenan = p.get("kenanSubscriberId");
+                    Object qos = p.get("qosProfile");
+                    Object kenan = p.get("billingId");
 
                     if (link != null) flags.put("SERVICE_LINK", link.toString());
                     if (sSN != null) flags.put("SERVICE_SN", sSN.toString());
@@ -1088,7 +1088,7 @@ public class QueryFlags implements HttpAction {
                     if (optRfs.isPresent()) {
 
                         Service rfs = optRfs.get();
-                        Set<Resource> usedRes = rfs.getUsedResource();
+                        Set<LogicalDevice> usedRes = rfs.getContaingservice();
 
                         if (usedRes != null) {
                             for (Resource res : usedRes) {
@@ -1113,9 +1113,13 @@ public class QueryFlags implements HttpAction {
                         subscriptionRepository.findByDiscoveredName(subName1).ifPresent(sub -> {
                             Map<String, Object> sp = safeProps(sub.getProperties());
                             flags.put("SERVICE_LINK", (String) sp.getOrDefault("serviceLink", ""));
-                            flags.put("FIRST_NAME", (String) sp.getOrDefault("firstName", ""));
-                            flags.put("LAST_NAME", (String) sp.getOrDefault("lastName", ""));
-                        });
+                            Customer cust = sub.getCustomer();
+                            if (cust != null) {
+                                Map<String,Object> cp = safeProps(cust.getProperties());
+                                flags.put("FIRST_NAME", (String) cp.getOrDefault("subscriberFirstName",""));
+                                flags.put("LAST_NAME", (String) cp.getOrDefault("subscriberLastName",""));
+                            }
+                            });
                     }
                 } catch (Exception e) {
                     log.error("Trace: Case-B failed {}", e.getMessage());
@@ -1131,51 +1135,134 @@ public class QueryFlags implements HttpAction {
 
                 try {
                     int rfsCount = 0;
-                    List<Service> rfsMatched = new ArrayList<>();
+                    final String finalOntSn = ontSN;
+                    List<Service> rfsMatched =
+                            StreamSupport.stream(serviceCustomRepository.findAll().spliterator(), false)
+                                    .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
+                                    .filter(sc -> sc.getDiscoveredName() != null)
+                                    .filter(sc -> sc.getDiscoveredName().contains(finalOntSn))
+                                    .collect(Collectors.toList());
 
-                    for (Service rfs : serviceCustomRepository.findAll()) {
-                        if (rfs.getDiscoveredName() != null
-                                && rfs.getDiscoveredName().contains(ontSN)) {
-                            rfsMatched.add(rfs);
-                            rfsCount++;
-                        }
-                    }
+                     rfsCount = rfsMatched.size();
+
 
                     if (rfsCount == 2) {
-                        log.error("Trace: ONT has exactly 2 RFS - WIFI/MGMT scan starting");
+                        log.error("Trace: ONT has exactly 2 RFS - WIFI/MGMT extended evaluation");
+
+                        List<Subscription> evpnSubs = new ArrayList<>();
+                        List<String> setarSubset = new ArrayList<>();
 
                         for (Service rfs : rfsMatched) {
 
                             Service resolved = serviceCustomRepository
                                     .findByDiscoveredName(rfs.getDiscoveredName())
                                     .orElse(null);
-
                             if (resolved == null) continue;
 
                             Service cfs = resolved.getUsedService().stream().findFirst().orElse(null);
                             if (cfs == null) continue;
+                            String prodName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                            Product product = productRepository.findByDiscoveredName(prodName).get();
+                            if (product == null) continue;
 
-                            Product prod = productRepository
-                                    .findByDiscoveredName(
-                                            cfs.getUsedService().stream().findFirst().get().getDiscoveredName())
-                                    .orElse(null);
-                            if (prod == null) continue;
-
-                            Subscription sub = prod.getSubscription().stream().findFirst().orElse(null);
+                            Subscription sub = product.getSubscription().stream().findFirst().orElse(null);
                             if (sub == null) continue;
 
-                            Map<String, Object> sp = safeProps(sub.getProperties());
+                            evpnSubs.add(sub);
 
-                            String sType = (String) sp.getOrDefault("serviceSubType", "");
+                            Map<String,Object> sp = safeProps(sub.getProperties());
+                            String subType = (String) sp.getOrDefault("serviceSubType","");
 
-                            if ("WIFI Maintenance".equalsIgnoreCase(sType)) {
-                                flags.put("SERVICE_EVPN_WIFIM_FIRST", "YES");
+                            if ("WIFI Maintenance".equalsIgnoreCase(subType)) {
+                                setarSubset.add(sub.getDiscoveredName());
                             }
+                        }
 
-                            flags.put("SERVICE_ONT_PORT", (String) sp.getOrDefault("ontPort", ""));
-                            flags.put("SERVICE_LINK", (String) sp.getOrDefault("serviceLink", ""));
+                        String wifiFlag = (setarSubset.size() == 1) ? "YES" : "NO";
+                        flags.put("SERVICE_EVPN_WIFIM_FIRST", wifiFlag);
+
+                        // -------- If NO EVPN subscription found → just skip further EVPN logic --------
+                        if (evpnSubs.isEmpty()) {
+                            log.error("Trace: Case-C → No EVPN subscription found. Skipping Case-C EVPN logic.");
+                        } else {
+
+                            Subscription currentEvpn = evpnSubs.stream().findFirst().get();
+                            Map<String,Object> evpnProps = safeProps(currentEvpn.getProperties());
+
+                            String evpnPort = (String) evpnProps.getOrDefault("evpnPort","");
+                            String tempVlan = (String) evpnProps.getOrDefault("evpnQosProfile","");
+                            String tempVpls = (String) evpnProps.getOrDefault("evpnTemplateVPLS","");
+                            String tempCreate = existsString(evpnProps.get("evpnTemplateCreate"));
+                            String tempVlanId = (String) evpnProps.getOrDefault("evpnVLAN","");
+
+                            flags.put("SERVICE_ONT_PORT", evpnPort);
+                            flags.put("QOS_PROFILE", tempVlan);
+                            flags.put("SERVICE_TEMPLATE_VPLS", tempVpls);
+                            flags.put("SERVICE_TEMPLATE_CREATE", tempCreate);
+                            flags.put("SERVICE_VLAN_ID", tempVlanId);
+                            flags.put("SERVICE_LINK", (String) evpnProps.getOrDefault("serviceLink",""));
+
+                            // ---- Evaluate OLT + Templates ----
+                            String ontGdn = "ONT" + ontSN;
+
+                            deviceRepository.findByDiscoveredName(ontGdn).ifPresent(ont -> {
+
+                                Map<String,Object> ontProps = safeProps(ont.getProperties());
+                                Object parentOltObj = ontProps.get("oltPosition");
+
+                                if (parentOltObj == null) {
+                                    log.error("Trace: Case-C → Parent OLT not found for ONT {}", ontGdn);
+                                }
+
+                                deviceRepository.findByDiscoveredName(parentOltObj.toString())
+                                        .ifPresent(olt -> {
+
+                                            Map<String,Object> oltProps = safeProps(olt.getProperties());
+
+                                            flags.put("SERVICE_OLT_POSITION",
+                                                    (String) oltProps.getOrDefault("oltPosition",""));
+
+                                            Object cardTemplate =
+                                                    "5".equals(evpnPort)
+                                                            ? oltProps.get("oltCard5Template")
+                                                            : oltProps.get("oltCardTemplate");
+
+                                            flags.put("SERVICE_TEMPLATE_CARD",
+                                                    existsString(cardTemplate));
+
+                                            flags.put("SERVICE_PORT2_EXIST",
+                                                    existsString(oltProps.get("port2Template")));
+
+                                            flags.put("SERVICE_PORT3_EXIST",
+                                                    existsString(oltProps.get("port3Template")));
+
+                                            flags.put("SERVICE_PORT4_EXIST",
+                                                    existsString(oltProps.get("port4Template")));
+
+                                            String p2 = flags.get("SERVICE_PORT2_EXIST");
+                                            String p3 = flags.get("SERVICE_PORT3_EXIST");
+                                            String p4 = flags.get("SERVICE_PORT4_EXIST");
+
+                                            if ("Exist".equals(p2) ||
+                                                    "Exist".equals(p3) ||
+                                                    "Exist".equals(p4)) {
+                                                flags.put("SERVICE_TEMPLATE_CARD","Exist");
+                                            } else {
+                                                flags.put("SERVICE_TEMPLATE_CARD","New");
+                                            }
+
+                                            if ("4".equals(evpnPort) && setarSubset.size() == 1) {
+                                                flags.put("SERVICE_EVPN_WIFIM_FIRST","YES");
+                                            } else {
+                                                flags.put("SERVICE_EVPN_WIFIM_FIRST","NO");
+                                            }
+                                        });
+                            });
                         }
                     }
+
+
+
 
                 } catch (Exception e) {
                     log.error("Trace: Case-C failed {}", e.getMessage());
@@ -1233,7 +1320,7 @@ public class QueryFlags implements HttpAction {
                         deviceRepository.findByDiscoveredName(ontGdn).ifPresent(ont -> {
 
                             Map<String, Object> ontProps = safeProps(ont.getProperties());
-                            Object parentOltObj = ontProps.get("parentOlt");
+                            Object parentOltObj = ontProps.get("oltPosition");
 
                             if (parentOltObj != null) {
 
