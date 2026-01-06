@@ -135,7 +135,7 @@ public class DetachResources implements HttpAction {
             }
             device.getProperties().put("AdministrativeState", "Available");
             device.getProperties().put("description", "");
-            device.setContained(null);
+            device.setUsingService(null);
             deviceRepository.save(device, 2);
             return true;
         }

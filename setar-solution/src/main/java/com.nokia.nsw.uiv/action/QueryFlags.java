@@ -182,7 +182,7 @@ public class QueryFlags implements HttpAction {
                                             .getOrDefault("serviceID", "");
 
                                     if (serviceID != null && serviceID.equals(subServiceId)) {
-                                        Set<LogicalDevice> used = rfs1.getContaingservice();
+                                        Set<LogicalDevice> used = rfs1.getUsedResource().stream().map(r->(LogicalDevice)r).collect(Collectors.toSet());
                                         if (used != null) {
                                             for (Resource res : used) {
                                                 if (res.getDiscoveredName() != null &&
@@ -1088,7 +1088,7 @@ public class QueryFlags implements HttpAction {
                     if (optRfs.isPresent()) {
 
                         Service rfs = optRfs.get();
-                        Set<LogicalDevice> usedRes = rfs.getContaingservice();
+                        Set<LogicalDevice> usedRes = rfs.getUsedResource().stream().map(r->(LogicalDevice)r).collect(Collectors.toSet());
 
                         if (usedRes != null) {
                             for (Resource res : usedRes) {

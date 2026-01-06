@@ -254,8 +254,6 @@ public class CreateServiceCBM implements HttpAction {
                     }
                     prop.put("startDate",new Date());
                     c.setProperties(prop);
-//                    c.addUsingService(product);
-//                    serviceRepository.save(c, 2);
                     c.setUsingService(new HashSet<>(List.of(product)));
                     serviceRepository.save(c, 2);
                     return c;
@@ -284,7 +282,6 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("serviceType",request.getProductType());
                     prop.put("CFSReference",cfs.getDiscoveredName());
                     r.setProperties(prop);
-//                    r.addUsedService(cfs);
                     r.setUsedService(new HashSet<>(List.of(cfs)));
                     serviceRepository.save(r, 2);
                     return r;
@@ -310,8 +307,7 @@ public class CreateServiceCBM implements HttpAction {
                     deviceProps.put("deviceModel", request.getCbmModel());
                     deviceProps.put("OperationalState", "Active");
                     d.setProperties(deviceProps);
-//                    d.addContainedservice(rfs);
-                    d.setContainedservice(new HashSet<>(List.of(rfs)));
+                    d.setUsingService(new HashSet<>(List.of(rfs)));
                     cbmDeviceRepository.save(d, 2);
                     return d;
                 });

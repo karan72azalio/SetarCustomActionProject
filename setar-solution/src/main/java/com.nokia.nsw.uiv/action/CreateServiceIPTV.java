@@ -288,7 +288,7 @@ public class CreateServiceIPTV implements HttpAction {
                 oltProps.put("igmpTemplate", request.getTemplateNameIGMP());
 
                 oltDevice.setProperties(oltProps);
-                oltDevice.setContainedservice(new HashSet<>(List.of(rfs)));
+                oltDevice.setUsingService(new HashSet<>(List.of(rfs)));
                 logicalDeviceRepository.save(oltDevice, 2);
                 log.error("Created OLT Device: {}", request.getOltName());
             }
@@ -315,7 +315,7 @@ public class CreateServiceIPTV implements HttpAction {
                 ontProps.put("OperationalState", "Active");
                 ontProps.put("iptvVlan", request.getVlanID());
                 ontDevice.setProperties(ontProps);
-                ontDevice.setContainedservice(new HashSet<>(List.of(rfs)));
+                ontDevice.setUsingService(new HashSet<>(List.of(rfs)));
                 ontDevice.setUsedResource(new HashSet<>(List.of(oltDevice)));
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Created ONT Device: {}", ontName);

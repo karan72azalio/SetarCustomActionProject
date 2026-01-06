@@ -21,10 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Component
 @RestController
@@ -191,7 +188,7 @@ public class AssociateResources implements HttpAction {
                         } else {
                             device.setDescription(request.getServiceId());
                         }
-                        device.addUsingService(rfs);
+                        device.setUsingService(new HashSet<>(List.of(rfs)));
                         deviceRepository.save(device);
                         deviceUpdated = true;
                     }
@@ -217,7 +214,7 @@ public class AssociateResources implements HttpAction {
                         Map<String, Object> props = new HashMap<>();
                         props.put("AdministrativeState", "Allocated");
                         device.setDescription(request.getServiceId());
-                        device.addUsingService(rfs);
+                        device.setUsingService(new HashSet<>(List.of(rfs)));
                         deviceRepository.save(device);
                         deviceUpdated = true;
                     }
@@ -247,7 +244,7 @@ public class AssociateResources implements HttpAction {
                     props.put("AdministrativeState", "Allocated");
                     device.setProperties(props);
                     device.setDescription(request.getServiceId());
-                    device.addUsingService(rfs);
+                    device.setUsingService(new HashSet<>(List.of(rfs)));
                     deviceRepository.save(device);
                     deviceUpdated = true;
                 }

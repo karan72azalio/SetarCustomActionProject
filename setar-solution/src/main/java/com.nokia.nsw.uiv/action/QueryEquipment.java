@@ -126,7 +126,7 @@ public class QueryEquipment implements HttpAction {
             log.error("Product Name: {}", productName);
 
             //retrieved linked devices
-            Set<Resource> linkedResources = rfs.getContaingservice()
+            Set<Resource> linkedResources = rfs.getUsedResource()
                     .stream()
                     .filter(r -> r instanceof LogicalDevice)
                     .collect(Collectors.toSet());

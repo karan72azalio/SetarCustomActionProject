@@ -271,7 +271,7 @@ public class CreateServiceFibernet implements HttpAction {
                     props.put("position", request.getOltName());
                     props.put("OperationalState", "Active");
                     oltDevice.setProperties(props);
-                    oltDevice.setContainedservice(new HashSet<>(List.of(rfs)));
+                    oltDevice.setUsingService(new HashSet<>(List.of(rfs)));
                     logicalDeviceRepository.save(oltDevice, 2);
                     log.error("Created OLT device: {}", oltName);
                 }
@@ -292,7 +292,7 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
 //                Set<Service> used = new HashSet<>();
 //                used.add(rfs);
-                ontDevice.setContainedservice(new HashSet<>(List.of(rfs)));
+                ontDevice.setUsingService(new HashSet<>(List.of(rfs)));
                 ontDevice.setProperties(ontProps);
                 logicalDeviceRepository.save(ontDevice, 2);
                 log.error("Found existing ONT: {}", ontName);
@@ -311,7 +311,7 @@ public class CreateServiceFibernet implements HttpAction {
                 if (request.getMenm() != null) ontProps.put("description", request.getMenm());
                 if (request.getVlanID() != null) ontProps.put("mgmtVlan", request.getVlanID());
 
-                ontDevice.setContainedservice(new HashSet<>(List.of(rfs)));
+                ontDevice.setUsingService(new HashSet<>(List.of(rfs)));
                 ontDevice.setProperties(ontProps);
                 ontDevice.setUsedResource(new HashSet<>(List.of(oltDevice)));
                 logicalDeviceRepository.save(ontDevice, 2);
@@ -339,7 +339,7 @@ public class CreateServiceFibernet implements HttpAction {
                     log.error("Created VLAN interface: {}", vlanName);
                     if (oltDevice != null) {
                         oltDevice = logicalDeviceRepository.findByDiscoveredName(oltDevice.getDiscoveredName()).get();
-                        oltDevice.setContainedinterface(new HashSet<>(List.of(vlan)));
+                        oltDevice.setContained(new HashSet<>(List.of(vlan)));
                         logicalDeviceRepository.save(oltDevice);
                     }
 

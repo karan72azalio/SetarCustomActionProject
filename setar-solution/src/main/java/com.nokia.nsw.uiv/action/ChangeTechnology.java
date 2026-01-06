@@ -27,10 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -231,7 +228,7 @@ public class ChangeTechnology implements HttpAction {
                         if (templateNameIgmp != null) p.put("igmpTemplate", templateNameIgmp);
                         d.setProperties(p);
                         // if RFS exists link to it
-                        maybeRfs.ifPresent(rfs -> d.addUsingService(rfs));
+                        maybeRfs.ifPresent(rfs -> d.setUsingService(new HashSet<>(List.of(rfs))));
                         return logicalDeviceRepo.save(d);
                     });
 
@@ -269,7 +266,7 @@ public class ChangeTechnology implements HttpAction {
                         // link containing logical device (OLT)
                         d.addManagingDevices(olt);
                         // link rfs if present
-                        maybeRfs.ifPresent(rfs -> d.addUsingService(rfs));
+                        maybeRfs.ifPresent(rfs -> d.setUsingService(new HashSet<>(List.of(rfs))));
                         return logicalDeviceRepo.save(d);
                     });
 

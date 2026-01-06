@@ -222,11 +222,10 @@ public class ImportCPEDevice implements HttpAction {
                         vlanProps.put("vlanStatus", "Available");
                         vlan.setProperties(vlanProps);
                         logicalInterfaceRepository.save(vlan, 2);
-                        ethPort.setUsedResource(new HashSet<>(List.of(vlan)));
+                        ethPort.setContainedinterface(new HashSet<>(List.of(vlan)));
                     }
                 }
                 try {
-                    componentRepository.save(ethPort);
                     Map<String, Object> props = ethPort.getProperties();
                     if (vlanCreated) {
                         props.put("portStatus", "Allocated");

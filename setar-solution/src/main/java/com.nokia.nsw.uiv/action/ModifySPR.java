@@ -281,7 +281,7 @@ public class ModifySPR implements HttpAction {
             subscription.getProperties().put("serviceSN",request.getModifyParam1());
             subscriptionRepository.save(subscription,2);
         }
-        Set<Service> services = ont.getContainedservice();
+        Set<Service> services = ont.getUsingService();
         for(Service s:services){
             Optional<Customer> setarSubscriber1 = Optional.empty();
             String subscriberNewName="";

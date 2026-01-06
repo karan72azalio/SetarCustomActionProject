@@ -70,7 +70,7 @@ public class QueryAllServicesByCPE implements HttpAction {
             log.error("ONT located: {}", ontName);
 
             // Collect linked RFS entries
-            Set<Service> linkedServiceList = ont.getContainedservice();
+            Set<Service> linkedServiceList = ont.getUsingService();
             List<Service> linkedRfsList = new ArrayList<>();
             for(Service s: linkedServiceList){
                 if(s.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS)){

@@ -301,7 +301,7 @@ public class CreateServiceVoIP implements HttpAction {
                         oltProps.put("oltPosition", req.getOltName());
                         oltProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(oltProps);
-                        dev.setContainedservice(new HashSet<>(List.of(rfs)));
+                        dev.setUsingService(new HashSet<>(List.of(rfs)));
                         return logicalDeviceRepo.save(dev);
                     });
 
@@ -325,7 +325,7 @@ public class CreateServiceVoIP implements HttpAction {
                         ontProps.put("ontTemplate", req.getTemplateNameOnt());
                         dev.setProperties(ontProps);
                         dev.setUsedResource(new HashSet<>(List.of(olt)));
-                        dev.addContainedservice(rfs);
+                        dev.setUsingService(new HashSet<>(List.of(rfs)));
                         return logicalDeviceRepo.save(dev);
                     });
 

@@ -359,7 +359,7 @@ public class CreateServiceEVPN implements HttpAction {
                 dev.setProperties(oltProps);
                 // link RFS reference if exists
                 dev.getProperties().put("linkedRFS", rfs.getLocalName());
-                dev.addContainedservice(rfs);
+                dev.setUsingService(new HashSet<>(List.of(rfs)));
                 olt =dev;
                 logicalDeviceRepo.save(dev,2);
             }
@@ -399,7 +399,7 @@ public class CreateServiceEVPN implements HttpAction {
                 dev.setProperties(ontProps);
                 dev.getProperties().put("containingDevice", olt.getLocalName());
                 dev.addUsedResource(olt);
-                dev.addContainedservice(rfs);
+                dev.setUsingService(new HashSet<>(List.of(rfs)));
                 logicalDeviceRepo.save(dev);
                 ont = dev;
             }
@@ -439,7 +439,7 @@ public class CreateServiceEVPN implements HttpAction {
                     v.setProperties(vProps);
                     vlanRepo.save(v);
                     ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                    ont.addContainedinterface(v);
+                    ont.setContained(new HashSet<>(List.of(v)));
                     logicalDeviceRepo.save(ont);
                 }
                 // no direct association required here beyond existence
@@ -495,7 +495,7 @@ public class CreateServiceEVPN implements HttpAction {
                     v.setProperties(vProps);
                     vlanRepo.save(v,2);
                     ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                    ont.addContainedinterface(v);
+                    ont.setContained(new HashSet<>(List.of(v)));
                     logicalDeviceRepo.save(ont);
                     serviceVlan = v;
                 }
@@ -618,7 +618,7 @@ public class CreateServiceEVPN implements HttpAction {
                         singleVlan.setProperties(svProps);
                         vlanRepo.save(singleVlan);
                         ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                        ont.addContainedinterface(singleVlan);
+                        ont.setContained(new HashSet<>(List.of(singleVlan)));
                         logicalDeviceRepo.save(ont);
                         break;
                     }
