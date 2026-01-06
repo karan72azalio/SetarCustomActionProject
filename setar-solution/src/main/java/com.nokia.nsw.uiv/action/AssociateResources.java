@@ -39,6 +39,7 @@ public class AssociateResources implements HttpAction {
 
     @Autowired
     private LogicalDeviceCustomRepository deviceRepository;
+    private String[] customerGroupIds;
 
 
     @Override
@@ -62,7 +63,7 @@ public class AssociateResources implements HttpAction {
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
                 Validations.validateMandatoryParams(request.getServiceId(), "serviceId");
                 Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
-                if(request.getProductSubtype().equalsIgnoreCase("IPTV")){
+                if (request.getProductSubtype().equalsIgnoreCase("IPTV")) {
                     Validations.validateMandatoryParams(request.getApSN1(), "apSN1");
                     Validations.validateMandatoryParams(request.getApSN2(), "apSN2");
                     Validations.validateMandatoryParams(request.getApSN3(), "apSN3");
@@ -90,13 +91,13 @@ public class AssociateResources implements HttpAction {
             String rfsName;
             log.error("----Trace #3: Preparing entity names ----");
             if ("IPTV".equalsIgnoreCase(request.getProductSubtype())) {
-                subscriptionName = subscriberName + Constants.UNDER_SCORE  + request.getServiceId();
+                subscriptionName = subscriberName + Constants.UNDER_SCORE + request.getServiceId();
                 rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             } else if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
-                subscriptionName = subscriberName +Constants.UNDER_SCORE+ request.getServiceId() +Constants.UNDER_SCORE+ request.getOntSN();
+                subscriptionName = subscriberName + Constants.UNDER_SCORE + request.getServiceId() + Constants.UNDER_SCORE + request.getOntSN();
                 rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             } else if (request.getCbmSN() != null && !"NA".equalsIgnoreCase(request.getCbmSN())) {
-                subscriptionName = subscriberName +Constants.UNDER_SCORE+ request.getServiceId() +Constants.UNDER_SCORE+ request.getCbmSN();
+                subscriptionName = subscriberName + Constants.UNDER_SCORE + request.getServiceId() + Constants.UNDER_SCORE + request.getCbmSN();
                 rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             } else {
                 return new AssociateResourcesResponse(
@@ -118,11 +119,11 @@ public class AssociateResources implements HttpAction {
                         ""
                 );
             }
-                Service rfs = optRfs.get();
-                Map<String,Object> rfsProps = rfs.getProperties();
-                rfsProps.put("transactionId",request.getFxOrderID());
-                serviceCustomRepository.save(rfs,2);
-                log.error("----Trace #9: Saving RFS changes ----");
+            Service rfs = optRfs.get();
+            Map<String, Object> rfsProps = rfs.getProperties();
+            rfsProps.put("transactionId", request.getFxOrderID());
+            serviceCustomRepository.save(rfs, 2);
+            log.error("----Trace #9: Saving RFS changes ----");
 
             // Step 4: IPTV logic
             boolean deviceUpdated = false;
@@ -141,6 +142,16 @@ public class AssociateResources implements HttpAction {
                         request.getStbSN16(), request.getStbSN17(), request.getStbSN18(),
                         request.getStbSN19(), request.getStbSN20()
                 };
+                String[] customerGroupIds = {
+                        request.getCustomerGroupID1(), request.getCustomerGroupID2(), request.getCustomerGroupID3(),
+                        request.getCustomerGroupID4(), request.getCustomerGroupID5(), request.getCustomerGroupID6(),
+                        request.getCustomerGroupID7(), request.getCustomerGroupID8(), request.getCustomerGroupID9(),
+                        request.getCustomerGroupID10(), request.getCustomerGroupID11(), request.getCustomerGroupID12(),
+                        request.getCustomerGroupID13(), request.getCustomerGroupID14(), request.getCustomerGroupID15(),
+                        request.getCustomerGroupID16(), request.getCustomerGroupID17(), request.getCustomerGroupID18(),
+                        request.getCustomerGroupID19(), request.getCustomerGroupID20()
+                };
+
 
                 String[] apSerials = {
                         request.getApSN1(), request.getApSN2(), request.getApSN3(),
@@ -156,7 +167,7 @@ public class AssociateResources implements HttpAction {
 
                 for (int i = 0; i < stbSerials.length; i++) {
                     String sn = stbSerials[i];
-                    if(sn!=null){
+                    if (sn != null) {
                         stbSerialsCount++;
                     }
                     if (sn != null && !"NA".equalsIgnoreCase(sn) && !sn.isEmpty()) {
@@ -172,11 +183,11 @@ public class AssociateResources implements HttpAction {
                             );
                         }
                         LogicalDevice device = optDev.get();
-                        device.getProperties().put("deviceGroupId", "GROUP" + (i + 1));
-                        Map<String,Object>props=new HashMap<>();
-                        props.put("AdministrativeState","Allocated");
+                        device.getProperties().put("deviceGroupId", customerGroupIds[i+1]!=null?customerGroupIds[i+1]:"");
+                        Map<String, Object> props = new HashMap<>();
+                        props.put("AdministrativeState", "Allocated");
                         if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
-                            device.setDescription(request.getServiceId()  + request.getOntSN().replace("ONT", Constants.UNDER_SCORE ));
+                            device.setDescription(request.getServiceId() + request.getOntSN().replace("ONT", Constants.UNDER_SCORE));
                         } else {
                             device.setDescription(request.getServiceId());
                         }
@@ -187,7 +198,7 @@ public class AssociateResources implements HttpAction {
                 }
 
                 for (String sn : apSerials) {
-                    if(sn!=null){
+                    if (sn != null) {
                         apSerialsCount++;
                     }
                     if (sn != null && !"NA".equalsIgnoreCase(sn) && !sn.isEmpty()) {
@@ -203,8 +214,8 @@ public class AssociateResources implements HttpAction {
                             );
                         }
                         LogicalDevice device = optDev.get();
-                        Map<String,Object>props=new HashMap<>();
-                        props.put("AdministrativeState","Allocated");
+                        Map<String, Object> props = new HashMap<>();
+                        props.put("AdministrativeState", "Allocated");
                         device.setDescription(request.getServiceId());
                         device.addUsingService(rfs);
                         deviceRepository.save(device);
@@ -216,9 +227,9 @@ public class AssociateResources implements HttpAction {
                 log.error("----Trace #8: Executing Non-IPTV device association ----");
                 String devName = null;
                 if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
-                    devName ="ONT" + request.getOntSN();
+                    devName = "ONT" + request.getOntSN();
                 } else if (request.getCbmSN() != null && !"NA".equalsIgnoreCase(request.getCbmSN())) {
-                    devName = "CBM" +request.getCbmSN();
+                    devName = "CBM" + request.getCbmSN();
                 }
 
                 if (devName != null) {
@@ -232,8 +243,8 @@ public class AssociateResources implements HttpAction {
                         );
                     }
                     LogicalDevice device = optDev.get();
-                    Map<String,Object>props=new HashMap<>();
-                    props.put("AdministrativeState","Allocated");
+                    Map<String, Object> props = new HashMap<>();
+                    props.put("AdministrativeState", "Allocated");
                     device.setProperties(props);
                     device.setDescription(request.getServiceId());
                     device.addUsingService(rfs);
@@ -245,9 +256,9 @@ public class AssociateResources implements HttpAction {
             // Step 7: Persist RFS changes
             if (deviceUpdated) {
                 rfs = serviceCustomRepository.findByDiscoveredName(rfs.getDiscoveredName()).get();
-                Map<String,Object> rfsProp = rfs.getProperties();
-                rfsProp.put("transactionId",request.getFxOrderID());
-                serviceCustomRepository.save(rfs,2);
+                Map<String, Object> rfsProp = rfs.getProperties();
+                rfsProp.put("transactionId", request.getFxOrderID());
+                serviceCustomRepository.save(rfs, 2);
                 log.error("----Trace #9: Saving RFS changes ----");
                 log.error(Constants.ACTION_COMPLETED);
                 return new AssociateResourcesResponse(
@@ -256,14 +267,14 @@ public class AssociateResources implements HttpAction {
                         Instant.now().toString(),
                         subscriptionName
                 );
-            } else if(apSerialsCount<20 || stbSerialsCount<20) {
+            } else if (apSerialsCount < 20 || stbSerialsCount < 20) {
                 return new AssociateResourcesResponse(
                         "400",
                         ERROR_PREFIX + "Resource not attached",
                         Instant.now().toString(),
                         ""
                 );
-            }else{
+            } else {
                 return new AssociateResourcesResponse(
                         "400",
                         ERROR_PREFIX + "No valid devices provided",
