@@ -1193,8 +1193,8 @@ public class QueryFlags implements HttpAction {
 
                             Subscription currentEvpn = evpnSubs.get(0);
                             Subscription currentEvpn1=evpnSubs.get(1);
-                            Map<String, Object> evpnProp = safeProps(currentEvpn1.getProperties());
                             Map<String, Object> evpnProps = safeProps(currentEvpn.getProperties());
+                            Map<String, Object> evpnProp = safeProps(currentEvpn.getProperties());
 
                             String evpnPort = (String) evpnProps.getOrDefault("evpnPort", "");
                             String tempVlan = (String) evpnProps.getOrDefault("evpnQosProfile", "");
@@ -1256,9 +1256,9 @@ public class QueryFlags implements HttpAction {
                                             }
 
                                             // ---- Evaluate OLT Port Templates ----
-                                            flags.put("SERVICE_PORT2_EXIST", existsString(oltProps.get("port3Counter")));
-                                            flags.put("SERVICE_PORT3_EXIST", existsString(oltProps.get("port2Counter")));
-                                            flags.put("SERVICE_PORT4_EXIST", existsString(oltProps.get("port4Counter")));
+                                            flags.put("SERVICE_PORT2_EXIST", existsString(oltProps.get("port2Template")));
+                                            flags.put("SERVICE_PORT3_EXIST", existsString(oltProps.get("port3Template")));
+                                            flags.put("SERVICE_PORT4_EXIST", existsString(oltProps.get("port4Template")));
 
                                             // ---- Card Template Rule ----
                                             String p2 = flags.get("SERVICE_PORT2_EXIST");
@@ -1266,9 +1266,9 @@ public class QueryFlags implements HttpAction {
                                             String p4 = flags.get("SERVICE_PORT4_EXIST");
 
                                             if ("Exist".equals(p2) || "Exist".equals(p3) || "Exist".equals(p4)) {
-                                                flags.put("SERVICE_TEMPLATE_CARD", "Exist");
+                                                flags.put("TEMPLATE_NAME_CARD", "Exist");
                                             } else {
-                                                flags.put("SERVICE_TEMPLATE_CARD", "New");
+                                                flags.put("TEMPLATE_NAME_CARD", "New");
                                             }
                                         });
                             });
@@ -1554,11 +1554,11 @@ public class QueryFlags implements HttpAction {
     }
 
     private Map<String, String> executeStep6Flags(
-            String ontSN,
-            String serviceID,
-            String subscriber,
-            String actionType,
-            String productSubtype) {
+                                                          String ontSN,
+                                                  String serviceID,
+                                                  String subscriber,
+                                                  String actionType,
+                                                  String productSubtype) {
 
         Map<String, String> result = new HashMap<>();
 
@@ -1581,14 +1581,17 @@ public class QueryFlags implements HttpAction {
 
             int subCount = subsForCustomer.size();
 
+            // ================= CASE 1: NO SUBSCRIPTIONS =================
             if (subCount == 0) {
-                // No subscriptions → New account
                 result.put("ACCOUNT_EXIST", "New");
                 result.put("SERVICE_FLAG", "New");
                 result.put("CBM_ACCOUNT_EXIST", "New");
+                return result;
+            }
 
-            } else if (subCount == 1) {
-                // Single subscription → still New
+            // ================= CASE 2: ONE SUBSCRIPTION =================
+            if (subCount == 1) {
+
                 result.put("ACCOUNT_EXIST", "New");
                 result.put("SERVICE_FLAG", "New");
 
@@ -1605,37 +1608,53 @@ public class QueryFlags implements HttpAction {
                     result.put("SIMA_CUST_ID", sima.toString());
                 }
 
-            } else {
-                // More than one subscription → Existing account
-                result.put("ACCOUNT_EXIST", "Exist");
-                result.put("SERVICE_FLAG", "Exist");
+                return result;
+            }
 
-                Set<String> macSet = new HashSet<>();
+            // ================= CASE 3: MULTIPLE SUBSCRIPTIONS =================
+            result.put("ACCOUNT_EXIST", "Exist");
+            result.put("SERVICE_FLAG", "Exist");
 
-                for (Subscription s : subsForCustomer) {
-                    Map<String, Object> p = safeProps(s.getProperties());
+            int cbmCount = 0;
+            Set<String> macSet = new HashSet<>();
 
-                    if ("Cable_Modem".equalsIgnoreCase(
-                            (String) p.get("serviceLink"))) {
+            for (Subscription s : subsForCustomer) {
+                Map<String, Object> p = safeProps(s.getProperties());
 
-                        Object mac = p.get("macAddress");
-                        if (mac != null) macSet.add(mac.toString());
-                    }
+                if ("Cable_Modem".equalsIgnoreCase(
+                        (String) p.get("serviceLink"))) {
 
-                    Object sima = p.get("simaCustomerId");
-                    if (sima != null && !sima.toString().isEmpty()) {
-                        result.put("SIMA_CUST_ID", sima.toString());
+                    cbmCount++;
+
+                    Object mac = p.get("macAddress");
+                    if (mac != null && !mac.toString().isEmpty()) {
+                        macSet.add(mac.toString());
                     }
                 }
 
+                Object sima = p.get("simaCustomerId");
+                if (sima != null && !sima.toString().isEmpty()) {
+                    result.put("SIMA_CUST_ID", sima.toString());
+                }
+            }
+
+            // ================= EXACT SPEC LOGIC =================
+            if (Arrays.asList("ChangeTechnology", "AccountTransfer")
+                    .contains(actionType)) {
+
                 result.put("CBM_ACCOUNT_EXIST",
                         macSet.size() > 1 ? "Exist" : "New");
+
+            } else {
+                // Unconfigure OR MoveOut
+                result.put("CBM_ACCOUNT_EXIST",
+                        cbmCount > 1 ? "Exist" : "New");
             }
         }
 
-
         return result;
     }
+
 
     private String getCurrentTimestamp() {
         return Instant.now().toString();
