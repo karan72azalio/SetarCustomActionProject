@@ -223,7 +223,7 @@ public class DeleteSPR implements HttpAction {
 
                 // If subtype NOT in BAAS/SIP/Cloudstarter/IPBH → remove extra VLAN (by ONT desc + sub evpn vlan)
                 if (!equalsAny(req.getProductSubtype(), "BAAS", "SIP", "Cloudstarter", "IPBH")) {
-                    String ontDesc = optOnt.map(LogicalDevice::getDescription).orElse("");
+                    String ontDesc = optOnt.map(d->d.getProperties().get("description").toString()).orElse("");
                     String nameToRemove = ontDesc + subVlan;
                     if (!nameToRemove.isEmpty()) {
                         logicalInterfaceRepository.findByDiscoveredName(nameToRemove)
