@@ -534,7 +534,7 @@ public class DeleteSPR implements HttpAction {
             Map<String,Object> oltProps = oltDevice.getProperties();
             oltDevice = logicalDeviceRepository.findByDiscoveredName(oltDevice.getDiscoveredName()).get();
             // Clear the EVPN card template (reset description/properties, etc.)
-            oltDevice.setDescription("EVPN card template cleared");
+            oltProps.put("description","EVPN card template cleared");
             oltProps.put("AdministrativeState", "Available");
             oltDevice.setProperties(oltProps);
 

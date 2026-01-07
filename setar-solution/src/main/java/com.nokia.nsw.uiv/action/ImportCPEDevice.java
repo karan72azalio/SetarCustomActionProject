@@ -146,7 +146,6 @@ public class ImportCPEDevice implements HttpAction {
             potsPort.setLocalName(Validations.encryptName(portName));
             potsPort.setDiscoveredName(portName);
             potsPort.setKind(Constants.SETAR_KIND_CPE_PORT);
-            potsPort.setDescription("Voice Port");
             potsPort.setContext(Constants.SETAR);
             Map<String, Object> properties = new HashMap<>();
             properties.put("portName", portName);
@@ -154,6 +153,7 @@ public class ImportCPEDevice implements HttpAction {
             properties.put("portStatus", "Available");
             properties.put("portType", portType);
             properties.put("serviceCount", "0");
+            properties.put("description","Voice Port");
             potsPort.setProperties(properties);
 
             componentRepository.save(potsPort, 2);
@@ -177,7 +177,6 @@ public class ImportCPEDevice implements HttpAction {
             ethPort.setLocalName(Validations.encryptName(portName));
             ethPort.setDiscoveredName(portName);
             ethPort.setKind(Constants.SETAR_KIND_CPE_PORT);
-            ethPort.setDescription("Data Port");
             ethPort.setContext(Constants.SETAR);
             Map<String, Object> properties = new HashMap<>();
             properties.put("portName", portName);
@@ -185,6 +184,7 @@ public class ImportCPEDevice implements HttpAction {
             properties.put("portType", portType);
             properties.put("serviceCount", "0");
             properties.put("portStatus", "Available");
+            properties.put("description","Data Port");
 
             ethPort.setProperties(properties);
             componentRepository.save(ethPort, 2);
@@ -211,7 +211,6 @@ public class ImportCPEDevice implements HttpAction {
                         vlan.setDiscoveredName(vlanName);
                         vlan.setKind(Constants.SETAR_KIND_VLAN_INTERFACE);
                         vlan.setContext(Constants.SETAR);
-                        vlan.setDescription("VLAN Interface for " + portName);
 
                         Map<String, Object> vlanProps = new HashMap<>();
                         vlanProps.put("name", vlanName);
@@ -220,6 +219,7 @@ public class ImportCPEDevice implements HttpAction {
                         vlanProps.put("serviceType", "");
                         vlanProps.put("vlanId", "");
                         vlanProps.put("vlanStatus", "Available");
+                        vlanProps.put("description","VLAN Interface for " + portName);
                         vlan.setProperties(vlanProps);
                         logicalInterfaceRepository.save(vlan, 2);
                         ethPort.setContainedinterface(new HashSet<>(List.of(vlan)));

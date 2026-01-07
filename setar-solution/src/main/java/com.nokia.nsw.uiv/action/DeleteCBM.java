@@ -251,7 +251,7 @@ public class DeleteCBM implements HttpAction {
                 }
                 else if ("Broadband".equalsIgnoreCase(request.getProductSubtype())) {
                     // clear description
-                    cbmDevice.setDescription("");
+                    cbmDevice.getProperties().put("description", "");
                     // check voip ports availability - if both available set admin state available
                     try {
                         Object vp1 = cbmDevice.getProperties() != null ? cbmDevice.getProperties().get("voipPort1") : null;

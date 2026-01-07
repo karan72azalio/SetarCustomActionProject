@@ -175,13 +175,18 @@ public class AssociateResources implements HttpAction {
                             );
                         }
                         LogicalDevice device = optDev.get();
-                        device.getProperties().put("deviceGroupId", customerGroupIds[i+1]!=null?customerGroupIds[i+1]:"");
+                        device.getProperties().put("deviceGroupId", customerGroupIds[i]!=null?customerGroupIds[i]:"");
                         Map<String, Object> props = new HashMap<>();
                         props.put("AdministrativeState", "Allocated");
                         if (request.getOntSN() != null && !"NA".equalsIgnoreCase(request.getOntSN())) {
-                            device.setDescription(request.getServiceId() + request.getOntSN().replace("ONT", Constants.UNDER_SCORE));
-                        } else {
-                            device.setDescription(request.getServiceId());
+                            if(request.getOntSN().contains("ONT")){
+                                props.put("description",request.getServiceId() + request.getOntSN().replace("ONT", Constants.UNDER_SCORE));
+                            }else{
+                                props.put("description",request.getServiceId()+Constants.UNDER_SCORE+request.getOntSN());
+                            }
+                        }
+                        else {
+                            props.put("description",request.getServiceId());
                         }
                         device.setUsingService(new HashSet<>(List.of(rfs)));
                         deviceRepository.save(device);
@@ -205,7 +210,7 @@ public class AssociateResources implements HttpAction {
                         LogicalDevice device = optDev.get();
                         Map<String, Object> props = new HashMap<>();
                         props.put("AdministrativeState", "Allocated");
-                        device.setDescription(request.getServiceId());
+                        props.put("description",request.getServiceId());
                         device.setUsingService(new HashSet<>(List.of(rfs)));
                         deviceRepository.save(device);
                         deviceUpdated = true;
@@ -235,7 +240,7 @@ public class AssociateResources implements HttpAction {
                     Map<String, Object> props = new HashMap<>();
                     props.put("AdministrativeState", "Allocated");
                     device.setProperties(props);
-                    device.setDescription(request.getServiceId());
+                    props.put("description",request.getServiceId());
                     device.setUsingService(new HashSet<>(List.of(rfs)));
                     deviceRepository.save(device);
                     deviceUpdated = true;
@@ -258,7 +263,7 @@ public class AssociateResources implements HttpAction {
                 );
             } else {
                 return new AssociateResourcesResponse(
-                        "400",
+                        "409",
                         ERROR_PREFIX + "Resource not attached",
                         Instant.now().toString(),
                         ""

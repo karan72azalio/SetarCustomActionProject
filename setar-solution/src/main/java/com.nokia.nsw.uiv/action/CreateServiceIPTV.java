@@ -305,10 +305,10 @@ public class CreateServiceIPTV implements HttpAction {
                 ontDevice.setDiscoveredName(ontName);
                 ontDevice.setKind("ONTDevice");
                 ontDevice.setContext(Constants.SETAR);
-                if (request.getMenm() != "" && request.getMenm() !=null && request.getMenm() != "NA"){
-                    ontDevice.setDescription(request.getMenm());
-                }
                 Map<String, Object> ontProps = new HashMap<>();
+                if (request.getMenm() != "" && request.getMenm() !=null && request.getMenm() != "NA"){
+                    ontProps.put("description",request.getMenm());
+                }
                 ontProps.put("serialNo", request.getOntSN());
                 ontProps.put("deviceModel", request.getOntModel());
                 ontProps.put("oltPosition",request.getOltName());
