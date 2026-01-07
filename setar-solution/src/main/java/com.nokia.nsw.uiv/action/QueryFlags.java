@@ -1061,8 +1061,8 @@ public class QueryFlags implements HttpAction {
 
                                 Object cardTemplate =
                                         "5".equals(evpnOntPort)
-                                                ? oltProps.get("oltCard5Template")
-                                                : oltProps.get("oltCardTemplate");
+                                                ? oltProps.get("port5Template")
+                                                : oltProps.get("port3Counter");
 
                                 flags.put("SERVICE_TEMPLATE_CARD", existsString(cardTemplate));
                             }
@@ -1131,27 +1131,29 @@ public class QueryFlags implements HttpAction {
                     && !equalsIgnoreCase(productSubtype, "WIFI Maintenance")
                     && ontSN != null) {
 
-                log.error("Trace: Case-C EVPN Unconfigure Non-WIFI flow triggered");
+                log.error("Trace: Case-C EVPN Unconfigure Non-WIFI triggered");
 
                 try {
-                    int rfsCount = 0;
+
                     final String finalOntSn = ontSN;
-                    List<Service> rfsMatched =
-                            StreamSupport.stream(serviceCustomRepository.findAll().spliterator(), false)
-                                    .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
-                                    .filter(sc -> sc.getDiscoveredName() != null)
-                                    .filter(sc -> sc.getDiscoveredName().contains(finalOntSn))
-                                    .collect(Collectors.toList());
 
-                     rfsCount = rfsMatched.size();
+                    List<Service> rfsMatched = StreamSupport
+                            .stream(serviceCustomRepository.findAll().spliterator(), false)
+                            .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
+                            .filter(sc -> sc.getDiscoveredName() != null)
+                            .filter(sc -> sc.getDiscoveredName().contains(finalOntSn))
+                            .collect(Collectors.toList());
 
+                    int rfsCount = rfsMatched.size();
 
                     if (rfsCount == 2) {
-                        log.error("Trace: ONT has exactly 2 RFS - WIFI/MGMT extended evaluation");
+
+                        log.error("Trace: Case-C ONT has exactly 2 RFS");
 
                         List<Subscription> evpnSubs = new ArrayList<>();
                         List<String> setarSubset = new ArrayList<>();
 
+                        // ---- Loop RFS → Resolve → Subscription ----
                         for (Service rfs : rfsMatched) {
 
                             Service resolved = serviceCustomRepository
@@ -1161,8 +1163,14 @@ public class QueryFlags implements HttpAction {
 
                             Service cfs = resolved.getUsedService().stream().findFirst().orElse(null);
                             if (cfs == null) continue;
-                            String prodName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
-                            Product product = productRepository.findByDiscoveredName(prodName).get();
+
+                            String prodName = cfs.getUsingService().stream()
+                                    .filter(ser -> ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT))
+                                    .findFirst()
+                                    .get()
+                                    .getDiscoveredName();
+
+                            Product product = productRepository.findByDiscoveredName(prodName).orElse(null);
                             if (product == null) continue;
 
                             Subscription sub = product.getSubscription().stream().findFirst().orElse(null);
@@ -1170,156 +1178,220 @@ public class QueryFlags implements HttpAction {
 
                             evpnSubs.add(sub);
 
-                            Map<String,Object> sp = safeProps(sub.getProperties());
-                            String subType = (String) sp.getOrDefault("serviceSubType","");
+                            Map<String, Object> sp = safeProps(sub.getProperties());
+                            String subType = (String) sp.getOrDefault("serviceSubType", "");
 
                             if ("WIFI Maintenance".equalsIgnoreCase(subType)) {
                                 setarSubset.add(sub.getDiscoveredName());
                             }
                         }
 
-                        String wifiFlag = (setarSubset.size() == 1) ? "YES" : "NO";
-                        flags.put("SERVICE_EVPN_WIFIM_FIRST", wifiFlag);
-
-                        // -------- If NO EVPN subscription found → just skip further EVPN logic --------
+                        // ---- If NO EVPN subscription, just skip remaining ----
                         if (evpnSubs.isEmpty()) {
-                            log.error("Trace: Case-C → No EVPN subscription found. Skipping Case-C EVPN logic.");
+                            log.error("Trace: Case-C no EVPN subscription found, skipping Case-C internals");
                         } else {
 
-                            Subscription currentEvpn = evpnSubs.stream().findFirst().get();
-                            Map<String,Object> evpnProps = safeProps(currentEvpn.getProperties());
+                            Subscription currentEvpn = evpnSubs.get(0);
+                            Subscription currentEvpn1=evpnSubs.get(1);
+                            Map<String, Object> evpnProp = safeProps(currentEvpn1.getProperties());
+                            Map<String, Object> evpnProps = safeProps(currentEvpn.getProperties());
 
-                            String evpnPort = (String) evpnProps.getOrDefault("evpnPort","");
-                            String tempVlan = (String) evpnProps.getOrDefault("evpnQosProfile","");
-                            String tempVpls = (String) evpnProps.getOrDefault("evpnTemplateVPLS","");
+                            String evpnPort = (String) evpnProps.getOrDefault("evpnPort", "");
+                            String tempVlan = (String) evpnProps.getOrDefault("evpnQosProfile", "");
+                            String tempVpls = (String) evpnProps.getOrDefault("evpnTemplateVPLS", "");
                             String tempCreate = existsString(evpnProps.get("evpnTemplateCreate"));
-                            String tempVlanId = (String) evpnProps.getOrDefault("evpnVLAN","");
+                            String tempVlanId = (String) evpnProps.getOrDefault("evpnVLAN", "");
 
                             flags.put("SERVICE_ONT_PORT", evpnPort);
                             flags.put("QOS_PROFILE", tempVlan);
                             flags.put("SERVICE_TEMPLATE_VPLS", tempVpls);
                             flags.put("SERVICE_TEMPLATE_CREATE", tempCreate);
                             flags.put("SERVICE_VLAN_ID", tempVlanId);
-                            flags.put("SERVICE_LINK", (String) evpnProps.getOrDefault("serviceLink",""));
+                            flags.put("SERVICE_LINK", (String) evpnProps.getOrDefault("serviceLink", ""));
 
-                            // ---- Evaluate OLT + Templates ----
+                            // ---- Resolve ONT ----
                             String ontGdn = "ONT" + ontSN;
 
                             deviceRepository.findByDiscoveredName(ontGdn).ifPresent(ont -> {
 
-                                Map<String,Object> ontProps = safeProps(ont.getProperties());
+                                Map<String, Object> ontProps = safeProps(ont.getProperties());
 
-                                Object ontMgmtTemplate   = ontProps.get("mgmtTemplate");
-                                Object ontCreateTemplate = ontProps.get("ontTemplate");
+                                flags.put("SERVICE_SN", (String) ontProps.getOrDefault("serialNumber", ""));
+                                flags.put("ONT_MODEL", (String) ontProps.getOrDefault("deviceModel", ""));
 
-                                flags.put("SERVICE_TEMPLATE_MGMT",
-                                        existsString(ontMgmtTemplate));
-
-                                flags.put("SERVICE_TEMPLATE_MGMT_CREATE",
-                                        existsString(ontCreateTemplate));
-
-                                log.error("Trace: Case-C ONT templates: MGMT={} CREATE={}",
-                                        flags.get("SERVICE_TEMPLATE_MGMT"),
-                                        flags.get("SERVICE_TEMPLATE_MGMT_CREATE"));
                                 Object parentOltObj = ontProps.get("oltPosition");
-
                                 if (parentOltObj == null) {
-                                    log.error("Trace: Case-C → Parent OLT not found for ONT {}", ontGdn);
+                                    log.error("Trace: Case-C OLT missing");
+                                    return;
                                 }
 
                                 deviceRepository.findByDiscoveredName(parentOltObj.toString())
                                         .ifPresent(olt -> {
 
-                                            Map<String,Object> oltProps = safeProps(olt.getProperties());
+                                            Map<String, Object> oltProps = safeProps(olt.getProperties());
 
                                             flags.put("SERVICE_OLT_POSITION",
-                                                    (String) oltProps.getOrDefault("oltPosition",""));
+                                                    (String) oltProps.getOrDefault("oltPosition", ""));
 
+                                            // ---- ONT Card Template ----
                                             Object cardTemplate =
                                                     "5".equals(evpnPort)
-                                                            ? oltProps.get("oltCard5Template")
-                                                            : oltProps.get("oltCardTemplate");
+                                                            ? oltProps.get("port5Template")
+                                                            : oltProps.get("port3Counter");
 
-                                            flags.put("SERVICE_TEMPLATE_CARD",
-                                                    existsString(cardTemplate));
+                                            flags.put("SERVICE_TEMPLATE_CARD", existsString(cardTemplate));
 
-                                            flags.put("SERVICE_PORT2_EXIST",
-                                                    existsString(oltProps.get("port2Template")));
+                                            // ---- EVPN WiFi Flag ----
+                                            if ("4".equals(evpnPort) && setarSubset.size() == 1) {
+                                                flags.put("SERVICE_EVPN_WIFIM_FIRST", "YES");
+                                            } else {
+                                                flags.put("SERVICE_EVPN_WIFIM_FIRST", "NO");
+                                            }
 
-                                            flags.put("SERVICE_PORT3_EXIST",
-                                                    existsString(oltProps.get("port3Template")));
+                                            // ---- ONT Port Template Rule ----
+                                            if ("1".equals(evpnPort)) {
+                                                flags.put("SERVICE_TEMPLATE_PORT1", "New");
+                                            } else {
+                                                flags.put("SERVICE_TEMPLATE_PORT1", "Exist");
+                                            }
 
-                                            flags.put("SERVICE_PORT4_EXIST",
-                                                    existsString(oltProps.get("port4Template")));
+                                            // ---- Evaluate OLT Port Templates ----
+                                            flags.put("SERVICE_PORT2_EXIST", existsString(oltProps.get("port3Counter")));
+                                            flags.put("SERVICE_PORT3_EXIST", existsString(oltProps.get("port2Counter")));
+                                            flags.put("SERVICE_PORT4_EXIST", existsString(oltProps.get("port4Counter")));
 
+                                            // ---- Card Template Rule ----
                                             String p2 = flags.get("SERVICE_PORT2_EXIST");
                                             String p3 = flags.get("SERVICE_PORT3_EXIST");
                                             String p4 = flags.get("SERVICE_PORT4_EXIST");
 
-                                            if ("Exist".equals(p2) ||
-                                                    "Exist".equals(p3) ||
-                                                    "Exist".equals(p4)) {
-                                                flags.put("SERVICE_TEMPLATE_CARD","Exist");
+                                            if ("Exist".equals(p2) || "Exist".equals(p3) || "Exist".equals(p4)) {
+                                                flags.put("SERVICE_TEMPLATE_CARD", "Exist");
                                             } else {
-                                                flags.put("SERVICE_TEMPLATE_CARD","New");
-                                            }
-
-                                            if ("4".equals(evpnPort) && setarSubset.size() == 1) {
-                                                flags.put("SERVICE_EVPN_WIFIM_FIRST","YES");
-                                            } else {
-                                                flags.put("SERVICE_EVPN_WIFIM_FIRST","NO");
+                                                flags.put("SERVICE_TEMPLATE_CARD", "New");
                                             }
                                         });
                             });
                         }
                     }
 
-
-
-
                 } catch (Exception e) {
                     log.error("Trace: Case-C failed {}", e.getMessage());
                 }
             }
+
+
             // ---------------------- Case D : Non EVPN + Not Configure -----------------------
-            if (!(equalsIgnoreCase(productType, "EVPN") || equalsIgnoreCase(productType, "ENTERPRISE"))
+            // ---------------------- Case D : Non-EVPN / Non-Enterprise + Not Configure ------------------
+            else if (!(equalsIgnoreCase(productType, "EVPN") ||
+                    equalsIgnoreCase(productType, "ENTERPRISE"))
                     && (actionType == null || !actionType.contains("Configure"))
                     && subscriber != null && serviceID != null && ontSN != null) {
 
-                log.error("Trace: Case-D Non-EVPN Not-Configure Triggered");
+                log.error("Trace: Case-D Non-EVPN Not-Configure triggered");
 
-                String subName1 = subscriber + Constants.UNDER_SCORE + serviceID + Constants.UNDER_SCORE + ontSN;
+                try {
 
-                subscriptionRepository.findByDiscoveredName(subName1).ifPresent(sub -> {
-                    Map<String, Object> sp = safeProps(sub.getProperties());
+                    String subName1 = subscriber + "_" + serviceID + "_" + ontSN;
 
-                    String evpnPort = (String) sp.getOrDefault("ontPort", "");
-                    flags.put("SERVICE_ONT_PORT", evpnPort);
+                    String finalOntSN = ontSN;
+                    subscriptionRepository.findByDiscoveredName(subName1).ifPresent(sub -> {
 
-                    String vlan = (String) sp.getOrDefault("veipQosSessionProfile", "");
-                    flags.put("QOS_PROFILE", vlan);
+                        Map<String, Object> sp = safeProps(sub.getProperties());
 
-                    // ---------- CASE D MISSING LOGIC ----------
-                    if ("4".equals(flags.get("SERVICE_ONT_PORT"))) {
-                        flags.put("SERVICE_PORT4_EXIST","New");
-                    }
-                    if ("3".equals(flags.get("SERVICE_ONT_PORT"))) {
-                        flags.put("SERVICE_PORT3_EXIST","New");
-                    }
-                    if ("2".equals(flags.get("SERVICE_ONT_PORT"))) {
-                        flags.put("SERVICE_PORT2_EXIST","New");
-                    }
+                        // ---------------- BASIC ASSIGNMENTS ----------------
+                        String evpnPort = (String) sp.getOrDefault("evpnPort", "");
+                        flags.put("SERVICE_ONT_PORT", evpnPort);
 
-                    String pp2 = flags.getOrDefault("SERVICE_PORT2_EXIST","New");
-                    String pp3 = flags.getOrDefault("SERVICE_PORT3_EXIST","New");
-                    String pp4 = flags.getOrDefault("SERVICE_PORT4_EXIST","New");
+                        String vlan = (String) sp.getOrDefault("evpnQosProfile", "");
+                        flags.put("QOS_PROFILE", vlan);
 
-                    flags.put("SERVICE_TEMPLATE_CARD",
-                            ("Exist".equals(pp2) || "Exist".equals(pp3) || "Exist".equals(pp4))
-                                    ? "Exist" : "New");
+                        log.error("Trace Case-D: SERVICE_ONT_PORT=" + evpnPort + "  QOS_PROFILE=" + vlan);
 
-                });
+                        // ---------------- RESOLVE OLT ----------------
+                        String ontGdn = "ONT" + finalOntSN;
+
+                        deviceRepository.findByDiscoveredName(ontGdn).ifPresent(ont -> {
+
+                            Map<String, Object> ontProps = safeProps(ont.getProperties());
+                            Object parentOltObj = ontProps.get("oltPosition");
+
+                            if (parentOltObj == null) {
+                                log.error("Trace Case-D: OLT missing for ONT {}", ontGdn);
+                                return;
+                            }
+
+                            deviceRepository.findByDiscoveredName(parentOltObj.toString()).ifPresent(olt -> {
+
+                                Map<String, Object> oltProps = safeProps(olt.getProperties());
+
+                                // ---------------- READ OLT PORT TEMPLATES ----------------
+                                String port2 = existsString(oltProps.get("port2Template"));
+                                String port3 = existsString(oltProps.get("port3Template"));
+                                String port4 = existsString(oltProps.get("port4Template"));
+
+                                flags.put("SERVICE_PORT2_EXIST", port2);
+                                flags.put("SERVICE_PORT3_EXIST", port3);
+                                flags.put("SERVICE_PORT4_EXIST", port4);
+
+                                log.error("Trace Case-D: OLT Templates  P2=" + port2 + " P3=" + port3 + " P4=" + port4);
+
+                                // ---------------- CARD TEMPLATE ----------------
+                                String cardTemplate = existsString(oltProps.get("generalCardServiceTemplate"));
+                                flags.put("SERVICE_TEMPLATE_CARD", cardTemplate);
+
+                                // ---------------- PORT LOGIC ----------------
+                                flags.put("SERVICE_TEMPLATE_PORT", "New");   // Always new per rule
+
+                                switch (evpnPort) {
+
+                                    case "4":
+                                        flags.put("SERVICE_PORT_EXIST4", "New");
+                                        // already set → check others for card decision
+                                        break;
+
+                                    case "3":
+                                        flags.put("SERVICE_PORT_EXIST3", "New");
+                                        break;
+
+                                    case "2":
+                                        flags.put("SERVICE_PORT_EXIST2", "New");
+                                        break;
+
+                                    default:
+                                        log.error("Trace Case-D: Unknown evpnPort {}", evpnPort);
+                                }
+
+                                // ---------------- CARD EVALUATION RULE ----------------
+                                String p2 = flags.get("SERVICE_PORT2_EXIST");
+                                String p3 = flags.get("SERVICE_PORT3_EXIST");
+                                String p4 = flags.get("SERVICE_PORT4_EXIST");
+
+                                if ("Exist".equalsIgnoreCase(p2)
+                                        || "Exist".equalsIgnoreCase(p3)
+                                        || "Exist".equalsIgnoreCase(p4)) {
+
+                                    flags.put("SERVICE_TEMPLATE_CARD", "Exist");
+
+                                } else {
+                                    flags.put("SERVICE_TEMPLATE_CARD", "New");
+                                }
+
+                                log.error("Trace Case-D FINAL -> PORT="
+                                        + evpnPort
+                                        + "  TEMPLATE_PORT=" + flags.get("SERVICE_TEMPLATE_PORT")
+                                        + "  CARD=" + flags.get("SERVICE_TEMPLATE_CARD"));
+                            });
+                        });
+
+                        log.error("Trace: Case-D processing completed");
+                    });
+
+                } catch (Exception e) {
+                    log.error("Trace: Case-D failed {}", e.getMessage());
+                }
             }
+
             // ---------------------- Case E : Fallback Logic ---------------------------------
             // ---------------------- Case E : Fallback Logic ---------------------------------
             else {
