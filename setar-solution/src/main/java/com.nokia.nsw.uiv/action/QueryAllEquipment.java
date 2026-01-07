@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -42,6 +44,7 @@ public class QueryAllEquipment implements HttpAction {
         log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.error("Executing QueryAllEquipment action...");
         QueryAllEquipmentRequest request = (QueryAllEquipmentRequest) actionContext.getObject();
+        Map<String,String> deviceData = new HashMap<>();
 
         try {
             // Step 1: Validate mandatory params
@@ -56,10 +59,7 @@ public class QueryAllEquipment implements HttpAction {
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
                         Instant.now().toString(),
-                        null, null, null, null, null,
-                        null, null, null, null, null,
-                        null, null, null, null, null,
-                        null, null, null, null,null,null,null,null
+                        deviceData
                 );
             }
 
@@ -73,10 +73,7 @@ public class QueryAllEquipment implements HttpAction {
                         "404",
                         ERROR_PREFIX + "No entry found for delete",
                         Instant.now().toString(),
-                        null, null, null, null, null,
-                        null, null, null, null, null,
-                        null, null, null, null, null,
-                        null, null, null, null,null,null,null,null
+                        deviceData
                 );
             }
             Service rfs = optRfs.get();
@@ -99,46 +96,18 @@ public class QueryAllEquipment implements HttpAction {
 
                     if (name.startsWith("STB")) {
                         successFlag = true;
-                        switch (stbCounter) {
-                            case 1:
-                                response.setStbSerialNo1((String) dev.getProperties().getOrDefault("serialNo", ""));
-                                response.setStbModel1((String) dev.getProperties().getOrDefault("deviceModel", ""));
-                                response.setStbMacAddr1((String) dev.getProperties().getOrDefault("macAddress", ""));
-                                response.setStbPreSharedKey1((String) dev.getProperties().getOrDefault("preSharedKey", ""));
-                                response.setStbCustomerGroupID1((String) dev.getProperties().getOrDefault("customerGroupId", ""));
-                                break;
-                            case 2:
-                                response.setStbSerialNo2((String) dev.getProperties().getOrDefault("serialNo", ""));
-                                response.setStbModel2((String) dev.getProperties().getOrDefault("deviceModel", ""));
-                                response.setStbMacAddr2((String) dev.getProperties().getOrDefault("macAddress", ""));
-                                response.setStbPreSharedKey2((String) dev.getProperties().getOrDefault("preSharedKey", ""));
-                                response.setStbCustomerGroupID2((String) dev.getProperties().getOrDefault("customerGroupId", ""));
-                                break;
-                            case 3:
-                                response.setStbSerialNo3((String) dev.getProperties().getOrDefault("serialNo", ""));
-                                response.setStbModel3((String) dev.getProperties().getOrDefault("deviceModel", ""));
-                                response.setStbMacAddr3((String) dev.getProperties().getOrDefault("macAddress", ""));
-                                response.setStbPreSharedKey3((String) dev.getProperties().getOrDefault("preSharedKey", ""));
-                                response.setStbCustomerGroupID3((String) dev.getProperties().getOrDefault("customerGroupId", ""));
-                                break;
-                        }
+                        deviceData.put("STB_SerialNo_" + stbCounter, (String) dev.getProperties().getOrDefault("serialNo", ""));
+                        deviceData.put("STB_Model_" + stbCounter, (String) dev.getProperties().getOrDefault("deviceModel", ""));
+                        deviceData.put("STB_MacAddr_" + stbCounter, (String) dev.getProperties().getOrDefault("macAddress", ""));
+                        deviceData.put("STB_PreShareKey_" + stbCounter, (String) dev.getProperties().getOrDefault("preSharedKey", ""));
+                        deviceData.put("STB_CustomerGroupID_" + stbCounter, (String) dev.getProperties().getOrDefault("deviceGroupId", ""));
                         stbCounter++;
                     } else if (name.startsWith("AP")) {
                         successFlag = true;
-                        switch (apCounter) {
-                            case 1:
-                                response.setApSerialNo1((String) dev.getProperties().getOrDefault("serialNo", ""));
-                                response.setApModel1((String) dev.getProperties().getOrDefault("deviceModel", ""));
-                                response.setApMacAddr1((String) dev.getProperties().getOrDefault("macAddress", ""));
-                                response.setApPreShareKey1((String) dev.getProperties().getOrDefault("preSharedKey", ""));
-                                break;
-                            case 2:
-                                response.setApSerialNo2((String) dev.getProperties().getOrDefault("serialNo", ""));
-                                response.setApModel2((String) dev.getProperties().getOrDefault("deviceModel", ""));
-                                response.setApMacAddr2((String) dev.getProperties().getOrDefault("macAddress", ""));
-                                response.setApPreShareKey2((String) dev.getProperties().getOrDefault("preSharedKey", ""));
-                                break;
-                        }
+                        deviceData.put("AP_SerialNo_" + apCounter, (String) dev.getProperties().getOrDefault("serialNo", ""));
+                        deviceData.put("AP_Model_" + apCounter, (String) dev.getProperties().getOrDefault("deviceModel", ""));
+                        deviceData.put("AP_MacAddr_" + apCounter, (String) dev.getProperties().getOrDefault("macAddress", ""));
+                        deviceData.put("AP_PreShareKey_" + apCounter, (String) dev.getProperties().getOrDefault("preSharedKey", ""));
                         apCounter++;
                     }
                 }
@@ -149,13 +118,11 @@ public class QueryAllEquipment implements HttpAction {
                         "500",
                         ERROR_PREFIX + "Error, Equipment Not Queried",
                         Instant.now().toString(),
-                        null, null, null, null, null,
-                        null, null, null, null, null,
-                        null, null, null, null, null,
-                        null, null, null, null,null,null,null,null
+                        deviceData
                 );
             }
             log.error(Constants.ACTION_COMPLETED);
+            response.setEquipmentsInfo(deviceData);
             return response;
 
         } catch (Exception ex) {
@@ -164,10 +131,7 @@ public class QueryAllEquipment implements HttpAction {
                     "500",
                     ERROR_PREFIX + "Internal server error occurred - " + ex.getMessage(),
                     Instant.now().toString(),
-                    null, null, null, null, null,
-                    null, null, null, null, null,
-                    null, null, null, null, null,
-                    null, null, null, null,null,null,null,null
+                    deviceData
             );
         }
     }
