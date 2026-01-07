@@ -1417,7 +1417,7 @@ public class QueryFlags implements HttpAction {
 
                                     // Card template
                                     flags.put("SERVICE_TEMPLATE_CARD",
-                                            existsString(oltProps.get("oltCardTemplate")));
+                                            existsString(oltProps.get("voipServiceTemplate")));
 
                                     // Only for Unconfigure case
                                     if ("Unconfigure".equalsIgnoreCase(actionType)) {
@@ -1432,10 +1432,10 @@ public class QueryFlags implements HttpAction {
                                                 existsString(oltProps.get("voipServiceTemplate")));
 
                                         flags.put("SERVICE_TEMPLATE_POTS1",
-                                                existsString(oltProps.get("voipPots1Template")));
+                                                existsString(oltProps.get("potsTemplate1")));
 
                                         flags.put("SERVICE_TEMPLATE_POTS2",
-                                                existsString(oltProps.get("voipPots2Template")));
+                                                existsString(oltProps.get("potsTemplate2")));
 
                                         flags.put("SERVICE_TEMPLATE_IPTV",
                                                 existsString(oltProps.get("iptvServiceTemplate")));
