@@ -71,6 +71,10 @@ public class QueryResource implements HttpAction {
             String devStatus = (String) device.getProperties().getOrDefault("AdministrativeState", "");
             String devKEY = (String) device.getProperties().getOrDefault("presharedKey", "");
             String devDesc = (String) device.getProperties().getOrDefault("description", "");
+            if(devDesc.isEmpty() && !device.getDescription().isEmpty())
+            {
+                devDesc=device.getDescription();
+            }
 
             String devGroupID = "NA";
             String devSubTYPE = "";

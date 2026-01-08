@@ -188,6 +188,7 @@ public class AssociateResources implements HttpAction {
                         else {
                             props.put("description",request.getServiceId());
                         }
+                        device.setProperties(props);
                         device.setUsingService(new HashSet<>(List.of(rfs)));
                         deviceRepository.save(device);
                         deviceUpdated = true;
@@ -212,6 +213,7 @@ public class AssociateResources implements HttpAction {
                         props.put("AdministrativeState", "Allocated");
                         props.put("description",request.getServiceId());
                         device.setUsingService(new HashSet<>(List.of(rfs)));
+                        device.setProperties(props);
                         deviceRepository.save(device);
                         deviceUpdated = true;
                     }
