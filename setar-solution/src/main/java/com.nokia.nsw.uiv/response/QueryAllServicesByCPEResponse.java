@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
  * Flat response for QueryAllServicesByCPE.
  * All fields use counters and prefixes per service family.
@@ -91,4 +93,7 @@ public class QueryAllServicesByCPEResponse {
     // Example for IPTV catalog items
     private String iptv1ProdName1;
     private String iptv1ProdVariant1;
+
+    public <V, K> QueryAllServicesByCPEResponse(String number, String msg, String currentTimestamp, Map<K,V> kvMap) {
+    }
 }

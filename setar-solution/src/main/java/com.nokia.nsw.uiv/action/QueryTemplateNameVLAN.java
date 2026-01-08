@@ -48,11 +48,11 @@ public class QueryTemplateNameVLAN implements HttpAction {
             // 1) Mandatory and optional input validations
             try {
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
-                Validations.validateMandatory(request.getOntSN(), "ONT_SN");
-                Validations.validateMandatory(request.getOntPort(), "ONT_PORT");
-                Validations.validateMandatory(request.getMenm(), "MENM");
-                Validations.validateMandatory(request.getTemplateNameVlan(), "TEMPLATE_NAME_VLAN");
-                Validations.validateMandatory(request.getTemplateNameVlanCreate(), "TEMPLATE_NAME_VLAN_CREATE");
+                Validations.validateMandatory(request.getOntSN(), "ontSN");
+                Validations.validateMandatory(request.getOntPort(), "ontPort");
+                Validations.validateMandatory(request.getMenm(), "menm");
+                Validations.validateMandatory(request.getTemplateNameVlan(), "templateNameVlan");
+                Validations.validateMandatory(request.getTemplateNameVlanCreate(), "templateNameVlanCreate");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 // Code5 -> Missing mandatory parameter

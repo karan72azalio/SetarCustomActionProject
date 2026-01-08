@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
@@ -12,6 +13,7 @@ import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.AccountTransferByServiceIDRequest;
 import com.nokia.nsw.uiv.response.AccountTransferByServiceIDResponse;
 
+import com.nokia.nsw.uiv.response.QueryAllServicesByCPEResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import com.nokia.nsw.uiv.model.service.Subscription;
@@ -28,6 +30,8 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import static com.nokia.nsw.uiv.utils.Validations.getCurrentTimestamp;
 
 @Component
 @RestController
@@ -53,13 +57,20 @@ public class AccountTransferByServiceID implements HttpAction {
         log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         AccountTransferByServiceIDRequest req = (AccountTransferByServiceIDRequest) actionContext.getObject();
         log.error("------Trace #1: Starting AccountTransferByServiceID");
-
+        try {
+            Validations.validateMandatory(req.getSubscriberNameOld(), "subscriberNameOld");
+            Validations.validateMandatory(req.getSubscriberName(), "subscriberName");
+            Validations.validateMandatory(req.getServiceId(), "serviceId");
+        } catch (BadRequestException bre) {
+            String msg = ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage();
+            return new AccountTransferByServiceIDResponse("400", msg, Validations.getCurrentTimestamp(), Collections.emptyMap());
+        }
         try {
             // Step 1: Mandatory validations
             if (req.getSubscriberNameOld() == null || req.getSubscriberNameOld().isEmpty()
                     || req.getSubscriberName() == null || req.getSubscriberName().isEmpty()
                     || req.getServiceId() == null || req.getServiceId().isEmpty()) {
-                return errorResponse("400", "Missing mandatory parameter(s)");
+                return errorResponse("400", "Missing mandatory parameter(s)",getCurrentTimestamp());
             }
             log.error("------Trace #2: Validated mandatory params");
 
@@ -81,7 +92,7 @@ public class AccountTransferByServiceID implements HttpAction {
 
             cfsList.removeIf(cfs -> !cfs.getDiscoveredName().contains(req.getServiceId()));
             if (cfsList.isEmpty()) {
-                return errorResponse("404", "No entry found for update");
+                return errorResponse("404", "No entry found for update",getCurrentTimestamp());
             }
             log.error("------Trace #3: Matching CFS found count=" + cfsList.size());
 
@@ -190,7 +201,7 @@ public class AccountTransferByServiceID implements HttpAction {
             }
 
             if (!updated) {
-                return errorResponse("404", "Error, No Account found");
+                return errorResponse("404", "Error, No Account found",Validations.getCurrentTimestamp());
             }
             log.error(Constants.ACTION_COMPLETED);
             AccountTransferByServiceIDResponse resp = new AccountTransferByServiceIDResponse();
@@ -201,15 +212,15 @@ public class AccountTransferByServiceID implements HttpAction {
 
         } catch (Exception ex) {
             log.error("Exception in AccountTransferByServiceID", ex);
-            return errorResponse("500", "Unexpected error - " + ex.getMessage());
+            return errorResponse("500", "Unexpected error - " + ex.getMessage(),Validations.getCurrentTimestamp());
         }
     }
 
-    private AccountTransferByServiceIDResponse errorResponse(String status, String msg) {
+    private AccountTransferByServiceIDResponse errorResponse(String status, String msg,String time) {
         AccountTransferByServiceIDResponse resp = new AccountTransferByServiceIDResponse();
         resp.setStatus(status);
         resp.setMessage(ERROR_PREFIX + msg);
-        resp.setTimestamp(Instant.now().toString());
+        resp.setTimestamp(time);
         return resp;
     }
 }

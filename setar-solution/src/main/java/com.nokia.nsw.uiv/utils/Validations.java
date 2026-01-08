@@ -55,4 +55,8 @@ public class Validations {
            throw new BadRequestException(type+" length is too long");
         }
     }
+
+    public static String getCurrentTimestamp() {
+        return Instant.now().toString();
+    }
 }

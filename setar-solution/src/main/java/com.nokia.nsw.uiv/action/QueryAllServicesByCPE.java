@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
@@ -8,17 +9,16 @@ import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryAllServicesByCPERequest;
 import com.nokia.nsw.uiv.response.QueryAllServicesByCPEResponse;
+import com.nokia.nsw.uiv.response.QueryFlagsResponse;
 import com.nokia.nsw.uiv.utils.Constants;
+import com.nokia.nsw.uiv.utils.Validations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Component
 @RestController
@@ -51,15 +51,20 @@ public class QueryAllServicesByCPE implements HttpAction {
     @Override
     public Object doPost(ActionContext actionContext) {
         log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
+
         log.error("Executing QueryAllServicesByCPE action...");
         QueryAllServicesByCPERequest req = (QueryAllServicesByCPERequest) actionContext.getObject();
+        log.error("Validating mandatory parameters...");
+        try {
+            Validations.validateMandatory(req.getOntSn(), "ontSn");
+        } catch (BadRequestException bre) {
+            String msg = ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage();
+            return new QueryAllServicesByCPEResponse("400", msg, Validations.getCurrentTimestamp(), Collections.emptyMap());
+        }
+        log.error("Mandatory validation completed.");
 
         try {
-            // 1) Mandatory validation
-            if (req.getOntSn() == null || req.getOntSn().isEmpty()) {
-                return errorResponse("400", "Missing mandatory parameter(s): ontSn");
-            }
-            String ontName ="ONT" + req.getOntSn();
+            String ontName = "ONT" + req.getOntSn();
 
             // 2) Identify the ONT
             Optional<LogicalDevice> ontOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
@@ -72,8 +77,8 @@ public class QueryAllServicesByCPE implements HttpAction {
             // Collect linked RFS entries
             Set<Service> linkedServiceList = ont.getUsingService();
             List<Service> linkedRfsList = new ArrayList<>();
-            for(Service s: linkedServiceList){
-                if(s.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS)){
+            for (Service s : linkedServiceList) {
+                if (s.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS)) {
                     linkedRfsList.add(s);
                 }
             }
@@ -205,4 +210,5 @@ public class QueryAllServicesByCPE implements HttpAction {
         resp.setTimestamp(Instant.now().toString());
         return resp;
     }
+
 }
