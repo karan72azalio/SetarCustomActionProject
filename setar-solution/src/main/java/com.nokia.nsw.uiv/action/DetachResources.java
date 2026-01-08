@@ -62,7 +62,16 @@ public class DetachResources implements HttpAction {
             Validations.validateMandatoryParams(request.getOntSN(), "ontSN");
             Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
             Validations.validateMandatoryParams(request.getProductSubtype(), "productSubtype");
-
+            Validations.validateMandatoryParams(request.getStbSN1(), "StbSN1");
+            Validations.validateMandatoryParams(request.getStbSN2(), "StbSN2");
+            Validations.validateMandatoryParams(request.getStbSN3(), "StbSN3");
+            Validations.validateMandatoryParams(request.getStbSN4(), "StbSN4");
+            Validations.validateMandatoryParams(request.getStbSN5(), "StbSN5");
+            Validations.validateMandatoryParams(request.getApSN1(), "ApSN1");
+            Validations.validateMandatoryParams(request.getApSN2(), "ApSN2");
+            Validations.validateMandatoryParams(request.getApSN3(), "ApSN3");
+            Validations.validateMandatoryParams(request.getApSN4(), "ApSN4");
+            Validations.validateMandatoryParams(request.getApSN5(), "ApSN5");
             // 2. Fetch entities
             Optional<Customer> subscriber = subscriberRepository.findByDiscoveredName(request.getSubscriberName());
             Optional<Subscription> subscription = subscriptionRepository.findByDiscoveredName(subscriptionName);
@@ -102,6 +111,7 @@ public class DetachResources implements HttpAction {
                 rfsEntity = serviceCustomRepository.findByDiscoveredName(rfsEntity.getDiscoveredName()).get();
                 Map<String,Object> rfsProps = rfsEntity.getProperties();
                 rfsProps.put("transactionId",request.getFxOrderId());
+                rfsProps.put("transactionType","DetachResources");
                 serviceCustomRepository.save(rfsEntity,2);
                 return new DetachResourcesResponse("200",
                         "UIV action DetachResources executed successfully.",
