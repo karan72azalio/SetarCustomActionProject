@@ -271,6 +271,9 @@ public class CreateServiceIPTV implements HttpAction {
             LogicalDevice oltDevice;
             if (optOlt.isPresent()) {
                 oltDevice = optOlt.get();
+                oltDevice.setUsingService(new HashSet<>(List.of(rfs)));
+               logicalDeviceRepository.save(oltDevice);
+
                 log.error("OLT already exists: {}", oltName);
             } else {
                 oltDevice = new LogicalDevice();

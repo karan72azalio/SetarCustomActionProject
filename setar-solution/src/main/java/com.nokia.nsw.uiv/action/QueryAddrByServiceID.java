@@ -58,7 +58,7 @@ public class QueryAddrByServiceID implements HttpAction {
             // 1) Mandatory input validation
             try {
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
-                Validations.validateMandatory(request.getServiceId(), "SERVICE_ID");
+                Validations.validateMandatory(request.getServiceId(), "serviceId");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             } catch (BadRequestException bre) {
                 // Code5 -> Missing mandatory parameter

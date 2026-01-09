@@ -68,9 +68,9 @@ public class ChangeState implements HttpAction {
         // 1. Mandatory validation
         try {
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
-            validateMandatory(req.getSubscriberName(), "subscriberName");
-            validateMandatory(req.getServiceId(), "serviceId");
-            validateMandatory(req.getActionType(), "actionType");
+            Validations.validateMandatory(req.getSubscriberName(), "subscriberName");
+            Validations.validateMandatory(req.getServiceId(), "serviceId");
+            Validations.validateMandatory(req.getActionType(), "actionType");
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return new ChangeStateResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
@@ -214,10 +214,6 @@ public class ChangeState implements HttpAction {
         }
     }
 
-    // ---------- helpers ----------
-    private void validateMandatory(String val, String name) throws BadRequestException {
-        if (val == null || val.trim().isEmpty()) throw new BadRequestException(name);
-    }
 
     private boolean isEmpty(String s) { return s == null || s.trim().isEmpty(); }
 

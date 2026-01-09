@@ -24,23 +24,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Migrated QueryIPTVByServiceID action (UIV)
- *
- * Behavior follows the legacy QueryIPTVByServiceID + instruction file you provided:
- * - Validate mandatory serviceId
- * - Find matching CFS names (middle portion or 3rd Constants.UNDER_SCORE  segment == serviceId)
- * - For each matching CFS, find its RFS (name replace CFS -> RFS), read Product -> Subscription -> Customer
- * - Collect IPTV details into iptvInfo map and keep ordered list of output parameter names
- *
- * Returns:
- *  - code "5" -> Missing mandatory parameter(s)
- *  - code "2" -> No entry found for delete / No IPTV Service Details Found
- *  - code "200" -> IPTV Service Details Found (with iptvDetails and parameterNames)
- *  - code "1" -> unexpected exception (500)
- *
- * NOTE: adapt small repo / POJO method names if your project uses different names.
- */
 @Component
 @RestController
 @Action

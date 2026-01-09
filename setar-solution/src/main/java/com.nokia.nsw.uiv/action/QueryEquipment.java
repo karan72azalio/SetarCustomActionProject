@@ -94,14 +94,14 @@ public class QueryEquipment implements HttpAction {
 
             if (subscriberOpt.isEmpty()) {
                 return createErrorResponse(CODE_NO_ENTRY,
-                        "Subscriber not found for subscriberName: " + request.getSubscriberName());
+                        "No entry found for delete " + request.getSubscriberName());
             }
             Customer subscriber = subscriberOpt.get();
 
             // 3️⃣ Locate entities
             Optional<Subscription> subscriptionOpt = subscriptionRepository.findByDiscoveredName(subscriptionName);
             if (subscriptionOpt.isEmpty()) {
-                return createErrorResponse(CODE_NO_ENTRY, "Subscription not found for subscriber/service");
+                return createErrorResponse(CODE_NO_ENTRY, "No entry found for delete");
             }
 
             Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);
@@ -112,7 +112,7 @@ public class QueryEquipment implements HttpAction {
             String rfsGdn = Validations.getGlobalName(rfsName);
             Service rfs = serviceCustomRepository.findByDiscoveredName(rfsName).orElse(null);
             if (rfs == null) {
-                return createErrorResponse(CODE_NO_ENTRY, "No RFS entry found for subscriber/service");
+                return createErrorResponse(CODE_NO_ENTRY, "No entry found for delete");
             }
 
             Optional<Product> productOpt = productRepository.findByDiscoveredName(productName);

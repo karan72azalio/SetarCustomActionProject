@@ -130,12 +130,42 @@ public class DeleteIPTV implements HttpAction {
             optProd.ifPresent(productRepository::delete);
 
             // Step 7: Conditional deletion of devices
+            // Step 7: Conditional deletion of devices
             if (!"Exist".equalsIgnoreCase(serviceFlag) && optOnt.isPresent()) {
-                deviceRepository.delete(optOnt.get());
-                if (olt != null && olt.getContained().isEmpty()) {
-                    deviceRepository.delete(olt);
+
+                // Only proceed if OLT exists
+                if (olt != null) {
+
+                    // Check if ANY RFS is associated with this OLT
+                    List<Service> allServices = (List<Service>) serviceCustomRepository.findAll();
+
+                    boolean oltHasAssociatedRfs = allServices.stream()
+                            .filter(s -> s.getDiscoveredName().startsWith("RFS") ||
+                                    s.getDiscoveredName().startsWith("RFS_"))
+                            .anyMatch(s ->
+                                    s.getUsedResource().stream()
+                                            .anyMatch(res ->
+                                                    res.getDiscoveredName()
+                                                            .equalsIgnoreCase(olt.getDiscoveredName()))
+                            );
+
+                    // === Required Business Logic ===
+                    if (!oltHasAssociatedRfs) {
+                        // Delete ONT first
+                        deviceRepository.delete(optOnt.get());
+
+                        // Then delete OLT
+                        deviceRepository.delete(olt);
+
+                        log.info("Deleted ONT {} and OLT {} as no RFS is associated",
+                                optOnt.get().getDiscoveredName(),
+                                olt.getDiscoveredName());
+                    } else {
+                        log.info("OLT {} NOT deleted as associated RFS exists", olt.getDiscoveredName());
+                    }
                 }
             }
+
 
             // Step 8: Conditional deletion of Subscriber & Subscription
             if (optCust.isPresent() && optSub.isPresent()) {
