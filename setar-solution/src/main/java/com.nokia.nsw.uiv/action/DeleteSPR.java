@@ -396,8 +396,6 @@ public class DeleteSPR implements HttpAction {
     private void clearOntMgmtTemplates(LogicalDevice ont) {
         Map<String, Object> p = ensureProps(ont);
         p.put("mgmtTemplate", "");
-        p.put("veipIptvTemplate", "");
-        p.put("tempTemplateMGMT", "");
         p.put("vlanCreateTemplate", "");
         ont.setProperties(p);
     }

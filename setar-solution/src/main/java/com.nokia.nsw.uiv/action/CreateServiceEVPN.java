@@ -577,14 +577,14 @@ public class CreateServiceEVPN implements HttpAction {
 
             // 14) OLT card template decision per port (if port 5 -> card-5)
             if ("5".equals(selectedPort)) {
-                String currentCard5 = (String) oltProps.getOrDefault("port5Template", "");
+                String currentCard5 = (String) oltProps.getOrDefault("evpnOntCard5Template", "");
                 if ((currentCard5 == null || currentCard5.isEmpty()) && req.getTemplateNameCard() != null) {
-                    oltProps.put("card5ServiceTemplate", req.getTemplateNameCard());
+                    oltProps.put("evpnOntCard5Template", req.getTemplateNameCard());
                 }
             } else {
-                String currentCard = (String) oltProps.getOrDefault("generalCardServiceTemplate", "");
+                String currentCard = (String) oltProps.getOrDefault("evpnOntCardTemplate", "");
                 if ((currentCard == null || currentCard.isEmpty()) && req.getTemplateNameCard() != null) {
-                    oltProps.put("generalCardServiceTemplate", req.getTemplateNameCard());
+                    oltProps.put("evpnOntCardTemplate", req.getTemplateNameCard());
                 }
             }
 
