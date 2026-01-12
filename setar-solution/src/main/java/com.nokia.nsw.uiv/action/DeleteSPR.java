@@ -524,12 +524,16 @@ public class DeleteSPR implements HttpAction {
     }
     private void maybeClearOntCardTemplateIfAllPortsEmpty(LogicalDevice oltDevice) {
         // Fetch all logical interfaces linked to the OLT
-        Set<LogicalResource> allInterfaces=oltDevice.getContained();
+        String port4temp = oltDevice.getProperties().get("evpnEthPort4Template").toString();
+        String port3temp = oltDevice.getProperties().get("evpnEthPort3Template").toString();
+        String port2temp = oltDevice.getProperties().get("evpnEthPort2Template").toString();
+        boolean allPortsCleared=false;
 
-        boolean allPortsCleared = allInterfaces.stream()
-                .filter(intf -> "EVPN_PORT".equalsIgnoreCase((String) intf.getProperties().get("TemplateName")))
-                .allMatch(intf -> intf.getProperties() == null
-                        || intf.getProperties().isEmpty());
+        if ((port4temp == null || port4temp == "") && (port3temp == null || port3temp == "") && (port2temp == null || port2temp == "") ) {
+            oltDevice.getProperties().put("evpnOntCardTemplate","");
+            allPortsCleared=true;
+            logicalDeviceRepository.save(oltDevice);
+        }
 
         if (allPortsCleared) {
             Map<String,Object> oltProps = oltDevice.getProperties();
