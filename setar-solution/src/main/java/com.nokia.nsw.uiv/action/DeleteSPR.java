@@ -506,7 +506,7 @@ public class DeleteSPR implements HttpAction {
         optSubscription.ifPresent(subscriptionRepository::delete);
         // Remove Product (we cannot check attached CFS count generically here; delete directly as per requirement note)
         Set<Service> connectedCFSs = new HashSet<>();
-        Optional<Product> tempProductOpt = productRepository.findByDiscoveredName(optProduct.get().getDiscoveredName());
+        Optional<Product> tempProductOpt = productRepository.findByDiscoveredName(optProduct.isPresent()?optProduct.get().getDiscoveredName():"");
         if(tempProductOpt.isPresent()){
             connectedCFSs = tempProductOpt.get().getUsedService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_CFS)).collect(Collectors.toSet());
         }
