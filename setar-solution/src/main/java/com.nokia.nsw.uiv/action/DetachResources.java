@@ -103,7 +103,7 @@ public class DetachResources implements HttpAction {
             for (String serial : apSerials) {
                 if (serial != null && !serial.equalsIgnoreCase("NA")) {
                     String devName = "AP_" + serial;
-                    deviceUpdated |= detachDevice(devName, rfsEntity, true);
+                    deviceUpdated |= detachDevice(devName, rfsEntity, false);
                 }
             }
 
