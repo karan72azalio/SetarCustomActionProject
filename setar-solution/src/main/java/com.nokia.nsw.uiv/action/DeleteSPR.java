@@ -472,7 +472,7 @@ public class DeleteSPR implements HttpAction {
     private void removePossibleVlanInterfaces(String ontSN, String ontPort) {
         if (isEmpty(ontSN) || isEmpty(ontPort)) return;
         for (int suffix = 2; suffix <= 8; suffix++) {
-            String vlanName = ontSN + "_P" + ontPort + "SINGLETAGGED" + suffix;
+            String vlanName = ontSN + "_P" + ontPort + "_SINGLETAGGED_" + suffix;
             Optional<LogicalInterface> optVlan = logicalInterfaceRepository.findByDiscoveredName(vlanName);
             if (optVlan.isPresent()) {
                 logicalInterfaceRepository.delete(optVlan.get());
@@ -524,12 +524,13 @@ public class DeleteSPR implements HttpAction {
     }
     private void maybeClearOntCardTemplateIfAllPortsEmpty(LogicalDevice oltDevice) {
         // Fetch all logical interfaces linked to the OLT
-        String port4temp = oltDevice.getProperties().get("evpnEthPort4Template").toString();
-        String port3temp = oltDevice.getProperties().get("evpnEthPort3Template").toString();
-        String port2temp = oltDevice.getProperties().get("evpnEthPort2Template").toString();
+        String port4temp = oltDevice.getProperties().get("evpnEthPort4Template")!=null?oltDevice.getProperties().get("evpnEthPort4Template").toString():"";
+        String port3temp = oltDevice.getProperties().get("evpnEthPort3Template")!=null?oltDevice.getProperties().get("evpnEthPort3Template").toString():"";
+        String port2temp = oltDevice.getProperties().get("evpnEthPort2Template")!=null?oltDevice.getProperties().get("evpnEthPort2Template").toString():"";
         boolean allPortsCleared=false;
 
         if ((port4temp == null || port4temp == "") && (port3temp == null || port3temp == "") && (port2temp == null || port2temp == "") ) {
+            oltDevice = logicalDeviceRepository.findByDiscoveredName(oltDevice.getDiscoveredName()).get();
             oltDevice.getProperties().put("evpnOntCardTemplate","");
             allPortsCleared=true;
             logicalDeviceRepository.save(oltDevice);
