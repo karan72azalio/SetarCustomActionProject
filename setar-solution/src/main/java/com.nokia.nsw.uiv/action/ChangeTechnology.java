@@ -21,6 +21,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.common.recycler.Recycler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -131,9 +132,9 @@ public class ChangeTechnology implements HttpAction {
             String subscriptionName = subscriberName + Constants.UNDER_SCORE  + serviceId;
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            String cbmName = "CBM" +cbmSn;
+            String cbmName = "CBM"+ Constants.UNDER_SCORE +cbmSn;
             String mgmtVlanName = menm + Constants.UNDER_SCORE  + vlanId;
-            String ontName ="ONT" + ontSN;
+            String ontName ="ONT"+Constants.UNDER_SCORE + ontSN;
             String subscriberNameFibernet = subscriberName + Constants.UNDER_SCORE  + ontSN;
             String subscriberNameCbmKey = subscriberName + Constants.UNDER_SCORE  + cbmMac.replace(":", "");
 
@@ -172,20 +173,19 @@ public class ChangeTechnology implements HttpAction {
                 if ("Fibernet".equalsIgnoreCase(productSubtype)) {
                     if (qosProfile != null) subProps.put("veipQosSessionProfile", qosProfile);
                     subscription.setDiscoveredName(subscriptionName + Constants.UNDER_SCORE  + ontSN);
+                    subscription.setProperties(subProps);
+                    subscriptionRepo.save(subscription);
                     // link to subscriber updated earlier if present
-                    String gdnFibernet = Validations.getGlobalName(subscriberNameFibernet);
                     Optional<Customer> maybeSub = customerRepo.findByDiscoveredName(subscriberNameFibernet);
                     maybeSub.ifPresent(subscription::setCustomer);
                 }
-                subscription.setProperties(subProps);
-                subscriptionRepo.save(subscription);
             }
 
             // 6. Update existing CFS (if exists)
             Optional<Service> maybeCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
             if (maybeCfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 Service cfs = maybeCfs.get();
-                cfs.setDiscoveredName(cfs.getLocalName() + Constants.UNDER_SCORE  + ontSN);
+                cfs.setDiscoveredName(cfsName);
                 if (fxOrderId != null) {
                     Map<String, Object> p = cfs.getProperties() != null ? cfs.getProperties() : new HashMap<>();
                     p.put("transactionId", fxOrderId);
@@ -198,7 +198,7 @@ public class ChangeTechnology implements HttpAction {
             Optional<Service> maybeRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (maybeRfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 Service rfs = maybeRfs.get();
-                rfs.setDiscoveredName(rfs.getName() + Constants.UNDER_SCORE  + ontSN);
+                rfs.setDiscoveredName(rfsName);
                 serviceCustomRepository.save(rfs);
             }
 
