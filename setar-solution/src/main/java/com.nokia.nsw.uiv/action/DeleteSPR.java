@@ -187,7 +187,7 @@ public class DeleteSPR implements HttpAction {
                 String ontPort = nullSafe(req.getOntPort());
                 // Identify current EVPN template on ONT port + VLAN from subscription
                 String currentEvpnTemplateVal = optOnt.map(ont -> getPortTemplateValue(ont, ontPort)).orElse("0");
-                String subVlan = optSubscription.map(s -> stringProp(s.getProperties(), "evpnTemplateVLAN")).orElse("");
+                String subVlan = optSubscription.map(s -> stringProp(s.getProperties(), "evpnVLAN")).orElse("");
 
                 // Remove possible VLAN interfaces (ends with 2..8) based on naming rule
                 removePossibleVlanInterfaces(req.getOntSN(), ontPort);
