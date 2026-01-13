@@ -335,11 +335,11 @@ public class CreateServiceVoIP implements HttpAction {
 
             if ("1".equals(req.getOntPort())) {
                 ontProps.put("potsPort1Number", req.getVoipNumber1());
-                oltProps.put("potsTemplate1", req.getTemplateNamePots1());
+                oltProps.put("voipPots1Template", req.getTemplateNamePots1());
                 ontProps.put("voipPort1",req.getVoipNumber1());
             } else {
                 ontProps.put("potsPort2Number", req.getVoipNumber1());
-                oltProps.put("potsTemplate2", req.getTemplateNamePots2());
+                oltProps.put("voipPots2Template", req.getTemplateNamePots2());
                 ontProps.put("voipPort2",req.getVoipNumber1());
             }
             oltProps.put("voipServiceTemplate", req.getVoipServiceTemplate());
