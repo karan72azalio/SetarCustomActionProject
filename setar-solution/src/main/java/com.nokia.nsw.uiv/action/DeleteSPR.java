@@ -487,8 +487,8 @@ public class DeleteSPR implements HttpAction {
         // In many deployments, CPE port state is recorded on contained components.
         // If they’re on properties of device itself, adapt keys accordingly.
         String key = "voipPort" + ("POTS_2".equals(portType) ? "2" : "1");
-        ensureProps(cpe).put(key, "Available");
-        safeSaveLogicalDevice(cpe);
+        cpe.getProperties().put(key,"Available");
+        logicalDeviceRepository.save(cpe);
     }
 
     private void cleanupServiceObjects(Optional<Service> optRfs,
