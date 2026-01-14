@@ -173,19 +173,31 @@ public class ChangeTechnology implements HttpAction {
                 if ("Fibernet".equalsIgnoreCase(productSubtype)) {
                     if (qosProfile != null) subProps.put("veipQosSessionProfile", qosProfile);
                     subscription.setDiscoveredName(subscriptionName + Constants.UNDER_SCORE  + ontSN);
-                    subscription.setProperties(subProps);
-                    subscriptionRepo.save(subscription);
+                    
                     // link to subscriber updated earlier if present
                     Optional<Customer> maybeSub = customerRepo.findByDiscoveredName(subscriberNameFibernet);
-                    maybeSub.ifPresent(subscription::setCustomer);
+                    if (maybeSub.isPresent()) {
+                        Customer newCustomer = maybeSub.get();
+                        Customer oldCustomer = subscription.getCustomer();
+                        if(oldCustomer!=null){
+                            oldCustomer.getSubscription().remove(subscription);   // 💥 removes HAS edge
+                            customerRepo.save(oldCustomer);
+                        }
+
+                        subscription.setCustomer(newCustomer);  // ✅ attach new
+                    }
+
                 }
+                subscription.setProperties(subProps);
+                subscriptionRepo.save(subscription);
             }
 
             // 6. Update existing CFS (if exists)
             Optional<Service> maybeCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
             if (maybeCfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 Service cfs = maybeCfs.get();
-                cfs.setDiscoveredName(cfsName + Constants.UNDER_SCORE+req.getOntSN());
+                // Append ONT_SN to existing CFS name as per specification
+                cfs.setDiscoveredName(cfs.getDiscoveredName() + Constants.UNDER_SCORE + ontSN);
                 if (fxOrderId != null) {
                     Map<String, Object> p = cfs.getProperties() != null ? cfs.getProperties() : new HashMap<>();
                     p.put("transactionId", fxOrderId);
@@ -198,7 +210,8 @@ public class ChangeTechnology implements HttpAction {
             Optional<Service> maybeRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (maybeRfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 Service rfs = maybeRfs.get();
-                rfs.setDiscoveredName(rfsName+Constants.UNDER_SCORE+req.getOntSN());
+                // Append ONT_SN to existing RFS name as per specification
+                rfs.setDiscoveredName(rfs.getDiscoveredName() + Constants.UNDER_SCORE + ontSN);
                 serviceCustomRepository.save(rfs);
             }
 
@@ -293,10 +306,12 @@ public class ChangeTechnology implements HttpAction {
                 return vlanRepo.save(v);
             });
 
-            // 11. Persist CBM device if exists
+            // 11. Remove CBM device if exists
             Optional<LogicalDevice> maybeCbm = cbmRepo.findByDiscoveredName(cbmName);
             if (maybeCbm.isPresent()) {
                 LogicalDevice cbmDevice = maybeCbm.get();
+                // Clear Resource-Facing Service link as per specification
+                cbmDevice.setUsingService(null);
                 Map<String, Object> cbmProps = cbmDevice.getProperties() != null ? cbmDevice.getProperties() : new HashMap<>();
                 cbmProps.put("AdministrativeState", "Available");
                 cbmProps.put("OperationalState", "Available");
