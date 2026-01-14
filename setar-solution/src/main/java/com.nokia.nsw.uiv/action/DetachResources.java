@@ -1,11 +1,14 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.AccessForbiddenException;
 import com.nokia.nsw.uiv.exception.BadRequestException;
+import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
+import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Product;
@@ -34,11 +37,16 @@ public class DetachResources implements HttpAction {
     protected static final String ACTION_LABEL = Constants.DETACH_RESOURCES;
     private static final String ERROR_PREFIX = "UIV action DetachResources execution failed - ";
 
-    @Autowired private CustomerCustomRepository subscriberRepository;
-    @Autowired private SubscriptionCustomRepository subscriptionRepository;
-    @Autowired private ProductCustomRepository productRepository;
-    @Autowired private ServiceCustomRepository serviceCustomRepository;
-    @Autowired private LogicalDeviceCustomRepository deviceRepository;
+    @Autowired
+    private CustomerCustomRepository subscriberRepository;
+    @Autowired
+    private SubscriptionCustomRepository subscriptionRepository;
+    @Autowired
+    private ProductCustomRepository productRepository;
+    @Autowired
+    private ServiceCustomRepository serviceCustomRepository;
+    @Autowired
+    private LogicalDeviceCustomRepository deviceRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -50,10 +58,10 @@ public class DetachResources implements HttpAction {
         log.error("Executing action: {}", ACTION_LABEL);
 
         DetachResourcesRequest request = (DetachResourcesRequest) actionContext.getObject();
-        String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceID();
+        String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getServiceID();
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-        String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE+ request.getServiceID();
+        String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceID();
 
         try {
             // 1. Mandatory validation
@@ -92,10 +100,12 @@ public class DetachResources implements HttpAction {
                     request.getStbSN3(), request.getStbSN4(), request.getStbSN5());
             List<String> apSerials = Arrays.asList(request.getApSN1(), request.getApSN2(),
                     request.getApSN3(), request.getApSN4(), request.getApSN5());
+            List<String>devNames=new ArrayList<>();
 
             for (String serial : stbSerials) {
                 if (serial != null && !serial.equalsIgnoreCase("NA")) {
                     String devName = "STB_" + serial;
+                    devNames.add(devName);
                     deviceUpdated |= detachDevice(devName, rfsEntity, true);
                 }
             }
@@ -103,6 +113,7 @@ public class DetachResources implements HttpAction {
             for (String serial : apSerials) {
                 if (serial != null && !serial.equalsIgnoreCase("NA")) {
                     String devName = "AP_" + serial;
+                    devNames.add(devName);
                     deviceUpdated |= detachDevice(devName, rfsEntity, false);
                 }
             }
@@ -112,7 +123,7 @@ public class DetachResources implements HttpAction {
                 Map<String,Object> rfsProps = rfsEntity.getProperties();
                 rfsProps.put("transactionId",request.getFxOrderId());
                 rfsProps.put("transactionType","DetachResources");
-                serviceCustomRepository.save(rfsEntity,2);
+                serviceCustomRepository.save(rfsEntity, 2);
                 return new DetachResourcesResponse("200",
                         "UIV action DetachResources executed successfully.",
                         getCurrentTimestamp(),
@@ -133,20 +144,37 @@ public class DetachResources implements HttpAction {
         }
     }
 
-    private boolean detachDevice(String devName, Service rfsEntity, boolean isSTB) {
+    private boolean detachDevice(String devName, Service rfsEntity, boolean isSTB)
+            throws ModificationNotAllowedException, BadRequestException, AccessForbiddenException {
+
         Optional<LogicalDevice> optDevice = deviceRepository.findByDiscoveredName(devName);
-        if (optDevice.isPresent()) {
-            LogicalDevice device = optDevice.get();
-            if (isSTB) {
-                device.getProperties().put("deviceGroupId", "");
-            }
-            device.getProperties().put("AdministrativeState", "Available");
-            device.getProperties().put("description", "");
-            device.setUsingService(null);
-            deviceRepository.save(device, 2);
-            return true;
+        if (optDevice.isEmpty()) {
+            return false;
         }
-        return false;
+
+        LogicalDevice oldDevice = optDevice.get();
+
+        LogicalDevice newDevice = new LogicalDevice();
+
+        newDevice.setKind(oldDevice.getKind());
+        newDevice.setLocalName(oldDevice.getLocalName());
+        newDevice.setDiscoveredName(oldDevice.getDiscoveredName());
+
+        Map<String, Object> props = new HashMap<>(oldDevice.getProperties());
+
+        if (isSTB) {
+            props.put("deviceGroupId", "");
+        }
+        props.put("AdministrativeState", "Available");
+        props.put("description", "");
+
+        newDevice.setProperties(props);
+
+        deviceRepository.save(newDevice, 1);
+
+        deviceRepository.delete(oldDevice);
+
+        return true;
     }
 
     private String getCurrentTimestamp() {
