@@ -115,6 +115,7 @@ public class DeleteIPTV implements HttpAction {
                     if (res.getDiscoveredName().startsWith("STB") || res.getDiscoveredName().startsWith("AP")) {
                         try {
                             deviceRepository.findByDiscoveredName(res.getDiscoveredName()).ifPresent(dev -> {
+                                if(dev.getDiscoveredName().startsWith("STB"))
                                 dev.getProperties().put("deviceGroupId", "");
                                 dev.getProperties().put("AdministrativeState", "Available");
                                 deviceRepository.save(dev);
