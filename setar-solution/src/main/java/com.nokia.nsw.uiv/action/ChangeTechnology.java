@@ -185,7 +185,7 @@ public class ChangeTechnology implements HttpAction {
             Optional<Service> maybeCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
             if (maybeCfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 Service cfs = maybeCfs.get();
-                cfs.setDiscoveredName(cfsName);
+                cfs.setDiscoveredName(cfsName + Constants.UNDER_SCORE+req.getOntSN());
                 if (fxOrderId != null) {
                     Map<String, Object> p = cfs.getProperties() != null ? cfs.getProperties() : new HashMap<>();
                     p.put("transactionId", fxOrderId);
@@ -198,7 +198,7 @@ public class ChangeTechnology implements HttpAction {
             Optional<Service> maybeRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (maybeRfs.isPresent() && "Fibernet".equalsIgnoreCase(productSubtype)) {
                 Service rfs = maybeRfs.get();
-                rfs.setDiscoveredName(rfsName);
+                rfs.setDiscoveredName(rfsName+Constants.UNDER_SCORE+req.getOntSN());
                 serviceCustomRepository.save(rfs);
             }
 
