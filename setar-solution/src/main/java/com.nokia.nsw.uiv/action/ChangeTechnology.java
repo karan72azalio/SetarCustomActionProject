@@ -176,7 +176,17 @@ public class ChangeTechnology implements HttpAction {
                     
                     // link to subscriber updated earlier if present
                     Optional<Customer> maybeSub = customerRepo.findByDiscoveredName(subscriberNameFibernet);
-                    maybeSub.ifPresent(subscription::setCustomer);
+                    if (maybeSub.isPresent()) {
+                        Customer newCustomer = maybeSub.get();
+                        Customer oldCustomer = subscription.getCustomer();
+                        if(oldCustomer!=null){
+                            oldCustomer.getSubscription().remove(subscription);   // 💥 removes HAS edge
+                            customerRepo.save(oldCustomer);
+                        }
+
+                        subscription.setCustomer(newCustomer);  // ✅ attach new
+                    }
+
                 }
                 subscription.setProperties(subProps);
                 subscriptionRepo.save(subscription);
