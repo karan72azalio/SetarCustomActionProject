@@ -306,15 +306,23 @@ public class DeleteCBM implements HttpAction {
 
                                 if (isSTB) {
                                     // clear deviceGroupId for STB
-                                    props.put("DeviceGroupId", null);
+                                    props.put("DeviceGroupId", "");
                                 }
 
                                 resource.setProperties(props);
 
                                 // Persist resource - resource may be LogicalDevice
                                 try {
-                                    cbmDeviceRepository.save((LogicalDevice) resource, 2);
-                                    log.error("Updated resource {} administrative state to Available", discoveredName);
+                                    Optional<LogicalDevice> tempDeviceOpt = cbmDeviceRepository.findByDiscoveredName(resource.getDiscoveredName());
+                                    LogicalDevice tempDevice = null;
+                                    if(tempDeviceOpt.isPresent()){
+                                        tempDevice = tempDeviceOpt.get();
+                                    }
+                                    if(tempDevice!=null){
+                                        tempDevice.setProperties(resource.getProperties());
+                                        cbmDeviceRepository.save(tempDevice, 2);
+                                        log.error("Updated resource {} administrative state to Available", discoveredName);
+                                    }
                                 } catch (ClassCastException cce) {
                                     log.error("Resource {} is not a LogicalDevice; skipping save via cbmDeviceRepository", discoveredName);
                                 } catch (Exception saveEx) {
