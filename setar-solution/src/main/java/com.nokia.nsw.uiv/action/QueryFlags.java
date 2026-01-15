@@ -1603,7 +1603,7 @@ public class QueryFlags implements HttpAction {
                     result.put("CBM_ACCOUNT_EXIST", "New");
                 }
 
-                Object sima = p.get("simaCustomerId");
+                Object sima = p.get("simaCustId");
                 if (sima != null && !sima.toString().isEmpty()) {
                     result.put("SIMA_CUST_ID", sima.toString());
                 }
@@ -1632,7 +1632,7 @@ public class QueryFlags implements HttpAction {
                     }
                 }
 
-                Object sima = p.get("simaCustomerId");
+                Object sima = p.get("simaCustId");
                 if (sima != null && !sima.toString().isEmpty()) {
                     result.put("SIMA_CUST_ID", sima.toString());
                 }

@@ -508,7 +508,7 @@ public class QueryServicesInfo implements HttpAction {
                         // SIMA and voice details from subscription if present
                         if (setarSubscription != null && setarSubscription.getProperties() != null) {
                             Map<String,Object> sprops = setarSubscription.getProperties();
-                            allvalues.put(prefix + "SIMA_CUST_ID", sprops.getOrDefault("simaCustomerId",""));
+                            allvalues.put(prefix + "SIMA_CUST_ID", sprops.getOrDefault("simaCustId",""));
                             allvalues.put(prefix + "SIMA_ENDPOINT_ID", sprops.getOrDefault("simaEndpointId1",""));
                             allvalues.put(prefix + "SIMA_ENDPOINT_ID2", sprops.getOrDefault("simaEndpointId2",""));
                             allvalues.put(prefix + "SIMA_SUBS_ID", sprops.getOrDefault("simaSubscriptionId1",""));

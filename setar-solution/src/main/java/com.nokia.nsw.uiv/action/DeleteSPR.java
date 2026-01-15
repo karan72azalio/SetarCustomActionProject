@@ -280,7 +280,7 @@ public class DeleteSPR implements HttpAction {
                         olt.getProperties().put("voipServiceTemplate", "");
                         safeSaveLogicalDevice(olt);
                         optSubscriber.ifPresent(sub -> {
-                            sub.getProperties().put("simaCustomerId", "");
+                            sub.getProperties().put("simaCustId", "");
                             safeSaveCustomer(sub);
                         });
                     }
