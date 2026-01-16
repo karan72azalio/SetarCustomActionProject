@@ -332,15 +332,23 @@ public class CreateServiceVoIP implements HttpAction {
             // Step 12: Configure VoIP ports
             Map<String, Object> ontProps = ont.getProperties();
             Map<String, Object> oltProps = olt.getProperties();
+            LogicalDevice cpeDevice = null;
+            Optional<LogicalDevice> optCpeDevice = logicalDeviceRepo.findByDiscoveredName("ONT" + Constants.UNDER_SCORE + req.getOntSN());
+            if (optCpeDevice.isPresent()) {
+                cpeDevice = optCpeDevice.get();
+            } else {
+                throw new RuntimeException("Could not found CPE device: " + "ONT" + Constants.UNDER_SCORE + req.getOntSN());
+            }
+
 
             if ("1".equals(req.getOntPort())) {
                 ontProps.put("potsPort1Number", req.getVoipNumber1());
                 oltProps.put("voipPots1Template", req.getTemplateNamePots1());
-                ontProps.put("voipPort1",req.getVoipNumber1());
+                cpeDevice.getProperties().put("voipPort1",req.getVoipNumber1());
             } else {
                 ontProps.put("potsPort2Number", req.getVoipNumber1());
                 oltProps.put("voipPots2Template", req.getTemplateNamePots2());
-                ontProps.put("voipPort2",req.getVoipNumber1());
+                cpeDevice.getProperties().put("voipPort2",req.getVoipNumber1());
             }
             oltProps.put("voipServiceTemplate", req.getVoipServiceTemplate());
 
@@ -350,6 +358,7 @@ public class CreateServiceVoIP implements HttpAction {
 
             logicalDeviceRepo.save(ont);
             logicalDeviceRepo.save(olt);
+            logicalDeviceRepo.save(cpeDevice);
             log.error(Constants.ACTION_COMPLETED);
             return new CreateServiceVoIPResponse(
                     "201",
