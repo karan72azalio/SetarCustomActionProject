@@ -6,6 +6,8 @@ import com.nokia.nsw.uiv.exception.ModificationNotAllowedException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.resource.AdministrativeState;
+import com.nokia.nsw.uiv.model.resource.OperationalState;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterface;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalInterfaceRepository;
 import com.nokia.nsw.uiv.model.service.Service;
@@ -67,6 +69,16 @@ public class ChangeTechnology implements HttpAction {
 
     @Override
     public Class<?> getActionClass() { return ChangeTechnologyRequest.class; }
+
+    private void ensureProperty(
+            Map<String, Object> props,
+            String key,
+            String value
+    ) {
+        if (!props.containsKey(key) || props.get(key) == null) {
+            props.put(key, value);
+        }
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -151,8 +163,15 @@ public class ChangeTechnology implements HttpAction {
                     cbmSubscriber.setContext("Setar");
                     cbmSubscriber.setKind("SetarSubscriber");
                     Map<String, Object> props = cbmSubscriber.getProperties() != null ? cbmSubscriber.getProperties() : new HashMap<>();
-                    props.put("subscriberStatus", "Active");
-                    props.put("subscriberType", "Regular");
+
+                    ensureProperty(props,
+                            "subscriberStatus",
+                            Constants.SUBSCRIBER_STATUS_ACTIVE);
+
+                    ensureProperty(props,
+                            "subscriberType",
+                            Constants.SUBSCRIBER_TYPE_REGULAR);
+
                     props.put("accountNumber", subscriberName);
                     if (hhid != null) props.put("householdId", hhid);
                     cbmSubscriber.setProperties(props);
@@ -313,42 +332,96 @@ public class ChangeTechnology implements HttpAction {
                 // Clear Resource-Facing Service link as per specification
                 cbmDevice.setUsingService(null);
                 Map<String, Object> cbmProps = cbmDevice.getProperties() != null ? cbmDevice.getProperties() : new HashMap<>();
-                cbmProps.put("AdministrativeState", "Available");
-                cbmProps.put("OperationalState", "Available");
+                ensureProperty(cbmProps,
+                        "AdministrativeState",
+                        Constants.ADMIN_STATE_AVAILABLE);
+
+                ensureProperty(cbmProps,
+                        "OperationalState",
+                        Constants.OPER_STATE_AVAILABLE);
+
                 cbmDevice.setProperties(cbmProps);
                 // remove from inventory
                 cbmRepo.save(cbmDevice,2);
             }
 
             // 12. Reassign CPE devices
-            String cpeDeviceName ="ONT"+ Constants.UNDER_SCORE + ontSN;
-            Optional<LogicalDevice> maybeCpeNew = cpeRepo.findByDiscoveredName(cpeDeviceName);
-            //Fetching cpeDevice with macAddress
+            // 12. Reassign CPE devices (ONT <-> CBM)
+
+// Expected names as per specification
+            String cpeDeviceName = "ONT_" + ontSN;
+            String cpeDeviceOldName = "CBM_" + cbmMac.replace(":", "");
+
+// Fetch ONT CPE
+            Optional<LogicalDevice> maybeCpeNew =
+                    cpeRepo.findByDiscoveredName(cpeDeviceName);
+
+// Fetch CBM CPE
             Optional<LogicalDevice> maybeCpeOld = StreamSupport
-                    .stream(logicalDeviceRepo.findAll().spliterator(), false).filter(device-> device.getDiscoveredName().contains(Constants.CBM) && device.getKind().equalsIgnoreCase(Constants.SETAR_KIND_CPE_DEVICE) && device.getProperties().get("macAddress").toString().equalsIgnoreCase(req.getCbmMac()))
+                    .stream(logicalDeviceRepo.findAll().spliterator(), false)
+                    .filter(device ->
+                            device.getDiscoveredName().contains(Constants.CBM)
+                                    && device.getKind().equalsIgnoreCase(Constants.SETAR_KIND_CPE_DEVICE)
+                                    && device.getProperties().get("macAddress").toString()
+                                    .equalsIgnoreCase(req.getCbmMac())
+                    )
                     .findFirst();
 
-            if (maybeCpeNew.isPresent() && maybeCpeOld.isPresent()) {
-                LogicalDevice cpeNew = maybeCpeNew.get();
-                LogicalDevice cpeOld = maybeCpeOld.get();
-
-                Map<String, Object> newProps = cpeNew.getProperties() != null ? cpeNew.getProperties() : new HashMap<>();
-                newProps.put("description", "Internet");
-                newProps.put("AdministrativeState", "Allocated");
-
-                Map<String, Object> oldProps = cpeOld.getProperties() != null ? cpeOld.getProperties() : new HashMap<>();
-                oldProps.put("description", null);
-                oldProps.put("AdministrativeState", "Available");
-
-                cpeNew.setProperties(newProps);
-                cpeOld.setProperties(oldProps);
-
-                cpeRepo.save(cpeOld);
-                cpeRepo.save(cpeNew);
-            } else {
-                // legacy returns error if either missing
-                return new ChangeTechnologyResponse("500", ERROR_PREFIX + "ONT name String: " + ontName + " is not found in CPEDevice", Instant.now().toString(),"","");
+// Validate ONT CPE existence
+            if (maybeCpeNew.isEmpty()) {
+                return new ChangeTechnologyResponse(
+                        "500",
+                        ERROR_PREFIX + "ONT name \"" + ontName + "\" is not found in CPEDevice",
+                        Instant.now().toString(),
+                        "",
+                        ""
+                );
             }
+
+// Validate CBM CPE existence
+            if (maybeCpeOld.isEmpty()) {
+                return new ChangeTechnologyResponse(
+                        "500",
+                        ERROR_PREFIX + "CBM device \"" + cpeDeviceOldName + "\" is not found in CPEDevice",
+                        Instant.now().toString(),
+                        "",
+                        ""
+                );
+            }
+
+// Retrieve devices
+            LogicalDevice cpeNew = maybeCpeNew.get(); // ONT CPE
+            LogicalDevice cpeOld = maybeCpeOld.get(); // CBM CPE
+
+// Prepare properties safely
+            Map<String, Object> newProps =
+                    cpeNew.getProperties() != null ? cpeNew.getProperties() : new HashMap<>();
+
+            Map<String, Object> oldProps =
+                    cpeOld.getProperties() != null ? cpeOld.getProperties() : new HashMap<>();
+
+// -------------------------
+// ONT CPE updates
+// -------------------------
+            newProps.put("description", "Internet");
+            newProps.put("AdministrativeState", Constants.ADMIN_STATE_ALLOCATED);
+            newProps.put("OperationalState", Constants.OPER_STATE_ACTIVE);
+
+// -------------------------
+// CBM CPE updates
+// -------------------------
+            oldProps.remove("description"); // safer than setting null
+            oldProps.put("AdministrativeState", Constants.ADMIN_STATE_AVAILABLE);
+            oldProps.put("OperationalState", Constants.OPER_STATE_AVAILABLE);
+
+// Apply properties
+            cpeNew.setProperties(newProps);
+            cpeOld.setProperties(oldProps);
+
+// Persist changes
+            cpeRepo.save(cpeOld);
+            cpeRepo.save(cpeNew);
+
 
             // 13. Final success response: include subscriptionName and ontName
             Map<String, String> out = new HashMap<>();
