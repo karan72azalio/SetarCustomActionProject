@@ -63,6 +63,15 @@ public class Constants {
     public static final String SETAR_KIND_AP_CM_DEVICE = "ApCmDevice";
 
     public static final String SETAR_KIND_CPE_PORT = "CPEPort";
+    public static final String SUBSCRIBER_STATUS_ACTIVE = "Active";
+    public static final String SUBSCRIBER_TYPE_REGULAR = "Regular";
+
+    public static final String ADMIN_STATE_AVAILABLE = "Available";
+    public static final String ADMIN_STATE_ALLOCATED = "Allocated";
+
+    public static final String OPER_STATE_ACTIVE = "Active";
+    public static final String OPER_STATE_AVAILABLE = "Available";
+
 
     public static final String SETAR_KIND_CPE_VLAN = "CPEVlan";
     public static final String SETAR_KIND_VLAN_INTERFACE = "VLANInterface";
