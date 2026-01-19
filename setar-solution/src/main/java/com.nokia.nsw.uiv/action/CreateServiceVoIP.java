@@ -104,28 +104,31 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-            Customer subscriber = customerRepo.findByDiscoveredName(subscriberNameStr)
-
-                    .orElseGet(() -> {
-                        Customer newSub = new Customer();
-                        isSubscriberExist.set(false);
-                        try {
-                            newSub.setLocalName(Validations.encryptName(subscriberNameStr));
-                            newSub.setDiscoveredName(subscriberNameStr);
-                            newSub.setContext("Setar");
-                            newSub.setKind("SetarSubscriber");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String, Object> subProps = new HashMap<>();
-                        subProps.put("subscriptionStatus", "Active");
-                        subProps.put("subscriberType", "Regular");
-                        subProps.put("accountNumber", req.getSubscriberName());
-                        subProps.put("householdId", req.getHhid());
-                        newSub.setProperties(subProps);
-                        return customerRepo.save(newSub);
-                    });
-
+            Customer subscriber = null;
+            Optional<Customer> subscriberOpt = customerRepo.findByDiscoveredName(subscriberNameStr);
+            if(subscriberOpt.isPresent()){
+                subscriber = subscriberOpt.get();
+                log.error("Subscriber already exist with subscriberName: "+subscriberNameStr);
+            }else{
+                Customer newSub = new Customer();
+                isSubscriberExist.set(false);
+                try {
+                    newSub.setLocalName(Validations.encryptName(subscriberNameStr));
+                    newSub.setDiscoveredName(subscriberNameStr);
+                    newSub.setContext("Setar");
+                    newSub.setKind("SetarSubscriber");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String, Object> subProps = new HashMap<>();
+                subProps.put("subscriptionStatus", "Active");
+                subProps.put("subscriberType", "Regular");
+                subProps.put("accountNumber", req.getSubscriberName());
+                subProps.put("householdId", req.getHhid());
+                newSub.setProperties(subProps);
+                subscriber = newSub;
+                customerRepo.save(newSub);
+            }
             // Step 4: Subscription
             String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
             if (subscriptionName.length() > 100) {
@@ -137,29 +140,33 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-            Subscription subscription = subscriptionRepo.findByDiscoveredName(subscriptionName)
-                    .orElseGet(() -> {
-                        isSubscriptionExist.set(false);
-                        Subscription subs = new Subscription();
-                        try {
-                            subs.setLocalName(Validations.encryptName(subscriptionName));
-                            subs.setDiscoveredName(subscriptionName);
-                            subs.setContext("Setar");
-                            subs.setKind("SetarSubscription");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String, Object> subProps = new HashMap<>();
-                        subProps.put("subscriptionStatus", "Active");
-                        subProps.put("serviceSubType", req.getProductSubtype());
-                        subProps.put("serviceID", req.getServiceId());
-                        subProps.put("oltPosition", req.getOltName());
-                        subProps.put("householdId", req.getHhid());
-                        subs.setProperties(subProps);
-                        subs.setCustomer(subscriber);
-                        return subscriptionRepo.save(subs);
-                    });
-
+            Subscription subscription = null;
+            Optional<Subscription> subscriptionOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
+            if(subscriptionOpt.isPresent()){
+                subscription = subscriptionOpt.get();
+                log.error("Subscription already exist with subscriptionName: "+subscriptionName);
+            }else{
+                isSubscriptionExist.set(false);
+                Subscription subs = new Subscription();
+                try {
+                    subs.setLocalName(Validations.encryptName(subscriptionName));
+                    subs.setDiscoveredName(subscriptionName);
+                    subs.setContext("Setar");
+                    subs.setKind("SetarSubscription");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String, Object> subProps = new HashMap<>();
+                subProps.put("subscriptionStatus", "Active");
+                subProps.put("serviceSubType", req.getProductSubtype());
+                subProps.put("serviceID", req.getServiceId());
+                subProps.put("oltPosition", req.getOltName());
+                subProps.put("householdId", req.getHhid());
+                subs.setProperties(subProps);
+                subs.setCustomer(subscriber);
+                subscription = subs;
+                subscriptionRepo.save(subs);
+            }
             // Step 5: Update attributes
             Map<String, Object> subProps = subscriber.getProperties();
             if (req.getFirstName() != null) subProps.put("firstName", req.getFirstName());
@@ -183,10 +190,12 @@ public class CreateServiceVoIP implements HttpAction {
             subsProps.put("voipPackage", req.getVoipPackage());
             subsProps.put("voipServiceCode", req.getVoipServiceCode());
             subsProps.put("serviceLink",(req.getOntSN()!=null && req.getOntSN().startsWith("ALCL"))?"ONT":"Cable_Modem");
-            subscription.setProperties(subsProps);
-            customerRepo.save(subscriber);
-            subscriptionRepo.save(subscription);
-
+            if(!isSubscriberExist.get() && !isSubscriptionExist.get()){
+                subscription.setProperties(subsProps);
+                subscriber.setProperties(subProps);
+                customerRepo.save(subscriber);
+                subscriptionRepo.save(subscription);
+            }
             // Step 7: Product
             String productNameStr = req.getSubscriberName() +Constants.UNDER_SCORE + req.getProductSubtype() +Constants.UNDER_SCORE + req.getServiceId();
             if (productNameStr.length() > 100) {
@@ -198,25 +207,30 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
-            Product product = productRepo.findByDiscoveredName(productNameStr)
-                    .orElseGet(() -> {
-                        Product prod = new Product();
-                        isProductExist.set(false);
-                        try {
-                            prod.setLocalName(Validations.encryptName(productNameStr));
-                            prod.setDiscoveredName(productNameStr);
-                            prod.setContext("Setar");
-                            prod.setKind("SetarProduct");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String, Object> prodProps = new HashMap<>();
-                        prodProps.put("productStatus", "Active");
-                        prodProps.put("productType", req.getProductType());
-                        prod.setProperties(prodProps);
-                        prod.setCustomer(subscriber);
-                        return productRepo.save(prod);
-                    });
+            Product product = null;
+            Optional<Product> productOpt = productRepo.findByDiscoveredName(productNameStr);
+            if(productOpt.isPresent()){
+                product = productOpt.get();
+                log.error("Product already exist with productName: "+productNameStr);
+            }else{
+                Product prod = new Product();
+                isProductExist.set(false);
+                try {
+                    prod.setLocalName(Validations.encryptName(productNameStr));
+                    prod.setDiscoveredName(productNameStr);
+                    prod.setContext("Setar");
+                    prod.setKind("SetarProduct");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String, Object> prodProps = new HashMap<>();
+                prodProps.put("productStatus", "Active");
+                prodProps.put("productType", req.getProductType());
+                prod.setProperties(prodProps);
+                prod.setCustomer(subscriber);
+                product = prod;
+                productRepo.save(prod);
+            }
             if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
                 log.error("createServiceVOIP service already exist");
                 return new CreateServiceVoIPResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriptionName,"ONT" + req.getOntSN());
@@ -232,46 +246,54 @@ public class CreateServiceVoIP implements HttpAction {
             subscriptionRepo.save(subscription,2);
             // Step 8: CFS
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
-            Service cfs = serviceCustomRepository.findByDiscoveredName(cfsName)
-                    .orElseGet(() -> {
-                        Service newCfs = new Service();
-                        try {
-                            newCfs.setLocalName(Validations.encryptName(cfsName));
-                            newCfs.setDiscoveredName(cfsName);
-                            newCfs.setContext("Setar");
-                            newCfs.setKind("SetarCFS");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String, Object> cfsProps = new HashMap<>();
-                        cfsProps.put("serviceStatus", "Active");
-                        cfsProps.put("serviceType", req.getProductType());
-                        newCfs.setProperties(cfsProps);
-                        newCfs.setUsingService(new HashSet<>(List.of(product)));
-                        return serviceCustomRepository.save(newCfs);
-                    });
-
+            Service cfs = null;
+            Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);
+            if(cfsOpt.isPresent()){
+                cfs = cfsOpt.get();
+                log.error("CFS is already exist with cfsName: "+cfsName);
+            }else{
+                Service newCfs = new Service();
+                try {
+                    newCfs.setLocalName(Validations.encryptName(cfsName));
+                    newCfs.setDiscoveredName(cfsName);
+                    newCfs.setContext("Setar");
+                    newCfs.setKind("SetarCFS");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String, Object> cfsProps = new HashMap<>();
+                cfsProps.put("serviceStatus", "Active");
+                cfsProps.put("serviceType", req.getProductType());
+                newCfs.setProperties(cfsProps);
+                newCfs.setUsingService(new HashSet<>(List.of(product)));
+                cfs = newCfs;
+                serviceCustomRepository.save(newCfs);
+            }
             // Step 9: RFS
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            Service rfs = serviceCustomRepository.findByDiscoveredName(rfsName)
-                    .orElseGet(() -> {
-                        Service newRfs = new Service();
-                        try {
-                            newRfs.setLocalName(Validations.encryptName(rfsName));
-                            newRfs.setDiscoveredName(rfsName);
-                            newRfs.setContext("Setar");
-                            newRfs.setKind("SetarRFS");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String, Object> rfsProps = new HashMap<>();
-                        rfsProps.put("rfsStatus", "Active");
-                        rfsProps.put("rfsType", req.getProductType());
-                        newRfs.setProperties(rfsProps);
-                        newRfs.setUsingService(new HashSet<>(List.of(cfs)));
-                        return serviceCustomRepository.save(newRfs);
-                    });
-
+            Service rfs=null;
+            Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
+            if(rfsOpt.isPresent()){
+                rfs=rfsOpt.get();
+                log.error("RFS is already exist with name RFSName: "+rfsName);
+            }else{
+                Service newRfs = new Service();
+                try {
+                    newRfs.setLocalName(Validations.encryptName(rfsName));
+                    newRfs.setDiscoveredName(rfsName);
+                    newRfs.setContext("Setar");
+                    newRfs.setKind("SetarRFS");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String, Object> rfsProps = new HashMap<>();
+                rfsProps.put("rfsStatus", "Active");
+                rfsProps.put("rfsType", req.getProductType());
+                newRfs.setProperties(rfsProps);
+                newRfs.setUsingService(new HashSet<>(List.of(cfs)));
+                rfs = newRfs;
+                serviceCustomRepository.save(newRfs);
+            }
             // Step 10: ONT & OLT
             String ontName ="ONT" + req.getOntSN();
             if (ontName.length() > 100) {
@@ -285,49 +307,57 @@ public class CreateServiceVoIP implements HttpAction {
             }
 
             String oltName=req.getOltName();
-            LogicalDevice olt = logicalDeviceRepo.findByDiscoveredName(oltName)
-                    .orElseGet(() -> {
-                        LogicalDevice dev = new LogicalDevice();
-                        try {
-                            dev.setLocalName(Validations.encryptName(req.getOltName()));
-                            dev.setDiscoveredName(req.getOltName());
-                            dev.setContext("Setar");
-                            dev.setKind("OLTDevice");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String, Object> oltProps = new HashMap<>();
-                        oltProps.put("deviceStatus", "Active");
-                        oltProps.put("oltPosition", req.getOltName());
-                        oltProps.put("ontTemplate", req.getTemplateNameOnt());
-                        dev.setProperties(oltProps);
-                        dev.setUsingService(new HashSet<>(List.of(rfs)));
-                        return logicalDeviceRepo.save(dev);
-                    });
-
-
-            LogicalDevice ont = logicalDeviceRepo.findByDiscoveredName(ontName)
-                    .orElseGet(() -> {
-                        LogicalDevice dev = new LogicalDevice();
-                        try {
-                            dev.setLocalName(Validations.encryptName(ontName));
-                            dev.setDiscoveredName(ontName);
-                            dev.setContext("Setar");
-                            dev.setKind("ONTDevice");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        Map<String, Object> ontProps = new HashMap<>();
-                        ontProps.put("deviceStatus", "Active");
-                        ontProps.put("serialNo", req.getOntSN());
-                        ontProps.put("deviceModel", req.getOntModel());
-                        ontProps.put("oltPosition", req.getOltName());
-                        ontProps.put("ontTemplate", req.getTemplateNameOnt());
-                        dev.setProperties(ontProps);
-                        dev.setUsedResource(new HashSet<>(List.of(olt)));
-                        dev.setUsingService(new HashSet<>(List.of(rfs)));
-                        return logicalDeviceRepo.save(dev);
-                    });
+            LogicalDevice olt = null;
+            Optional<LogicalDevice> oltOpt = logicalDeviceRepo.findByDiscoveredName(oltName);
+            if(oltOpt.isPresent()){
+                olt=oltOpt.get();
+                log.error("OLTDevice is already present with oltName: "+oltName);
+            }else{
+                LogicalDevice dev = new LogicalDevice();
+                try {
+                    dev.setLocalName(Validations.encryptName(req.getOltName()));
+                    dev.setDiscoveredName(req.getOltName());
+                    dev.setContext("Setar");
+                    dev.setKind("OLTDevice");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String, Object> oltProps = new HashMap<>();
+                oltProps.put("deviceStatus", "Active");
+                oltProps.put("oltPosition", req.getOltName());
+                oltProps.put("ontTemplate", req.getTemplateNameOnt());
+                dev.setProperties(oltProps);
+                dev.setUsingService(new HashSet<>(List.of(rfs)));
+                olt=dev;
+                logicalDeviceRepo.save(dev);
+            }
+            LogicalDevice ont=null;
+            Optional<LogicalDevice> ontOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
+            if(ontOpt.isPresent()){
+                ont = ontOpt.get();
+                log.error("ONTDevice is already exist with ontName: "+ontName);
+            }else {
+                LogicalDevice dev = new LogicalDevice();
+                try {
+                    dev.setLocalName(Validations.encryptName(ontName));
+                    dev.setDiscoveredName(ontName);
+                    dev.setContext("Setar");
+                    dev.setKind("ONTDevice");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                Map<String, Object> ontProps = new HashMap<>();
+                ontProps.put("deviceStatus", "Active");
+                ontProps.put("serialNo", req.getOntSN());
+                ontProps.put("deviceModel", req.getOntModel());
+                ontProps.put("oltPosition", req.getOltName());
+                ontProps.put("ontTemplate", req.getTemplateNameOnt());
+                dev.setProperties(ontProps);
+                dev.setUsedResource(new HashSet<>(List.of(olt)));
+                dev.setUsingService(new HashSet<>(List.of(rfs)));
+                ont = dev;
+                logicalDeviceRepo.save(dev);
+            }
 
             // Step 12: Configure VoIP ports
             Map<String, Object> ontProps = ont.getProperties();
@@ -355,10 +385,13 @@ public class CreateServiceVoIP implements HttpAction {
             ont.setProperties(ontProps);
             olt.setProperties(oltProps);
 
-
-            logicalDeviceRepo.save(ont);
-            logicalDeviceRepo.save(olt);
             logicalDeviceRepo.save(cpeDevice);
+            ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).orElseThrow(()->new RuntimeException("OLTDevice not found: "+ontName));
+            ont.setProperties(ontProps);
+            logicalDeviceRepo.save(ont);
+            olt = logicalDeviceRepo.findByDiscoveredName(olt.getDiscoveredName()).orElseThrow(()->new RuntimeException("OLTDevice not found: "+oltName));
+            olt.setProperties(oltProps);
+            logicalDeviceRepo.save(olt);
             log.error(Constants.ACTION_COMPLETED);
             return new CreateServiceVoIPResponse(
                     "201",

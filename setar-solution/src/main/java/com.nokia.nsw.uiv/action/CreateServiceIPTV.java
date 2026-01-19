@@ -137,7 +137,6 @@ public class CreateServiceIPTV implements HttpAction {
                 subscriberProps.put("companyName", request.getCompanyName());
                 subscriberProps.put("contactPhoneNumber", request.getContactPhone());
                 subscriberProps.put("subscriberAddress",request.getSubsAddress());
-
                 subscriber.setProperties(subscriberProps);
                 customerRepository.save(subscriber, 2);
                 log.error("Created Subscriber: {}", subscriberName);
