@@ -89,10 +89,19 @@ public class CreateServiceVoIP implements HttpAction {
                         null
                 );
             }
+            String ontName ="ONT" + req.getOntSN();
+            if (ontName.length() > 100) {
+                return new CreateServiceVoIPResponse(
+                        "400",
+                        ERROR_PREFIX + "ONT name too long",
+                        Instant.now().toString(),
+                        null,
+                        null
+                );
+            }
             AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
             AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
             AtomicBoolean isProductExist = new AtomicBoolean(true);
-
             // Step 2 & 3: Subscriber
             String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
             if (subscriberNameStr.length() > 100) {
@@ -295,17 +304,6 @@ public class CreateServiceVoIP implements HttpAction {
                 newRfs.setUsingService(new HashSet<>(List.of(cfs)));
                 rfs = newRfs;
                 serviceCustomRepository.save(newRfs);
-            }
-            // Step 10: ONT & OLT
-            String ontName ="ONT" + req.getOntSN();
-            if (ontName.length() > 100) {
-                return new CreateServiceVoIPResponse(
-                        "400",
-                        ERROR_PREFIX + "ONT name too long",
-                        Instant.now().toString(),
-                        null,
-                        null
-                );
             }
 
             String oltName=req.getOltName();
