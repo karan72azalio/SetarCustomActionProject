@@ -301,7 +301,6 @@ public class CreateServiceEVPN implements HttpAction {
                 Map<String,Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStatus", "Active");
                 cfsProps.put("serviceType", req.getProductType());
-                cfsProps.put("cfsType",req.getProductSubtype());
                 cfsProps.put("serviceStartDate", Instant.now().toString());
                 if (req.getFxOrderID() != null) cfsProps.put("transactionId", req.getFxOrderID());
                 cfsProps.put("linkedProduct", product.getDiscoveredName());

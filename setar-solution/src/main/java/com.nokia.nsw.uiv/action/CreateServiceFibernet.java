@@ -222,8 +222,8 @@ public class CreateServiceFibernet implements HttpAction {
                 cfs.setContext(Constants.SETAR);
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStartDate", Instant.now().toString());
-                cfsProps.put("cfsType", request.getProductType());
-                cfsProps.put("cfsStatus", "Active");
+                cfsProps.put("serviceType", request.getProductType());
+                cfsProps.put("serviceStatus", "Active");
                 if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
                 cfs.setUsingService(new HashSet<>(List.of(product)));
                 serviceRepository.save(cfs, 2);

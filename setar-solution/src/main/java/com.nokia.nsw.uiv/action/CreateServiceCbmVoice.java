@@ -282,7 +282,6 @@ public class CreateServiceCbmVoice implements HttpAction {
                         Map<String, Object> cfsProps = new HashMap<>();
                         cfsProps.put("serviceStatus", "Active");
                         cfsProps.put("serviceType", request.getProductType());
-                        cfsProps.put("cfsType",request.getProductSubtype());
                         cfsProps.put("serviceStartDate", Instant.now().toString());
                         if (request.getFxOrderID() != null) cfsProps.put("transactionId", request.getFxOrderID());
                         c.setProperties(cfsProps);

@@ -244,8 +244,8 @@ public class CreateServiceVoIP implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> cfsProps = new HashMap<>();
-                        cfsProps.put("cfsStatus", "Active");
-                        cfsProps.put("cfsType", req.getProductType());
+                        cfsProps.put("serviceStatus", "Active");
+                        cfsProps.put("serviceType", req.getProductType());
                         newCfs.setProperties(cfsProps);
                         newCfs.setUsingService(new HashSet<>(List.of(product)));
                         return serviceCustomRepository.save(newCfs);
