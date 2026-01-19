@@ -352,7 +352,7 @@ public class CreateServiceEVPN implements HttpAction {
                     throw new RuntimeException(e);
                 }
                 Map<String,Object> oltProps = new HashMap<>();
-                oltProps.put("operationalState", "Active");
+                oltProps.put("OperationalState", "Active");
                 oltProps.put("oltPosition", req.getOltName());
                 if (req.getTemplateNameOnt() != null) oltProps.put("ontTemplate", req.getTemplateNameOnt());
                 dev.setProperties(oltProps);

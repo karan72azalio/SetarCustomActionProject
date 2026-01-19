@@ -325,7 +325,7 @@ public class CreateServiceVoIP implements HttpAction {
                     throw new RuntimeException(e);
                 }
                 Map<String, Object> oltProps = new HashMap<>();
-                oltProps.put("operationalState", "Active");
+                oltProps.put("OperationalState", "Active");
                 oltProps.put("oltPosition", req.getOltName());
                 oltProps.put("ontTemplate", req.getTemplateNameOnt());
                 dev.setProperties(oltProps);
@@ -349,7 +349,7 @@ public class CreateServiceVoIP implements HttpAction {
                     throw new RuntimeException(e);
                 }
                 Map<String, Object> ontProps = new HashMap<>();
-                ontProps.put("operationalState", "Active");
+                ontProps.put("OperationalState", "Active");
                 ontProps.put("serialNo", req.getOntSN());
                 ontProps.put("deviceModel", req.getOntModel());
                 ontProps.put("oltPosition", req.getOltName());

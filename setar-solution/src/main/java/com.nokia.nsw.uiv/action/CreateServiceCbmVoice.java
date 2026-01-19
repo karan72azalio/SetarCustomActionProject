@@ -330,7 +330,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         if (request.getCbmType() != null) deviceProps.put("deviceType", request.getCbmType());
                         if (request.getCbmManufacturer() != null) deviceProps.put("manufacturer", request.getCbmManufacturer());
                         if (request.getCbmModel() != null) deviceProps.put("deviceModel", request.getCbmModel());
-                        deviceProps.put("operationalState", "Active");
+                        deviceProps.put("OperationalState", "Active");
                         d.setProperties(deviceProps);
                         d.setUsingService(new HashSet<>(List.of(rfs)));
                         cbmDeviceRepository.save(d, 2);

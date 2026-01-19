@@ -251,7 +251,7 @@ public class ChangeTechnology implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> p = new HashMap<>();
-                        p.put("operationalState", "Active");
+                        p.put("OperationalState", "Active");
                         p.put("oltPosition", oltName);
                         if (templateNameOnt != null) p.put("ontTemplate", templateNameOnt);
                         if (templateNameVeip != null) p.put("veipServiceTemplate", templateNameVeip);
@@ -286,7 +286,7 @@ public class ChangeTechnology implements HttpAction {
                             throw new RuntimeException(e);
                         }
                         Map<String, Object> p = new HashMap<>();
-                        p.put("operationalState", "Active");
+                        p.put("OperationalState", "Active");
                         p.put("serialNo", ontSN);
                         p.put("deviceModel",ontModel );
                         p.put("description", menm);
