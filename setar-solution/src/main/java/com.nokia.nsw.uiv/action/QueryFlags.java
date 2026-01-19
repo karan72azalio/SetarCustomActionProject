@@ -824,7 +824,7 @@ public class QueryFlags implements HttpAction {
                         String oltDiscoveredName = parentOltObj.toString();
                         deviceRepository.findByDiscoveredName(oltDiscoveredName).ifPresent(olt -> {
                             Map<String, Object> oltProps = safeProps(olt.getProperties());
-                            flags.put("SERVICE_OLT_POSITION", oltProps.get("oltPosition").toString());
+                            flags.put("SERVICE_OLT_POSITION", oltProps.get("oltPosition")!=null?oltProps.get("oltPosition").toString():"");
                             flags.put("SERVICE_TEMPLATE_ONT", existsString(oltProps.get("ontTemplate")));
                             flags.put("SERVICE_TEMPLATE_IPTV", existsString(oltProps.get("iptvServiceTemplate")));
 
