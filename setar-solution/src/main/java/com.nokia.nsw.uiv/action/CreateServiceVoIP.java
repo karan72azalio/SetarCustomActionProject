@@ -264,6 +264,8 @@ public class CreateServiceVoIP implements HttpAction {
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStatus", "Active");
                 cfsProps.put("serviceType", req.getProductType());
+                cfsProps.put("serviceStartDate", Instant.now().toString());
+                if (req.getFxOrderID() != null) cfsProps.put("transactionId", req.getFxOrderID());
                 newCfs.setProperties(cfsProps);
                 newCfs.setUsingService(new HashSet<>(List.of(product)));
                 cfs = newCfs;
@@ -323,7 +325,7 @@ public class CreateServiceVoIP implements HttpAction {
                     throw new RuntimeException(e);
                 }
                 Map<String, Object> oltProps = new HashMap<>();
-                oltProps.put("deviceStatus", "Active");
+                oltProps.put("operationalState", "Active");
                 oltProps.put("oltPosition", req.getOltName());
                 oltProps.put("ontTemplate", req.getTemplateNameOnt());
                 dev.setProperties(oltProps);
@@ -347,7 +349,7 @@ public class CreateServiceVoIP implements HttpAction {
                     throw new RuntimeException(e);
                 }
                 Map<String, Object> ontProps = new HashMap<>();
-                ontProps.put("deviceStatus", "Active");
+                ontProps.put("operationalState", "Active");
                 ontProps.put("serialNo", req.getOntSN());
                 ontProps.put("deviceModel", req.getOntModel());
                 ontProps.put("oltPosition", req.getOltName());
