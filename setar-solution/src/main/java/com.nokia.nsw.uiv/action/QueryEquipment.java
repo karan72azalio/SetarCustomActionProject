@@ -138,8 +138,11 @@ public class QueryEquipment implements HttpAction {
             for (Resource r : linkedResources) {
                 LogicalDevice device = null;
                 if (r instanceof LogicalDevice) {
+                    if(r.getKind().equalsIgnoreCase(Constants.SETAR_KIND_STB_AP_CM_DEVICE))
+                    {
                     LogicalDevice ld = (LogicalDevice) r;
                     device = logicalDeviceRepository.findByDiscoveredName(ld.getDiscoveredName()).orElse(null);
+                    }
                 }
                 if (device == null) continue;
 
@@ -173,6 +176,7 @@ public class QueryEquipment implements HttpAction {
             QueryEquipmentResponse response = new QueryEquipmentResponse();
             response.setSubscriptionId(subscriptionName);
             response.setTimestamp(new Date().toString());
+
 
             // Map APs
             if (!apSns.isEmpty()) {
