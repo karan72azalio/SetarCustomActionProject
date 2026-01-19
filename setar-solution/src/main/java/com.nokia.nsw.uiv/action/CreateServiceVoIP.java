@@ -121,7 +121,7 @@ public class CreateServiceVoIP implements HttpAction {
                     throw new RuntimeException(e);
                 }
                 Map<String, Object> subProps = new HashMap<>();
-                subProps.put("subscriptionStatus", "Active");
+                subProps.put("subscriberStatus", "Active");
                 subProps.put("subscriberType", "Regular");
                 subProps.put("accountNumber", req.getSubscriberName());
                 subProps.put("householdId", req.getHhid());
