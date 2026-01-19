@@ -138,7 +138,7 @@ public class DeleteCBM implements HttpAction {
                     if (!optCbmDevice.isPresent()) {
                         log.error("CBM device required to derive subscriber name for non-IPTV product but CBM not found: {}", cbmName);
                         // If CBM required, return or continue depending on business decision.
-                        return new DeleteCBMResponse("404", ERROR_PREFIX + "No entry found for delete",
+                        return new DeleteCBMResponse("404", ERROR_PREFIX + "No entry found for delete, CBMDevice not found: "+cbmName,
                                 Instant.now().toString(), cbmName, subscriptionName);
                     }
                     LogicalDevice cbm = optCbmDevice.get();
