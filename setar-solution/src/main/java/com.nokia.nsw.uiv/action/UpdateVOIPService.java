@@ -152,7 +152,7 @@ public class UpdateVOIPService implements HttpAction {
             } else {
                 return new UpdateVOIPServiceResponse(
                         "404",
-                        ERROR_PREFIX + "No subscription found to update",
+                        ERROR_PREFIX + "No subscription or subscriber found to update",
                         Instant.now().toString(),
                         null,
                         null
