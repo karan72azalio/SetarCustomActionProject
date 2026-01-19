@@ -219,7 +219,6 @@ public class ChangeTechnology implements HttpAction {
                 cfs.setDiscoveredName(cfs.getDiscoveredName() + Constants.UNDER_SCORE + ontSN);
                 if (fxOrderId != null) {
                     Map<String, Object> p = cfs.getProperties() != null ? cfs.getProperties() : new HashMap<>();
-                    p.put("transactionId", fxOrderId);
                     cfs.setProperties(p);
                 }
                 serviceCustomRepository.save(cfs);
