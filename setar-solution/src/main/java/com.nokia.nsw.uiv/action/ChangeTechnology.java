@@ -403,7 +403,7 @@ public class ChangeTechnology implements HttpAction {
 // -------------------------
 // CBM CPE updates
 // -------------------------
-            oldProps.put("description",null); // safer than setting null
+            oldProps.put("description"," "); // safer than setting null
             oldProps.put("AdministrativeState", Constants.ADMIN_STATE_AVAILABLE);
             oldProps.put("OperationalState", Constants.OPER_STATE_AVAILABLE);
 
