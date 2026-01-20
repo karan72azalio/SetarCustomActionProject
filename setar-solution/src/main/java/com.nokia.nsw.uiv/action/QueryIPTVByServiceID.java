@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Component
 @RestController
@@ -75,8 +76,11 @@ public class QueryIPTVByServiceID implements HttpAction {
             // 2. Identify target CFS names
             Set<String> matchingCfsNames = new TreeSet<>();
 
-            Iterable<Service> allCfs = serviceCustomRepository.findAll();
-            for (Service cfs : allCfs) {
+            List<Service> cfsServices =
+                    StreamSupport.stream(serviceCustomRepository.findAll().spliterator(), false)
+                            .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS))
+                            .collect(Collectors.toList());
+            for (Service cfs : cfsServices) {
                 String cfsName = cfs.getDiscoveredName();
                 if (cfsName == null) continue;
                 // Middle portion (text between first '_' and last '_'), if present
@@ -402,6 +406,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                 resp.setStatus("200");
                 resp.setMessage("IPTV Service Details Found");
                 resp.setTimestamp(Instant.now().toString());
+                resp.setIptvInfo(iptvInfo);
                 return resp;
 
             } else {
