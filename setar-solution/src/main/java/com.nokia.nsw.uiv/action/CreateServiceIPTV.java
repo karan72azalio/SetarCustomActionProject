@@ -84,7 +84,7 @@ public class CreateServiceIPTV implements HttpAction {
                 Validations.validateMandatoryParams(request.getHhid(), "hhid");
                 Validations.validateMandatoryParams(request.getMenm(), "menm");
                 Validations.validateMandatoryParams(request.getServiceID(), "serviceID");
-                Validations.validateMandatoryParams(request.getCustomerGroupID(), "customerGroupID");
+                Validations.validateMandatoryParams(request.getCustomerGroupID(), "customerGroupId");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
             }catch (BadRequestException bre) {
                 return new CreateServiceIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
@@ -162,7 +162,7 @@ public class CreateServiceIPTV implements HttpAction {
                 subscriptionProps.put("serviceSN", request.getOntSN());
                 subscriptionProps.put("macAddress", request.getOntMacAddr());
                 subscriptionProps.put("iptvQosSessionProfile", request.getQosProfile());
-                subscriptionProps.put("customerGroupID", request.getCustomerGroupID());
+                subscriptionProps.put("customerGroupId", request.getCustomerGroupID());
                 subscriptionProps.put("householdID", request.getHhid());
                 subscriptionProps.put("servicePackage", request.getServicePackage());
                 subscriptionProps.put("kenanSubscriberID", request.getKenanUidNo());
