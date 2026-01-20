@@ -4,6 +4,7 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Subscription;
@@ -107,8 +108,9 @@ public class QueryVoipNumber implements HttpAction {
                     simaEndpointId = (String) subs.getProperties().get("simaEndpointId");
                     voipCode1      = (String) subs.getProperties().get("voipServiceCode");
                     voipPackage    = (String) subs.getProperties().get("voipPackage");
-                    firstName      = (String) subs.getProperties().get("firstName");
-                    lastName       = (String) subs.getProperties().get("lastName");
+                    Customer subscriber = subsOpt.get().getCustomer();
+                    firstName      = (String) subscriber.getProperties().get("firstName");
+                    lastName       = (String) subscriber.getProperties().get("lastName");
 
                     if ("CBM".equals(linkType)) {
                         voipNumber1 = (String) subs.getProperties().get("voipNumber1");
