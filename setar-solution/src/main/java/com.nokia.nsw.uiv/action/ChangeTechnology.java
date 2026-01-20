@@ -319,7 +319,7 @@ public class ChangeTechnology implements HttpAction {
 
                 Map<String, Object> p = new HashMap<>();
                 p.put("vlanId", vlanId);
-                p.put("vlanStatus", "Active");
+                p.put("OperationalState", "Active");
                 v.setProperties(p);
                 return vlanRepo.save(v);
             });
@@ -409,7 +409,7 @@ public class ChangeTechnology implements HttpAction {
 // -------------------------
 // CBM CPE updates
 // -------------------------
-            oldProps.remove("description"); // safer than setting null
+            oldProps.put("description"," "); // safer than setting null
             oldProps.put("AdministrativeState", Constants.ADMIN_STATE_AVAILABLE);
             oldProps.put("OperationalState", Constants.OPER_STATE_AVAILABLE);
 
