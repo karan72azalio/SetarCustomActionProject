@@ -356,15 +356,9 @@ public class ChangeTechnology implements HttpAction {
                     cpeRepo.findByDiscoveredName(cpeDeviceName);
 
 // Fetch CBM CPE
-            Optional<LogicalDevice> maybeCpeOld = StreamSupport
-                    .stream(logicalDeviceRepo.findAll().spliterator(), false)
-                    .filter(device ->
-                            device.getDiscoveredName().contains(Constants.CBM)
-                                    && device.getKind().equalsIgnoreCase(Constants.SETAR_KIND_CPE_DEVICE)
-                                    && device.getProperties().get("macAddress").toString()
-                                    .equalsIgnoreCase(req.getCbmMac())
-                    )
-                    .findFirst();
+            Optional<LogicalDevice> maybeCpeOld =
+                    cpeRepo.findByDiscoveredName("CBM_" + cbmMac.replace(":", ""));
+
 
 // Validate ONT CPE existence
             if (maybeCpeNew.isEmpty()) {
@@ -409,7 +403,7 @@ public class ChangeTechnology implements HttpAction {
 // -------------------------
 // CBM CPE updates
 // -------------------------
-            oldProps.put("description"," "); // safer than setting null
+            oldProps.put("description",null); // safer than setting null
             oldProps.put("AdministrativeState", Constants.ADMIN_STATE_AVAILABLE);
             oldProps.put("OperationalState", Constants.OPER_STATE_AVAILABLE);
 
