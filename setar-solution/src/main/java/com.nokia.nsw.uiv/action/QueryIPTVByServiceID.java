@@ -101,7 +101,6 @@ public class QueryIPTVByServiceID implements HttpAction {
             }
 
             if (matchingCfsNames.isEmpty()) {
-                // Per instruction: return code$2 ("No entry found for delete")
                 QueryIPTVByServiceIDResponse resp = new QueryIPTVByServiceIDResponse();
                 resp.setStatus("400");
                 resp.setMessage("No entry found for delete");
@@ -411,7 +410,7 @@ public class QueryIPTVByServiceID implements HttpAction {
 
             } else {
                 QueryIPTVByServiceIDResponse resp = new QueryIPTVByServiceIDResponse();
-                resp.setStatus("2");
+                resp.setStatus("200");
                 resp.setMessage("No IPTV Service Details Found");
                 resp.setTimestamp(Instant.now().toString());
                 return resp;
