@@ -50,6 +50,6 @@ public class CreateServiceCbmVoiceRequest {
     private String cpeMacAddressMTA;   // O
     private Integer voipPort;           // O
     private String userName;           // O
-    private String servicePackage;     // O
+    private String voipPackage;     // O
     private String kenanUidNo;         // O
 }
