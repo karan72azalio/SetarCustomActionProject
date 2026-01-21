@@ -69,7 +69,7 @@ public class Constants {
     public static final String ADMIN_STATE_AVAILABLE = "Available";
     public static final String ADMIN_STATE_ALLOCATED = "Allocated";
 
-    public static final String OPER_STATE_ACTIVE = "Available";
+    public static final String OPER_STATE_ACTIVE = "Active";
     public static final String OPER_STATE_AVAILABLE = "Available";
 
 
