@@ -7,6 +7,7 @@ import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalComponent;
 import com.nokia.nsw.uiv.repository.LogicalComponentCustomRepository;
 import com.nokia.nsw.uiv.request.UpdateStatusRequest;
+import com.nokia.nsw.uiv.response.CreateProductSubscriptionResponse;
 import com.nokia.nsw.uiv.response.UpdateStatusResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -113,6 +114,10 @@ public class UpdateStatus implements HttpAction {
                     portStatus
             );
 
+        }catch (Exception ex) {
+            String msg = "UIV action UpdateStatus execution failed - Internal server error occurred";
+            return new UpdateStatusResponse("500", msg + " - " + ex.getMessage(),
+                    Instant.now().toString(), "", "");
         }
     }
 }
