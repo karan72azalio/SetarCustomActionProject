@@ -210,7 +210,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                             for (Service prodItem : prodSet) {
                                 String prodName = prodItem.getDiscoveredName();
                                 if (prodName != null && prodName.startsWith(serviceId)) {
-                                    String comp = prodName.replaceFirst("^" + serviceId, "");
+                                    String comp = prodName.replace(serviceId, "");
                                     // remove underscores
                                     comp = comp.replace(Constants.UNDER_SCORE , "");
                                     String label = "Service_Component_" + serviceComponentCounter;
