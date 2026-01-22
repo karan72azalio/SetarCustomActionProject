@@ -155,7 +155,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                     case "VoIP":
                         voiceCount++;
                         String voicePrefix = "Voice_" + voiceCount + "_";
-                        populateVoice(output, voicePrefix, rfs, subscription, customer, olt);
+                        populateVoice(output, voicePrefix, rfs, subscription, customer, olt,ont);
                         break;
 
                     case "Enterprise":
@@ -201,7 +201,7 @@ public class QueryAllServicesByCPE implements HttpAction {
         putIfNotNull(out, prefix + "SERVICE_SUBTYPE", sub != null ? sub.getProperties().get("serviceSubType") : null);
         out.put(prefix + "SERVICE_TYPE", "Broadband");
         putIfNotNull(out, prefix + "QOS_PROFILE", sub.getProperties().get("veipQosSessionProfile"));
-        putIfNotNull(out, prefix + "KENAN_SUBS_ID", sub != null ? sub.getProperties().get("kenanSubsId") : null);
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID",sub.getProperties().get("kenanSubscriberId"));
 
         populateSubscriberDetails(out, prefix, cust);
 
@@ -217,27 +217,28 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     // --- Voice / VoIP ---
     private void populateVoice(Map<String, Object> out, String prefix, Service rfs,
-            Subscription sub, Customer cust, LogicalDevice olt) {
+            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
         Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
-        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceId"));
+        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceID"));
         putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
         out.put(prefix + "SERVICE_TYPE", "Voice");
         putIfNotNull(out, prefix + "CUSTOMER_ID", subProps.get("simaCustId"));
         putIfNotNull(out, prefix + "SIMA_SUBS_ID", subProps.get("simaSubsId"));
         putIfNotNull(out, prefix + "SIMA_ENDPOINT_ID", subProps.get("simaEndpointId"));
         putIfNotNull(out, prefix + "VOIP_NUMBER_1", subProps.get("voipNumber1"));
-        putIfNotNull(out, prefix + "VOIP_CODE_1", subProps.get("voipCode1"));
+        putIfNotNull(out, prefix + "VOIP_CODE_1", subProps.get("voipServiceCode"));
         putIfNotNull(out, prefix + "QOS_PROFILE", subProps.get("voipPackage"));
 
         populateSubscriberDetails(out, prefix, cust);
 
         // Templates from OLT
         if (olt != null) {
+            Map<String, Object> ontProps= ont.getProperties();
             Map<String, Object> oltProps = olt.getProperties();
-            putIfNotNull(out, prefix + "ONT_TEMPLATE", oltProps.get("ontTemplate"));
+            putIfNotNull(out, prefix + "ONT_TEMPLATE", ontProps.get("ontTemplate"));
             putIfNotNull(out, prefix + "SERVICE_TEMPLATE_VOIP", oltProps.get("voipServiceTemplate"));
-            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_POTS1", oltProps.get("potsLine1Template"));
-            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_POTS2", oltProps.get("potsLine2Template"));
+            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_POTS1", oltProps.get("voipPots1Template"));
+            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_POTS2", oltProps.get("voipPots2Template"));
         }
     }
 
@@ -371,13 +372,13 @@ public class QueryAllServicesByCPE implements HttpAction {
         Map<String, Object> custProps = cust.getProperties() != null ? cust.getProperties() : Collections.emptyMap();
         putIfNotNull(out, prefix + "HHID", custProps.get("houseHoldId"));
         putIfNotNull(out, prefix + "ACCOUNT_NUMBER", custProps.get("accountNumber"));
-        putIfNotNull(out, prefix + "FIRST_NAME", custProps.get("subscriberFirstName"));
-        putIfNotNull(out, prefix + "LAST_NAME", custProps.get("subscriberLastName"));
+        putIfNotNull(out, prefix + "FIRST_NAME", custProps.get("firstName"));
+        putIfNotNull(out, prefix + "LAST_NAME", custProps.get("lastName"));
         putIfNotNull(out, prefix + "EMAIL", custProps.get("email"));
         putIfNotNull(out, prefix + "EMAIL_PASSWORD", custProps.get("emailPassword"));
         putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
-        putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhoneNumber"));
-        putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("address"));
+        putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhone"));
+        putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("subsAddress"));
     }
 
     private void putIfNotNull(Map<String, Object> map, String key, Object value) {
