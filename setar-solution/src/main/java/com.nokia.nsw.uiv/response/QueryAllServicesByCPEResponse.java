@@ -1,17 +1,21 @@
 package com.nokia.nsw.uiv.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Flat response for QueryAllServicesByCPE.
- * All fields use counters and prefixes per service family.
+ * Response for QueryAllServicesByCPE.
+ * Uses a dynamic properties map to support variable service count fields
+ * (e.g., Broadband_1_..., Broadband_2_..., IPTV_1_STB_SN_1, etc.).
  */
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
 public class QueryAllServicesByCPEResponse {
 
@@ -19,81 +23,32 @@ public class QueryAllServicesByCPEResponse {
     private String message;
     private String timestamp;
 
-    // Service counters
-    private String bbCount;
-    private String voiceCount;
-    private String entCount;
-    private String iptvCount;
+    // Dynamic output properties (flattened into the root JSON object)
+    private Map<String, Object> outputProperties = new LinkedHashMap<>();
 
-    // --- Broadband sample fields ---
-    private String broadband1ServiceId;
-    private String broadband1ServiceSubtype;
-    private String broadband1ServiceType;
-    private String broadband1QosProfile;
-    private String broadband1OntTemplate;
-    private String broadband1ServiceTemplateHsi;
-    private String broadband1ServiceTemplateVeip;
-    private String broadband1Hhid;
-    private String broadband1AccountNumber;
-    private String broadband1FirstName;
-    private String broadband1LastName;
-    private String broadband1Email;
-    private String broadband1EmailPassword;
-    private String broadband1CompanyName;
-    private String broadband1ContactPhone;
-    private String broadband1SubsAddress;
+    public QueryAllServicesByCPEResponse(String status, String message, String timestamp,
+            Map<String, Object> properties) {
+        this.status = status;
+        this.message = message;
+        this.timestamp = timestamp;
+        if (properties != null) {
+            this.outputProperties = properties;
+        }
+    }
 
-    // --- Voice sample fields ---
-    private String voice1ServiceId;
-    private String voice1ServiceSubtype;
-    private String voice1ServiceType;
-    private String voice1CustomerId;
-    private String voice1SimaSubsId;
-    private String voice1SimaEndpointId;
-    private String voice1VoipNumber1;
-    private String voice1VoipCode1;
-    private String voice1QosProfile;
-    private String voice1OntTemplate;
-    private String voice1ServiceTemplateVoip;
-    private String voice1ServiceTemplatePots1;
-    private String voice1ServiceTemplatePots2;
-    private String voice1FirstName;
-    private String voice1LastName;
+    @JsonAnyGetter
+    public Map<String, Object> getOutputProperties() {
+        return outputProperties;
+    }
 
-    // --- Enterprise sample fields ---
-    private String enterprise1ServiceId;
-    private String enterprise1ServiceSubtype;
-    private String enterprise1ServiceType;
-    private String enterprise1QosProfile;
-    private String enterprise1KenanSubsId;
-    private String enterprise1Port;
-    private String enterprise1Vlan;
-    private String enterprise1TemplateNameVlan;
-    private String enterprise1TemplateNameVlanCreate;
-    private String enterprise1TemplateNameVpls;
+    @JsonAnySetter
+    public void setOutputProperty(String key, Object value) {
+        this.outputProperties.put(key, value);
+    }
 
-    // --- IPTV sample fields ---
-    private String iptv1ServiceId;
-    private String iptv1ServiceSubtype;
-    private String iptv1ServiceType;
-    private String iptv1QosProfile;
-    private String iptv1CustomerGroupId;
-    private String iptv1TemplateNameIptv;
-    private String iptv1TemplateNameIgmp;
-    private String iptv1Vlan;
-
-    // Example for IPTV devices
-    private String iptv1StbSn1;
-    private String iptv1StbMac1;
-    private String iptv1StbModel1;
-    private String iptv1ApSn1;
-    private String iptv1ApMac1;
-    private String iptv1ApModel1;
-
-    // Example for IPTV catalog items
-    private String iptv1ProdName1;
-    private String iptv1ProdVariant1;
-
-    public <V, K> QueryAllServicesByCPEResponse(String number, String msg, String currentTimestamp, Map<K,V> kvMap) {
+    public void put(String key, Object value) {
+        if (value != null) {
+            this.outputProperties.put(key, value);
+        }
     }
 }
