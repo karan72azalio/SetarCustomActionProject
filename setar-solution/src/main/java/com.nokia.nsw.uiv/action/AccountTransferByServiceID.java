@@ -113,7 +113,7 @@ public class AccountTransferByServiceID implements HttpAction {
                 String productDiscName  = cfs.getUsingService().stream().filter(ser->ser.getKind().equals(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                 Product prod = prodRepo.findByDiscoveredName(productDiscName).get();
                 Subscription subs = prod.getSubscription().stream().findFirst().get();
-                Customer oldCust = custRepo.findByDiscoveredName(oldSubscriberName).orElse(null);
+                Customer oldCust = prod.getCustomer();
 //                Customer oldCust1 = customerCustomRepository.findByDiscoveredName(oldSubscriberName);
 
                 if (subs == null || prod == null || oldCust == null) {
