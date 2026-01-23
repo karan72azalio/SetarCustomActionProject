@@ -351,7 +351,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                     Map<String, Object> props = cpe.getProperties() == null ? new HashMap<>() : cpe.getProperties();
 
                     if (request.getCpeMacAddressMTA() != null && !request.getCpeMacAddressMTA().trim().isEmpty()) {
-                        props.put("mtaMacAddress", request.getCpeMacAddressMTA());
+                        props.put("macAddressMta", request.getCpeMacAddressMTA());
                     }
 
                     if (Integer.valueOf(1).equals(request.getVoipPort())) {
