@@ -282,7 +282,7 @@ public class QueryAllServicesByCPE implements HttpAction {
         putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
         out.put(prefix + "SERVICE_TYPE", "IPTV");
         putIfNotNull(out, prefix + "QOS_PROFILE", subProps.get("iptvQosSessionProfile"));
-        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubscriberID"));
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubscriberId"));
         putIfNotNull(out, prefix + "CUSTOMER_GROUP_ID", subProps.get("customerGroupId"));
 
         populateSubscriberDetails(out, prefix, cust);
