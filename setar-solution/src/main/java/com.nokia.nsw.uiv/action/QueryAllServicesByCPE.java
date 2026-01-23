@@ -233,9 +233,8 @@ public class QueryAllServicesByCPE implements HttpAction {
 
         // Templates from OLT
         if (olt != null) {
-            Map<String, Object> ontProps= ont.getProperties();
             Map<String, Object> oltProps = olt.getProperties();
-            putIfNotNull(out, prefix + "ONT_TEMPLATE", ontProps.get("ontTemplate"));
+            putIfNotNull(out, prefix + "ONT_TEMPLATE", oltProps.get("ontTemplate"));
             putIfNotNull(out, prefix + "SERVICE_TEMPLATE_VOIP", oltProps.get("voipServiceTemplate"));
             putIfNotNull(out, prefix + "SERVICE_TEMPLATE_POTS1", oltProps.get("voipPots1Template"));
             putIfNotNull(out, prefix + "SERVICE_TEMPLATE_POTS2", oltProps.get("voipPots2Template"));
@@ -370,13 +369,11 @@ public class QueryAllServicesByCPE implements HttpAction {
         if (cust == null)
             return;
         Map<String, Object> custProps = cust.getProperties() != null ? cust.getProperties() : Collections.emptyMap();
-        putIfNotNull(out, prefix + "HHID", custProps.get("houseHoldId"));
+        putIfNotNull(out, prefix + "HHID", custProps.get("householdId"));
         putIfNotNull(out, prefix + "ACCOUNT_NUMBER", custProps.get("accountNumber"));
         putIfNotNull(out, prefix + "FIRST_NAME", custProps.get("firstName"));
         putIfNotNull(out, prefix + "LAST_NAME", custProps.get("lastName"));
-        putIfNotNull(out, prefix + "EMAIL", custProps.get("email"));
-        putIfNotNull(out, prefix + "EMAIL_PASSWORD", custProps.get("emailPassword"));
-        putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
+       putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
         putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhone"));
         putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("subsAddress"));
     }
