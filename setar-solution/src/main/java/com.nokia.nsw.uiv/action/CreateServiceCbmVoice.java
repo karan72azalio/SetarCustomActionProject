@@ -114,13 +114,41 @@ public class CreateServiceCbmVoice implements HttpAction {
         String cbmName = "CBM" +request.getServiceId();
 
         // name length checks
-        if (subscriberNameString.length() > 100 ||
-                subscriptionName.length() > 100 ||
-                cfsName.length() > 100 ||
-                rfsName.length() > 100 ||
-                cbmName.length() > 100) {
-            return createErrorResponse(CODE_NAME_TOO_LONG, "Name value too long");
+        if (subscriberNameString.length() > 100) {
+            return createErrorResponse(
+                    CODE_NAME_TOO_LONG,
+                    "Subscriber name value too long"
+            );
         }
+
+        if (subscriptionName.length() > 100) {
+            return createErrorResponse(
+                    CODE_NAME_TOO_LONG,
+                    "Subscription name value too long"
+            );
+        }
+
+        if (cfsName.length() > 100) {
+            return createErrorResponse(
+                    CODE_NAME_TOO_LONG,
+                    "CFS name value too long"
+            );
+        }
+
+        if (rfsName.length() > 100) {
+            return createErrorResponse(
+                    CODE_NAME_TOO_LONG,
+                    "RFS name value too long"
+            );
+        }
+
+        if (cbmName.length() > 100) {
+            return createErrorResponse(
+                    CODE_NAME_TOO_LONG,
+                    "CBM name value too long"
+            );
+        }
+
 
         try {
             // 3. Subscriber logic
