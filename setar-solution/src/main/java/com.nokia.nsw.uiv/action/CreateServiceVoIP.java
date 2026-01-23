@@ -133,7 +133,7 @@ public class CreateServiceVoIP implements HttpAction {
                 subProps.put("subscriberStatus", "Active");
                 subProps.put("subscriberType", "Regular");
                 subProps.put("accountNumber", req.getSubscriberName());
-                subProps.put("householdId", req.getHhid());
+                subProps.put("houseHoldId", req.getHhid());
                 newSub.setProperties(subProps);
                 subscriber = newSub;
                 customerRepo.save(newSub);
@@ -178,11 +178,11 @@ public class CreateServiceVoIP implements HttpAction {
             }
             // Step 5: Update attributes
             Map<String, Object> subProps = subscriber.getProperties();
-            if (req.getFirstName() != null) subProps.put("firstName", req.getFirstName());
-            if (req.getLastName() != null) subProps.put("lastName", req.getLastName());
+            if (req.getFirstName() != null) subProps.put("subscriberFirstName", req.getFirstName());
+            if (req.getLastName() != null) subProps.put("subscriberLastName", req.getLastName());
             if (req.getCompanyName() != null) subProps.put("companyName", req.getCompanyName());
-            if (req.getContactPhone() != null) subProps.put("contactPhone", req.getContactPhone());
-            if (req.getSubsAddress() != null) subProps.put("subsAddress", req.getSubsAddress());
+            if (req.getContactPhone() != null) subProps.put("contactPhoneNumber", req.getContactPhone());
+            if (req.getSubsAddress() != null) subProps.put("subscriberAddress", req.getSubsAddress());
             Object existingSimaCustId = subProps.get("simaCustId");
 
             if ((existingSimaCustId == null || existingSimaCustId.toString().isEmpty())
