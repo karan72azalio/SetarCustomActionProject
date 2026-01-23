@@ -162,7 +162,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                     case "EVPN":
                         entCount++;
                         String entPrefix = "Enterprise_" + entCount + "_";
-                        populateEnterprise(output, entPrefix, rfs, subscription, customer, olt);
+                        populateEnterprise(output, entPrefix, rfs, subscription, customer, olt,ont);
                         break;
 
                     case "IPTV":
@@ -243,32 +243,33 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     // --- Enterprise / EVPN ---
     private void populateEnterprise(Map<String, Object> out, String prefix, Service rfs,
-            Subscription sub, Customer cust, LogicalDevice olt) {
+            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
         Map<String, Object> rfsProps = rfs.getProperties();
         Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
 
-        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceId"));
+        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceID"));
         putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
         out.put(prefix + "SERVICE_TYPE", "Enterprise");
-        putIfNotNull(out, prefix + "QOS_PROFILE", rfsProps.get("evpnQosProfile"));
-        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubsId"));
-        putIfNotNull(out, prefix + "PORT", rfsProps.get("evpnPort"));
-        putIfNotNull(out, prefix + "VLAN", rfsProps.get("evpnVlan"));
+        putIfNotNull(out, prefix + "QOS_PROFILE", subProps.get("evpnQosProfile"));
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubscriberId"));
+        putIfNotNull(out, prefix + "PORT", subProps.get("evpnPort"));
+        putIfNotNull(out, prefix + "VLAN", subProps.get("evpnVLAN"));
 
         // EVPN templates from RFS properties
-        putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN", rfsProps.get("templateNameVlan"));
-        putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN_CREATE", rfsProps.get("templateNameVlanCreate"));
-        putIfNotNull(out, prefix + "TEMPLATE_NAME_VPLS", rfsProps.get("templateNameVpls"));
+        putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN", subProps.get("evpnTemplateVLAN"));
+        putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN_CREATE", subProps.get("evpnTemplateCreate"));
+        putIfNotNull(out, prefix + "TEMPLATE_NAME_VPLS", subProps.get("evpnTemplateVPLS"));
 
         populateSubscriberDetails(out, prefix, cust);
 
         // OLT templates
         if (olt != null) {
+            Map<String, Object> ontProps= ont.getProperties();
             Map<String, Object> oltProps = olt.getProperties();
             putIfNotNull(out, prefix + "ONT_TEMPLATE", oltProps.get("ontTemplate"));
-            putIfNotNull(out, prefix + "TEMPLATE_NAME_CARD", oltProps.get("evpnCardTemplate"));
-            putIfNotNull(out, prefix + "TEMPLATE_NAME_PORT", oltProps.get("evpnEthPort3Template"));
-            putIfNotNull(out, prefix + "TEMPLATE_NAME_PORT_CREATE", oltProps.get("evpnEthPort4Template"));
+            putIfNotNull(out, prefix + "TEMPLATE_NAME_CARD", oltProps.get("evpnOntCardTemplate"));
+            putIfNotNull(out, prefix + "TEMPLATE_NAME_PORT", ontProps.get("evpnEthPortTemplate"));
+            putIfNotNull(out, prefix + "TEMPLATE_NAME_PORT_CREATE", ontProps.get("createTemplate"));
         }
     }
 

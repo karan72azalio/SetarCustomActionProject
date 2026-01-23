@@ -332,6 +332,7 @@ public class CreateServiceEVPN implements HttpAction {
                 rfsProps.put("linkedCFS", cfs.getDiscoveredName());
                 newRfs.addUsedService(cfs);
                 rfs = newRfs;
+                newRfs.setProperties(rfsProps);
                 serviceCustomRepository.save(newRfs);
             }
 
@@ -528,21 +529,21 @@ public class CreateServiceEVPN implements HttpAction {
             Map<String,Object> ontProps = ont.getProperties();
 
             if ("4".equals(selectedPort)) {
-                oltProps.put("evpnEthPort4Template", req.getTemplateNamePort());
-                ontProps.put("evpnEthPort4Template", servCounter);
+                oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
+                ontProps.put("evpnEthPortTemplate", servCounter);
             } else if ("5".equals(selectedPort)) {
-                oltProps.put("evpnEthPort5Template", req.getTemplateNamePort());
-                ontProps.put("evpnEthPort5Template", servCounter);
+                oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
+                ontProps.put("evpnEthPortTemplate", servCounter);
             } else if ("3".equals(selectedPort)) {
-                oltProps.put("evpnEthPort3Template", req.getTemplateNamePort());
-                ontProps.put("evpnEthPort3Template", servCounter);
+                oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
+                ontProps.put("evpnEthPortTemplate", servCounter);
             } else if ("2".equals(selectedPort)) {
                 // spec asked: port2 uses original pre-increment value
-                ontProps.put("evpnEthPort2Template", String.valueOf(currentCounter));
-                oltProps.put("evpnEthPort2Template", req.getTemplateNamePort());
+                ontProps.put("evpnEthPortTemplate", String.valueOf(currentCounter));
+                oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
             } else { // port 1
                 // port 1: set ONT port-1 EVPN VLAN template
-                ontProps.put("evpnEthPort1Template", req.getTemplateNameVlan());
+                ontProps.put("evpnEthPortTemplate", req.getTemplateNameVlan());
                 // no olt update required
             }
 
@@ -576,9 +577,9 @@ public class CreateServiceEVPN implements HttpAction {
 
             // 14) OLT card template decision per port (if port 5 -> card-5)
             if ("5".equals(selectedPort)) {
-                String currentCard5 = (String) oltProps.getOrDefault("evpnOntCard5Template", "");
+                String currentCard5 = (String) oltProps.getOrDefault("evpnOntCardTemplate", "");
                 if ((currentCard5 == null || currentCard5.isEmpty()) && req.getTemplateNameCard() != null) {
-                    oltProps.put("evpnOntCard5Template", req.getTemplateNameCard());
+                    oltProps.put("evpnOntCardTemplate", req.getTemplateNameCard());
                 }
             } else {
                 String currentCard = (String) oltProps.getOrDefault("evpnOntCardTemplate", "");
