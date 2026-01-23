@@ -128,11 +128,11 @@ public class CreateServiceFibernet implements HttpAction {
                 custProps.put("accountNumber", request.getSubscriberName());
                 custProps.put("subscriberStatus", "Active");
                 custProps.put("subscriberType", "Regular");
-                if (request.getFirstName() != null) custProps.put("firstName", request.getFirstName());
-                if (request.getLastName() != null) custProps.put("lastName", request.getLastName());
-                if (request.getSubsAddress() != null) custProps.put("subsAddress", request.getSubsAddress());
+                if (request.getFirstName() != null) custProps.put("subscriberFirstName", request.getFirstName());
+                if (request.getLastName() != null) custProps.put("subscriberLastName", request.getLastName());
+                if (request.getSubsAddress() != null) custProps.put("subscriberAddress", request.getSubsAddress());
                 if (request.getCompanyName() != null) custProps.put("companyName", request.getCompanyName());
-                if (request.getContactPhone() != null) custProps.put("contactPhone", request.getContactPhone());
+                if (request.getContactPhone() != null) custProps.put("contactPhoneNumber", request.getContactPhone());
                 if (request.getHhid() != null) custProps.put("houseHoldId", request.getHhid());
                 if (request.getEmail() != null) custProps.put("email", request.getEmail());
                 if (request.getEmailPassword() != null) custProps.put("emailPassword", request.getEmailPassword());
