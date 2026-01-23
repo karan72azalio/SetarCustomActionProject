@@ -197,7 +197,7 @@ public class AccountTransferByServiceID implements HttpAction {
             log.error(Constants.ACTION_COMPLETED);
             AccountTransferByServiceIDResponse resp = new AccountTransferByServiceIDResponse();
             resp.setStatus("200");
-            resp.setMessage("AccountNumber successfully updated executed successfully.");
+            resp.setMessage("AccountNumber updated successfully.");
             resp.setTimestamp(Instant.now().toString());
             return resp;
 
