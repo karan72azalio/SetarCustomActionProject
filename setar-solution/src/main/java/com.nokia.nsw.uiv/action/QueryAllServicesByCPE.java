@@ -376,6 +376,8 @@ public class QueryAllServicesByCPE implements HttpAction {
        putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
         putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhoneNumber"));
         putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("subscriberAddress"));
+        putIfNotNull(out, prefix + "EMAIL", custProps.get("email"));
+        putIfNotNull(out, prefix + "EMAIL_PASSWORD", custProps.get("emailPassword"));
     }
 
     private void putIfNotNull(Map<String, Object> map, String key, Object value) {
