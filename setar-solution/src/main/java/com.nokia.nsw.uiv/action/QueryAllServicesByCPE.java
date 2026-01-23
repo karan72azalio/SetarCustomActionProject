@@ -281,8 +281,8 @@ public class QueryAllServicesByCPE implements HttpAction {
         putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceID"));
         putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
         out.put(prefix + "SERVICE_TYPE", "IPTV");
-        putIfNotNull(out, prefix + "QOS_PROFILE", subProps.get("veipQosSessionProfile"));
-        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubscriberId"));
+        putIfNotNull(out, prefix + "QOS_PROFILE", subProps.get("iptvQosSessionProfile"));
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubscriberID"));
         putIfNotNull(out, prefix + "CUSTOMER_GROUP_ID", subProps.get("customerGroupId"));
 
         populateSubscriberDetails(out, prefix, cust);
@@ -377,8 +377,6 @@ public class QueryAllServicesByCPE implements HttpAction {
        putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
         putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhoneNumber"));
         putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("subscriberAddress"));
-        putIfNotNull(out, prefix + "EMAIL", custProps.get("email"));
-        putIfNotNull(out, prefix + "EMAIL_PASSWORD", custProps.get("emailPassword"));
     }
 
     private void putIfNotNull(Map<String, Object> map, String key, Object value) {
