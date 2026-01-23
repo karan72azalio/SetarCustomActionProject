@@ -102,9 +102,9 @@ public class QueryAllServicesByCPE implements HttpAction {
 
             // Step 4: Traverse services linked to ONT
             for (Service rfs : linkedRfsList) {
-                String rfsType = (String) rfs.getProperties().get("rfsType");
-                if (rfsType == null)
-                    continue;
+//                String rfsType1 = (String) rfs.getProperties().get("rfsType");
+//                if (rfsType1 == null)
+//                    continue;
 
                 // Derive CFS name: replace RFS_ with CFS_
                 String rfsName = rfs.getDiscoveredName();
@@ -123,8 +123,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                         // CFS -> Product (via usingService with kind SetarProduct)
                         if (cfs.getUsingService() != null) {
                             for (Service svc : cfs.getUsingService()) {
-                                if (svc.getKind() != null
-                                        && svc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)) {
+                                if (svc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)) {
                                     String productName = svc.getDiscoveredName();
                                     Optional<Product> prodOpt = productRepo.findByDiscoveredName(productName);
                                     if (prodOpt.isPresent()) {
@@ -143,6 +142,7 @@ public class QueryAllServicesByCPE implements HttpAction {
                     }
                 }
 
+                String rfsType = (String) product.getProperties().get("productType");
                 switch (rfsType) {
                     case "Broadband":
                     case "Fiber":
@@ -277,11 +277,11 @@ public class QueryAllServicesByCPE implements HttpAction {
             Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
         Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
 
-        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceId"));
+        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceID"));
         putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
         out.put(prefix + "SERVICE_TYPE", "IPTV");
         putIfNotNull(out, prefix + "QOS_PROFILE", subProps.get("veipQosSessionProfile"));
-        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubsId"));
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubscriberID"));
         putIfNotNull(out, prefix + "CUSTOMER_GROUP_ID", subProps.get("customerGroupId"));
 
         populateSubscriberDetails(out, prefix, cust);
@@ -369,13 +369,13 @@ public class QueryAllServicesByCPE implements HttpAction {
         if (cust == null)
             return;
         Map<String, Object> custProps = cust.getProperties() != null ? cust.getProperties() : Collections.emptyMap();
-        putIfNotNull(out, prefix + "HHID", custProps.get("householdId"));
+        putIfNotNull(out, prefix + "HHID", custProps.get("houseHoldId"));
         putIfNotNull(out, prefix + "ACCOUNT_NUMBER", custProps.get("accountNumber"));
-        putIfNotNull(out, prefix + "FIRST_NAME", custProps.get("firstName"));
-        putIfNotNull(out, prefix + "LAST_NAME", custProps.get("lastName"));
+        putIfNotNull(out, prefix + "FIRST_NAME", custProps.get("subscriberFirstName"));
+        putIfNotNull(out, prefix + "LAST_NAME", custProps.get("subscriberLastName"));
        putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
-        putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhone"));
-        putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("subsAddress"));
+        putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhoneNumber"));
+        putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("subscriberAddress"));
     }
 
     private void putIfNotNull(Map<String, Object> map, String key, Object value) {
