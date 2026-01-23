@@ -276,7 +276,6 @@ public class CreateServiceCbmVoice implements HttpAction {
                             c.setDiscoveredName(cfsName);
                             c.setContext(Constants.SETAR);
                             c.setKind(Constants.SETAR_KIND_SETAR_CFS);
-                            c.setCustomer(subscriber);
                         } catch (AccessForbiddenException | BadRequestException | ModificationNotAllowedException e) {
                             throw new RuntimeException(e);
                         }
