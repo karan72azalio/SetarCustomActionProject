@@ -175,7 +175,7 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("QosSessionProfile", request.getQosProfile());
                     prop.put("houseHoldId", request.getHhid());
                     prop.put("customerGroupId", request.getCustomerGroupId());
-                    prop.put("subscriberIDForCableModem", request.getSubscriberId());
+                    prop.put("subscriberID_CableModem", request.getSubscriberId());
                     prop.put("servicePackage", request.getServicePackage());
                     prop.put("kenanSubscriberId", request.getKenanUidNo());
                     sub.setCustomer(subscriber);

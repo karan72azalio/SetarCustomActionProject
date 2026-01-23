@@ -4,12 +4,15 @@ import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.common.party.Customer;
+import com.nokia.nsw.uiv.model.resource.Resource;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
+import com.nokia.nsw.uiv.model.service.Product;
 import com.nokia.nsw.uiv.model.service.Service;
+import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryAllServicesByCPERequest;
 import com.nokia.nsw.uiv.response.QueryAllServicesByCPEResponse;
-import com.nokia.nsw.uiv.response.QueryFlagsResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
 import lombok.extern.slf4j.Slf4j;
@@ -50,36 +53,42 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     @Override
     public Object doPost(ActionContext actionContext) {
-        log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
-
-        log.error("Executing QueryAllServicesByCPE action...");
+        log.info("Executing action {}", ACTION_LABEL);
         QueryAllServicesByCPERequest req = (QueryAllServicesByCPERequest) actionContext.getObject();
-        log.error("Validating mandatory parameters...");
+
+        // Step 1: Mandatory Validation
         try {
-            Validations.validateMandatory(req.getOntSn(), "ontSn");
+            Validations.validateMandatory(req.getOntSn(), "ONT_SN");
         } catch (BadRequestException bre) {
-            String msg = ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage();
-            return new QueryAllServicesByCPEResponse("400", msg, Validations.getCurrentTimestamp(), Collections.emptyMap());
+            return errorResponse("400", "Missing mandatory parameter: " + bre.getMessage());
         }
-        log.error("Mandatory validation completed.");
 
         try {
             String ontName = "ONT" + req.getOntSn();
 
-            // 2) Identify the ONT
+            // Step 2: Identify the ONT
             Optional<LogicalDevice> ontOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
             if (!ontOpt.isPresent()) {
                 return errorResponse("404", "CPE/ONT not found");
             }
             LogicalDevice ont = ontOpt.get();
-            log.error("ONT located: {}", ontName);
+            log.info("ONT located: {}", ontName);
 
-            // Collect linked RFS entries
+            // Find parent OLT (ONT -> managingDevices)
+            LogicalDevice olt = null;
+            Set<Resource> managingDevices = ont.getUsedResource();
+            if (managingDevices != null && !managingDevices.isEmpty()) {
+                olt = (LogicalDevice) managingDevices.iterator().next();
+            }
+
+            // Collect linked RFS entries from ONT
             Set<Service> linkedServiceList = ont.getUsingService();
             List<Service> linkedRfsList = new ArrayList<>();
-            for (Service s : linkedServiceList) {
-                if (s.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS)) {
-                    linkedRfsList.add(s);
+            if (linkedServiceList != null) {
+                for (Service s : linkedServiceList) {
+                    if (s.getKind() != null && s.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS)) {
+                        linkedRfsList.add(s);
+                    }
                 }
             }
 
@@ -87,128 +96,301 @@ public class QueryAllServicesByCPE implements HttpAction {
                 return errorResponse("404", "No services linked to CPE");
             }
 
-            // 3) Initialize counters
+            // Step 3: Initialize counters and output map
             int bbCount = 0, voiceCount = 0, entCount = 0, iptvCount = 0;
-            int stbIndex = 1, apIndex = 1, prodIndex = 1;
-            log.error(Constants.ACTION_COMPLETED);
-            QueryAllServicesByCPEResponse resp = new QueryAllServicesByCPEResponse();
-            resp.setStatus("200");
-            resp.setMessage("UIV action QueryAllServicesByCPE executed successfully.");
-            resp.setTimestamp(Instant.now().toString());
+            Map<String, Object> output = new LinkedHashMap<>();
 
-            // 4) Traverse services linked to ONT
+            // Step 4: Traverse services linked to ONT
             for (Service rfs : linkedRfsList) {
-                String prodType = (String) rfs.getProperties().get("rfsType");
-                if (prodType == null) continue;
+                String rfsType = (String) rfs.getProperties().get("rfsType");
+                if (rfsType == null)
+                    continue;
 
-                switch (prodType) {
+                // Derive CFS name: replace RFS_ with CFS_
+                String rfsName = rfs.getDiscoveredName();
+                String cfsName = rfsName != null ? rfsName.replaceFirst("^RFS_", "CFS_") : null;
 
-                    // 4A) Broadband / Fiber
+                // Find CFS, Product, Subscription, Customer
+                Service cfs = null;
+                Product product = null;
+                Subscription subscription = null;
+                Customer customer = null;
+
+                if (cfsName != null) {
+                    Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);
+                    if (cfsOpt.isPresent()) {
+                        cfs = cfsOpt.get();
+                        // CFS -> Product (via usingService with kind SetarProduct)
+                        if (cfs.getUsingService() != null) {
+                            for (Service svc : cfs.getUsingService()) {
+                                if (svc.getKind() != null
+                                        && svc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)) {
+                                    String productName = svc.getDiscoveredName();
+                                    Optional<Product> prodOpt = productRepo.findByDiscoveredName(productName);
+                                    if (prodOpt.isPresent()) {
+                                        product = prodOpt.get();
+                                        // Product -> Subscription
+                                        if (product.getSubscription() != null && !product.getSubscription().isEmpty()) {
+                                            subscription = product.getSubscription().iterator().next();
+                                        }
+                                        // Product -> Customer
+                                        customer = product.getCustomer();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                switch (rfsType) {
                     case "Broadband":
                     case "Fiber":
                         bbCount++;
-                        resp.setBbCount(String.valueOf(bbCount));
-                        resp.setBroadband1ServiceId((String) rfs.getProperties().get("serviceId"));
-                        resp.setBroadband1ServiceSubtype((String) rfs.getProperties().get("serviceSubType"));
-                        resp.setBroadband1ServiceType("Broadband");
-                        resp.setBroadband1QosProfile((String) rfs.getProperties().get("qosProfile"));
-                        resp.setBroadband1OntTemplate((String) rfs.getProperties().get("ontTemplate"));
-                        resp.setBroadband1ServiceTemplateVeip((String) rfs.getProperties().get("serviceTemplateVeip"));
-                        resp.setBroadband1ServiceTemplateHsi((String) rfs.getProperties().get("serviceTemplateHsi"));
-
-                        resp.setBroadband1Hhid((String) rfs.getProperties().get("hhId"));
-                        resp.setBroadband1AccountNumber((String) rfs.getProperties().get("accountNumber"));
-                        resp.setBroadband1FirstName((String) rfs.getProperties().get("firstName"));
-                        resp.setBroadband1LastName((String) rfs.getProperties().get("lastName"));
-                        resp.setBroadband1Email((String) rfs.getProperties().get("email"));
-                        resp.setBroadband1EmailPassword((String) rfs.getProperties().get("emailPassword"));
-                        resp.setBroadband1CompanyName((String) rfs.getProperties().get("companyName"));
-                        resp.setBroadband1ContactPhone((String) rfs.getProperties().get("contactPhone"));
-                        resp.setBroadband1SubsAddress((String) rfs.getProperties().get("subsAddress"));
+                        String bbPrefix = "Broadband_" + bbCount + "_";
+                        populateBroadband(output, bbPrefix, rfs, subscription, customer, olt,ont);
                         break;
 
-                    // 4B) Voice / VoIP
                     case "Voice":
                     case "VoIP":
                         voiceCount++;
-                        resp.setVoiceCount(String.valueOf(voiceCount));
-                        resp.setVoice1ServiceId((String) rfs.getProperties().get("serviceId"));
-                        resp.setVoice1ServiceSubtype((String) rfs.getProperties().get("serviceSubType"));
-                        resp.setVoice1ServiceType("Voice");
-                        resp.setVoice1CustomerId((String) rfs.getProperties().get("customerId"));
-                        resp.setVoice1SimaSubsId((String) rfs.getProperties().get("simaSubsId"));
-                        resp.setVoice1SimaEndpointId((String) rfs.getProperties().get("simaEndpointId"));
-                        resp.setVoice1VoipNumber1((String) rfs.getProperties().get("voipNumber1"));
-                        resp.setVoice1VoipCode1((String) rfs.getProperties().get("voipCode1"));
-                        resp.setVoice1QosProfile((String) rfs.getProperties().get("qosProfile"));
-                        resp.setVoice1OntTemplate((String) rfs.getProperties().get("ontTemplate"));
-                        resp.setVoice1ServiceTemplateVoip((String) rfs.getProperties().get("serviceTemplateVoip"));
-                        resp.setVoice1ServiceTemplatePots1((String) rfs.getProperties().get("serviceTemplatePots1"));
-                        resp.setVoice1ServiceTemplatePots2((String) rfs.getProperties().get("serviceTemplatePots2"));
-                        resp.setVoice1FirstName((String) rfs.getProperties().get("firstName"));
-                        resp.setVoice1LastName((String) rfs.getProperties().get("lastName"));
+                        String voicePrefix = "Voice_" + voiceCount + "_";
+                        populateVoice(output, voicePrefix, rfs, subscription, customer, olt,ont);
                         break;
 
-                    // 4C) Enterprise / EVPN
                     case "Enterprise":
                     case "EVPN":
                         entCount++;
-                        resp.setEntCount(String.valueOf(entCount));
-                        resp.setEnterprise1ServiceId((String) rfs.getProperties().get("serviceId"));
-                        resp.setEnterprise1ServiceSubtype((String) rfs.getProperties().get("serviceSubType"));
-                        resp.setEnterprise1ServiceType("Enterprise");
-                        resp.setEnterprise1QosProfile((String) rfs.getProperties().get("qosProfile"));
-                        resp.setEnterprise1KenanSubsId((String) rfs.getProperties().get("kenanSubsId"));
-                        resp.setEnterprise1Port((String) rfs.getProperties().get("port"));
-                        resp.setEnterprise1Vlan((String) rfs.getProperties().get("vlan"));
-                        resp.setEnterprise1TemplateNameVlan((String) rfs.getProperties().get("templateNameVlan"));
-                        resp.setEnterprise1TemplateNameVlanCreate((String) rfs.getProperties().get("templateNameVlanCreate"));
-                        resp.setEnterprise1TemplateNameVpls((String) rfs.getProperties().get("templateNameVpls"));
+                        String entPrefix = "Enterprise_" + entCount + "_";
+                        populateEnterprise(output, entPrefix, rfs, subscription, customer, olt);
                         break;
 
-                    // 4D) IPTV
                     case "IPTV":
                         iptvCount++;
-                        stbIndex = 1;
-                        apIndex = 1;
-                        prodIndex = 1;
-                        resp.setIptvCount(String.valueOf(iptvCount));
-                        resp.setIptv1ServiceId((String) rfs.getProperties().get("serviceId"));
-                        resp.setIptv1ServiceSubtype((String) rfs.getProperties().get("serviceSubType"));
-                        resp.setIptv1ServiceType("IPTV");
-                        resp.setIptv1QosProfile((String) rfs.getProperties().get("qosProfile"));
-                        resp.setIptv1CustomerGroupId((String) rfs.getProperties().get("customerGroupId"));
-                        resp.setIptv1TemplateNameIptv((String) rfs.getProperties().get("templateNameIptv"));
-                        resp.setIptv1TemplateNameIgmp((String) rfs.getProperties().get("templateNameIgmp"));
-                        resp.setIptv1Vlan((String) rfs.getProperties().get("vlan"));
-
-                        resp.setIptv1StbSn1((String) rfs.getProperties().get("stbSn" + stbIndex));
-                        resp.setIptv1StbMac1((String) rfs.getProperties().get("stbMac" + stbIndex));
-                        resp.setIptv1StbModel1((String) rfs.getProperties().get("stbModel" + stbIndex));
-                        resp.setIptv1ApSn1((String) rfs.getProperties().get("apSn" + apIndex));
-                        resp.setIptv1ApMac1((String) rfs.getProperties().get("apMac" + apIndex));
-                        resp.setIptv1ApModel1((String) rfs.getProperties().get("apModel" + apIndex));
-
-                        resp.setIptv1ProdName1((String) rfs.getProperties().get("prodName" + prodIndex));
-                        resp.setIptv1ProdVariant1((String) rfs.getProperties().get("prodVariant" + prodIndex));
+                        String iptvPrefix = "IPTV_" + iptvCount + "_";
+                        populateIptv(output, iptvPrefix, iptvCount, rfs, subscription, customer, olt, ont);
                         break;
                 }
             }
 
-            return resp;
+            // Step 5: Aggregate counts
+            output.put("BB_COUNT", String.valueOf(bbCount));
+            output.put("VOICE_COUNT", String.valueOf(voiceCount));
+            output.put("ENT_COUNT", String.valueOf(entCount));
+            output.put("IPTV_COUNT", String.valueOf(iptvCount));
+
+            // Step 6: Success response
+            log.info("QueryAllServicesByCPE completed successfully.");
+            return new QueryAllServicesByCPEResponse(
+                    "200",
+                    "UIV action QueryAllServicesByCPE executed successfully.",
+                    Instant.now().toString(),
+                    output);
 
         } catch (Exception ex) {
             log.error("Exception in QueryAllServicesByCPE", ex);
-            return errorResponse("500", "Error occurred - " + ex.getMessage());
+            return errorResponse("500", "Internal server error occurred");
+        }
+    }
+
+    // --- Broadband / Fiber ---
+    private void populateBroadband(Map<String, Object> out, String prefix, Service rfs,
+            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
+        Map<String, Object> rfsProps = rfs.getProperties();
+        putIfNotNull(out, prefix + "SERVICE_ID", sub != null ? sub.getProperties().get("serviceID") : null);
+        putIfNotNull(out, prefix + "SERVICE_SUBTYPE", sub != null ? sub.getProperties().get("serviceSubType") : null);
+        out.put(prefix + "SERVICE_TYPE", "Broadband");
+        putIfNotNull(out, prefix + "QOS_PROFILE", sub.getProperties().get("veipQosSessionProfile"));
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID",sub.getProperties().get("kenanSubscriberId"));
+
+        populateSubscriberDetails(out, prefix, cust);
+
+        // Templates from OLT
+        if (olt != null && ont!=null) {
+            Map<String, Object> ontProps= ont.getProperties();
+            Map<String, Object> oltProps = olt.getProperties();
+            putIfNotNull(out, prefix + "ONT_TEMPLATE", ontProps.get("ontTemplate"));
+            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_VEIP", oltProps.get("veipServiceTemplate"));
+            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_HSI", oltProps.get("veipHsiTemplate"));
+        }
+    }
+
+    // --- Voice / VoIP ---
+    private void populateVoice(Map<String, Object> out, String prefix, Service rfs,
+            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
+        Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
+        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceID"));
+        putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
+        out.put(prefix + "SERVICE_TYPE", "Voice");
+        putIfNotNull(out, prefix + "CUSTOMER_ID", subProps.get("simaCustId"));
+        putIfNotNull(out, prefix + "SIMA_SUBS_ID", subProps.get("simaSubsId"));
+        putIfNotNull(out, prefix + "SIMA_ENDPOINT_ID", subProps.get("simaEndpointId"));
+        putIfNotNull(out, prefix + "VOIP_NUMBER_1", subProps.get("voipNumber1"));
+        putIfNotNull(out, prefix + "VOIP_CODE_1", subProps.get("voipServiceCode"));
+        putIfNotNull(out, prefix + "QOS_PROFILE", subProps.get("voipPackage"));
+
+        populateSubscriberDetails(out, prefix, cust);
+
+        // Templates from OLT
+        if (olt != null) {
+            Map<String, Object> oltProps = olt.getProperties();
+            putIfNotNull(out, prefix + "ONT_TEMPLATE", oltProps.get("ontTemplate"));
+            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_VOIP", oltProps.get("voipServiceTemplate"));
+            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_POTS1", oltProps.get("voipPots1Template"));
+            putIfNotNull(out, prefix + "SERVICE_TEMPLATE_POTS2", oltProps.get("voipPots2Template"));
+        }
+    }
+
+    // --- Enterprise / EVPN ---
+    private void populateEnterprise(Map<String, Object> out, String prefix, Service rfs,
+            Subscription sub, Customer cust, LogicalDevice olt) {
+        Map<String, Object> rfsProps = rfs.getProperties();
+        Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
+
+        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceId"));
+        putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
+        out.put(prefix + "SERVICE_TYPE", "Enterprise");
+        putIfNotNull(out, prefix + "QOS_PROFILE", rfsProps.get("evpnQosProfile"));
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubsId"));
+        putIfNotNull(out, prefix + "PORT", rfsProps.get("evpnPort"));
+        putIfNotNull(out, prefix + "VLAN", rfsProps.get("evpnVlan"));
+
+        // EVPN templates from RFS properties
+        putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN", rfsProps.get("templateNameVlan"));
+        putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN_CREATE", rfsProps.get("templateNameVlanCreate"));
+        putIfNotNull(out, prefix + "TEMPLATE_NAME_VPLS", rfsProps.get("templateNameVpls"));
+
+        populateSubscriberDetails(out, prefix, cust);
+
+        // OLT templates
+        if (olt != null) {
+            Map<String, Object> oltProps = olt.getProperties();
+            putIfNotNull(out, prefix + "ONT_TEMPLATE", oltProps.get("ontTemplate"));
+            putIfNotNull(out, prefix + "TEMPLATE_NAME_CARD", oltProps.get("evpnCardTemplate"));
+            putIfNotNull(out, prefix + "TEMPLATE_NAME_PORT", oltProps.get("evpnEthPort3Template"));
+            putIfNotNull(out, prefix + "TEMPLATE_NAME_PORT_CREATE", oltProps.get("evpnEthPort4Template"));
+        }
+    }
+
+    // --- IPTV ---
+    private void populateIptv(Map<String, Object> out, String prefix, int iptvCount, Service rfs,
+            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
+        Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
+
+        putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceId"));
+        putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
+        out.put(prefix + "SERVICE_TYPE", "IPTV");
+        putIfNotNull(out, prefix + "QOS_PROFILE", subProps.get("veipQosSessionProfile"));
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID", subProps.get("kenanSubsId"));
+        putIfNotNull(out, prefix + "CUSTOMER_GROUP_ID", subProps.get("customerGroupId"));
+
+        populateSubscriberDetails(out, prefix, cust);
+
+        // VLAN from ONT
+        if (ont != null) {
+            putIfNotNull(out, prefix + "VLAN", ont.getProperties().get("iptvVlan"));
+        }
+
+        // Templates from OLT
+        if (olt != null) {
+            Map<String, Object> oltProps = olt.getProperties();
+            putIfNotNull(out, prefix + "TEMPLATE_NAME_IPTV", oltProps.get("veipIptvTemplate"));
+            putIfNotNull(out, prefix + "TEMPLATE_NAME_IGMP", oltProps.get("igmpTemplate"));
+        }
+
+        // Process STB and AP devices linked to RFS
+        int stbIndex = 1;
+        int apIndex = 1;
+        Set<Resource> usedResources = rfs.getUsedResource();
+        if (usedResources != null) {
+            for (Resource res : usedResources) {
+                if (res instanceof LogicalDevice) {
+                    LogicalDevice device = (LogicalDevice) res;
+                    String kind = device.getKind();
+                    Map<String, Object> devProps = device.getProperties() != null ? device.getProperties()
+                            : Collections.emptyMap();
+
+                    if ("StbApCmDevice".equalsIgnoreCase(kind)) {
+                        String deviceType = (String) devProps.get("deviceType");
+                        if ("STB".equalsIgnoreCase(deviceType)) {
+                            String stbPre = prefix + "STB_";
+                            putIfNotNull(out, stbPre + "SN_" + stbIndex, devProps.get("serialNo"));
+                            putIfNotNull(out, stbPre + "MAC_" + stbIndex, devProps.get("macAddress"));
+                            putIfNotNull(out, stbPre + "MODEL_" + stbIndex, devProps.get("deviceModel"));
+                            putIfNotNull(out, stbPre + "MANUFACTURER_" + stbIndex, devProps.get("manufacturer"));
+                            putIfNotNull(out, stbPre + "GID_" + stbIndex, devProps.get("customerGroupId"));
+                            putIfNotNull(out, stbPre + "MDLSBTYPE_" + stbIndex, devProps.get("modelSubType"));
+                            putIfNotNull(out, stbPre + "PKEY_" + stbIndex, devProps.get("preSharedKey"));
+                            stbIndex++;
+                        } else if ("AP".equalsIgnoreCase(deviceType)) {
+                            String apPre = prefix + "AP_";
+                            putIfNotNull(out, apPre + "SN_" + apIndex, devProps.get("serialNo"));
+                            putIfNotNull(out, apPre + "MAC_" + apIndex, devProps.get("macAddress"));
+                            putIfNotNull(out, apPre + "MODEL_" + apIndex, devProps.get("deviceModel"));
+                            putIfNotNull(out, apPre + "MANUFACTURER_" + apIndex, devProps.get("manufacturer"));
+                            putIfNotNull(out, apPre + "GID_" + apIndex, devProps.get("customerGroupId"));
+                            putIfNotNull(out, apPre + "MDLSBTYPE_" + apIndex, devProps.get("modelSubType"));
+                            putIfNotNull(out, apPre + "PKEY_" + apIndex, devProps.get("preSharedKey"));
+                            apIndex++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Process IPTV products from Subscription properties
+        // Note: IPTV catalog items may be stored in subscription properties as
+        // prodName1, prodVariant1, etc.
+        int prodIndex = 1;
+        if (sub != null) {
+            // Check for indexed product properties (prodName1, prodName2, etc.)
+            while (subProps.containsKey("prodName" + prodIndex)
+                    || subProps.containsKey("catalogItemName" + prodIndex)) {
+                Object prodName = subProps.get("prodName" + prodIndex);
+                if (prodName == null)
+                    prodName = subProps.get("catalogItemName" + prodIndex);
+                Object prodVariant = subProps.get("prodVariant" + prodIndex);
+                if (prodVariant == null)
+                    prodVariant = subProps.get("catalogItemVersion" + prodIndex);
+
+                if (prodName != null) {
+                    putIfNotNull(out, prefix + "PROD_NAME_" + prodIndex, prodName);
+                    putIfNotNull(out, prefix + "PROD_VARIANT_" + prodIndex, prodVariant);
+                    prodIndex++;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    // --- Subscriber Details ---
+    private void populateSubscriberDetails(Map<String, Object> out, String prefix, Customer cust) {
+        if (cust == null)
+            return;
+        Map<String, Object> custProps = cust.getProperties() != null ? cust.getProperties() : Collections.emptyMap();
+        putIfNotNull(out, prefix + "HHID", custProps.get("householdId"));
+        putIfNotNull(out, prefix + "ACCOUNT_NUMBER", custProps.get("accountNumber"));
+        putIfNotNull(out, prefix + "FIRST_NAME", custProps.get("firstName"));
+        putIfNotNull(out, prefix + "LAST_NAME", custProps.get("lastName"));
+       putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
+        putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhone"));
+        putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("subsAddress"));
+    }
+
+    private void putIfNotNull(Map<String, Object> map, String key, Object value) {
+        if (value != null) {
+            map.put(key, value);
+        } else {
+            map.put(key, "");
         }
     }
 
     private QueryAllServicesByCPEResponse errorResponse(String status, String msg) {
-        QueryAllServicesByCPEResponse resp = new QueryAllServicesByCPEResponse();
-        resp.setStatus(status);
-        resp.setMessage(ERROR_PREFIX + msg);
-        resp.setTimestamp(Instant.now().toString());
-        return resp;
+        return new QueryAllServicesByCPEResponse(
+                status,
+                ERROR_PREFIX + msg,
+                Instant.now().toString(),
+                null);
     }
-
 }

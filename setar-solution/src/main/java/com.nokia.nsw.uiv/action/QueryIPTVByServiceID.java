@@ -75,11 +75,15 @@ public class QueryIPTVByServiceID implements HttpAction {
 
             // 2. Identify target CFS names
             Set<String> matchingCfsNames = new TreeSet<>();
-
-            List<Service> cfsServices =
-                    StreamSupport.stream(serviceCustomRepository.findAll().spliterator(), false)
-                            .filter(sc -> sc.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS))
-                            .collect(Collectors.toList());
+            List<Service> allCFS = (List<Service>) serviceCustomRepository.findAll();
+            List<Service> cfsServices=new ArrayList<>();
+            for(Service s:allCFS)
+            {
+                if(s.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS))
+                {
+                    cfsServices.add(s);
+                }
+            }
             for (Service cfs : cfsServices) {
                 String cfsName = cfs.getDiscoveredName();
                 if (cfsName == null) continue;
@@ -101,7 +105,6 @@ public class QueryIPTVByServiceID implements HttpAction {
             }
 
             if (matchingCfsNames.isEmpty()) {
-                // Per instruction: return code$2 ("No entry found for delete")
                 QueryIPTVByServiceIDResponse resp = new QueryIPTVByServiceIDResponse();
                 resp.setStatus("400");
                 resp.setMessage("No entry found for delete");
@@ -211,7 +214,7 @@ public class QueryIPTVByServiceID implements HttpAction {
                             for (Service prodItem : prodSet) {
                                 String prodName = prodItem.getDiscoveredName();
                                 if (prodName != null && prodName.startsWith(serviceId)) {
-                                    String comp = prodName.replaceFirst("^" + serviceId, "");
+                                    String comp = prodName.replace(serviceId, "");
                                     // remove underscores
                                     comp = comp.replace(Constants.UNDER_SCORE , "");
                                     String label = "Service_Component_" + serviceComponentCounter;
@@ -411,7 +414,7 @@ public class QueryIPTVByServiceID implements HttpAction {
 
             } else {
                 QueryIPTVByServiceIDResponse resp = new QueryIPTVByServiceIDResponse();
-                resp.setStatus("2");
+                resp.setStatus("200");
                 resp.setMessage("No IPTV Service Details Found");
                 resp.setTimestamp(Instant.now().toString());
                 return resp;
