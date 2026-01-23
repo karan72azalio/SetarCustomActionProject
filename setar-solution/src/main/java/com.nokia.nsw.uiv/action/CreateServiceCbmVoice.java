@@ -192,16 +192,17 @@ public class CreateServiceCbmVoice implements HttpAction {
                         if (request.getCustomerGroupId() != null && !"NA".equalsIgnoreCase(request.getCustomerGroupId()))
                             props.put("customerGroupId", request.getCustomerGroupId());
                         if (request.getSubscriberId() != null) props.put("subscriberId", request.getSubscriberId());
-                        if (request.getVoipPackage() != null) props.put("voipPackage", request.getVoipPackage());
+                        if (request.getServicePackage() != null) props.put("voipPackage", request.getServicePackage());
                         if (request.getKenanUidNo() != null) props.put("billingId", request.getKenanUidNo());
                         props.put("simaCustId", request.getSimaCustId());
                         props.put("voipNumber1", request.getVoipNumber1());
                         props.put("simaSubsId", request.getSimaSubsId());
                         props.put("simaEndpointId", request.getSimaEndpointId());
                         props.put("voipServiceCode",request.getVoipServiceCode());
+                        props.put("servicePackage",request.getServicePackage());
 
                         // if both servicePackage and voipServiceCode provided, store them
-                        if (request.getVoipPackage() != null && request.getVoipPackage().trim().length() > 0
+                        if (request.getServicePackage() != null && request.getServicePackage().trim().length() > 0
                                 && request.getCpeMacAddressMTA() != null) {
                             // nothing special, already stored servicePackage above; VOIP service code handled below if present in request
                         }
@@ -214,8 +215,8 @@ public class CreateServiceCbmVoice implements HttpAction {
             // If voip package/code present, store them in subscription
             try {
                 Map<String, Object> subsProps = subscription.getProperties() == null ? new HashMap<>() : subscription.getProperties();
-                if (request.getVoipPackage() != null && request.getVoipPackage().trim().length() > 0)
-                    subsProps.put("voipPackagePrimary", request.getVoipPackage());
+                if (request.getServicePackage() != null && request.getServicePackage().trim().length() > 0)
+                    subsProps.put("voipPackage", request.getServicePackage());
                 // voipServiceCode might be named differently in your request; if present add accordingly
                 // if request object has getVoipServiceCode() then store, else ignore
                 // subsProps.put("voipServiceCodePrimary", request.getVoipServiceCode());
