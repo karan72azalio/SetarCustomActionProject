@@ -343,26 +343,33 @@ public class QueryAllServicesByCPE implements HttpAction {
         // Note: IPTV catalog items may be stored in subscription properties as
         // prodName1, prodVariant1, etc.
         int prodIndex = 1;
-        if (sub != null) {
-            // Check for indexed product properties (prodName1, prodName2, etc.)
-            while (subProps.containsKey("prodName" + prodIndex)
-                    || subProps.containsKey("catalogItemName" + prodIndex)) {
-                Object prodName = subProps.get("prodName" + prodIndex);
-                if (prodName == null)
-                    prodName = subProps.get("catalogItemName" + prodIndex);
-                Object prodVariant = subProps.get("prodVariant" + prodIndex);
-                if (prodVariant == null)
-                    prodVariant = subProps.get("catalogItemVersion" + prodIndex);
 
-                if (prodName != null) {
+        if (sub != null) {
+            Set<Service> products = sub.getService();
+            if (products != null && !products.isEmpty()) {
+                for (Service product : products) {
+
+                    Map<String, Object> props = product.getProperties();
+                    if (props == null) {
+                        continue;
+                    }
+
+                    String prodName = props.get("catalogItemName") != null
+                            ? props.get("catalogItemName").toString()
+                            : null;
+
+                    String prodVariant = props.get("catalogItemVersion") != null
+                            ? props.get("catalogItemVersion").toString()
+                            : null;
+
                     putIfNotNull(out, prefix + "PROD_NAME_" + prodIndex, prodName);
                     putIfNotNull(out, prefix + "PROD_VARIANT_" + prodIndex, prodVariant);
+
                     prodIndex++;
-                } else {
-                    break;
                 }
             }
         }
+
     }
 
     // --- Subscriber Details ---
