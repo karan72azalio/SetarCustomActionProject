@@ -53,25 +53,16 @@ public class AccountTransferByServiceID implements HttpAction {
     }
 
     @Override
-    public Object doPost(ActionContext actionContext) {
+    public Object doPost(ActionContext actionContext) throws BadRequestException {
         log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         AccountTransferByServiceIDRequest req = (AccountTransferByServiceIDRequest) actionContext.getObject();
         log.error("------Trace #1: Starting AccountTransferByServiceID");
-        try {
-            Validations.validateMandatory(req.getSubscriberNameOld(), "subscriberNameOld");
-            Validations.validateMandatory(req.getSubscriberName(), "subscriberName");
-            Validations.validateMandatory(req.getServiceId(), "serviceId");
-        } catch (BadRequestException bre) {
-            String msg = ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage();
-            return new AccountTransferByServiceIDResponse("400", msg, Validations.getCurrentTimestamp(), Collections.emptyMap());
-        }
+
+            Validations.validateMandatoryParams(req.getSubscriberNameOld(), "subscriberNameOld");
+            Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
+            Validations.validateMandatoryParams(req.getServiceId(), "serviceId");
         try {
             // Step 1: Mandatory validations
-            if (req.getSubscriberNameOld() == null || req.getSubscriberNameOld().isEmpty()
-                    || req.getSubscriberName() == null || req.getSubscriberName().isEmpty()
-                    || req.getServiceId() == null || req.getServiceId().isEmpty()) {
-                return errorResponse("400", "Missing mandatory parameter(s)",getCurrentTimestamp());
-            }
             log.error("------Trace #2: Validated mandatory params");
 
             String oldSubscriberName = req.getSubscriberNameOld();
