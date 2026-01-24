@@ -94,7 +94,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             String cbmName = "CBM" +req.getCbmSn();
             String ontName ="ONT" + req.getOntSN(); // per spec: ONT + SN (no underscore)
-            String cpeDeviceName ="ONT" + req.getOntSN(); // CPE device convention used elsewhere
+            String cpeDeviceName ="ONT" + Constants.UNDER_SCORE + req.getOntSN(); // CPE device convention used elsewhere
             String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn(); // CBM CPE
 
             log.error("------------Test Trace # 4--------------- Names prepared:"
@@ -120,20 +120,20 @@ public class ChangeTechnologyVoice implements HttpAction {
                 log.error("------------Test Trace # 7--------------- Subscription found: " + subs.getLocalName());
 
                 // Update core subscription fields
-                Map<String, Object> props = new HashMap<>();
-                props.put("ServiceLink", "ONT");
-                props.put("ServiceMac", req.getOntMacAddr());
-                props.put("ServiceSN", req.getOntSN());
-                props.put("ServiceSubtype", "Voice");
+                Map<String, Object> props = subs.getProperties();
+                props.put("serviceLink", "ONT");
+                props.put("serviceMac", req.getOntMacAddr());
+                props.put("serviceSN", req.getOntSN());
+                props.put("serviceSubType", "Voice");
 
                 // SIMA fields if provided
                 if (req.getSimaSubsId() != null && !req.getSimaSubsId().trim().isEmpty()) {
-                    props.put("SimaSubsId", req.getSimaSubsId());
+                    props.put("simaSubsId", req.getSimaSubsId());
                     log.error("------------Test Trace # 8--------------- Set SIMA subs id: " + req.getSimaSubsId());
                 }
                 if (req.getServiceEndpointNumber1() != null && !req.getServiceEndpointNumber1().trim().isEmpty()) {
                     // map to subscription endpoint slot 1
-                    props.put("SimaEndpointId", req.getServiceEndpointNumber1());
+                    props.put("simaEndpointId", req.getServiceEndpointNumber1());
                     log.error("------------Test Trace # 9--------------- Set SIMA endpoint id 1: " + req.getServiceEndpointNumber1());
                 } else if (req.getSimaSubsId() != null && !req.getSimaSubsId().trim().isEmpty()) {
                     // If simaSubsId provided but not endpoint number, keep existing endpoint if any
@@ -141,11 +141,11 @@ public class ChangeTechnologyVoice implements HttpAction {
 
                 // VoIP package/code
                 if (req.getVoipPackage() != null && !req.getVoipPackage().trim().isEmpty()) {
-                    props.put("VoipPackage", req.getVoipPackage());
+                    props.put("voipPackage", req.getVoipPackage());
                     log.error("------------Test Trace # 10--------------- Set VoIP package: " + req.getVoipPackage());
                 }
                 if (req.getVoipServiceCode() != null && !req.getVoipServiceCode().trim().isEmpty()) {
-                    props.put("VoipServiceCode", req.getVoipServiceCode());
+                    props.put("voipServiceCode", req.getVoipServiceCode());
                     log.error("------------Test Trace # 11--------------- Set VoIP service code: " + req.getVoipServiceCode());
                 }
 
@@ -175,9 +175,9 @@ public class ChangeTechnologyVoice implements HttpAction {
                     // accountNumber mapping stored in properties map - preserve or set
                     Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
                     custProps.put("accountNumber", req.getSubscriberName());
-                    custProps.put("Status", "Active");
+                    custProps.put("subscriberStatus", "Active");
                     custProps.put("subscriberType","Regular");
-                    if (req.getHhid() != null) custProps.put("HouseholdId", req.getHhid());
+                    if (req.getHhid() != null) custProps.put("houseHoldId", req.getHhid());
                     if (req.getSimaCustId() != null) custProps.put("simaCustId", req.getSimaCustId());
                     cust.setProperties(custProps);
                     customerRepo.save(cust);
@@ -197,7 +197,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);
             if (cfsOpt.isPresent()) {
                 Service cfs = cfsOpt.get();
-                String newCfsName = cfs.getLocalName() + Constants.UNDER_SCORE  + req.getOntSN();
+                String newCfsName = cfs.getDiscoveredName() + Constants.UNDER_SCORE  + req.getOntSN();
                 cfs.setDiscoveredName(newCfsName);
                 if (req.getFxOrderId() != null && !req.getFxOrderId().trim().isEmpty()) {
                     Map<String, Object> cfsProps = cfs.getProperties() == null ? new HashMap<>() : new HashMap<>(cfs.getProperties());
@@ -215,7 +215,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
             if (rfsOpt.isPresent()) {
                 Service rfs = rfsOpt.get();
-                String newRfsName = rfs.getLocalName() + Constants.UNDER_SCORE  + req.getOntSN();
+                String newRfsName = rfs.getDiscoveredName() + Constants.UNDER_SCORE  + req.getOntSN();
                 rfs.setDiscoveredName(newRfsName);
                 serviceCustomRepository.save(rfs);
                 log.error("------------Test Trace # 22--------------- RFS renamed/saved: " + newRfsName);
@@ -257,7 +257,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 String missing = !ontCpeOpt.isPresent() ? cpeDeviceName : (!cbmCpeOpt.isPresent() ? cpeDeviceOldName : "");
                 log.error("------------Test Trace # 28--------------- CPE missing: " + missing);
                 // Per spec: If either device is missing → return error about ONT name in CPEDevice
-                return new ChangeTechnologyVoiceResponse("404", ERROR_PREFIX + "ONT name \"" + ontName + "\" is not found in CPEDevice",
+                return new ChangeTechnologyVoiceResponse("404", ERROR_PREFIX + "ONT name \"" + cpeDeviceName + "\" is not found in CPEDevice",
                         Instant.now().toString(), subscriptionName, ontName);
             }
 
@@ -297,7 +297,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 // attach RFS (if present)
                 if (rfsOpt.isPresent()) {
                     // store reference name in properties for downstream consumers
-                    ontDevice.getProperties().put("linkedRFS", rfsOpt.get().getLocalName());
+                    ontDevice.getProperties().put("linkedRFS", rfsOpt.get().getDiscoveredName());
                 }
                 logicalDeviceRepo.save(ontDevice);
                 log.error("------------Test Trace # 34--------------- ONT device updated and saved: " + ontDevice.getLocalName());

@@ -139,13 +139,13 @@ public class AccountTransferByServiceID implements HttpAction {
 
                 }catch (Exception e){
                     if(subs!=null){
-                        subs.setDiscoveredName(oldCust.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+                        subs.setDiscoveredName(subs.getDiscoveredName().replace(oldSubscriberName,subscriberName));
                         Map<String, Object> subsProps = subs.getProperties();
                         String serviceSubType = subsProps.get("serviceSubType")!=null?subsProps.get("serviceSubType").toString():"";
                         if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("Broadband")){
                             subsProps.put("kenanSubscriberId",req.getKenanUidNo());
                         }else if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("IPTV")){
-                            subsProps.put("subscriberId_cableModem",subscriberName);
+                            subsProps.put("subscriberID_CableModem",subscriberName);
                         }
                         log.error("Subscription updated: "+subs.getDiscoveredName());
                         subs.setProperties(subsProps);
