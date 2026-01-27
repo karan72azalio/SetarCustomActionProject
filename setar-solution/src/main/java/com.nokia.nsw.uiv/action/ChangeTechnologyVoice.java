@@ -316,6 +316,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 // Per spec: delete CBM device from inventory
                 try {
                     logicalDeviceRepo.save(cbmDevice);
+                    logicalDeviceRepo.delete(cbmDevice);
                     log.error("------------Test Trace # 37--------------- CBM device deleted: " + cbmDevice.getLocalName());
                 } catch (Exception e) {
                     log.error("------------Test Trace # 38--------------- CBM updation failed, saved as Available");
