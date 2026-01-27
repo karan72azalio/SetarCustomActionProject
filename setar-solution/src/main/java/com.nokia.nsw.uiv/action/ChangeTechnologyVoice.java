@@ -95,7 +95,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             String cbmName = "CBM" +req.getCbmSn();
             String ontName ="ONT" + req.getOntSN(); // per spec: ONT + SN (no underscore)
             String cpeDeviceName ="ONT" + Constants.UNDER_SCORE + req.getOntSN(); // CPE device convention used elsewhere
-            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn(); // CBM CPE
+            String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmMac(); // CBM CPE
 
             log.error("------------Test Trace # 4--------------- Names prepared:"
                     + " subscriptionName=" + subscriptionName
