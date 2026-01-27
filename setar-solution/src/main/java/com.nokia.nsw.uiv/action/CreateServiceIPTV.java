@@ -228,7 +228,7 @@ public class CreateServiceIPTV implements HttpAction {
 
                 Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStartDate", Instant.now().toString());
-                cfsProps.put("transactionID", request.getFxOrderID());
+                cfsProps.put("transactionId", request.getFxOrderID());
                 cfsProps.put("serviceStatus", "ACTIVE");
                 cfsProps.put("serviceType", request.getProductType());
 

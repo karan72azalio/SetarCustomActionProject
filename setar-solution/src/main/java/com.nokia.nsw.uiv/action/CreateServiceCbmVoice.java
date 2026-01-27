@@ -113,25 +113,10 @@ public class CreateServiceCbmVoice implements HttpAction {
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String cbmName = "CBM" +request.getServiceId();
 
-        // name length checks
-        if (subscriberNameString.length() > 100) {
+        if (cbmName.length() > 100) {
             return createErrorResponse(
                     CODE_NAME_TOO_LONG,
-                    "Subscriber name value too long"
-            );
-        }
-
-        if (subscriptionName.length() > 100) {
-            return createErrorResponse(
-                    CODE_NAME_TOO_LONG,
-                    "Subscription name value too long"
-            );
-        }
-
-        if (cfsName.length() > 100) {
-            return createErrorResponse(
-                    CODE_NAME_TOO_LONG,
-                    "CFS name value too long"
+                    "CBM name value too long"
             );
         }
 
@@ -142,13 +127,27 @@ public class CreateServiceCbmVoice implements HttpAction {
             );
         }
 
-        if (cbmName.length() > 100) {
+        if (cfsName.length() > 100) {
             return createErrorResponse(
                     CODE_NAME_TOO_LONG,
-                    "CBM name value too long"
+                    "CFS name value too long"
             );
         }
 
+        if (subscriptionName.length() > 100) {
+            return createErrorResponse(
+                    CODE_NAME_TOO_LONG,
+                    "Subscription name value too long"
+            );
+        }
+
+        // name length checks
+        if (subscriberNameString.length() > 100) {
+            return createErrorResponse(
+                    CODE_NAME_TOO_LONG,
+                    "Subscriber name value too long"
+            );
+        }
 
         try {
             // 3. Subscriber logic
@@ -258,7 +257,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             // 5. Product logic
             String productNameStr = request.getSubscriberName() +Constants.UNDER_SCORE+ request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
             if (productNameStr.length() > 100) {
-                return createErrorResponse(CODE_NAME_TOO_LONG, "Identifier exceeds allowed character length");
+                return createErrorResponse(CODE_NAME_TOO_LONG, "Product Name Value too Long");
             }
             Product product = productRepository.findByDiscoveredName(productNameStr)
                     .orElseGet(() -> {

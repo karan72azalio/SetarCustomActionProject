@@ -110,42 +110,81 @@ public class AccountTransferByServiceID implements HttpAction {
                 if (subs == null || prod == null || oldCust == null) {
                     continue;
                 }
-                try{
-                    if(subs!=null){
-                        subs.setDiscoveredName(oldCust.getDiscoveredName().replace(oldSubscriberName,subscriberName));
-                        Map<String, Object> subsProps = subs.getProperties();
-                        String serviceSubType = subsProps.get("serviceSubType")!=null?subsProps.get("serviceSubType").toString():"";
-                        if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("Broadband")){
-                            subsProps.put("kenanSubscriberId",req.getKenanUidNo());
-                        }else if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("IPTV")){
-                            subsProps.put("subscriberId_cableModem",subscriberName);
-                        }
-                        subs.setProperties(subsProps);
-                        log.error("Subscription updated: "+subs.getDiscoveredName());
-                        subsRepo.save(subs,2);
+                boolean created=false;
+                Product newProd = new Product();
+                try {
+
+                    Customer newCust = custRepo.findByDiscoveredName(subscriberName)
+                            .orElseThrow(() ->
+                                    new RuntimeException("New Customer not found: " + subscriberName));
+
+
+                    // 1. Break old associations
+                    subs.setCustomer(null);
+                    subs.setService(null);
+                    subsRepo.save(subs);
+
+                    // 2. Delete old subscription
+                    subsRepo.delete(subs);
+
+                    // 3. Create new subscription
+                    Subscription newSubscription = new Subscription();
+                    newSubscription.setLocalName(subs.getLocalName());
+                    newSubscription.setKind(subs.getKind());
+                    newSubscription.setCustomer(newCust);
+                    newSubscription.setDiscoveredName(
+                            subs.getDiscoveredName().replace(oldSubscriberName, subscriberName)
+                    );
+
+                    Map<String, Object> subsProps = new HashMap<>(subs.getProperties());
+                    String serviceSubType = String.valueOf(subsProps.get("serviceSubType"));
+
+                    if ("Broadband".equalsIgnoreCase(serviceSubType)) {
+                        subsProps.put("kenanSubscriberId", req.getKenanUidNo());
+                    } else if ("IPTV".equalsIgnoreCase(serviceSubType)) {
+                        subsProps.put("subscriberId_cableModem", subscriberName);
                     }
-                    if(prod!=null){
-                        prod = prodRepo.findByDiscoveredName(prod.getDiscoveredName()).get();
-                        prod.setDiscoveredName(prod.getDiscoveredName().replace(oldSubscriberName,subscriberName));
-                        log.error("Product updated: "+prod.getDiscoveredName());
-                        prodRepo.save(prod,2);
-                    }
-                    if(oldCust!=null){
-                        oldCust = custRepo.findByDiscoveredName(oldCust.getDiscoveredName()).get();
-                        oldCust.setDiscoveredName(oldCust.getDiscoveredName().replace(oldSubscriberName,subscriberName));
-                        log.error("Subscriber updated: "+oldCust.getDiscoveredName());
-                        custRepo.save(oldCust,2);
+                    newSubscription.setProperties(subsProps);
+                    subsRepo.save(newSubscription, 2);
+
+
+                    if (prod != null) {
+
+                        // 4. Break old associations
+                        prod.setCustomer(null);
+                        prod.setSubscription(null);
+                        prod.setUsingService(null);
+                        prodRepo.save(prod);
+
+                        // 5. Delete old product
+                        prodRepo.delete(prod);
+
+                        // 6. Create new product
+                        newProd.setKind(prod.getKind());
+                        newProd.setLocalName(prod.getLocalName());
+                        newProd.setCustomer(newCust);
+
+                        newProd.setDiscoveredName(
+                                prod.getDiscoveredName().replace(oldSubscriberName, subscriberName)
+                        );
+                        newProd.setProperties(new HashMap<>(prod.getProperties()));
+                        newSubscription.setService(new HashSet<>(List.of(newProd)));
+                        subsRepo.save(newSubscription);
+                        prodRepo.save(newProd, 2);
+                        created=true;
                     }
 
-                }catch (Exception e){
+                }
+                catch (Exception e){
                     if(subs!=null){
-                        subs.setDiscoveredName(oldCust.getDiscoveredName().replace(oldSubscriberName,subscriberName));
+
+                        subs.setDiscoveredName(subs.getDiscoveredName().replace(oldSubscriberName,subscriberName));
                         Map<String, Object> subsProps = subs.getProperties();
                         String serviceSubType = subsProps.get("serviceSubType")!=null?subsProps.get("serviceSubType").toString():"";
                         if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("Broadband")){
                             subsProps.put("kenanSubscriberId",req.getKenanUidNo());
                         }else if(serviceSubType!=null && serviceSubType.equalsIgnoreCase("IPTV")){
-                            subsProps.put("subscriberId_cableModem",subscriberName);
+                            subsProps.put("subscriberID_CableModem",subscriberName);
                         }
                         log.error("Subscription updated: "+subs.getDiscoveredName());
                         subs.setProperties(subsProps);
@@ -180,6 +219,10 @@ public class AccountTransferByServiceID implements HttpAction {
                     cfs = serviceRepository.findByDiscoveredName(cfs.getDiscoveredName()).get();
                     cfs.setDiscoveredName(cfs.getDiscoveredName().replace(oldSubscriberName,subscriberName));
                     log.error("CFS updated: "+cfs.getDiscoveredName());
+                    if(created)
+                    {
+                        cfs.setUsingService(new HashSet<>(List.of(newProd)));
+                    }
                     serviceRepository.save(cfs,2);
                 }
                 if(rfs!=null){
@@ -192,7 +235,7 @@ public class AccountTransferByServiceID implements HttpAction {
             }
 
             if (!updated) {
-                return errorResponse("404", "Error, No Account found",Validations.getCurrentTimestamp());
+                return errorResponse("404", "Error, No Account found", getCurrentTimestamp());
             }
             log.error(Constants.ACTION_COMPLETED);
             AccountTransferByServiceIDResponse resp = new AccountTransferByServiceIDResponse();
@@ -203,7 +246,7 @@ public class AccountTransferByServiceID implements HttpAction {
 
         } catch (Exception ex) {
             log.error("Exception in AccountTransferByServiceID", ex);
-            return errorResponse("500", "Unexpected error - " + ex.getMessage(),Validations.getCurrentTimestamp());
+            return errorResponse("500", "Unexpected error - " + ex.getMessage(), getCurrentTimestamp());
         }
     }
 
