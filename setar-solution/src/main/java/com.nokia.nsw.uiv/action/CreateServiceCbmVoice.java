@@ -168,7 +168,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                         subProps.put("subscriberStatus", "Active");
                         subProps.put("subscriberType", "Regular");
                         subProps.put("accountNumber", request.getSubscriberName());
-                        subProps.put("householdId", request.getHhid());
+                        subProps.put("houseHoldId", request.getHhid());
                         if (request.getUserName() != null && !request.getUserName().trim().isEmpty()) {
                             subProps.put("userName", request.getUserName());
                         }
