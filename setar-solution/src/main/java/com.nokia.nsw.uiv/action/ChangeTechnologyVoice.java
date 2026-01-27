@@ -113,7 +113,6 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             // 4. Update Subscription (must exist)
             log.error("------------Test Trace # 6--------------- Fetching Subscription by " + subscriptionName);
-            String subscriptionGdn = Validations.getGlobalName(subscriptionName);
             Optional<Subscription> subsOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
             if (subsOpt.isPresent()) {
                 Subscription subs = subsOpt.get();
@@ -166,10 +165,8 @@ public class ChangeTechnologyVoice implements HttpAction {
                 // Try to find linked subscriber — attempt several common patterns
                 String subscriberCandidate1 = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
                 String subscriberCandidate2 = req.getSubscriberName();
-                String subscriberCandidata1Gdn = Validations.getGlobalName(subscriberCandidate1);
                 Optional<Customer> custOpt = customerRepo.findByDiscoveredName(subscriberCandidate1);
                 if (!custOpt.isPresent()) {
-                    String subscriberCandidate2Gdn=Validations.getGlobalName(subscriberCandidate2);
                     custOpt = customerRepo.findByDiscoveredName(subscriberCandidate2);
                 }
                 if (custOpt.isPresent()) {
@@ -242,6 +239,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 } else {
                     oltProps.put("potsTemplate2", req.getTemplateNamePots2());
                 }
+                oltProps.put("OperationalState", "Available");
                 olt.setProperties(oltProps);
                 logicalDeviceRepo.save(olt);
                 log.error("------------Test Trace # 25--------------- OLT updated and saved: " + olt.getLocalName());
@@ -291,6 +289,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 } else {
                     ontProps.put("potsPort2Number", req.getServiceId());
                 }
+                ontProps.put("OperationalState", "Available");
                 // set other ONT attributes if needed
                 ontDevice.setProperties(ontProps);
 

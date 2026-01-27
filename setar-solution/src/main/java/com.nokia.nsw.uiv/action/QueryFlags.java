@@ -286,7 +286,7 @@ public class QueryFlags implements HttpAction {
                 subscriptionRepository.findByDiscoveredName(subName)
                         .ifPresent(sub -> {
                             Map<String, Object> p = safeProps(sub.getProperties());
-                            Object mac = p.get("macAddress");
+                            Object mac = p.get("serviceMac");
 
                             if (mac != null && !mac.toString().isEmpty()) {
                                 flags.put("CBM_MAC", mac.toString());
@@ -420,7 +420,7 @@ public class QueryFlags implements HttpAction {
                                 (String) p.get("serviceLink"))) {
 
                             cbmCount++;
-                            Object mac = p.get("macAddress");
+                            Object mac = p.get("serviceMac");
                             if (mac != null) macSet.add(mac.toString());
                         }
                     }
@@ -642,7 +642,7 @@ public class QueryFlags implements HttpAction {
 
                     Object link  = p.get("serviceLink");
                     Object sSN   = p.get("serviceSN");
-                    Object sMAC  = p.get("macAddress");
+                    Object sMAC  = p.get("serviceMac");
                     Object qos   = p.get("veipQosSessionProfile");
                     Object kenan = p.get("kenanSubscriberId");
 
@@ -692,7 +692,7 @@ public class QueryFlags implements HttpAction {
                     Map<String, Object> p = safeProps(found.getProperties());
                     Object link = p.get("serviceLink");
                     Object sSN = p.get("serviceSN");
-                    Object sMAC = p.get("macAddress");
+                    Object sMAC = p.get("serviceMac");
                     Object qos = p.get("qosProfile");
                     Object kenan = p.get("billingId");
 
@@ -1626,7 +1626,7 @@ public class QueryFlags implements HttpAction {
 
                     cbmCount++;
 
-                    Object mac = p.get("macAddress");
+                    Object mac = p.get("serviceMac");
                     if (mac != null && !mac.toString().isEmpty()) {
                         macSet.add(mac.toString());
                     }

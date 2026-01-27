@@ -105,7 +105,7 @@ public class QueryService implements HttpAction {
                 if (optSub.isPresent()) {
                     Subscription sub = optSub.get();
                     iptvinfo.put("CUSTOMER_GROUP_ID", sub.getProperties().get("customerGroupId"));
-                    iptvinfo.put("CPE_MacAddr_1", sub.getProperties().get("macAddress"));
+                    iptvinfo.put("CPE_MacAddr_1", sub.getProperties().get("serviceMac"));
                     iptvinfo.put("Service_Link", sub.getProperties().get("serviceLink"));
                     iptvinfo.put("CPE_GW_MacAddr_1", sub.getProperties().get("gatewayMacAddress"));
                     iptvinfo.put("Service_Package_1", sub.getProperties().get("veipQosSessionProfile"));

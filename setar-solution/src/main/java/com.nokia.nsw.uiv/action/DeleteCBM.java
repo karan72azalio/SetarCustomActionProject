@@ -225,11 +225,11 @@ public class DeleteCBM implements HttpAction {
                     } else {
                         Map<String, Object> subProps = subscription.getProperties();
 
-                        if (subProps == null || subProps.get("macAddress") == null) {
+                        if (subProps == null || subProps.get("serviceMac") == null) {
                             log.error("Subscription missing macAddress - cannot derive CPE.");
                         } else {
 
-                            String serviceMac = subProps.get("macAddress").toString();
+                            String serviceMac = subProps.get("serviceMac").toString();
                             String cleanMac = serviceMac.replace(":", "");
                             String cpeDeviceName = "CBM_" + cleanMac;
 
