@@ -117,6 +117,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             Optional<Subscription> subsOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
             if (subsOpt.isPresent()) {
                 Subscription subs = subsOpt.get();
+
                 log.error("------------Test Trace # 7--------------- Subscription found: " + subs.getLocalName());
 
                 // Update core subscription fields
@@ -163,35 +164,37 @@ public class ChangeTechnologyVoice implements HttpAction {
                 log.error("------------Test Trace # 13--------------- Subscription saved: " + newSubscriptionName);
 
                 // 5. Update Subscriber if linked via subscription
-                // Try to find linked subscriber — attempt several common patterns
-                String subscriberCandidate1 = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
-                String subscriberCandidate2 = req.getSubscriberName();
-                String subscriberCandidata1Gdn = Validations.getGlobalName(subscriberCandidate1);
-                Optional<Customer> custOpt = customerRepo.findByDiscoveredName(subscriberCandidate1);
-                if (!custOpt.isPresent()) {
-                    String subscriberCandidate2Gdn=Validations.getGlobalName(subscriberCandidate2);
-                    custOpt = customerRepo.findByDiscoveredName(subscriberCandidate2);
-                }
-                if (custOpt.isPresent()) {
-                    Customer cust = custOpt.get();
-                    log.error("------------Test Trace # 14--------------- Subscriber found: " + cust.getLocalName());
-                    // accountNumber mapping stored in properties map - preserve or set
-                    Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
-                    custProps.put("accountNumber", req.getSubscriberName());
-                    custProps.put("subscriberStatus", "Active");
-                    custProps.put("subscriberType","Regular");
-                    if (req.getHhid() != null) custProps.put("houseHoldId", req.getHhid());
-                    if (req.getSimaCustId() != null) custProps.put("simaCustId", req.getSimaCustId());
-                    cust.setProperties(custProps);
-                    customerRepo.save(cust);
-                    log.error("------------Test Trace # 15--------------- Subscriber updated and saved");
-                } else {
-                    log.error("------------Test Trace # 16--------------- Subscriber not found using common patterns - continuing");
-                }
 
             } else {
                 // Per spec, subscription must exist; but we proceed (action does not create new subscription)
                 log.error("------------Test Trace # 17--------------- Subscription not found: " + subscriptionName + " - continuing without subscription updates");
+            }
+
+            // Try to find linked subscriber — attempt several common patterns
+            String subscriberCandidate1 = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
+            String subscriberCandidate2 = req.getSubscriberName();
+
+            String subscriberCandidata1Gdn = Validations.getGlobalName(subscriberCandidate1);
+            Optional<Customer> custOpt = customerRepo.findByDiscoveredName(subscriberCandidate1);
+            if (!custOpt.isPresent()) {
+                String subscriberCandidate2Gdn=Validations.getGlobalName(subscriberCandidate2);
+                custOpt = customerRepo.findByDiscoveredName(subscriberCandidate2);
+            }
+            if (custOpt.isPresent()) {
+                Customer cust = custOpt.get();
+                log.error("------------Test Trace # 14--------------- Subscriber found: " + cust.getLocalName());
+                // accountNumber mapping stored in properties map - preserve or set
+                Map<String, Object> custProps = cust.getProperties() == null ? new HashMap<>() : new HashMap<>(cust.getProperties());
+                custProps.put("accountNumber", req.getSubscriberName());
+                custProps.put("subscriberStatus", "Active");
+                custProps.put("subscriberType","Regular");
+                if (req.getHhid() != null) custProps.put("houseHoldId", req.getHhid());
+                if (req.getSimaCustId() != null) custProps.put("simaCustId", req.getSimaCustId());
+                cust.setProperties(custProps);
+                customerRepo.save(cust);
+                log.error("------------Test Trace # 15--------------- Subscriber updated and saved");
+            } else {
+                log.error("------------Test Trace # 16--------------- Subscriber not found using common patterns - continuing");
             }
 
             // 6. Update CFS (if exists)
