@@ -155,7 +155,7 @@ public class ChangeTechnologyVoice implements HttpAction {
                 // Rename subscription to include ONT SN per spec
                 String newSubscriptionName = subscriptionName + Constants.UNDER_SCORE  + req.getOntSN();
                 log.error("------------Test Trace # 12--------------- Renaming subscription to: " + newSubscriptionName);
-                subs.setDiscoveredName(subscriptionName);
+                subs.setDiscoveredName(newSubscriptionName);
                 subs.setProperties(props);
 
                 // Persist subscription updates
