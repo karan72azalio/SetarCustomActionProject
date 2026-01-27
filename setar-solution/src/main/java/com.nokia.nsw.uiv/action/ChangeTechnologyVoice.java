@@ -94,7 +94,7 @@ public class ChangeTechnologyVoice implements HttpAction {
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             String cbmName = "CBM" +req.getCbmSn();
             String ontName ="ONT" + req.getOntSN(); // per spec: ONT + SN (no underscore)
-            String cpeDeviceName ="ONT" + req.getOntSN(); // CPE device convention used elsewhere
+            String cpeDeviceName ="ONT" + Constants.UNDER_SCORE + req.getOntSN(); // CPE device convention used elsewhere
             String cpeDeviceOldName = "CBM" + Constants.UNDER_SCORE +req.getCbmSn(); // CBM CPE
 
             log.error("------------Test Trace # 4--------------- Names prepared:"
@@ -248,8 +248,6 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             // 9. Retrieve CPE devices (ONT_ and CBM_ entries) - these are CPE representations
             log.error("------------Test Trace # 27--------------- Looking for CPE devices: " + cpeDeviceName + ", " + cpeDeviceOldName);
-            String cpeDeviceGdn = Validations.getGlobalName(cpeDeviceName);
-            String cpeDeviceOldGdn = Validations.getGlobalName(cpeDeviceOldName);
             Optional<LogicalDevice> ontCpeOpt = logicalDeviceRepo.findByDiscoveredName(cpeDeviceName);
             Optional<LogicalDevice> cbmCpeOpt = logicalDeviceRepo.findByDiscoveredName(cpeDeviceOldName);
 
@@ -281,7 +279,6 @@ public class ChangeTechnologyVoice implements HttpAction {
 
             // 11. Update ONT device (logical device, ONT object)
             log.error("------------Test Trace # 33--------------- Looking for ONT device: " + ontName);
-            String ontGdn = Validations.getGlobalName(ontName);
             Optional<LogicalDevice> ontDeviceOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
             if (ontDeviceOpt.isPresent()) {
                 LogicalDevice ontDevice = ontDeviceOpt.get();
