@@ -107,6 +107,9 @@ public class QueryService implements HttpAction {
                         optSub = prod.getSubscription().stream().findFirst();
                     if (prod.getSubscription() != null && prod.getCustomer() != null)
                         optCust = Optional.ofNullable(prod.getCustomer());
+                }else {
+                    return new QueryServiceResponse("404", "No entry found to update.",
+                            Instant.now().toString(), true, iptvinfo);
                 }
 
                 // Step 4: Populate Subscription details
