@@ -133,11 +133,11 @@ public class CreateServiceCBM implements HttpAction {
                 });
         try {
             Map<String, Object> sp = subscriber.getProperties() == null ? new HashMap<>() : subscriber.getProperties();
-            if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) sp.put("firstName", request.getFirstName());
-            if (request.getLastName() != null && !request.getLastName().trim().isEmpty()) sp.put("lastName", request.getLastName());
+            if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) sp.put("subscriberFirstName", request.getFirstName());
+            if (request.getLastName() != null && !request.getLastName().trim().isEmpty()) sp.put("subscriberLastName", request.getLastName());
             if (request.getCompanyName() != null && !request.getCompanyName().trim().isEmpty()) sp.put("companyName", request.getCompanyName());
-            if (request.getContactPhone() != null && !request.getContactPhone().trim().isEmpty()) sp.put("contactPhone", request.getContactPhone());
-            if (request.getSubsAddress() != null && !request.getSubsAddress().trim().isEmpty()) sp.put("subsAddress", request.getSubsAddress());
+            if (request.getContactPhone() != null && !request.getContactPhone().trim().isEmpty()) sp.put("contactPhoneNumber", request.getContactPhone());
+            if (request.getSubsAddress() != null && !request.getSubsAddress().trim().isEmpty()) sp.put("subscriberAddress", request.getSubsAddress());
             if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) sp.put("email", request.getEmail());
             if (request.getEmailPassword() != null  && !request.getEmailPassword().trim().isEmpty()) sp.put("emailPassword", request.getEmailPassword());
             subscriber.setProperties(sp);
