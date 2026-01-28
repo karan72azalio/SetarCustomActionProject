@@ -331,7 +331,7 @@ public class CreateServiceFibernet implements HttpAction {
                     vlan.setContext(vlanContext);
                     Map<String, Object> vlanProps = new HashMap<>();
                     vlanProps.put("vlanId", request.getVlanID());
-                    vlanProps.put("state", "Active");
+                    vlanProps.put("OperationalState", "Active");
                     vlanProps.put("serviceId", request.getServiceID());
                     vlan.setProperties(vlanProps);
                     //uncommented for checking devicetointerface association
