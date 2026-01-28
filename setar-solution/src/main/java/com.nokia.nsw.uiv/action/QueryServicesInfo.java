@@ -79,15 +79,15 @@ public class QueryServicesInfo implements HttpAction {
             Service iptvrfsname = null; // candidate to add later
 
             if (accno != null && !accno.trim().isEmpty()) {
-                isAccno = true;
                 log.debug("Searching RFS by subscriber/account number '{}'", accno);
                 List<Service> resourceFacingServices = (List<Service>) serviceCustomRepository.findAll();
                 if(!resourceFacingServices.isEmpty()){
                     for(Service rfs:resourceFacingServices)
                     {
-                        if(rfs.getDiscoveredName().contains(accno))
+                        if(rfs.getDiscoveredName().contains(accno) && rfs.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
                         {
                             setarsRFS= Collections.singletonList(rfs);
+                            isAccno = true;
                         }
                     }
                 }
@@ -100,7 +100,7 @@ public class QueryServicesInfo implements HttpAction {
                 if(!resourceFacingServicesONT.isEmpty()){
                     for(Service rfs:resourceFacingServicesONT)
                     {
-                        if(rfs.getDiscoveredName().contains(ontSN))
+                        if(rfs.getDiscoveredName().contains(ontSN)&& rfs.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS))
                         {
                             rfsByOnt= Collections.singletonList(rfs);
                         }
@@ -482,7 +482,7 @@ public class QueryServicesInfo implements HttpAction {
                         if (setarSubscriber != null) {
                             Object fn = setarSubscriber.getProperties() == null ? null : setarSubscriber.getProperties().get("subscriberFirstName");
                             Object ln = setarSubscriber.getProperties() == null ? null : setarSubscriber.getProperties().get("subscriberLastName");
-                            Object em = setarSubscriber.getProperties() == null ? null : setarSubscriber.getProperties().get("email_username");
+                            Object em = setarSubscriber.getProperties() == null ? null : setarSubscriber.getProperties().get("email");
                             allvalues.put(prefix + "FIRST_NAME", fn == null ? "" : String.valueOf(fn));
                             allvalues.put(prefix + "LAST_NAME", ln == null ? "" : String.valueOf(ln));
                             allvalues.put(prefix + "EMAIL", em == null ? "" : String.valueOf(em));
