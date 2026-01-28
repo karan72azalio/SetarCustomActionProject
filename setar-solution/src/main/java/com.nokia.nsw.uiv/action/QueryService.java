@@ -65,12 +65,14 @@ public class QueryService implements HttpAction {
             Set<String> cfsNameSet = new LinkedHashSet<>();
 
             for (Service cfs : cfsList) {
-                if(cfs.getDiscoveredName().contains(serviceId)) {
-                    String cfsName = cfs.getDiscoveredName();
-                    if (cfsName == null) continue;
-                    String[] parts = cfsName.split(Constants.UNDER_SCORE );
-                    if (parts.length > 2 && parts[2].equalsIgnoreCase(serviceId)) {
-                        cfsNameSet.add(cfsName);
+                if(cfs.getDiscoveredName().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS)) {
+                    if (cfs.getDiscoveredName().contains(serviceId)) {
+                        String cfsName = cfs.getDiscoveredName();
+                        if (cfsName == null) continue;
+                        String[] parts = cfsName.split(Constants.UNDER_SCORE);
+                        if (parts.length > 2 && parts[2].equalsIgnoreCase(serviceId)) {
+                            cfsNameSet.add(cfsName);
+                        }
                     }
                 }
             }
@@ -117,11 +119,11 @@ public class QueryService implements HttpAction {
                 // Step 5: Populate Subscriber details
                 if (optCust.isPresent()) {
                     Customer cust = optCust.get();
-                    iptvinfo.put("Service_EmailId_1", cust.getProperties().get("email_username"));
-                    iptvinfo.put("Service_EmailPw_1", cust.getProperties().get("email_pwd"));
+                    iptvinfo.put("Service_EmailId_1", cust.getProperties().get("email"));
+                    iptvinfo.put("Service_EmailPw_1", cust.getProperties().get("emailPassword"));
                     iptvinfo.put("Service_Company_1", cust.getProperties().get("companyName"));
                     iptvinfo.put("Service_ContactPhone_1", cust.getProperties().get("contactPhoneNumber"));
-                    iptvinfo.put("Service_Address_1", cust.getProperties().get("address"));
+                    iptvinfo.put("Service_Address_1", cust.getProperties().get("subscriberAddress"));
                     iptvinfo.put("Service_HHID_1", cust.getProperties().get("houseHoldId"));
                     iptvinfo.put("Service_FirstName_1", cust.getProperties().get("subscriberFirstName"));
                     iptvinfo.put("Service_LastName_1", cust.getProperties().get("subscriberLastName"));
