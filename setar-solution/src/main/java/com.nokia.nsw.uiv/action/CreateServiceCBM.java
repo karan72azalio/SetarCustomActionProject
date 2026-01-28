@@ -251,7 +251,7 @@ public class CreateServiceCBM implements HttpAction {
                     {
                         prop.put("TransactionID",request.getProductType());
                     }
-                    prop.put("startDate",new Date());
+                    prop.put("serviceStartDate",new Date());
                     c.setProperties(prop);
                     c.setUsingService(new HashSet<>(List.of(product)));
                     serviceRepository.save(c, 2);
