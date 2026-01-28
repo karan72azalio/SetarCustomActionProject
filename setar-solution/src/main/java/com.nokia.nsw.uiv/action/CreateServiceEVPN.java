@@ -101,7 +101,7 @@ public class CreateServiceEVPN implements HttpAction {
             AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
             AtomicBoolean isProductExist = new AtomicBoolean(true);
             // 2) Prepare names
-            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getOntSN();
+            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE + req.getOntSN();
             if (subscriberNameStr.length() > 100) {
                 log.error("------------Trace # 3--------------- Subscriber name too long");
                 return new CreateServiceEVPNResponse(
@@ -113,7 +113,7 @@ public class CreateServiceEVPN implements HttpAction {
                 );
             }
 
-            String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getServiceId() + Constants.UNDER_SCORE  + req.getOntSN();
+            String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE + req.getServiceId() + Constants.UNDER_SCORE + req.getOntSN();
             if (subscriptionName.length() > 100) {
                 log.error("------------Trace # 4-------V-------- Subscription name too long");
                 return new CreateServiceEVPNResponse(
@@ -125,7 +125,7 @@ public class CreateServiceEVPN implements HttpAction {
                 );
             }
 
-            String productNameStr = req.getSubscriberName() + Constants.UNDER_SCORE  + req.getProductSubtype() + Constants.UNDER_SCORE  + req.getServiceId();
+            String productNameStr = req.getSubscriberName() + Constants.UNDER_SCORE + req.getProductSubtype() + Constants.UNDER_SCORE + req.getServiceId();
             if (productNameStr.length() > 100) {
                 log.error("------------Trace # 5--------------- Product name too long");
                 return new CreateServiceEVPNResponse(
@@ -139,7 +139,7 @@ public class CreateServiceEVPN implements HttpAction {
 
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            String ontName ="ONT" + req.getOntSN();
+            String ontName = "ONT" + req.getOntSN();
             if (ontName.length() > 100) {
                 log.error("------------Trace # 6--------------- ONT name too long");
                 return new CreateServiceEVPNResponse(
@@ -151,8 +151,8 @@ public class CreateServiceEVPN implements HttpAction {
                 );
             }
 
-            String vlanName = req.getMenm() + Constants.UNDER_SCORE  + (req.getVlanId() == null ? "" : req.getVlanId());
-            String mgmtVlanName = req.getMenm() + Constants.UNDER_SCORE  + req.getMgmntVlanId();
+            String vlanName = req.getMenm() + Constants.UNDER_SCORE + (req.getVlanId() == null ? "" : req.getVlanId());
+            String mgmtVlanName = req.getMenm() + Constants.UNDER_SCORE + req.getMgmntVlanId();
 
             log.error("------------Trace # 7--------------- Names prepared: subscriber=" + subscriberNameStr
                     + ", subscription=" + subscriptionName + ", product=" + productNameStr
@@ -172,7 +172,7 @@ public class CreateServiceEVPN implements HttpAction {
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                        Map<String,Object> subProps = new HashMap<>();
+                        Map<String, Object> subProps = new HashMap<>();
                         subProps.put("subscriberStatus", "Active");
                         subProps.put("subscriberType", "Regular");
                         subProps.put("accountNumber", req.getSubscriberName());
@@ -188,9 +188,9 @@ public class CreateServiceEVPN implements HttpAction {
             // 4) Subscription: find or create (properties map)
             Optional<Subscription> subscriptionOpt = subscriptionRepo.findByDiscoveredName(subscriptionName);
             Subscription subscription = null;
-            if(subscriptionOpt.isPresent()){
+            if (subscriptionOpt.isPresent()) {
                 subscription = subscriptionOpt.get();
-            }else{
+            } else {
                 isSubscriptionExist.set(false);
                 log.error("------------Trace # 9--------------- Creating subscription: " + subscriptionName);
                 Subscription subs = new Subscription();
@@ -202,12 +202,13 @@ public class CreateServiceEVPN implements HttpAction {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                Map<String,Object> subsProps = new HashMap<>();
+                Map<String, Object> subsProps = new HashMap<>();
                 subsProps.put("subscriptionStatus", "Active");
                 subsProps.put("serviceSubType", req.getProductSubtype());
                 if (req.getQosProfile() != null) subsProps.put("evpnQosProfile", req.getQosProfile());
                 if (req.getOntPort() != null) subsProps.put("evpnPort", req.getOntPort());
-                if (req.getTemplateNameVlanCreate() != null) subsProps.put("evpnTemplateCreate", req.getTemplateNameVlanCreate());
+                if (req.getTemplateNameVlanCreate() != null)
+                    subsProps.put("evpnTemplateCreate", req.getTemplateNameVlanCreate());
                 if (req.getTemplateNameVlan() != null) subsProps.put("evpnTemplateVLAN", req.getTemplateNameVlan());
                 if (req.getTemplateNameVpls() != null) subsProps.put("evpnTemplateVPLS", req.getTemplateNameVpls());
                 if (req.getVlanId() != null) subsProps.put("evpnVLAN", req.getVlanId());
@@ -227,13 +228,19 @@ public class CreateServiceEVPN implements HttpAction {
                 subsProps.put("oltPosition", oltPos);
                 subsProps.put("kenanSubscriberId", req.getKenanUidNo());
                 subsProps.put("subscriberIdCbm", req.getSubscriberId());
+                subsProps.put("linkedSubscriber", subscriber.getDiscoveredName());
+                subsProps.put("serviceSN", req.getOntSN());
+                if (req.getProductSubtype() != null && (req.getProductSubtype().contains("Bridged") || req.getProductSubtype().contains("Cloudstarter"))) {
+                    subsProps.put("subscriptionDetails", req.getServiceId());
+                }else {
+                    subsProps.put("subscriptionDetails", "FTTB-"+req.getServiceId());
+                }
                 subs.setProperties(subsProps);
                 subs.setCustomer(subscriber);
                 // association to subscriber (store link name so external process can link)
-                subsProps.put("linkedSubscriber", subscriber.getDiscoveredName());
-                subsProps.put("serviceSN", req.getOntSN());
+
                 subscription = subs;
-                subscriptionRepo.save(subs,2);
+                subscriptionRepo.save(subs, 2);
             }
             // ensure we keep subscriber-subscription link when we didn't create subs
             if (!subscription.getProperties().containsKey("linkedSubscriber")) {
@@ -244,9 +251,9 @@ public class CreateServiceEVPN implements HttpAction {
             // 5) Product: find or create (properties map)
             Optional<Product> productOpt = productRepo.findByDiscoveredName(productNameStr);
             Product product = null;
-            if(productOpt.isPresent()){
+            if (productOpt.isPresent()) {
                 product = productOpt.get();
-            }else{
+            } else {
                 isProductExist.set(false);
                 log.error("------------Trace # 10--------------- Creating product: " + productNameStr);
                 Product prod = new Product();
@@ -258,7 +265,7 @@ public class CreateServiceEVPN implements HttpAction {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                Map<String,Object> prodProps = new HashMap<>();
+                Map<String, Object> prodProps = new HashMap<>();
                 prodProps.put("productType", req.getProductType());
                 prodProps.put("productStatus", "Active");
                 prodProps.put("linkedSubscriber", subscriber.getDiscoveredName());
@@ -266,18 +273,18 @@ public class CreateServiceEVPN implements HttpAction {
                 prod.setProperties(prodProps);
                 prod.setCustomer(subscriber);
                 product = prod;
-                productRepo.save(prod,2);
+                productRepo.save(prod, 2);
             }
-            if(isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()){
+            if (isSubscriberExist.get() && isSubscriptionExist.get() && isProductExist.get()) {
                 log.error("createServiceEVPN service already exist");
-                return new CreateServiceEVPNResponse("409","Service already exist/Duplicate entry",Instant.now().toString(),subscriberNameStr,ontName);
+                return new CreateServiceEVPNResponse("409", "Service already exist/Duplicate entry", Instant.now().toString(), subscriberNameStr, ontName);
             }
-            if(isSubscriptionExist.get()){
+            if (isSubscriptionExist.get()) {
                 subscription = subscriptionRepo.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 Set<Service> existingServices = subscription.getService();
                 existingServices.add(product);
                 subscription.setService(existingServices);
-            }else{
+            } else {
                 subscription.setService(new HashSet<>(List.of(product)));
             }
             subscriptionRepo.save(subscription);
@@ -285,9 +292,9 @@ public class CreateServiceEVPN implements HttpAction {
             // 6) CFS: find or create (properties map)
             Optional<Service> cfsOpt = serviceCustomRepository.findByDiscoveredName(cfsName);
             Service cfs = null;
-            if(cfsOpt.isPresent()){
+            if (cfsOpt.isPresent()) {
                 cfs = cfsOpt.get();
-            }else{
+            } else {
                 log.error("------------Trace # 11--------------- Creating CFS: " + cfsName);
                 Service newCfs = new Service();
                 try {
@@ -295,10 +302,10 @@ public class CreateServiceEVPN implements HttpAction {
                     newCfs.setDiscoveredName(cfsName);
                     newCfs.setContext("Setar");
                     newCfs.setKind("SetarCFS");
-                }catch (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                Map<String,Object> cfsProps = new HashMap<>();
+                Map<String, Object> cfsProps = new HashMap<>();
                 cfsProps.put("serviceStatus", "Active");
                 cfsProps.put("serviceType", req.getProductType());
                 cfsProps.put("serviceStartDate", Instant.now().toString());
@@ -306,16 +313,16 @@ public class CreateServiceEVPN implements HttpAction {
                 cfsProps.put("linkedProduct", product.getDiscoveredName());
                 newCfs.setProperties(cfsProps);
                 newCfs.addUsingService(product);
-                cfs=newCfs;
-                serviceCustomRepository.save(newCfs,2);
+                cfs = newCfs;
+                serviceCustomRepository.save(newCfs, 2);
             }
 
             // 7) RFS: find or create (properties map)
             Optional<Service> rfsOpt = serviceCustomRepository.findByDiscoveredName(rfsName);
             Service rfs = null;
-            if(rfsOpt.isPresent()){
+            if (rfsOpt.isPresent()) {
                 rfs = rfsOpt.get();
-            }else{
+            } else {
                 log.error("------------Trace # 12--------------- Creating RFS: " + rfsName);
                 Service newRfs = new Service();
                 try {
@@ -323,10 +330,10 @@ public class CreateServiceEVPN implements HttpAction {
                     newRfs.setDiscoveredName(rfsName);
                     newRfs.setContext("Setar");
                     newRfs.setKind("SetarRFS");
-                }catch (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                Map<String,Object> rfsProps = new HashMap<>();
+                Map<String, Object> rfsProps = new HashMap<>();
                 rfsProps.put("rfsStatus", "Active");
                 rfsProps.put("rfsType", req.getProductType());
                 rfsProps.put("linkedCFS", cfs.getDiscoveredName());
@@ -339,9 +346,9 @@ public class CreateServiceEVPN implements HttpAction {
             // 8) OLT: find or create
             Optional<LogicalDevice> oltOpt = logicalDeviceRepo.findByDiscoveredName(req.getOltName());
             LogicalDevice olt = null;
-            if(oltOpt.isPresent()){
+            if (oltOpt.isPresent()) {
                 olt = oltOpt.get();
-            }else{
+            } else {
                 log.error("------------Trace # 13--------------- Creating OLT: " + req.getOltName());
                 LogicalDevice dev = new LogicalDevice();
                 try {
@@ -349,10 +356,10 @@ public class CreateServiceEVPN implements HttpAction {
                     dev.setDiscoveredName(req.getOltName());
                     dev.setContext("Setar");
                     dev.setKind("OLTDevice");
-                }catch (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                Map<String,Object> oltProps = new HashMap<>();
+                Map<String, Object> oltProps = new HashMap<>();
                 oltProps.put("OperationalState", "Active");
                 oltProps.put("oltPosition", req.getOltName());
                 if (req.getTemplateNameOnt() != null) oltProps.put("ontTemplate", req.getTemplateNameOnt());
@@ -360,16 +367,16 @@ public class CreateServiceEVPN implements HttpAction {
                 // link RFS reference if exists
                 dev.getProperties().put("linkedRFS", rfs.getDiscoveredName());
                 dev.setUsingService(new HashSet<>(List.of(rfs)));
-                olt =dev;
-                logicalDeviceRepo.save(dev,2);
+                olt = dev;
+                logicalDeviceRepo.save(dev, 2);
             }
 
             // 9) ONT: find or create, manage EVPN counters
             LogicalDevice ont = null;
             Optional<LogicalDevice> ontOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
-            if(ontOpt.isPresent()){
+            if (ontOpt.isPresent()) {
                 ont = ontOpt.get();
-            }else{
+            } else {
                 log.error("------------Trace # 14--------------- Creating ONT: " + ontName);
                 LogicalDevice dev = new LogicalDevice();
                 try {
@@ -377,10 +384,10 @@ public class CreateServiceEVPN implements HttpAction {
                     dev.setDiscoveredName(ontName);
                     dev.setContext("Setar");
                     dev.setKind("ONTDevice");
-                }catch (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                Map<String,Object> ontProps = new HashMap<>();
+                Map<String, Object> ontProps = new HashMap<>();
                 ontProps.put("serialNumber", req.getOntSN());
                 ontProps.put("deviceModel", req.getOntModel());
                 ontProps.put("OperationalState", "Active");
@@ -390,9 +397,10 @@ public class CreateServiceEVPN implements HttpAction {
                 ontProps.put("evpnEthPort3Template", "0");
                 ontProps.put("evpnEthPort4Template", "0");
                 ontProps.put("evpnEthPort5Template", "0");
-                ontProps.put("oltPosition",req.getOltName());
+                ontProps.put("oltPosition", req.getOltName());
                 // management fields
-                if (req.getTemplateNameVlanMgmnt() != null) ontProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
+                if (req.getTemplateNameVlanMgmnt() != null)
+                    ontProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
                 if (req.getMgmntVlanId() != null) ontProps.put("mgmtVlan", req.getMgmntVlanId());
                 // link RFS
                 ontProps.put("linkedRFS", rfs.getDiscoveredName());
@@ -419,9 +427,9 @@ public class CreateServiceEVPN implements HttpAction {
             if (!"IPBH".equalsIgnoreCase(req.getProductSubtype())) {
                 LogicalInterface mgmtVlan = null;
                 Optional<LogicalInterface> mgmtVlanOpt = vlanRepo.findByDiscoveredName(mgmtVlanName);
-                if(mgmtVlanOpt.isPresent()){
+                if (mgmtVlanOpt.isPresent()) {
                     mgmtVlan = mgmtVlanOpt.get();
-                }else{
+                } else {
                     log.error("------------Trace # 15--------------- Creating mgmt VLAN: " + mgmtVlanName);
                     LogicalInterface v = new LogicalInterface();
                     try {
@@ -432,9 +440,10 @@ public class CreateServiceEVPN implements HttpAction {
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                    Map<String,Object> vProps = new HashMap<>();
+                    Map<String, Object> vProps = new HashMap<>();
                     vProps.put("vlanId", req.getMgmntVlanId());
-                    if (req.getTemplateNameVlanMgmnt() != null) vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
+                    if (req.getTemplateNameVlanMgmnt() != null)
+                        vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
                     vProps.put("OperationalState", "Active");
                     v.setProperties(vProps);
                     vlanRepo.save(v);
@@ -462,9 +471,9 @@ public class CreateServiceEVPN implements HttpAction {
             LogicalInterface serviceVlan = null;
             if (req.getVlanId() != null) {
                 Optional<LogicalInterface> serviceVlanOpt = vlanRepo.findByDiscoveredName(vlanName);
-                if(serviceVlanOpt.isPresent()){
-                    serviceVlan=serviceVlanOpt.get();
-                }else{
+                if (serviceVlanOpt.isPresent()) {
+                    serviceVlan = serviceVlanOpt.get();
+                } else {
                     log.error("------------Trace # 16--------------- Creating service VLAN: " + vlanName);
                     LogicalInterface v = new LogicalInterface();
                     try {
@@ -472,10 +481,10 @@ public class CreateServiceEVPN implements HttpAction {
                         v.setDiscoveredName(vlanName);
                         v.setContext("Setar");
                         v.setKind("VLANInterface");
-                    }catch (Exception e) {
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                    Map<String,Object> vProps = new HashMap<>();
+                    Map<String, Object> vProps = new HashMap<>();
                     vProps.put("vlanId", req.getVlanId());
                     vProps.put("OperationalState", "Active");
                     if (usedStandardEvpn) {
@@ -493,7 +502,7 @@ public class CreateServiceEVPN implements HttpAction {
                         vProps.put("vlanTemplate", req.getTemplateNameVlan());
                     }
                     v.setProperties(vProps);
-                    vlanRepo.save(v,2);
+                    vlanRepo.save(v, 2);
                     ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
                     ont.setContained(new HashSet<>(List.of(v)));
                     logicalDeviceRepo.save(ont);
@@ -525,8 +534,8 @@ public class CreateServiceEVPN implements HttpAction {
             String servCounter = String.valueOf(newCounter);
 
             // apply per-port updates to OLT and ONT properties
-            Map<String,Object> oltProps = olt.getProperties();
-            Map<String,Object> ontProps = ont.getProperties();
+            Map<String, Object> oltProps = olt.getProperties();
+            Map<String, Object> ontProps = ont.getProperties();
 
             if ("4".equals(selectedPort)) {
                 oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
@@ -596,8 +605,8 @@ public class CreateServiceEVPN implements HttpAction {
             logicalDeviceRepo.save(olt);
 
             // 15) Single-tagged VLAN interface creation logic (spec) - simplified: create one matching
-            if ( (req.getProductType() != null && (req.getProductType().contains("EVPN") || req.getProductType().contains("ENTERPRISE")))
-                    || (req.getProductSubtype() != null && req.getProductSubtype().contains("Cloudstarter")) ) {
+            if ((req.getProductType() != null && (req.getProductType().contains("EVPN") || req.getProductType().contains("ENTERPRISE")))
+                    || (req.getProductSubtype() != null && req.getProductSubtype().contains("Cloudstarter"))) {
                 // pick index 2..8 -> naive approach: choose 2
                 for (int idx = 2; idx <= 8; idx++) {
                     String singleName = req.getOntSN() + "_P" + selectedPort + "_SINGLETAGGED_" + idx;
@@ -607,7 +616,7 @@ public class CreateServiceEVPN implements HttpAction {
                         singleVlan.setDiscoveredName(singleName);
                         singleVlan.setContext("Setar");
                         singleVlan.setKind("VLANInterface");
-                        Map<String,Object> svProps = new HashMap<>();
+                        Map<String, Object> svProps = new HashMap<>();
                         svProps.put("vlanId", req.getVlanId());
                         svProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
                         svProps.put("configuredOntSN", req.getOntSN());
