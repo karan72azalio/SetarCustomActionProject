@@ -172,7 +172,7 @@ public class CreateServiceCBM implements HttpAction {
                     prop.put("serviceSerialNumber", request.getCbmSN());
                     prop.put("serviceMac", request.getCbmMac());
                     prop.put("serviceID", request.getServiceId());
-                    prop.put("QosSessionProfile", request.getQosProfile());
+                    prop.put("veipQosSessionProfile", request.getQosProfile());
                     prop.put("houseHoldId", request.getHhid());
                     prop.put("customerGroupId", request.getCustomerGroupId());
                     prop.put("subscriberID_CableModem", request.getSubscriberId());
