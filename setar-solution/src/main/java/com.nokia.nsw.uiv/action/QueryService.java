@@ -65,7 +65,8 @@ public class QueryService implements HttpAction {
             Set<String> cfsNameSet = new LinkedHashSet<>();
 
             for (Service cfs : cfsList) {
-                if(cfs.getDiscoveredName().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS)) {
+                if(cfs.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS)) {
+
                     if (cfs.getDiscoveredName().contains(serviceId)) {
                         String cfsName = cfs.getDiscoveredName();
                         if (cfsName == null) continue;
