@@ -30,11 +30,16 @@ public class QueryService implements HttpAction {
     private static final String ACTION_LABEL = Constants.QUERY_SERVICE;
     private static final String ERROR_PREFIX = "UIV action QueryService execution failed - ";
 
-    @Autowired private CustomerCustomRepository customerRepository;
-    @Autowired private SubscriptionCustomRepository subscriptionRepository;
-    @Autowired private ProductCustomRepository productRepository;
-    @Autowired private ServiceCustomRepository serviceCustomRepository;
-    @Autowired private LogicalDeviceCustomRepository logicalDeviceRepository;
+    @Autowired
+    private CustomerCustomRepository customerRepository;
+    @Autowired
+    private SubscriptionCustomRepository subscriptionRepository;
+    @Autowired
+    private ProductCustomRepository productRepository;
+    @Autowired
+    private ServiceCustomRepository serviceCustomRepository;
+    @Autowired
+    private LogicalDeviceCustomRepository logicalDeviceRepository;
 
     @Override
     public Class<?> getActionClass() {
@@ -65,7 +70,7 @@ public class QueryService implements HttpAction {
             Set<String> cfsNameSet = new LinkedHashSet<>();
 
             for (Service cfs : cfsList) {
-                if(cfs.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS)) {
+                if (cfs.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS)) {
 
                     if (cfs.getDiscoveredName().contains(serviceId)) {
                         String cfsName = cfs.getDiscoveredName();
@@ -89,7 +94,7 @@ public class QueryService implements HttpAction {
                 Optional<Service> optCfs = serviceCustomRepository.findByDiscoveredName(cfsName);
                 if (!optCfs.isPresent()) continue;
                 Service cfs = optCfs.get();
-                String productName = cfs.getUsingService().stream().filter(ser->ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
+                String productName = cfs.getUsingService().stream().filter(ser -> ser.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_PRODUCT)).findFirst().get().getDiscoveredName();
                 String rfsName = cfsName.replace("CFS", "RFS");
                 Optional<Service> optRfs = serviceCustomRepository.findByDiscoveredName(rfsName);
                 Optional<Product> optProd = productRepository.findByDiscoveredName(productName);
@@ -109,13 +114,45 @@ public class QueryService implements HttpAction {
                     Subscription sub = optSub.get();
                     iptvinfo.put("CUSTOMER_GROUP_ID", sub.getProperties().get("customerGroupId"));
                     iptvinfo.put("CPE_MacAddr_1", sub.getProperties().get("serviceMac"));
+                    if (sub.getProperties().get("serviceLink").toString().equalsIgnoreCase("Cable_Modem")) {
+                        iptvinfo.put("CBM_Subscriber_ID_1", sub.getProperties().get("subscriberID_CableModem"));
+                    }
                     iptvinfo.put("Service_Link", sub.getProperties().get("serviceLink"));
                     iptvinfo.put("CPE_GW_MacAddr_1", sub.getProperties().get("gatewayMacAddress"));
                     iptvinfo.put("Service_Package_1", sub.getProperties().get("veipQosSessionProfile"));
                     iptvinfo.put("Service_Subscriber_1", sub.getProperties().get("veipQosSessionProfile"));
-                    returnedParams.addAll(Arrays.asList("CUSTOMER_GROUP_ID","CPE_MacAddr_1","Service_Link",
-                            "CPE_GW_MacAddr_1","Service_Package_1","Service_Subscriber_1"));
+                    returnedParams.addAll(Arrays.asList("CUSTOMER_GROUP_ID", "CPE_MacAddr_1", "Service_Link",
+                            "CPE_GW_MacAddr_1", "Service_Package_1", "Service_Subscriber_1", "CBM_Subscriber_ID_1"));
+
+
+                    Set<Service> products = sub.getService();
+
+                    if (products != null && !products.isEmpty()) {
+
+                        int ordinal = 1;
+
+                        for (Service product : products) {
+
+                            String prodName = product.getName();
+
+                            if (prodName != null && productName.startsWith(request.getServiceId())) {
+
+                                String value = productName.substring(request.getServiceId().length());
+
+                                value = value.replace("_", "");
+
+                                String key = "Service_Component_" + ordinal;
+
+                                iptvinfo.put(key, value);
+                                returnedParams.add(key);
+
+                                ordinal++;
+                            }
+                        }
+                    }
+
                 }
+
 
                 // Step 5: Populate Subscriber details
                 if (optCust.isPresent()) {
