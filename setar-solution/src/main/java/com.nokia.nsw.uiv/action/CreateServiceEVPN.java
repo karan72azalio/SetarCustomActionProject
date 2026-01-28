@@ -91,7 +91,7 @@ public class CreateServiceEVPN implements HttpAction {
                 log.error("------------Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
                 return new CreateServiceEVPNResponse(
                         "400",
-                        ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
+                        ERROR_PREFIX + bre.getMessage(),
                         Instant.now().toString(),
                         null,
                         null
