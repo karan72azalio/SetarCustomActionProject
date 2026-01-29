@@ -394,6 +394,7 @@ public class CreateServiceEVPN implements HttpAction {
                 if (req.getTemplateNameOnt() != null) ontProps.put("ontTemplate", req.getTemplateNameOnt());
                 ontProps.put("oltPosition", req.getOltName());
                 // initialize counters
+                ontProps.put("evpnEthPort2Template", "0");
                 ontProps.put("evpnEthPort3Template", "0");
                 ontProps.put("evpnEthPort4Template", "0");
                 ontProps.put("evpnEthPort5Template", "0");
@@ -435,8 +436,8 @@ public class CreateServiceEVPN implements HttpAction {
                     try {
                         v.setLocalName(Validations.encryptName(mgmtVlanName));
                         v.setDiscoveredName(mgmtVlanName);
-                        v.setContext("Setar");
-                        v.setKind("VLANInterface");
+                        v.setContext(Constants.SETAR);
+                        v.setKind(Constants.SETAR_KIND_VLAN_INTERFACE);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -538,21 +539,21 @@ public class CreateServiceEVPN implements HttpAction {
             Map<String, Object> ontProps = ont.getProperties();
 
             if ("4".equals(selectedPort)) {
-                oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
-                ontProps.put("evpnEthPortTemplate", servCounter);
+                oltProps.put("evpnEthPort4Template", req.getTemplateNamePort());
+                ontProps.put("evpnEthPort4Template", servCounter);
             } else if ("5".equals(selectedPort)) {
-                oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
-                ontProps.put("evpnEthPortTemplate", servCounter);
+                oltProps.put("evpnEthPort5Template", req.getTemplateNamePort());
+                ontProps.put("evpnEthPort5Template", servCounter);
             } else if ("3".equals(selectedPort)) {
-                oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
-                ontProps.put("evpnEthPortTemplate", servCounter);
+                oltProps.put("evpnEthPort3Template", req.getTemplateNamePort());
+                ontProps.put("evpnEthPort3Template", servCounter);
             } else if ("2".equals(selectedPort)) {
                 // spec asked: port2 uses original pre-increment value
-                ontProps.put("evpnEthPortTemplate", String.valueOf(currentCounter));
-                oltProps.put("evpnEthPortTemplate", req.getTemplateNamePort());
+                ontProps.put("evpnEthPort2Template", String.valueOf(currentCounter));
+                oltProps.put("evpnEthPort2Template", req.getTemplateNamePort());
             } else { // port 1
                 // port 1: set ONT port-1 EVPN VLAN template
-                ontProps.put("evpnEthPortTemplate", req.getTemplateNameVlan());
+                ontProps.put("evpnEthPort1Template", req.getTemplateNameVlan());
                 // no olt update required
             }
 
