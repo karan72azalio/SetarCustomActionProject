@@ -140,9 +140,7 @@ public class QueryService implements HttpAction {
 
                             if (prodName != null && prodName.startsWith(request.getServiceId())) {
 
-                                String value = productName.substring(request.getServiceId().length());
-
-                                value = value.replace("_", "");
+                                String value = prodName.replace(request.getServiceId(),"");
 
                                 String key = "Service_Component_" + ordinal;
 
