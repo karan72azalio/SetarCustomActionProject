@@ -142,6 +142,8 @@ public class QueryService implements HttpAction {
 
                                 String value = prodName.replace(request.getServiceId(),"");
 
+                                value=value.replace("_","");
+
                                 String key = "Service_Component_" + ordinal;
 
                                 iptvinfo.put(key, value);
