@@ -136,7 +136,7 @@ public class QueryService implements HttpAction {
 
                         for (Service product : products) {
 
-                            String prodName = product.getName();
+                            String prodName = product.getDiscoveredName();
 
                             if (prodName != null && productName.startsWith(request.getServiceId())) {
 
