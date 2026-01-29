@@ -138,7 +138,7 @@ public class QueryService implements HttpAction {
 
                             String prodName = product.getDiscoveredName();
 
-                            if (prodName != null && productName.startsWith(request.getServiceId())) {
+                            if (prodName != null && prodName.startsWith(request.getServiceId())) {
 
                                 String value = productName.substring(request.getServiceId().length());
 
