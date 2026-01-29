@@ -176,22 +176,100 @@ public class QueryService implements HttpAction {
 
                     Set<Resource> ls = rfs.getUsedResource();
                     ls.forEach(res -> {
-                        if (res instanceof LogicalDevice) {
-                            LogicalDevice ont = (LogicalDevice) res;
-                            String name = ont.getDiscoveredName();
+                        // Counters should be defined outside the loop
+                        int apIndex = 1;
+                        int stbIndex = 1;
 
-                            if (name != null && name.contains("ONT")) {
-                                iptvinfo.put("Service_Link", "ONT");
-                                iptvinfo.put("CPE_Model_1", ont.getProperties().get("deviceModel"));
-                                iptvinfo.put("CPE_Serial_Number_1", ont.getProperties().get("serialNo"));
-                                iptvinfo.put("Menm_1", ont.getProperties().get("description"));
-                            } else if (name != null && name.contains("CBM")) {
-                                iptvinfo.put("Service_Link", "Cable_Modem");
-                                iptvinfo.put("CBM_Device_MacAddr_1", ont.getProperties().get("macAddress"));
-                                iptvinfo.put("CBM_Device_Model_1", ont.getProperties().get("deviceType"));
+                        if (res instanceof LogicalDevice) {
+                            LogicalDevice device = (LogicalDevice) res;
+                            String name = device.getDiscoveredName();
+
+                            if (name == null) {
+                                return;
                             }
-                            log.error("------------Test Trace #9--------------- ONT updated: " + ont.getLocalName());
+
+                            /* ===================== ONT ===================== */
+                            if (name.contains("ONT")) {
+                                iptvinfo.put("Service_Link", "ONT");
+                                iptvinfo.put("CPE_Model_1", device.getProperties().get("deviceModel"));
+                                iptvinfo.put("CPE_Serial_Number_1", device.getProperties().get("serialNo"));
+                                iptvinfo.put("Menm_1", device.getProperties().get("description"));
+
+                                returnedParams.add("CPE_Model_1");
+                                returnedParams.add("CPE_Serial_Number_1");
+                                returnedParams.add("Menm_1");
+                            }
+
+                            /* ===================== CBM ===================== */
+                            else if (name.contains("CBM")) {
+                                iptvinfo.put("Service_Link", "Cable_Modem");
+                                iptvinfo.put("CBM_Device_MacAddr_1", device.getProperties().get("macAddress"));
+                                iptvinfo.put("CBM_Device_Model_1", device.getProperties().get("deviceType"));
+
+                                returnedParams.add("CBM_Device_MacAddr_1");
+                                returnedParams.add("CBM_Device_Model_1");
+                            }
+
+                            /* ===================== OLT ===================== */
+                            else if (name.contains(":")) {
+                                iptvinfo.put("ONT_OBJECT_ID", device.getName());
+                                iptvinfo.put("TEMPLATE_NAME_ONT", device.getProperties().get("ontTemplate"));
+                                iptvinfo.put("TEMPLATE_NAME_IPTV", device.getProperties().get("veipIptvTemplate"));
+                                iptvinfo.put("TEMPLATE_NAME_IGMP", device.getProperties().get("igmpTemplate"));
+                                iptvinfo.put("TEMPLATE_NAME_VEIP", device.getProperties().get("veipServiceTemplate"));
+                                iptvinfo.put("TEMPLATE_NAME_HSI", device.getProperties().get("veipHsiTemplate"));
+
+                                returnedParams.add("ONT_OBJECT_ID");
+                                returnedParams.add("TEMPLATE_NAME_ONT");
+                                returnedParams.add("TEMPLATE_NAME_IPTV");
+                                returnedParams.add("TEMPLATE_NAME_IGMP");
+                                returnedParams.add("TEMPLATE_NAME_VEIP");
+                                returnedParams.add("TEMPLATE_NAME_HSI");
+                            }
+
+                            /* ===================== AP ===================== */
+                            else if (name.startsWith("AP")) {
+                                String idx = String.valueOf(apIndex);
+
+                                iptvinfo.put("AP_SerialNo_" + idx, device.getProperties().get("serialNo"));
+                                iptvinfo.put("AP_MacAddr_" + idx, device.getProperties().get("macAddress"));
+                                iptvinfo.put("AP_PreShareKey_" + idx, device.getProperties().get("presharedKey"));
+                                iptvinfo.put("AP_Status_" + idx, device.getProperties().get("administrativeStateName"));
+                                iptvinfo.put("AP_Model_" + idx, device.getProperties().get("deviceModel"));
+
+                                returnedParams.add("AP_SerialNo_" + idx);
+                                returnedParams.add("AP_MacAddr_" + idx);
+                                returnedParams.add("AP_PreShareKey_" + idx);
+                                returnedParams.add("AP_Status_" + idx);
+                                returnedParams.add("AP_Model_" + idx);
+
+                                apIndex++;
+                            }
+
+                            /* ===================== STB ===================== */
+                            else if (name.startsWith("STB")) {
+                                String idx = String.valueOf(stbIndex);
+
+                                iptvinfo.put("STB_SerialNo_" + idx, device.getProperties().get("serialNo"));
+                                iptvinfo.put("STB_MacAddr_" + idx, device.getProperties().get("macAddress"));
+                                iptvinfo.put("STB_PreShareKey_" + idx, device.getProperties().get("presharedKey"));
+                                iptvinfo.put("STB_CustomerGroupID_" + idx, device.getProperties().get("deviceGroupId"));
+                                iptvinfo.put("STB_Status_" + idx, device.getProperties().get("administrativeStateName"));
+                                iptvinfo.put("STB_Model_" + idx, device.getProperties().get("deviceModel"));
+
+                                returnedParams.add("STB_SerialNo_" + idx);
+                                returnedParams.add("STB_MacAddr_" + idx);
+                                returnedParams.add("STB_PreShareKey_" + idx);
+                                returnedParams.add("STB_CustomerGroupID_" + idx);
+                                returnedParams.add("STB_Status_" + idx);
+                                returnedParams.add("STB_Model_" + idx);
+
+                                stbIndex++;
+                            }
+
+                            log.debug("Processed device: {}", device.getLocalName());
                         }
+
                     });
                 }
 
