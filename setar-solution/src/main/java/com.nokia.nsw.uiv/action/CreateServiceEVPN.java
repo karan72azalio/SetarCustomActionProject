@@ -113,18 +113,18 @@ public class CreateServiceEVPN implements HttpAction {
                         null
                 );
             }
-
-            String productNameStr = req.getSubscriberName() + Constants.UNDER_SCORE + req.getProductSubtype() + Constants.UNDER_SCORE + req.getServiceId();
-            if (productNameStr.length() > 100) {
-                log.error("------------Trace # 5--------------- Product name too long");
+            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE + req.getOntSN();
+            if (subscriberNameStr.length() > 100) {
+                log.error("------------Trace # 3--------------- Subscriber name too long");
                 return new CreateServiceEVPNResponse(
                         "400",
-                        ERROR_PREFIX + "Product name too long",
+                        ERROR_PREFIX + "Subscriber name too long",
                         Instant.now().toString(),
                         null,
                         null
                 );
             }
+
             String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE + req.getServiceId() + Constants.UNDER_SCORE + req.getOntSN();
             if (subscriptionName.length() > 100) {
                 log.error("------------Trace # 4-------V-------- Subscription name too long");
@@ -137,20 +137,22 @@ public class CreateServiceEVPN implements HttpAction {
                 );
             }
 
-            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
-            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-
-            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE + req.getOntSN();
-            if (subscriberNameStr.length() > 100) {
-                log.error("------------Trace # 3--------------- Subscriber name too long");
+            String productNameStr = req.getSubscriberName() + Constants.UNDER_SCORE + req.getProductSubtype() + Constants.UNDER_SCORE + req.getServiceId();
+            if (productNameStr.length() > 100) {
+                log.error("------------Trace # 5--------------- Product name too long");
                 return new CreateServiceEVPNResponse(
                         "400",
-                        ERROR_PREFIX + "Subscriber name too long",
+                        ERROR_PREFIX + "Product name too long",
                         Instant.now().toString(),
                         null,
                         null
                 );
             }
+
+            String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+            String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+
+
 
             String vlanName = req.getMenm() + Constants.UNDER_SCORE + (req.getVlanId() == null ? "" : req.getVlanId());
             String mgmtVlanName = req.getMenm() + Constants.UNDER_SCORE + req.getMgmntVlanId();
@@ -523,10 +525,10 @@ public class CreateServiceEVPN implements HttpAction {
                 if ("4".equals(selectedPort)) {
                     currentCounter = Integer.parseInt((String) ont.getProperties().getOrDefault("evpnEthPort4Template", "0"));
                 } else if ("5".equals(selectedPort)) {
-                    currentCounter = Integer.parseInt((String) ont.getProperties().getOrDefault("evpnEthPort4Template", "0"));
+                    currentCounter = Integer.parseInt((String) ont.getProperties().getOrDefault("evpnEthPort5Template", "0"));
                 } else {
                     // ports 1..3 default to port3Counter usage
-                    currentCounter = Integer.parseInt((String) ont.getProperties().getOrDefault("evpnEthPort4Template", "0"));
+                    currentCounter = Integer.parseInt((String) ont.getProperties().getOrDefault("evpnEthPort3Template", "0"));
                 }
             } catch (Exception e) {
                 currentCounter = 0;
