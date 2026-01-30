@@ -609,29 +609,33 @@ public class CreateServiceEVPN implements HttpAction {
                     || (req.getProductSubtype() != null && req.getProductSubtype().contains("Cloudstarter"))) {
                 // pick index 2..8 -> naive approach: choose 2
                 for (int idx = 2; idx <= 8; idx++) {
-                    String singleName = req.getOntSN() + "_P" + selectedPort + "_SINGLETAGGED_" + idx;
-                    if (!vlanRepo.findByDiscoveredName(singleName).isPresent()) {
-                        LogicalInterface singleVlan = new LogicalInterface();
-                        singleVlan.setLocalName(singleName);
-                        singleVlan.setDiscoveredName(singleName);
-                        singleVlan.setContext("Setar");
-                        singleVlan.setKind("VLANInterface");
-                        Map<String, Object> svProps = new HashMap<>();
-                        svProps.put("vlanId", req.getVlanId());
-                        svProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
-                        svProps.put("configuredOntSN", req.getOntSN());
-                        svProps.put("configuredPort", selectedPort);
-                        svProps.put("vlanTemplate", req.getTemplateNameVlan());
-                        svProps.put("serviceId", req.getServiceId());
-                        svProps.put("vlanCreateTemplate", req.getTemplateNameVlanCreate());
-                        svProps.put("OperationalState", "Active");
-                        svProps.put("linkedOnt", ont.getDiscoveredName());
-                        singleVlan.setProperties(svProps);
-                        vlanRepo.save(singleVlan);
-                        ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                        ont.setContained(new HashSet<>(List.of(singleVlan)));
-                        logicalDeviceRepo.save(ont);
-                        break;
+                    String freeTemp =  String.valueOf(idx);
+
+                    if (req.getTemplateNameVlan().endsWith(freeTemp)) {
+                        String singleName = req.getOntSN() + "_P" + selectedPort + "_SINGLETAGGED_" + idx;
+                        if (!vlanRepo.findByDiscoveredName(singleName).isPresent()) {
+                            LogicalInterface singleVlan = new LogicalInterface();
+                            singleVlan.setLocalName(singleName);
+                            singleVlan.setDiscoveredName(singleName);
+                            singleVlan.setContext("Setar");
+                            singleVlan.setKind("VLANInterface");
+                            Map<String, Object> svProps = new HashMap<>();
+                            svProps.put("vlanId", req.getVlanId());
+                            svProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
+                            svProps.put("configuredOntSN", req.getOntSN());
+                            svProps.put("configuredPort", selectedPort);
+                            svProps.put("vlanTemplate", req.getTemplateNameVlan());
+                            svProps.put("serviceId", req.getServiceId());
+                            svProps.put("vlanCreateTemplate", req.getTemplateNameVlanCreate());
+                            svProps.put("OperationalState", "Active");
+                            svProps.put("linkedOnt", ont.getDiscoveredName());
+                            singleVlan.setProperties(svProps);
+                            vlanRepo.save(singleVlan);
+                            ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
+                            ont.setContained(new HashSet<>(List.of(singleVlan)));
+                            logicalDeviceRepo.save(ont);
+                            break;
+                        }
                     }
                 }
             }
