@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,8 +72,25 @@ public class QueryAccountCPE implements HttpAction {
             Subscription matchedSub = null;
 
             // Step 2: Find candidate subscriptions (Name CONTAINS pattern)
-            String pattern = accountNumber + Constants.UNDER_SCORE  + serviceId;
-            Iterable<Subscription> subscriptionList = subscriptionRepo.findAll(pattern);
+            String pattern;
+
+            List<Subscription> subscriptionList = new ArrayList<>();
+            List<Subscription> subscriptions= (List<Subscription>) subscriptionRepo.findAll();
+            for(Subscription s:subscriptions) {
+                if (accountNumber != null && serviceId != null) {
+                    pattern = accountNumber + Constants.UNDER_SCORE + serviceId;
+                    if(s.getDiscoveredName().equalsIgnoreCase(pattern))
+                    {
+                      subscriptionList.add(s);
+                    } else if (s.getDiscoveredName().contains("-"+serviceId))
+                    {
+                        subscriptionList.add(s);
+                    } else if(s.getDiscoveredName().contains(accountNumber))
+                    {
+                        subscriptionList.add(s);
+                    }
+                }
+            }
 
             // Step 3: Select matching subscription
             for (Subscription s : subscriptionList) {
@@ -94,7 +112,7 @@ public class QueryAccountCPE implements HttpAction {
             String serviceLink = safeStr(matchedSub.getProperties().get("serviceLink"));
             String gatewayMac = safeStr(matchedSub.getProperties().get("gatewayMacAddress"));
             String serviceId1 = safeStr(matchedSub.getProperties().get("serviceID"));
-            String accountNumber1 = matchedSub.getLocalName().split(Constants.UNDER_SCORE )[0];
+            String accountNumber1 = matchedSub.getDiscoveredName().split(Constants.UNDER_SCORE )[0];
 
             String ontSN = "";
             String cbmMac = "";
