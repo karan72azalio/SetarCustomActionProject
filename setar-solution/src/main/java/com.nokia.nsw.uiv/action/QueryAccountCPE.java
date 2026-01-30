@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
@@ -48,21 +49,21 @@ public class QueryAccountCPE implements HttpAction {
         log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.error("------------Trace # 1--------------- QueryAccountCPE started");
         QueryAccountCPERequest req = (QueryAccountCPERequest) actionContext.getObject();
-
         try {
+
             // Step 1: Validate mandatory parameters
             try {
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
-                Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
-                Validations.validateMandatoryParams(req.getServiceId(), "serviceId");
+                Validations.validateMandatory(req.getSubscriberName(), "subscriberName");
+                Validations.validateMandatory(req.getServiceId(), "serviceId");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
-            } catch (Exception bre) {
+            } catch (BadRequestException bre) {
                 return new QueryAccountCPEResponse(
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
-                        Instant.now().toString(),
-                        null, null, null, null, null, null, null, null, null, null, null
+                        Instant.now().toString(), "", "", "", "", "", "", "", "", "", "", "", ""
                 );
+
             }
 
             String accountNumber = req.getSubscriberName();
@@ -85,9 +86,8 @@ public class QueryAccountCPE implements HttpAction {
             if (matchedSub == null) {
                 return new QueryAccountCPEResponse(
                         "404",
-                        "Service Details Not Found.",
-                        Instant.now().toString(),
-                        null, null, null, null, null, null, null, null, null, null, null
+                        ERROR_PREFIX + "Service Details Not Found.",
+                        Instant.now().toString(), "", "", "", "", "", "", "", "", "", "", "", ""
                 );
             }
 
@@ -162,9 +162,9 @@ public class QueryAccountCPE implements HttpAction {
             return new QueryAccountCPEResponse(
                     "500",
                     ERROR_PREFIX + ex.getMessage(),
-                    Instant.now().toString(),
-                    null, null, null, null, null, null, null, null, null, null, null
+                    Instant.now().toString(), "", "", "", "", "", "", "", "", "", "", "", ""
             );
+
         }
     }
 
