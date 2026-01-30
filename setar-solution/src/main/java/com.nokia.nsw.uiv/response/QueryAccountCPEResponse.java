@@ -29,7 +29,4 @@ public class QueryAccountCPEResponse {
     private String voiceMtaMac;
     private String voice1ServiceId;
     private String voice2ServiceId;
-
-    public QueryAccountCPEResponse(String number, String s, String string, Object o, Object o1, Object o2, Object o3, Object o4, Object o5, Object o6, Object o7, Object o8, Object o9, Object o10) {
-    }
 }

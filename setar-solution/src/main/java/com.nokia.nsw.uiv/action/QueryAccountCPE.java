@@ -61,7 +61,7 @@ public class QueryAccountCPE implements HttpAction {
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
                         Instant.now().toString(),
-                        null, null, null, null, null, null, null, null, null, null, null
+                        null, null, null, null, null, null, null, null, null, null, null,null
                 );
             }
 
@@ -87,7 +87,7 @@ public class QueryAccountCPE implements HttpAction {
                         "404",
                         "Service Details Not Found.",
                         Instant.now().toString(),
-                        null, null, null, null, null, null, null, null, null, null, null
+                        null, null, null, null, null, null, null, null, null, null, null,null
                 );
             }
 
@@ -163,7 +163,7 @@ public class QueryAccountCPE implements HttpAction {
                     "500",
                     ERROR_PREFIX + ex.getMessage(),
                     Instant.now().toString(),
-                    null, null, null, null, null, null, null, null, null, null, null
+                    null, null, null, null, null, null, null, null, null, null, null,null
             );
         }
     }
