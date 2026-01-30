@@ -101,24 +101,13 @@ public class CreateServiceEVPN implements HttpAction {
             AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
             AtomicBoolean isProductExist = new AtomicBoolean(true);
             // 2) Prepare names
-            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE + req.getOntSN();
-            if (subscriberNameStr.length() > 100) {
-                log.error("------------Trace # 3--------------- Subscriber name too long");
-                return new CreateServiceEVPNResponse(
-                        "400",
-                        ERROR_PREFIX + "Subscriber name too long",
-                        Instant.now().toString(),
-                        null,
-                        null
-                );
-            }
 
-            String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE + req.getServiceId() + Constants.UNDER_SCORE + req.getOntSN();
-            if (subscriptionName.length() > 100) {
-                log.error("------------Trace # 4-------V-------- Subscription name too long");
+            String ontName = "ONT" + req.getOntSN();
+            if (ontName.length() > 100) {
+                log.error("------------Trace # 6--------------- ONT name too long");
                 return new CreateServiceEVPNResponse(
                         "400",
-                        ERROR_PREFIX + "Subscription name too long",
+                        ERROR_PREFIX + "ONT name too long",
                         Instant.now().toString(),
                         null,
                         null
@@ -136,15 +125,27 @@ public class CreateServiceEVPN implements HttpAction {
                         null
                 );
             }
+            String subscriptionName = req.getSubscriberName() + Constants.UNDER_SCORE + req.getServiceId() + Constants.UNDER_SCORE + req.getOntSN();
+            if (subscriptionName.length() > 100) {
+                log.error("------------Trace # 4-------V-------- Subscription name too long");
+                return new CreateServiceEVPNResponse(
+                        "400",
+                        ERROR_PREFIX + "Subscription name too long",
+                        Instant.now().toString(),
+                        null,
+                        null
+                );
+            }
 
             String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-            String ontName = "ONT" + req.getOntSN();
-            if (ontName.length() > 100) {
-                log.error("------------Trace # 6--------------- ONT name too long");
+
+            String subscriberNameStr = req.getSubscriberName() + Constants.UNDER_SCORE + req.getOntSN();
+            if (subscriberNameStr.length() > 100) {
+                log.error("------------Trace # 3--------------- Subscriber name too long");
                 return new CreateServiceEVPNResponse(
                         "400",
-                        ERROR_PREFIX + "ONT name too long",
+                        ERROR_PREFIX + "Subscriber name too long",
                         Instant.now().toString(),
                         null,
                         null
