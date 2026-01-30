@@ -80,9 +80,10 @@ public class ModifySubscriber implements HttpAction {
             List<Service> cfsList = new ArrayList<>();
             for(Service cfs:cfsList1)
             {
-                if(cfs.getDiscoveredName().contains(oldSubscriberName))
-                {
-                    cfsList.add(cfs);
+                if(cfs.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS)) {
+                    if (cfs.getDiscoveredName().contains(oldSubscriberName)) {
+                        cfsList.add(cfs);
+                    }
                 }
             }
             log.error("------------Test Trace # 4--------------- CFS candidates found: " + cfsList.size());

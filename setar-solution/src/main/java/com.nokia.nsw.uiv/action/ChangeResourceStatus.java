@@ -69,15 +69,6 @@ public class ChangeResourceStatus implements HttpAction {
 
             log.error("------------Test Trace # 3--------------- Inputs: SN=" + sn + ", Type=" + type + ", TargetStatus=" + targetStatus);
 
-            // 2. Resolve states
-            if (!("Available".equalsIgnoreCase(targetStatus) || "Deallocated".equalsIgnoreCase(targetStatus) || "Unknown".equalsIgnoreCase(targetStatus) || "NotApplicabe".equalsIgnoreCase(targetStatus))) {
-                return new ChangeResourceStatusResponse(
-                        "400",
-                        ERROR_PREFIX + "Invalid resourceStatus: " + targetStatus,
-                        Instant.now().toString(),
-                        sn, "", targetStatus, "", type
-                );
-            }
 
             // 3. Derive Device Name
             String devName = type + Constants.UNDER_SCORE  + sn;
@@ -98,7 +89,7 @@ public class ChangeResourceStatus implements HttpAction {
             LogicalDevice device = devOpt.get();
             String currentStatus = device.getProperties().get("AdministrativeState")!=null?device.getProperties().get("AdministrativeState").toString():null;
             String model = device.getProperties().get("deviceModel") == null ? "" : device.getProperties().get("deviceModel").toString();
-            String mac = device.getProperties().get("MacAddress") == null ? "" : device.getProperties().get("MacAddress").toString() ;
+            String mac = device.getProperties().get("macAddress") == null ? "" : device.getProperties().get("MacAddress").toString() ;
 
             log.error("------------Test Trace # 6--------------- Device found. Current status=" + currentStatus);
 
@@ -114,7 +105,7 @@ public class ChangeResourceStatus implements HttpAction {
             }
 
             Map<String, Object> deviceProps = device.getProperties();
-            deviceProps.put("administrativeStatus",targetStatus);
+            deviceProps.put("AdministrativeStatus",targetStatus);
             device.setProperties(deviceProps);
             stbRepo.save(device);
 

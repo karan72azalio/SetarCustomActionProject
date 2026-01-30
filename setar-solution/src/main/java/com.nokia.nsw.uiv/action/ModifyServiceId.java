@@ -85,9 +85,10 @@ public class ModifyServiceId implements HttpAction {
             List<Service> cfsList = new ArrayList<>();
             for(Service cfs:cfsList1)
             {
-                if(cfs.getDiscoveredName().contains(oldServiceId))
-                {
-                    cfsList.add(cfs);
+                if(cfs.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_CFS)) {
+                    if (cfs.getDiscoveredName().contains(oldServiceId)) {
+                        cfsList.add(cfs);
+                    }
                 }
             }
             log.error("------------Test Trace # 4--------------- Found CFS candidates: " + cfsList.size());
