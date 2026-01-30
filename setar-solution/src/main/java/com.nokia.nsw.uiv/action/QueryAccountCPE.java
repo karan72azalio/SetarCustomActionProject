@@ -1,5 +1,6 @@
 package com.nokia.nsw.uiv.action;
 
+import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,21 +50,21 @@ public class QueryAccountCPE implements HttpAction {
         log.error(Constants.EXECUTING_ACTION, ACTION_LABEL);
         log.error("------------Trace # 1--------------- QueryAccountCPE started");
         QueryAccountCPERequest req = (QueryAccountCPERequest) actionContext.getObject();
-
         try {
+
             // Step 1: Validate mandatory parameters
             try {
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_STARTED);
-                Validations.validateMandatoryParams(req.getSubscriberName(), "subscriberName");
-                Validations.validateMandatoryParams(req.getServiceId(), "serviceId");
+                Validations.validateMandatory(req.getSubscriberName(), "subscriberName");
+                Validations.validateMandatory(req.getServiceId(), "serviceId");
                 log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
-            } catch (Exception bre) {
+            } catch (BadRequestException bre) {
                 return new QueryAccountCPEResponse(
                         "400",
                         ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
-                        Instant.now().toString(),
-                        null, null, null, null, null, null, null, null, null, null, null,null
+                        Instant.now().toString(), "", "", "", "", "", "", "", "", "", "", "", ""
                 );
+
             }
 
             String accountNumber = req.getSubscriberName();
@@ -70,8 +72,25 @@ public class QueryAccountCPE implements HttpAction {
             Subscription matchedSub = null;
 
             // Step 2: Find candidate subscriptions (Name CONTAINS pattern)
-            String pattern = accountNumber + Constants.UNDER_SCORE  + serviceId;
-            Iterable<Subscription> subscriptionList = subscriptionRepo.findAll(pattern);
+            String pattern;
+
+            List<Subscription> subscriptionList = new ArrayList<>();
+            List<Subscription> subscriptions= (List<Subscription>) subscriptionRepo.findAll();
+            for(Subscription s:subscriptions) {
+                if (accountNumber != null && serviceId != null) {
+                    pattern = accountNumber + Constants.UNDER_SCORE + serviceId;
+                    if(s.getDiscoveredName().equalsIgnoreCase(pattern))
+                    {
+                      subscriptionList.add(s);
+                    } else if (s.getDiscoveredName().contains("-"+serviceId))
+                    {
+                        subscriptionList.add(s);
+                    } else if(s.getDiscoveredName().contains(accountNumber))
+                    {
+                        subscriptionList.add(s);
+                    }
+                }
+            }
 
             // Step 3: Select matching subscription
             for (Subscription s : subscriptionList) {
@@ -85,16 +104,15 @@ public class QueryAccountCPE implements HttpAction {
             if (matchedSub == null) {
                 return new QueryAccountCPEResponse(
                         "404",
-                        "Service Details Not Found.",
-                        Instant.now().toString(),
-                        null, null, null, null, null, null, null, null, null, null, null,null
+                        ERROR_PREFIX + "Service Details Not Found.",
+                        Instant.now().toString(), "", "", "", "", "", "", "", "", "", "", "", ""
                 );
             }
 
             String serviceLink = safeStr(matchedSub.getProperties().get("serviceLink"));
             String gatewayMac = safeStr(matchedSub.getProperties().get("gatewayMacAddress"));
             String serviceId1 = safeStr(matchedSub.getProperties().get("serviceID"));
-            String accountNumber1 = matchedSub.getLocalName().split(Constants.UNDER_SCORE )[0];
+            String accountNumber1 = matchedSub.getDiscoveredName().split(Constants.UNDER_SCORE )[0];
 
             String ontSN = "";
             String cbmMac = "";
@@ -162,9 +180,9 @@ public class QueryAccountCPE implements HttpAction {
             return new QueryAccountCPEResponse(
                     "500",
                     ERROR_PREFIX + ex.getMessage(),
-                    Instant.now().toString(),
-                    null, null, null, null, null, null, null, null, null, null, null,null
+                    Instant.now().toString(), "", "", "", "", "", "", "", "", "", "", "", ""
             );
+
         }
     }
 

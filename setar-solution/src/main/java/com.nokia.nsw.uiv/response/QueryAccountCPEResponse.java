@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
  * Flat object – no maps, only fields explicitly listed in spec.
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class QueryAccountCPEResponse {
 
     private String status;
@@ -29,4 +29,5 @@ public class QueryAccountCPEResponse {
     private String voiceMtaMac;
     private String voice1ServiceId;
     private String voice2ServiceId;
+
 }

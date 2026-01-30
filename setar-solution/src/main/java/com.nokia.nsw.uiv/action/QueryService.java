@@ -75,6 +75,12 @@ public class QueryService implements HttpAction {
                     if (cfs.getDiscoveredName().contains(serviceId)) {
                         String cfsName = cfs.getDiscoveredName();
                         if (cfsName == null) continue;
+                        if(request.getServiceId().contains("_")){
+                            String finalValue=cfsName.substring(cfsName.indexOf("_")+1, cfsName.lastIndexOf("_"));
+                            if(finalValue!=null&&finalValue.equalsIgnoreCase(request.getServiceId())){
+                                cfsNameSet.add(cfsName);
+                            }
+                        }
                         String[] parts = cfsName.split(Constants.UNDER_SCORE);
                         if (parts.length > 2 && parts[2].equalsIgnoreCase(serviceId)) {
                             cfsNameSet.add(cfsName);
