@@ -199,10 +199,12 @@ public class ModifyServiceId implements HttpAction {
                                 log.error("------------Test Trace # 9--------------- ONT updated: " + ont.getDiscoveredName());
                             }else if(ont.getDiscoveredName().contains("CBM")){
                                 LogicalDevice cbm = (LogicalDevice) res;
+                                Map<String,Object> prop = res.getProperties();
                                 String newDevName = cbm.getDiscoveredName().replace(oldServiceId, newServiceId);
                                 log.error("CBM Device updated successfully with the updated name: "+newDevName);
                                 cbm.setDiscoveredName(newDevName);
-                                props.put("serviceLink",newServiceId);
+                                prop.put("serviceLink",newServiceId);
+                                cbm.setProperties(prop);
                                 logicalDeviceRepository.save(cbm);
                                 log.error("------------Test Trace # 10--------------- CBM updated: " + cbm.getDiscoveredName());
                             }
