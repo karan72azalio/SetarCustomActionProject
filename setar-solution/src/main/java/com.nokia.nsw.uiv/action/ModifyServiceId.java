@@ -202,6 +202,8 @@ public class ModifyServiceId implements HttpAction {
                                 String newDevName = cbm.getDiscoveredName().replace(oldServiceId, newServiceId);
                                 log.error("CBM Device updated successfully with the updated name: "+newDevName);
                                 cbm.setDiscoveredName(newDevName);
+                                props.put("serviceLink",newServiceId);
+                                logicalDeviceRepository.save(cbm);
                                 log.error("------------Test Trace # 10--------------- CBM updated: " + cbm.getDiscoveredName());
                             }
                         }
