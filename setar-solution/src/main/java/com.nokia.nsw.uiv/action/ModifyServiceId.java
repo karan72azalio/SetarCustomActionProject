@@ -220,7 +220,9 @@ public class ModifyServiceId implements HttpAction {
                 cfs.setDiscoveredName(newCfsName);
                 log.error("CFS updated successfully with the updated name: "+newCfsName);
                 serviceCustomRepository.save(cfs);
-                updatesApplied = true;
+                if(cfs!=null){
+                    updatesApplied = true;
+                }
                 log.error("------------Test Trace # 12--------------- CFS updated: " + newCfsName);
             }
 
