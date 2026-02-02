@@ -451,8 +451,6 @@ public class CreateServiceEVPN implements HttpAction {
                     vProps.put("OperationalState", "Active");
                     v.setProperties(vProps);
                     vlanRepo.save(v);
-                    ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                    logicalDeviceRepo.save(ont);
                 }
                 // no direct association required here beyond existence
             }
@@ -506,9 +504,11 @@ public class CreateServiceEVPN implements HttpAction {
                     }
                     v.setProperties(vProps);
                     vlanRepo.save(v, 2);
-                    ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                    ont.setContained(new HashSet<>(List.of(v)));
-                    logicalDeviceRepo.save(ont);
+                    if(usedStandardEvpn){
+                        ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
+                        ont.setContained(new HashSet<>(List.of(v)));
+                        logicalDeviceRepo.save(ont);
+                    }
                     serviceVlan = v;
                 }
                 // if created and usedStandardEvpn -> ensure association entry on ONT exists
@@ -589,9 +589,9 @@ public class CreateServiceEVPN implements HttpAction {
 
             // 14) OLT card template decision per port (if port 5 -> card-5)
             if ("5".equals(selectedPort)) {
-                String currentCard5 = (String) oltProps.getOrDefault("evpnOntCardTemplate", "");
+                String currentCard5 = (String) oltProps.getOrDefault("evpnOntCard5Template", "");
                 if ((currentCard5 == null || currentCard5.isEmpty()) && req.getTemplateNameCard() != null) {
-                    oltProps.put("evpnOntCardTemplate", req.getTemplateNameCard());
+                    oltProps.put("evpnOntCard5Template", req.getTemplateNameCard());
                 }
             } else {
                 String currentCard = (String) oltProps.getOrDefault("evpnOntCardTemplate", "");
@@ -608,7 +608,7 @@ public class CreateServiceEVPN implements HttpAction {
             logicalDeviceRepo.save(olt);
 
             // 15) Single-tagged VLAN interface creation logic (spec) - simplified: create one matching
-            if ((req.getProductType() != null && (req.getProductType().contains("EVPN") || req.getProductType().contains("ENTERPRISE")))
+            if (((req.getProductType() != null && req.getProductType().contains("EVPN")) || req.getProductType().contains("ENTERPRISE"))
                     || (req.getProductSubtype() != null && req.getProductSubtype().contains("Cloudstarter"))) {
                 // pick index 2..8 -> naive approach: choose 2
                 for (int idx = 2; idx <= 8; idx++) {
