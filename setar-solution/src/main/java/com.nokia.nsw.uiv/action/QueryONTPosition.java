@@ -105,9 +105,9 @@ public class QueryONTPosition implements HttpAction {
             }
 
             // 4. Determine OLT Object ID
-            String objectId = olt.getProperties().get("OltPosition")==null?"":olt.getProperties().get("OltPosition").toString();
+            String objectId = olt.getProperties().get("oltPosition")==null?"":olt.getProperties().get("OltPosition").toString();
             if (objectId == null || objectId.isEmpty()) {
-                objectId = olt.getName();
+                objectId = olt.getDiscoveredName();
             }
 
             if (objectId == null || objectId.isEmpty()) {

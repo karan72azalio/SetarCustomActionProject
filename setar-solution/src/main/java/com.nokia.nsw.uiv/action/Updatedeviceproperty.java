@@ -87,11 +87,11 @@ public class Updatedeviceproperty implements HttpAction {
             log.error("------------Test Trace # 6--------------- STB found. Current state=" + currentState);
 
             // 4. Validate Allocated state
-            if (!"Available".equalsIgnoreCase(currentState)) {
+            if ("Allocated".equalsIgnoreCase(currentState)) {
                 log.error("------------Test Trace # 7--------------- STB not in Allocated state");
                 return new UpdatedevicepropertyResponse(
                         "404",
-                        ERROR_PREFIX + "Error, No STB found with Activated state to update.",
+                        ERROR_PREFIX + "Error, No STB found with Allocated state to update.",
                         Instant.now().toString(),
                         stbSn,
                         custGroupId
@@ -100,7 +100,7 @@ public class Updatedeviceproperty implements HttpAction {
 
             // 5. Update Device Property
             Map<String,Object>props=new HashMap<>();
-            props.put("DeviceGroupId",custGroupId);
+            props.put("deviceGroupId",custGroupId);
             stb.setProperties(props);
             stbRepo.save(stb);
             log.error("------------Test Trace # 8--------------- CustomerGroupId updated to " + custGroupId);

@@ -72,7 +72,7 @@ public class QueryAddrByServiceID implements HttpAction {
             List<Service> rfsListAll = StreamSupport.stream(serviceCustomRepository.findAll().spliterator(),false).filter(service -> service.getDiscoveredName().contains(Constants.RFS)).toList();
             List<Service> rfsList =new ArrayList<>();
             rfsListAll.forEach(rFS -> {
-                if (rFS.getDiscoveredName().contains(serviceId)) {
+                if (rFS.getDiscoveredName().contains(serviceId) && rFS.getKind().equalsIgnoreCase(Constants.SETAR_KIND_SETAR_RFS)) {
                     rfsList.add(rFS);
                 }});
             if (rfsList == null || rfsList.isEmpty()) {
@@ -117,16 +117,16 @@ public class QueryAddrByServiceID implements HttpAction {
             String productName = null;
             try {
                 // Try product.getProductType().getName() if productType object exists
-                if (product.getProperties().get("type") != null) {
-                    productName = product.getProperties().get("type").toString();
+                if (product.getProperties().get("productType") != null) {
+                    productName = product.getProperties().get("productType").toString();
                 }
             } catch (Exception e) {
                 log.debug("product.getProductType() access failed, will try properties map");
             }
             if (productName == null || productName.trim().isEmpty()) {
                 Map<String, Object> prodProps = product.getProperties();
-                if (prodProps != null && prodProps.get("type") != null) {
-                    productName = prodProps.get("type").toString();
+                if (prodProps != null && prodProps.get("productType") != null) {
+                    productName = prodProps.get("productType").toString();
                 }
             }
 
@@ -161,12 +161,12 @@ public class QueryAddrByServiceID implements HttpAction {
             String address = null;
             if (subscriber != null) {
                 try {
-                    if (subscriber.getProperties().get("address") != null) address = subscriber.getProperties().get("address").toString();
+                    if (subscriber.getProperties().get("subscriberAddress") != null) address = subscriber.getProperties().get("subscriberAddress").toString();
                 } catch (Exception e) {
                     log.debug("subscriber.getAddress() failed, will try properties map");
                 }
                 if ((address == null || address.trim().isEmpty()) && subscriber.getProperties() != null) {
-                    Object a = subscriber.getProperties().get("address");
+                    Object a = subscriber.getProperties().get("subscriberAddress");
                     if (a != null) address = a.toString();
                 }
             } else {
