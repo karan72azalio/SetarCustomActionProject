@@ -268,7 +268,7 @@ public class CreateServiceFibernet implements HttpAction {
                     props.put("localName", oltName);
                     if (request.getTemplateNameVEIP() != null) props.put("veipServiceTemplate", request.getTemplateNameVEIP());
                     if (request.getTemplateNameHSI() != null) props.put("veipHsiTemplate", request.getTemplateNameHSI());
-                    props.put("position", request.getOltName());
+                    props.put("oltPosition", request.getOltName());
                     props.put("OperationalState", "Active");
                     oltDevice.setProperties(props);
                     oltDevice.setUsingService(new HashSet<>(List.of(rfs)));
