@@ -88,6 +88,14 @@ public class Updatedeviceproperty implements HttpAction {
 
             // 4. Validate Allocated state
             if ("Allocated".equalsIgnoreCase(currentState)) {
+                // 5. Update Device Property
+                Map<String,Object>props=new HashMap<>();
+                props.put("deviceGroupId",custGroupId);
+                stb.setProperties(props);
+                stbRepo.save(stb);
+                log.error("------------Test Trace # 8--------------- CustomerGroupId updated to " + custGroupId);
+                log.error(Constants.ACTION_COMPLETED);
+            }else{
                 log.error("------------Test Trace # 7--------------- STB not in Allocated state");
                 return new UpdatedevicepropertyResponse(
                         "404",
@@ -97,14 +105,6 @@ public class Updatedeviceproperty implements HttpAction {
                         custGroupId
                 );
             }
-
-            // 5. Update Device Property
-            Map<String,Object>props=new HashMap<>();
-            props.put("deviceGroupId",custGroupId);
-            stb.setProperties(props);
-            stbRepo.save(stb);
-            log.error("------------Test Trace # 8--------------- CustomerGroupId updated to " + custGroupId);
-            log.error(Constants.ACTION_COMPLETED);
             // 6. Success response
             return new UpdatedevicepropertyResponse(
                     "200",
