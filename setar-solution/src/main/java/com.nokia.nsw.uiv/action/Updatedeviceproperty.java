@@ -89,7 +89,7 @@ public class Updatedeviceproperty implements HttpAction {
             // 4. Validate Allocated state
             if ("Allocated".equalsIgnoreCase(currentState)) {
                 // 5. Update Device Property
-                Map<String,Object>props=new HashMap<>();
+                Map<String,Object>props= stb.getProperties();
                 props.put("deviceGroupId",custGroupId);
                 stb.setProperties(props);
                 stbRepo.save(stb);
