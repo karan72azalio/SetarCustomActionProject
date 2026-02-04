@@ -89,7 +89,7 @@ public class ChangeResourceStatus implements HttpAction {
             LogicalDevice device = devOpt.get();
             String currentStatus = device.getProperties().get("AdministrativeState")!=null?device.getProperties().get("AdministrativeState").toString():null;
             String model = device.getProperties().get("deviceModel") == null ? "" : device.getProperties().get("deviceModel").toString();
-            String mac = device.getProperties().get("macAddress") == null ? "" : device.getProperties().get("MacAddress").toString() ;
+            String mac = device.getProperties().get("macAddress") == null ? "" : device.getProperties().get("macAddress").toString() ;
 
             log.error("------------Test Trace # 6--------------- Device found. Current status=" + currentStatus);
 
@@ -105,7 +105,7 @@ public class ChangeResourceStatus implements HttpAction {
             }
 
             Map<String, Object> deviceProps = device.getProperties();
-            deviceProps.put("AdministrativeStatus",targetStatus);
+            deviceProps.put("AdministrativeState",targetStatus);
             device.setProperties(deviceProps);
             stbRepo.save(device);
 

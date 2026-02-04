@@ -93,7 +93,17 @@ public class QueryONTPosition implements HttpAction {
             log.error("------------Trace # 7--------------- ONT found, checking linked OLT");
 
             Set<LogicalDevice> managingDevices =  ont.getUsedResource().stream().map(r->(LogicalDevice)r).collect(Collectors.toSet());
-            LogicalDevice olt = managingDevices.stream().findFirst().get();
+            LogicalDevice olt= null;
+            try {
+                olt= managingDevices.stream().findFirst().get();
+            } catch (Exception e) {
+                return new QueryONTPositionResponse(
+                        "404",
+                        ERROR_PREFIX + "No ONT Object ID found.",
+                        Instant.now().toString(),
+                        ""
+                );
+            }
             if (olt == null) {
                 log.error("------------Trace # 8--------------- No OLT linked to ONT=" + ontName);
                 return new QueryONTPositionResponse(
@@ -105,7 +115,7 @@ public class QueryONTPosition implements HttpAction {
             }
 
             // 4. Determine OLT Object ID
-            String objectId = olt.getProperties().get("oltPosition")==null?"":olt.getProperties().get("OltPosition").toString();
+            String objectId = olt.getProperties().get("oltPosition")==null?"":olt.getProperties().get("oltPosition").toString();
             if (objectId == null || objectId.isEmpty()) {
                 objectId = olt.getDiscoveredName();
             }
