@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Component
 @Action
 @Slf4j
-public class QueryTemplateNameVLAN implements HttpAction {
+public class    QueryTemplateNameVLAN implements HttpAction {
 
     private static final String ACTION_LABEL = Constants.QUERY_TEMPLATENAME_VLAN;
     private static final String ERROR_PREFIX = "UIV action QueryTemplateNameVLAN execution failed - ";
@@ -71,7 +71,7 @@ public class QueryTemplateNameVLAN implements HttpAction {
             if (optOnt.isPresent()) {
                 // NOTE: replace method below with your actual repo method if different.
                 LogicalDevice ldn=optOnt.get();
-                List<LogicalInterface> ifaceSet = ldn.getUsedResource().stream()
+                List<LogicalInterface> ifaceSet = ldn.getContained().stream()
                         .filter(res -> res instanceof LogicalInterface)
                         .map(res -> (LogicalInterface) res)
                         .collect(Collectors.toList());
@@ -96,7 +96,7 @@ public class QueryTemplateNameVLAN implements HttpAction {
                     LogicalInterface li = optIf.get();
                     Map<String, Object> props = li.getProperties();
                     if (props != null) {
-                        Object cfg = props.get("configuredVPLSTemplate");
+                        Object cfg = props.get("configuredVplsTemplate");
                         if (cfg != null) {
                             String tmpl = cfg.toString();
                             if (!vplsFinalList.contains(tmpl)) vplsFinalList.add(tmpl);

@@ -495,7 +495,7 @@ public class CreateServiceEVPN implements HttpAction {
                         vProps.put("vlanTemplate", req.getTemplateNameVlan());
                         vProps.put("serviceId", req.getServiceId());
                         vProps.put("vlanCreateTemplate", req.getTemplateNameVlanCreate());
-                        vProps.put("vplsTemplate", req.getTemplateNameVpls());
+                        vProps.put("configuredVplsTemplate", req.getTemplateNameVpls());
                         // associate with ONT
                         vProps.put("linkedOnt", ont.getDiscoveredName());
                     } else {
