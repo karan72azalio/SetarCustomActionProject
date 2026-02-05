@@ -592,7 +592,7 @@ public class QueryServicesInfo implements HttpAction {
                     // Always record subscription status, HHID, address, account number, product name (if exists)
                     String subscriptionStatus = (setarSubscription == null) ? "" : (setarSubscription.getProperties() == null ? "" : String.valueOf(setarSubscription.getProperties().getOrDefault("subscriptionStatusName", setarSubscription.getProperties().getOrDefault("subscriptionStatus", ""))));
                     String hhid = (setarSubscriber == null) ? "" : String.valueOf(setarSubscriber.getProperties() == null ? "" : setarSubscriber.getProperties().getOrDefault("houseHoldId", ""));
-                    String address = (setarSubscriber == null) ? "" : String.valueOf(setarSubscriber.getProperties() == null ? "" : setarSubscriber.getProperties().getOrDefault("address", ""));
+                    String address = (setarSubscriber == null) ? "" : String.valueOf(setarSubscriber.getProperties() == null ? "" : setarSubscriber.getProperties().getOrDefault("subscriberAddress", ""));
                     String acct = (setarSubscriber == null) ? "" : String.valueOf(setarSubscriber.getProperties() == null ? "" : setarSubscriber.getProperties().getOrDefault("accountNumber", ""));
                     allvalues.put(prefix + "SUBSCRIPTION_STAUS", subscriptionStatus == null ? "" : subscriptionStatus);
                     allvalues.put(prefix + "HHID", hhid == null ? "" : hhid);
