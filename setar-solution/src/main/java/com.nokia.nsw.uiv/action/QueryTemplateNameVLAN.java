@@ -128,9 +128,9 @@ public class    QueryTemplateNameVLAN implements HttpAction {
                     ? 1000 : request.getVlanRangeStart();
             int rangeEnd = (request.getVlanRangeEnd() == null || request.getVlanRangeEnd() == 0)
                     ? 4000 : request.getVlanRangeEnd();
-            if (rangeStart < 0 || rangeEnd <= rangeStart) {
-                return createErrorResponse("400", ERROR_PREFIX + "Invalid VLAN range");
-            }
+//            if (rangeStart < 0 || rangeEnd <= rangeStart) {
+//                return createErrorResponse("400", ERROR_PREFIX + "Invalid VLAN range");
+//            }
 
             // 5) Find next free VLAN ID for this MENM prefix
             String freeVLAN = "";

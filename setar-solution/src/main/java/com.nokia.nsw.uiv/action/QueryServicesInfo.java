@@ -13,6 +13,7 @@ import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryServicesInfoRequest;
+import com.nokia.nsw.uiv.response.CreateServiceIPTVResponse;
 import com.nokia.nsw.uiv.response.QueryServicesInfoResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -64,12 +65,19 @@ public class QueryServicesInfo implements HttpAction {
         QueryServicesInfoRequest request = (QueryServicesInfoRequest) actionContext.getObject();
 
         try {
+            try {
+                // 1) Input validations (both optional but at least one required)
+                Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+                Validations.validateMandatoryParams(request.getOntSn(), "ontSn");
+            }catch (BadRequestException bre) {
+                log.error("QueryServicesInfo start: subscriberName='{}', ontSN='{}'", request.getSubscriberName(), request.getOntSn());
+                return new CreateServiceIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        Instant.now().toString(), "","");
+            }
             // 1) Input validations (both optional but at least one required)
             String accno = request.getSubscriberName();
             String ontSN = request.getOntSn();
-            if ((accno == null || accno.trim().isEmpty()) && (ontSN == null || ontSN.trim().isEmpty())) {
-                return createErrorResponse("400", ERROR_PREFIX + "Missing mandatory parameter(s): SUBSCRIBER_NAME or ONT_SN");
-            }
+
 
             log.error("QueryServicesInfo start: subscriberName='{}', ontSN='{}'", accno, ontSN);
 
@@ -348,15 +356,16 @@ public class QueryServicesInfo implements HttpAction {
                     // Components: products whose name begins with serviceID
                     List<Product> products = (List<Product>) productRepository.findAll();
                     List<Product> compos = new ArrayList<>();
-                    if(!compos.isEmpty()){
+
                         for(Product pds:products)
                         {
-                            if(pds.getDiscoveredName().startsWith(serviceID))
+                            if(pds.getDiscoveredName().contains(serviceID))
                             {
-                                compos= Collections.singletonList(pds);
+
+                                compos.add(pds);
                             }
                         }
-                    }
+
                     if (compos != null && !compos.isEmpty()) {
                         for (Product prod : compos) {
                             String pname = prod.getDiscoveredName();
@@ -583,7 +592,7 @@ public class QueryServicesInfo implements HttpAction {
                     // Always record subscription status, HHID, address, account number, product name (if exists)
                     String subscriptionStatus = (setarSubscription == null) ? "" : (setarSubscription.getProperties() == null ? "" : String.valueOf(setarSubscription.getProperties().getOrDefault("subscriptionStatusName", setarSubscription.getProperties().getOrDefault("subscriptionStatus", ""))));
                     String hhid = (setarSubscriber == null) ? "" : String.valueOf(setarSubscriber.getProperties() == null ? "" : setarSubscriber.getProperties().getOrDefault("houseHoldId", ""));
-                    String address = (setarSubscriber == null) ? "" : String.valueOf(setarSubscriber.getProperties() == null ? "" : setarSubscriber.getProperties().getOrDefault("address", ""));
+                    String address = (setarSubscriber == null) ? "" : String.valueOf(setarSubscriber.getProperties() == null ? "" : setarSubscriber.getProperties().getOrDefault("subscriberAddress", ""));
                     String acct = (setarSubscriber == null) ? "" : String.valueOf(setarSubscriber.getProperties() == null ? "" : setarSubscriber.getProperties().getOrDefault("accountNumber", ""));
                     allvalues.put(prefix + "SUBSCRIPTION_STAUS", subscriptionStatus == null ? "" : subscriptionStatus);
                     allvalues.put(prefix + "HHID", hhid == null ? "" : hhid);
