@@ -348,15 +348,16 @@ public class QueryServicesInfo implements HttpAction {
                     // Components: products whose name begins with serviceID
                     List<Product> products = (List<Product>) productRepository.findAll();
                     List<Product> compos = new ArrayList<>();
-                    if(!compos.isEmpty()){
+
                         for(Product pds:products)
                         {
-                            if(pds.getDiscoveredName().startsWith(serviceID))
+                            if(pds.getDiscoveredName().contains(serviceID))
                             {
-                                compos= Collections.singletonList(pds);
+
+                                compos.add(pds);
                             }
                         }
-                    }
+
                     if (compos != null && !compos.isEmpty()) {
                         for (Product prod : compos) {
                             String pname = prod.getDiscoveredName();
