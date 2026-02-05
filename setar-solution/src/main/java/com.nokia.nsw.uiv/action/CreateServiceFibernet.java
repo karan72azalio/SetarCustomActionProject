@@ -243,8 +243,8 @@ public class CreateServiceFibernet implements HttpAction {
                 rfs.setKind(Constants.SETAR_KIND_SETAR_RFS);
                 rfs.setContext(Constants.SETAR);
                 Map<String, Object> rfsProps = new HashMap<>();
-                rfsProps.put("rfsType", request.getProductType());
-                rfsProps.put("rfsStatus", "Active");
+                rfsProps.put("serviceType", request.getProductType());
+                rfsProps.put("serviceStatus", "Active");
 //                if (request.getFxOrderID() != null) rfsProps.put("transactionId", request.getFxOrderID());
                 rfs.setProperties(rfsProps);
                 rfs.setUsedService(new HashSet<>(List.of(cfs)));

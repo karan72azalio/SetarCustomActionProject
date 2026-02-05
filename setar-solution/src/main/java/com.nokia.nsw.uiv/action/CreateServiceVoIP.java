@@ -298,8 +298,8 @@ public class CreateServiceVoIP implements HttpAction {
                     throw new RuntimeException(e);
                 }
                 Map<String, Object> rfsProps = new HashMap<>();
-                rfsProps.put("rfsStatus", "Active");
-                rfsProps.put("rfsType", req.getProductType());
+                rfsProps.put("serviceStatus", "Active");
+                rfsProps.put("serviceType", req.getProductType());
                 newRfs.setProperties(rfsProps);
                 newRfs.setUsingService(new HashSet<>(List.of(cfs)));
                 rfs = newRfs;

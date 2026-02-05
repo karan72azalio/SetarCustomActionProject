@@ -337,8 +337,8 @@ public class CreateServiceEVPN implements HttpAction {
                     throw new RuntimeException(e);
                 }
                 Map<String, Object> rfsProps = new HashMap<>();
-                rfsProps.put("rfsStatus", "Active");
-                rfsProps.put("rfsType", req.getProductType());
+                rfsProps.put("serviceStatus", "Active");
+                rfsProps.put("serviceType", req.getProductType());
                 rfsProps.put("linkedCFS", cfs.getDiscoveredName());
                 newRfs.addUsedService(cfs);
                 rfs = newRfs;

@@ -161,7 +161,7 @@ public class QueryServicesInfo implements HttpAction {
             for (Service rfs : setarRFSs) {
                 try {
                     String rfsnameget = rfs.getDiscoveredName() == null ? "" : rfs.getDiscoveredName();
-                    String serviceType = rfs.getProperties().get("ServiceTypeName") == null ? "" : rfs.getProperties().get("ServiceTypeName").toString();
+                    String serviceType = rfs.getProperties().get("serviceType") == null ? "" : rfs.getProperties().get("serviceType").toString();
                     log.error("Processing RFS '{}' with serviceType='{}'", rfsnameget, serviceType);
 
                     // initialize per-service vars

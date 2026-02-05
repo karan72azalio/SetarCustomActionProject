@@ -276,8 +276,8 @@ public class CreateServiceCBM implements HttpAction {
                     }
                     r.setDiscoveredName(rfsName);
                     Map<String, Object> prop = new HashMap<>();
-                    prop.put("rfsStatus", "Active");
-                    prop.put("rfsType",request.getProductType());
+                    prop.put("serviceStatus", "Active");
+                    prop.put("serviceType",request.getProductType());
                     prop.put("serviceType",request.getProductType());
                     prop.put("CFSReference",cfs.getDiscoveredName());
                     r.setProperties(prop);
