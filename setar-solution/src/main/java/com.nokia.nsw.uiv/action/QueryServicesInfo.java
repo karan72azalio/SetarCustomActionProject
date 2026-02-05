@@ -68,7 +68,7 @@ public class QueryServicesInfo implements HttpAction {
             try {
                 // 1) Input validations (both optional but at least one required)
                 Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
-                Validations.validateMandatoryParams(request.getOntSn(), "productType");
+                Validations.validateMandatoryParams(request.getOntSn(), "ontSn");
             }catch (BadRequestException bre) {
                 log.error("QueryServicesInfo start: subscriberName='{}', ontSN='{}'", request.getSubscriberName(), request.getOntSn());
                 return new CreateServiceIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
