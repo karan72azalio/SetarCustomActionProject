@@ -13,6 +13,7 @@ import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.QueryServicesInfoRequest;
+import com.nokia.nsw.uiv.response.CreateServiceIPTVResponse;
 import com.nokia.nsw.uiv.response.QueryServicesInfoResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -64,12 +65,19 @@ public class QueryServicesInfo implements HttpAction {
         QueryServicesInfoRequest request = (QueryServicesInfoRequest) actionContext.getObject();
 
         try {
+            try {
+                // 1) Input validations (both optional but at least one required)
+                Validations.validateMandatoryParams(request.getSubscriberName(), "subscriberName");
+                Validations.validateMandatoryParams(request.getOntSn(), "productType");
+            }catch (BadRequestException bre) {
+                log.error("QueryServicesInfo start: subscriberName='{}', ontSN='{}'", request.getSubscriberName(), request.getOntSn());
+                return new CreateServiceIPTVResponse("400", ERROR_PREFIX + "Missing mandatory parameter : " + bre.getMessage(),
+                        Instant.now().toString(), "","");
+            }
             // 1) Input validations (both optional but at least one required)
             String accno = request.getSubscriberName();
             String ontSN = request.getOntSn();
-            if ((accno == null || accno.trim().isEmpty()) && (ontSN == null || ontSN.trim().isEmpty())) {
-                return createErrorResponse("400", ERROR_PREFIX + "Missing mandatory parameter(s): SUBSCRIBER_NAME or ONT_SN");
-            }
+
 
             log.error("QueryServicesInfo start: subscriberName='{}', ontSN='{}'", accno, ontSN);
 
