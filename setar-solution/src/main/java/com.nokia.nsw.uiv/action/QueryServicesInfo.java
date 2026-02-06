@@ -555,9 +555,9 @@ public class QueryServicesInfo implements HttpAction {
                     if (serviceTypeLower.contains("evpn") || serviceTypeLower.contains("enterprise") || serviceSubTypeLower.contains("cloudstarter")) {
                         if (setarServiceLink != null && setarServiceLink.equalsIgnoreCase("ONT")) {
                             // Evpn templates on oltDevice
-                            if (nameONT != null && nameONT.getProperties() != null) {
+                            if (oltDevice != null && oltDevice.getProperties() != null) {
 
-                                Map<String, Object> opl = nameONT.getProperties();
+                                Map<String, Object> opl = oltDevice.getProperties();
                                 allvalues.put(prefix + "SERVICE_TEMPLATE_PORT2", opl.getOrDefault("evpnEthPort2Template", ""));
                                 allvalues.put(prefix + "SERVICE_TEMPLATE_PORT3", opl.getOrDefault("evpnEthPort3Template", ""));
                                 allvalues.put(prefix + "SERVICE_TEMPLATE_PORT4", opl.getOrDefault("evpnEthPort4Template", ""));
