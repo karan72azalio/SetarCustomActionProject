@@ -163,6 +163,7 @@ public class CreateServiceIPTV implements HttpAction {
                 subscriptionProps.put("serviceMac", request.getOntMacAddr());
                 subscriptionProps.put("iptvQosSessionProfile", request.getQosProfile());
                 subscriptionProps.put("customerGroupId", request.getCustomerGroupID());
+                subscriptionProps.put("subscriptionStatus", "Active");
                 subscriptionProps.put("householdID", request.getHhid());
                 subscriptionProps.put("servicePackage", request.getServicePackage());
                 subscriptionProps.put("kenanSubscriberId", request.getKenanUidNo());
