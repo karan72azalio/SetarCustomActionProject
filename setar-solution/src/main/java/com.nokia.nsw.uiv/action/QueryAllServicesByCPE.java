@@ -259,7 +259,7 @@ public class QueryAllServicesByCPE implements HttpAction {
 
         // EVPN templates from RFS properties
         putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN", subProps.get("evpnTemplateVLAN"));
-        putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN_CREATE", subProps.get("evpnTemplateCreate"));
+        putIfNotNull(out, prefix + "TEMPLATE_NAME_VLAN_CREATE", subProps.get("evpnTemplateCreateVLAN"));
         putIfNotNull(out, prefix + "TEMPLATE_NAME_VPLS", subProps.get("evpnTemplateVPLS"));
 
         populateSubscriberDetails(out, prefix, cust);

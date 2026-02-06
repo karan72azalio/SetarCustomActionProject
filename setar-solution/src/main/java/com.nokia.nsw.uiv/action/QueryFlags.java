@@ -1199,7 +1199,7 @@ public class QueryFlags implements HttpAction {
                             String evpnPort = (String) evpnProps.getOrDefault("evpnPort", "");
                             String tempVlan = (String) evpnProps.getOrDefault("evpnQosProfile", "");
                             String tempVpls = (String) evpnProps.getOrDefault("evpnTemplateVPLS", "");
-                            String tempCreate = existsString(evpnProps.get("evpnTemplateCreate"));
+                            String tempCreate = existsString(evpnProps.get("evpnTemplateCreateVLAN"));
                             String tempVlanId = (String) evpnProps.getOrDefault("evpnVLAN", "");
 
                             flags.put("SERVICE_ONT_PORT", evpnPort);
