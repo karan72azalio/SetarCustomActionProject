@@ -546,6 +546,7 @@ public class QueryServicesInfo implements HttpAction {
                             }
                             if(String.valueOf(svc1)!= null && String.valueOf(svc1).isEmpty()) {
                                 allvalues.put(prefix + "VOIP_SERVICE_CODE", String.valueOf(svc1));
+
                             }
                         }
                     }
