@@ -402,7 +402,8 @@ public class QueryServicesInfo implements HttpAction {
                             serviceTypeLower.contains("voip") ||
                             serviceTypeLower.contains("voice") ||
                             serviceTypeLower.contains("evpn") ||
-                            serviceTypeLower.contains("enterprise");
+                            serviceTypeLower.contains("enterprise")||
+                            serviceSubTypeLower.contains("cloudstarter");
 
                     if (!applicableType) {
                         log.debug("Service type/subtype not in output set; skipping detailed output for RFS '{}'", rfsnameget);
@@ -518,16 +519,16 @@ public class QueryServicesInfo implements HttpAction {
                         if (setarSubscription != null && setarSubscription.getProperties() != null) {
                             Map<String,Object> sprops = setarSubscription.getProperties();
                             allvalues.put(prefix + "SIMA_CUST_ID", sprops.getOrDefault("simaCustId",""));
-                            allvalues.put(prefix + "SIMA_ENDPOINT_ID", sprops.getOrDefault("simaEndpointId1",""));
+                            allvalues.put(prefix + "SIMA_ENDPOINT_ID", sprops.getOrDefault("simaEndpointId",""));
                             allvalues.put(prefix + "SIMA_ENDPOINT_ID2", sprops.getOrDefault("simaEndpointId2",""));
-                            allvalues.put(prefix + "SIMA_SUBS_ID", sprops.getOrDefault("simaSubscriptionId1",""));
-                            allvalues.put(prefix + "SIMA_SUBS_ID2", sprops.getOrDefault("simaSubscriptionId2",""));
+                            allvalues.put(prefix + "SIMA_SUBS_ID", sprops.getOrDefault("simaSubsId",""));
+                            allvalues.put(prefix + "SIMA_SUBS_ID2", sprops.getOrDefault("simaSubsId2",""));
                             allvalues.put(prefix + "VOIP_NUMBER_1", sprops.getOrDefault("voipNumber1",""));
                             allvalues.put(prefix + "VOIP_NUMBER_2", sprops.getOrDefault("voipNumber2",""));
-                            allvalues.put(prefix + "VOIP_PACKAGE", sprops.getOrDefault("voipPackage1",""));
+                            allvalues.put(prefix + "VOIP_PACKAGE", sprops.getOrDefault("voipPackage",""));
                             allvalues.put(prefix + "VOIP_PACKAGE2", sprops.getOrDefault("voipPackage2",""));
                             // VoIP service code logic: if code2 exists overwrite code1
-                            Object svc1 = sprops.getOrDefault("voipServiceCode1", "");
+                            Object svc1 = sprops.getOrDefault("voipServiceCode", "");
                             Object svc2 = sprops.getOrDefault("voipServiceCode2", "");
                             if (svc2 != null && !String.valueOf(svc2).isEmpty()) allvalues.put(prefix + "VOIP_SERVICE_CODE", String.valueOf(svc2));
                             else allvalues.put(prefix + "VOIP_SERVICE_CODE", String.valueOf(svc1));
@@ -538,8 +539,9 @@ public class QueryServicesInfo implements HttpAction {
                     if (serviceTypeLower.contains("evpn") || serviceTypeLower.contains("enterprise") || serviceSubTypeLower.contains("cloudstarter")) {
                         if (setarServiceLink != null && setarServiceLink.equalsIgnoreCase("ONT")) {
                             // Evpn templates on oltDevice
-                            if (oltDevice != null && oltDevice.getProperties() != null) {
-                                Map<String,Object> opl = oltDevice.getProperties();
+                            if (nameONT != null && nameONT.getProperties() != null) {
+
+                                Map<String,Object> opl = nameONT.getProperties();
                                 allvalues.put(prefix + "SERVICE_TEMPLATE_PORT2", opl.getOrDefault("evpnEthPort2Template",""));
                                 allvalues.put(prefix + "SERVICE_TEMPLATE_PORT3", opl.getOrDefault("evpnEthPort3Template",""));
                                 allvalues.put(prefix + "SERVICE_TEMPLATE_PORT4", opl.getOrDefault("evpnEthPort4Template",""));
