@@ -579,8 +579,8 @@ public class QueryServicesInfo implements HttpAction {
                                     String vlanIntName = prefixText + Constants.UNDER_SCORE + evpnVlan;
                                     Optional<LogicalInterface> optVlanInt = logicalInterfaceRepository.findByDiscoveredName(vlanIntName);
                                     if (optVlanInt.isPresent()) {
-                                        Object mgmt = optVlanInt.get().getProperties() == null ? null : optVlanInt.get().getProperties().get("mgmtTemplate");
-                                        allvalues.put(prefix + "SERVICE_TEMPLATE_MGMT", mgmt == null ? "" : String.valueOf(mgmt));
+                                        String  mgmt = optVlanInt.get().getProperties() == null ? null : optVlanInt.get().getProperties().get("mgmtTemplate").toString();
+                                        allvalues.put(prefix + "SERVICE_TEMPLATE_MGMT", mgmt == null ? "" : mgmt);
                                     } else {
                                         allvalues.put(prefix + "SERVICE_TEMPLATE_MGMT", "");
                                     }
