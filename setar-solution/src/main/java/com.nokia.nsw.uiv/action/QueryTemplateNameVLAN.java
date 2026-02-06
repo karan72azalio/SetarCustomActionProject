@@ -144,7 +144,7 @@ public class    QueryTemplateNameVLAN implements HttpAction {
             }
             if (freeVLAN.isEmpty()) {
                 // Code8 -> No free VLAN found
-                return createErrorResponse("404", ERROR_PREFIX + "No unused ${MENM}_${VLAN} between VLAN_RANGE_START and VLAN_RANGE_END");
+                return createErrorResponse("404", ERROR_PREFIX + "No free VLAN found in the specified range");
             }
 
             // 6) Choose per-port EVPN template suffix (2..9), max usable 2..8 (8 templates)
