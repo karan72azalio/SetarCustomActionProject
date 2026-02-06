@@ -370,7 +370,7 @@ public class CreateServiceCbmVoice implements HttpAction {
                 String cpeDeviceName = "CBM" + Constants.UNDER_SCORE +request.getCbmMac();
                 Optional<LogicalDevice> cpeOpt = cpeDeviceRepository.findByDiscoveredName(cpeDeviceName);
                 if (!cpeOpt.isPresent()) {
-                    return createErrorResponse(CODE_CPE_NOT_FOUND, "CPE device not found");
+                    return createErrorResponse(CODE_CPE_NOT_FOUND, "CPE device not found with cbmName: "+cpeDeviceName);
                 }
 
                 try {
