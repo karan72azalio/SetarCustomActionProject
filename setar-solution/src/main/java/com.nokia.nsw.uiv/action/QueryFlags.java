@@ -1197,7 +1197,7 @@ public class QueryFlags implements HttpAction {
                             Map<String, Object> evpnProp = safeProps(currentEvpn.getProperties());
 
                             String evpnPort = (String) evpnProps.getOrDefault("evpnPort", "");
-                            String tempVlan = (String) evpnProps.getOrDefault("evpnQosProfile", "");
+                            String tempVlan = (String) evpnProps.getOrDefault("evpnQosSessionProfile", "");
                             String tempVpls = (String) evpnProps.getOrDefault("evpnTemplateVPLS", "");
                             String tempCreate = existsString(evpnProps.get("evpnTemplateCreateVLAN"));
                             String tempVlanId = (String) evpnProps.getOrDefault("evpnVLAN", "");
@@ -1303,7 +1303,7 @@ public class QueryFlags implements HttpAction {
                         String evpnPort = (String) sp.getOrDefault("evpnPort", "");
                         flags.put("SERVICE_ONT_PORT", evpnPort);
 
-                        String vlan = (String) sp.getOrDefault("evpnQosProfile", "");
+                        String vlan = (String) sp.getOrDefault("evpnQosSessionProfile", "");
                         flags.put("QOS_PROFILE", vlan);
 
                         log.error("Trace Case-D: SERVICE_ONT_PORT=" + evpnPort + "  QOS_PROFILE=" + vlan);

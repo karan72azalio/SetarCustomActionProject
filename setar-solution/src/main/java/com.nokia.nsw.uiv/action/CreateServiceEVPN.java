@@ -208,7 +208,7 @@ public class CreateServiceEVPN implements HttpAction {
                 Map<String, Object> subsProps = new HashMap<>();
                 subsProps.put("subscriptionStatus", "Active");
                 subsProps.put("serviceSubType", req.getProductSubtype());
-                if (req.getQosProfile() != null) subsProps.put("evpnQosProfile", req.getQosProfile());
+                if (req.getQosProfile() != null) subsProps.put("evpnQosSessionProfile", req.getQosProfile());
                 if (req.getOntPort() != null) subsProps.put("evpnPort", req.getOntPort());
                 if (req.getTemplateNameVlanCreate() != null)
                     subsProps.put("evpnTemplateCreateVLAN", req.getTemplateNameVlanCreate());
