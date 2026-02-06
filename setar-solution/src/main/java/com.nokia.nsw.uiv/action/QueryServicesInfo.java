@@ -539,15 +539,9 @@ public class QueryServicesInfo implements HttpAction {
                             allvalues.put(prefix + "VOIP_PACKAGE", sprops.getOrDefault("voipPackage", ""));
                             allvalues.put(prefix + "VOIP_PACKAGE2", sprops.getOrDefault("voipPackage2", ""));
                             // VoIP service code logic: if code2 exists overwrite code1
-                            Object svc1 = sprops.getOrDefault("voipServiceCode", "");
-                            Object svc2 = sprops.getOrDefault("voipServiceCode2", "");
-                            if(String.valueOf(svc2)!= null && String.valueOf(svc2).isEmpty()) {
-                                allvalues.put(prefix + "VOIP_SERVICE_CODE2", String.valueOf(svc2));
-                            }
-                            if(String.valueOf(svc1)!= null && String.valueOf(svc1).isEmpty()) {
-                                allvalues.put(prefix + "VOIP_SERVICE_CODE", String.valueOf(svc1));
+                            allvalues.put(prefix + "VOIP_SERVICE_CODE",sprops.getOrDefault("voipServiceCode", ""));
+                            allvalues.put(prefix + "VOIP_SERVICE_CODE2", sprops.getOrDefault("voipServiceCode2", ""));
 
-                            }
                         }
                     }
 
