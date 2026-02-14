@@ -13,5 +13,8 @@ public class ModifyCBMResponse {
     private String timestamp;
     private String subscriberId;
     private String subscriptionId;
+
+    public ModifyCBMResponse() {
+    }
 }
 

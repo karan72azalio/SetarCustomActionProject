@@ -66,6 +66,14 @@ public class QueryAllServicesByCPE implements HttpAction {
         try {
             String ontName = "ONT" + req.getOntSn();
 
+            if (ontName.length() > 100) {
+                return new QueryAllServicesByCPEResponse(
+                        "400",
+                        ERROR_PREFIX + "ONT name too long",
+                        Instant.now().toString(),
+                        null);
+            }
+
             // Step 2: Identify the ONT
             Optional<LogicalDevice> ontOpt = logicalDeviceRepo.findByDiscoveredName(ontName);
             if (!ontOpt.isPresent()) {
@@ -148,21 +156,21 @@ public class QueryAllServicesByCPE implements HttpAction {
                     case "Fiber":
                         bbCount++;
                         String bbPrefix = "Broadband_" + bbCount + "_";
-                        populateBroadband(output, bbPrefix, rfs, subscription, customer, olt,ont);
+                        populateBroadband(output, bbPrefix, rfs, subscription, customer, olt, ont);
                         break;
 
                     case "Voice":
                     case "VoIP":
                         voiceCount++;
                         String voicePrefix = "Voice_" + voiceCount + "_";
-                        populateVoice(output, voicePrefix, rfs, subscription, customer, olt,ont);
+                        populateVoice(output, voicePrefix, rfs, subscription, customer, olt, ont);
                         break;
 
                     case "Enterprise":
                     case "EVPN":
                         entCount++;
                         String entPrefix = "Enterprise_" + entCount + "_";
-                        populateEnterprise(output, entPrefix, rfs, subscription, customer, olt,ont);
+                        populateEnterprise(output, entPrefix, rfs, subscription, customer, olt, ont);
                         break;
 
                     case "IPTV":
@@ -195,21 +203,21 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     // --- Broadband / Fiber ---
     private void populateBroadband(Map<String, Object> out, String prefix, Service rfs,
-            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
+                                   Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
         Map<String, Object> rfsProps = rfs.getProperties();
         putIfNotNull(out, prefix + "SERVICE_ID", sub != null ? sub.getProperties().get("serviceID") : null);
         putIfNotNull(out, prefix + "SERVICE_SUBTYPE", sub != null ? sub.getProperties().get("serviceSubType") : null);
         out.put(prefix + "SERVICE_TYPE", "Broadband");
         putIfNotNull(out, prefix + "QOS_PROFILE", sub.getProperties().get("veipQosSessionProfile"));
-        putIfNotNull(out, prefix + "KENAN_SUBS_ID",sub.getProperties().get("kenanSubscriberId"));
+        putIfNotNull(out, prefix + "KENAN_SUBS_ID", sub.getProperties().get("kenanSubscriberId"));
 
         populateSubscriberDetails(out, prefix, cust);
         putIfNotNull(out, prefix + "Email", cust.getProperties().get("email"));
         putIfNotNull(out, prefix + "Email_Password", cust.getProperties().get("emailPassword"));
 
         // Templates from OLT
-        if (olt != null && ont!=null) {
-            Map<String, Object> ontProps= ont.getProperties();
+        if (olt != null && ont != null) {
+            Map<String, Object> ontProps = ont.getProperties();
             Map<String, Object> oltProps = olt.getProperties();
             putIfNotNull(out, prefix + "ONT_TEMPLATE", ontProps.get("ontTemplate"));
             putIfNotNull(out, prefix + "SERVICE_TEMPLATE_VEIP", oltProps.get("veipServiceTemplate"));
@@ -219,7 +227,7 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     // --- Voice / VoIP ---
     private void populateVoice(Map<String, Object> out, String prefix, Service rfs,
-            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
+                               Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
         Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
         putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceID"));
         putIfNotNull(out, prefix + "SERVICE_SUBTYPE", subProps.get("serviceSubType"));
@@ -245,7 +253,7 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     // --- Enterprise / EVPN ---
     private void populateEnterprise(Map<String, Object> out, String prefix, Service rfs,
-            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
+                                    Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
         Map<String, Object> rfsProps = rfs.getProperties();
         Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
 
@@ -266,7 +274,7 @@ public class QueryAllServicesByCPE implements HttpAction {
 
         // OLT templates
         if (olt != null) {
-            Map<String, Object> ontProps= ont.getProperties();
+            Map<String, Object> ontProps = ont.getProperties();
             Map<String, Object> oltProps = olt.getProperties();
             putIfNotNull(out, prefix + "ONT_TEMPLATE", oltProps.get("ontTemplate"));
             putIfNotNull(out, prefix + "TEMPLATE_NAME_CARD", oltProps.get("evpnOntCardTemplate"));
@@ -277,7 +285,7 @@ public class QueryAllServicesByCPE implements HttpAction {
 
     // --- IPTV ---
     private void populateIptv(Map<String, Object> out, String prefix, int iptvCount, Service rfs,
-            Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
+                              Subscription sub, Customer cust, LogicalDevice olt, LogicalDevice ont) {
         Map<String, Object> subProps = sub != null ? sub.getProperties() : Collections.emptyMap();
 
         putIfNotNull(out, prefix + "SERVICE_ID", subProps.get("serviceID"));
@@ -383,7 +391,7 @@ public class QueryAllServicesByCPE implements HttpAction {
         putIfNotNull(out, prefix + "ACCOUNT_NUMBER", custProps.get("accountNumber"));
         putIfNotNull(out, prefix + "FIRST_NAME", custProps.get("subscriberFirstName"));
         putIfNotNull(out, prefix + "LAST_NAME", custProps.get("subscriberLastName"));
-       putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
+        putIfNotNull(out, prefix + "COMPANY_NAME", custProps.get("companyName"));
         putIfNotNull(out, prefix + "CONTACT_PHONE", custProps.get("contactPhoneNumber"));
         putIfNotNull(out, prefix + "SUBS_ADDRESS", custProps.get("subscriberAddress"));
     }

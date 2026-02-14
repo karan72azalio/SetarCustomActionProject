@@ -151,7 +151,10 @@ public class DeleteCBM implements HttpAction {
                     String cbmMacAddr = macObj.toString();
                     String macWithoutColons = cbmMacAddr.replaceAll(":", "");
                     String newSubscriberName = subscriberName + Constants.UNDER_SCORE + macWithoutColons;
-
+                    if (newSubscriberName.length() > 100) {
+                        return new DeleteCBMResponse("400", ERROR_PREFIX + "Subscriber name too long",
+                                Instant.now().toString(), cbmName, subscriptionName);
+                    }
                     Optional<Customer> subscriberOpt = subscriberRepository.findByDiscoveredName(newSubscriberName);
                     if (subscriberOpt.isPresent()) {
                         Customer setarSubscriber = subscriberOpt.get();

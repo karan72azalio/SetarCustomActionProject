@@ -89,6 +89,38 @@ public class ModifyIPTV implements HttpAction {
             String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
             String cbmDeviceName = "CBM" +request.getServiceId();
 
+            if (subscriptionName.length() > 100) {
+                log.warn("Subscription name too long: {}", subscriptionName.length());
+                return new ModifyIPTVResponse(
+                        "400",
+                        ERROR_PREFIX + "Subscription name too long",
+                        String.valueOf(System.currentTimeMillis()),
+                        "",
+                        ""
+                );
+            }
+
+            if (productName.length() > 100) {
+                log.warn("Product name too long: {}", productName.length());
+                return new ModifyIPTVResponse(
+                        "400",
+                        ERROR_PREFIX + "Product name too long",
+                        String.valueOf(System.currentTimeMillis()),
+                        "",
+                        ""
+                );
+            }
+
+            if (cbmDeviceName.length() > 100) {
+                log.warn("CBM Device name too long: {}", cbmDeviceName.length());
+                return new ModifyIPTVResponse(
+                        "400",
+                        ERROR_PREFIX + "CBM device name too long",
+                        String.valueOf(System.currentTimeMillis()),
+                        "",
+                        ""
+                );
+            }
             // -------------------- Fetch entities --------------------
             Optional<Customer> optSubscriber = customerRepository.findByDiscoveredName(subscriberName);
             Optional<Subscription> optSubscription = subscriptionRepository.findByDiscoveredName(subscriptionName);

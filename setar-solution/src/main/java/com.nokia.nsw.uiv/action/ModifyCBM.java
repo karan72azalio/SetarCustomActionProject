@@ -91,6 +91,26 @@ public class ModifyCBM implements HttpAction {
             log.error("ModifyCBM start: subscriberDerived='{}', subscriptionName='{}', cfsName='{}', rfsName='{}', productName='{}', cbmDeviceName='{}'",
                     subscriberNameDerived, subscriptionName, cfsName, rfsName, productName, cbmDeviceName);
 
+            if (subscriptionName.length() > 100) {
+                log.warn("Subscription name too long: {}", subscriptionName.length());
+                return createErrorResponse("Subscription name too long", 400);
+            }
+
+            if (subscriberNameDerived.length() > 100) {
+                log.warn("Subscription name too long: {}", subscriberNameDerived.length());
+                return createErrorResponse("Subscriber  name too long", 400);
+            }
+
+            if (productName.length() > 100) {
+                log.warn("Product name too long: {}", productName.length());
+                return createErrorResponse("Product name too long", 400);
+            }
+
+            if (cbmDeviceName.length() > 100) {
+                log.warn("CBM device name too long: {}", cbmDeviceName.length());
+                return createErrorResponse("CBM device name too long", 400);
+            }
+
             // Retrieve entities
             boolean skipEntities = containsAny(input.getModifyType(), "Package", "Components", "Products", "Contracts");
             Optional<Customer> subscriber = Optional.empty();
@@ -442,6 +462,17 @@ public class ModifyCBM implements HttpAction {
             return new ModifyCBMResponse("500", msg, Instant.now().toString(), "", "");
         }
     }
+
+    private ModifyCBMResponse createErrorResponse(String message, int status) {
+        return new ModifyCBMResponse(
+                String.valueOf(status),
+                ERROR_PREFIX + message,
+                Instant.now().toString(),
+                "",
+                ""
+        );
+    }
+
 
     // --- helper utilities ---
     private boolean containsAny(String source, String... toks) {

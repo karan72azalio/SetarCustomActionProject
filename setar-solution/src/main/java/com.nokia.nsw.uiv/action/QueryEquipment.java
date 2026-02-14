@@ -81,7 +81,15 @@ public class QueryEquipment implements HttpAction {
         String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
         String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceId();
+        if (subscriptionName.length()>100) {
+            return createErrorResponse("400",
+                    "Subscription Name too long " + subscriptionName);
+        }
 
+        if (productName.length()>100) {
+            return createErrorResponse("400",
+                    "Product Name too long " + productName);
+        }
         boolean successFlag = false;
         int apCounter = 1;
         int stbCounter = 1;

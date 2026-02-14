@@ -153,7 +153,7 @@ public class ChangeTechnology implements HttpAction {
             // 4. Update existing subscriber (only when productSubtype == Fibernet)
             if ("Fibernet".equalsIgnoreCase(productSubtype)) {
                 if (subscriberNameFibernet.length() > 100) {
-                    return new ChangeTechnologyResponse("400", ERROR_PREFIX + "Subscriber name too long", Instant.now().toString(),"","");
+                    return new ChangeTechnologyResponse("400", ERROR_PREFIX + "Subscriber name too long", Instant.now().toString(),subscriptionName,ontName);
                 }
                 // Try find CBM-keyed subscriber
                 Optional<Customer> maybeCbmSubscriber = customerRepo.findByDiscoveredName(subscriberNameCbmKey);
@@ -178,7 +178,9 @@ public class ChangeTechnology implements HttpAction {
                     customerRepo.save(cbmSubscriber);
                 }
             }
-
+            if (subscriptionName.length() > 100) {
+                return new ChangeTechnologyResponse("400", ERROR_PREFIX + "Subscription name too long", Instant.now().toString(),subscriptionName,"");
+            }
             // 5. Update existing subscription (if exists)
             Optional<Subscription> maybeSubscription = subscriptionRepo.findByDiscoveredName(subscriptionName);
             Subscription subscription = null;
@@ -301,6 +303,9 @@ public class ChangeTechnology implements HttpAction {
                         return logicalDeviceRepo.save(d);
                     });
 
+            if (mgmtVlanName.length() > 100) {
+                return new ChangeTechnologyResponse("400", ERROR_PREFIX + "Vlan name too long", Instant.now().toString(),"","");
+            }
             // 10. Create or retrieve management VLAN interface
             vlanRepo.findByDiscoveredName(mgmtVlanName).orElseGet(() -> {
                 LogicalInterface v = new LogicalInterface();

@@ -81,6 +81,14 @@ public class DeleteIPTV implements HttpAction {
                 return errorResponse("400", ERROR_PREFIX + "ONT name too long");
             }
 
+            if (subscriptionName.length() > 100) {
+                return errorResponse("400", ERROR_PREFIX + "Subscription name too long");
+            }
+
+            if (productName.length() > 100) {
+                return errorResponse("400", ERROR_PREFIX + "Product name too long");
+            }
+
             // Step 3: Retrieve entities
             Optional<Customer> optCust = customerRepository.findByDiscoveredName(subscriberName);
             Optional<Subscription> optSub = subscriptionRepository.findByDiscoveredName(subscriptionName);
