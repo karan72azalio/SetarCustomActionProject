@@ -445,7 +445,7 @@ public class CreateServiceEVPN implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> vProps = new HashMap<>();
-                    vProps.put("vlanId", req.getMgmntVlanId());
+                    if (req.getMgmntVlanId() != null) vProps.put("vlanId", req.getMgmntVlanId());
                     if (req.getTemplateNameVlanMgmnt() != null)
                         vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
                     vProps.put("OperationalState", "Active");
@@ -486,21 +486,23 @@ public class CreateServiceEVPN implements HttpAction {
                         throw new RuntimeException(e);
                     }
                     Map<String, Object> vProps = new HashMap<>();
-                    vProps.put("vlanId", req.getVlanId());
+                    putIfNotNull(vProps, "vlanId", req.getVlanId());
                     vProps.put("OperationalState", "Active");
                     if (usedStandardEvpn) {
-                        vProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
-                        vProps.put("configuredOntSN", req.getOntSN());
-                        vProps.put("configuredPort", req.getOntPort());
-                        vProps.put("vlanTemplate", req.getTemplateNameVlan());
-                        vProps.put("serviceId", req.getServiceId());
-                        vProps.put("vlanCreateTemplate", req.getTemplateNameVlanCreate());
-                        vProps.put("configuredVplsTemplate", req.getTemplateNameVpls());
+                        putIfNotNull(vProps, "mgmtTemplate", req.getTemplateNameVlanMgmnt());
+                        putIfNotNull(vProps, "configuredOntSN", req.getOntSN());
+                        putIfNotNull(vProps, "configuredPort", req.getOntPort());
+                        putIfNotNull(vProps, "vlanTemplate", req.getTemplateNameVlan());
+                        putIfNotNull(vProps, "serviceId", req.getServiceId());
+                        putIfNotNull(vProps, "vlanCreateTemplate", req.getTemplateNameVlanCreate());
+                        putIfNotNull(vProps, "configuredVplsTemplate", req.getTemplateNameVpls());
                         // associate with ONT
                         vProps.put("linkedOnt", ont.getDiscoveredName());
                     } else {
                         // generic (no ONT association)
-                        vProps.put("vlanTemplate", req.getTemplateNameVlan());
+                        if (req.getTemplateNameVlan() != null) {
+                            vProps.put("vlanTemplate", req.getTemplateNameVlan());
+                        }
                     }
                     v.setProperties(vProps);
                     vlanRepo.save(v, 2);
@@ -541,21 +543,21 @@ public class CreateServiceEVPN implements HttpAction {
             Map<String, Object> ontProps = ont.getProperties();
 
             if ("4".equals(selectedPort)) {
-                oltProps.put("evpnEthPort4Template", req.getTemplateNamePort());
+                putIfNotNull(oltProps, "evpnEthPort4Template",req.getTemplateNamePort());
                 ontProps.put("evpnEthPort4Template", servCounter);
             } else if ("5".equals(selectedPort)) {
-                oltProps.put("evpnEthPort5Template", req.getTemplateNamePort());
+                putIfNotNull(oltProps, "evpnEthPort5Template",req.getTemplateNamePort());
                 ontProps.put("evpnEthPort5Template", servCounter);
             } else if ("3".equals(selectedPort)) {
-                oltProps.put("evpnEthPort3Template", req.getTemplateNamePort());
+                putIfNotNull(oltProps, "evpnEthPort3Template",req.getTemplateNamePort());
                 ontProps.put("evpnEthPort3Template", servCounter);
             } else if ("2".equals(selectedPort)) {
                 // spec asked: port2 uses original pre-increment value
                 ontProps.put("evpnEthPort2Template", String.valueOf(currentCounter));
-                oltProps.put("evpnEthPort2Template", req.getTemplateNamePort());
+                putIfNotNull(oltProps, "evpnEthPort2Template",req.getTemplateNamePort());
             } else { // port 1
                 // port 1: set ONT port-1 EVPN VLAN template
-                ontProps.put("evpnEthPort1Template", req.getTemplateNameVlan());
+                putIfNotNull(ontProps, "evpnEthPort1Template", req.getTemplateNameVlan());
                 // no olt update required
             }
 
@@ -612,34 +614,36 @@ public class CreateServiceEVPN implements HttpAction {
                     || (req.getProductSubtype() != null && req.getProductSubtype().contains("Cloudstarter"))) {
                 // pick index 2..8 -> naive approach: choose 2
                 for (int idx = 2; idx <= 8; idx++) {
-                    String freeTemp =  String.valueOf(idx);
+                    String freeTemp = String.valueOf(idx);
+                    if (req.getTemplateNameVlan() != null){
+                        if (req.getTemplateNameVlan().endsWith(freeTemp)) {
+                            String singleName = req.getOntSN() + "_P" + selectedPort + "_SINGLETAGGED_" + idx;
+                            if (!vlanRepo.findByDiscoveredName(singleName).isPresent()) {
+                                LogicalInterface singleVlan = new LogicalInterface();
+                                singleVlan.setLocalName(singleName);
+                                singleVlan.setDiscoveredName(singleName);
+                                singleVlan.setContext("Setar");
+                                singleVlan.setKind("VLANInterface");
+                                Map<String, Object> svProps = new HashMap<>();
+                                putIfNotNull(svProps, "vlanId", req.getVlanId());
+                                putIfNotNull(svProps, "mgmtTemplate", req.getTemplateNameVlanMgmnt());
+                                putIfNotNull(svProps, "configuredOntSN", req.getOntSN());
+                                putIfNotNull(svProps, "configuredPort", selectedPort);
+                                putIfNotNull(svProps, "vlanTemplate", req.getTemplateNameVlan());
+                                putIfNotNull(svProps, "serviceId", req.getServiceId());
+                                putIfNotNull(svProps, "vlanCreateTemplate", req.getTemplateNameVlanCreate());
 
-                    if (req.getTemplateNameVlan().endsWith(freeTemp)) {
-                        String singleName = req.getOntSN() + "_P" + selectedPort + "_SINGLETAGGED_" + idx;
-                        if (!vlanRepo.findByDiscoveredName(singleName).isPresent()) {
-                            LogicalInterface singleVlan = new LogicalInterface();
-                            singleVlan.setLocalName(singleName);
-                            singleVlan.setDiscoveredName(singleName);
-                            singleVlan.setContext("Setar");
-                            singleVlan.setKind("VLANInterface");
-                            Map<String, Object> svProps = new HashMap<>();
-                            svProps.put("vlanId", req.getVlanId());
-                            svProps.put("mgmtTemplate", req.getTemplateNameVlanMgmnt());
-                            svProps.put("configuredOntSN", req.getOntSN());
-                            svProps.put("configuredPort", selectedPort);
-                            svProps.put("vlanTemplate", req.getTemplateNameVlan());
-                            svProps.put("serviceId", req.getServiceId());
-                            svProps.put("vlanCreateTemplate", req.getTemplateNameVlanCreate());
-                            svProps.put("OperationalState", "Active");
-                            svProps.put("linkedOnt", ont.getDiscoveredName());
-                            singleVlan.setProperties(svProps);
-                            vlanRepo.save(singleVlan);
-                            ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
-                            ont.setContained(new HashSet<>(List.of(singleVlan)));
-                            logicalDeviceRepo.save(ont);
-                            break;
+                                svProps.put("OperationalState", "Active");
+                                svProps.put("linkedOnt", ont.getDiscoveredName());
+                                singleVlan.setProperties(svProps);
+                                vlanRepo.save(singleVlan);
+                                ont = logicalDeviceRepo.findByDiscoveredName(ont.getDiscoveredName()).get();
+                                ont.setContained(new HashSet<>(List.of(singleVlan)));
+                                logicalDeviceRepo.save(ont);
+                                break;
+                            }
                         }
-                    }
+                }
                 }
             }
             // 16) Ensure associations & final persist for RFS/ONT/OLT
@@ -674,4 +678,10 @@ public class CreateServiceEVPN implements HttpAction {
             );
         }
     }
+    private void putIfNotNull(Map<String, Object> map, String key, Object value) {
+        if (value != null) {
+            map.put(key, value);
+        }
+    }
+
 }

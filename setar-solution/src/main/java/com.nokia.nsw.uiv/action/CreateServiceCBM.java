@@ -278,7 +278,6 @@ public class CreateServiceCBM implements HttpAction {
                     Map<String, Object> prop = new HashMap<>();
                     prop.put("serviceStatus", "Active");
                     prop.put("serviceType",request.getProductType());
-                    prop.put("serviceType",request.getProductType());
                     prop.put("CFSReference",cfs.getDiscoveredName());
                     r.setProperties(prop);
                     r.setUsedService(new HashSet<>(List.of(cfs)));
@@ -329,5 +328,11 @@ public class CreateServiceCBM implements HttpAction {
         response.setMessage("UIV action CreateServiceCBM execution failed - " + message);
         response.setTimestamp(new Date().toString());
         return response;
+    }
+
+    private void putIfNotNull(Map<String, Object> map, String key, Object value) {
+        if (value != null) {
+            map.put(key, value);
+        }
     }
 }
