@@ -96,20 +96,18 @@ public class CreateServiceFibernet implements HttpAction {
             AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);
             AtomicBoolean isProductExist = new AtomicBoolean(true);
             // Length checks
-            if (productName.length() > 100) {
-                return createErrorResponse("Product name too long", "400", "", "");
-            }
             if (ontName.length() > 100) {
                 return createErrorResponse("ONT name too long", "400", "", "");
-            }
-            if (subscriptionName.length() > 100) {
-                return createErrorResponse("Subscription name too long", "400", "", "");
             }
             if (subscriberName.length() > 100) {
                 return createErrorResponse("Subscriber name too long", "400", "", "");
             }
-
-
+            if (subscriptionName.length() > 100) {
+                return createErrorResponse("Subscription name too long", "400", "", "");
+            }
+            if (productName.length() > 100) {
+                return createErrorResponse("Product name too long", "400", "", "");
+            }
 
             // 2. Subscriber: create or fetch
             Optional<Customer> optCustomer = customerRepository.findByDiscoveredName(subscriberName);

@@ -1,27 +1,19 @@
 package com.nokia.nsw.uiv.action;
 
-import com.nokia.nsw.uiv.exception.AccessForbiddenException;
 import com.nokia.nsw.uiv.exception.BadRequestException;
 import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
+import com.nokia.nsw.uiv.model.common.party.Customer;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
 import com.nokia.nsw.uiv.model.service.Product;
 import com.nokia.nsw.uiv.model.service.Service;
+import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceVoIPRequest;
-import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
-import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.response.CreateServiceVoIPResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
-
-import com.nokia.nsw.uiv.model.common.party.Customer;
-import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
-import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -301,7 +293,7 @@ public class CreateServiceVoIP implements HttpAction {
                 rfsProps.put("serviceStatus", "Active");
                 rfsProps.put("serviceType", req.getProductType());
                 newRfs.setProperties(rfsProps);
-                newRfs.setUsingService(new HashSet<>(List.of(cfs)));
+                newRfs.setUsedService(new HashSet<>(List.of(cfs)));
                 rfs = newRfs;
                 serviceCustomRepository.save(newRfs);
             }

@@ -6,17 +6,12 @@ import com.nokia.nsw.uiv.framework.action.Action;
 import com.nokia.nsw.uiv.framework.action.ActionContext;
 import com.nokia.nsw.uiv.framework.action.HttpAction;
 import com.nokia.nsw.uiv.model.common.party.Customer;
-import com.nokia.nsw.uiv.model.common.party.CustomerRepository;
-import com.nokia.nsw.uiv.model.resource.AdministrativeState;
 import com.nokia.nsw.uiv.model.resource.logical.LogicalDevice;
-import com.nokia.nsw.uiv.model.resource.logical.LogicalDeviceRepository;
 import com.nokia.nsw.uiv.model.service.Product;
 import com.nokia.nsw.uiv.model.service.Service;
 import com.nokia.nsw.uiv.model.service.Subscription;
-import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.CreateServiceCbmVoiceRequest;
-import com.nokia.nsw.uiv.response.CreateServiceCBMResponse;
 import com.nokia.nsw.uiv.response.CreateServiceCbmVoiceResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -381,12 +376,16 @@ public class CreateServiceCbmVoice implements HttpAction {
                         props.put("macAddressMta", request.getCpeMacAddressMTA());
                     }
 
-                    if (Integer.valueOf(1).equals(request.getVoipPort())) {
-                        props.put("voipPort1", request.getVoipNumber1());
-                    } else if (Integer.valueOf(2).equals(request.getVoipPort())) {
-                        props.put("voipPort2", request.getVoipNumber1());
-                    }
+                    String voipPort = request.getVoipPort();
+                    if (voipPort != null) {
+                        int port = Integer.parseInt(voipPort);
 
+                        if (port == 1) {
+                            props.put("voipPort1", request.getVoipNumber1());
+                        } else if (port == 2) {
+                            props.put("voipPort2", request.getVoipNumber1());
+                        }
+                    }
 
                     cpe.setProperties(props);
                     cpeDeviceRepository.save(cpe, 2);
