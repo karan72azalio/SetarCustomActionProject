@@ -19,6 +19,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifySPRRequest;
+import com.nokia.nsw.uiv.response.CreateServiceIPTVResponse;
 import com.nokia.nsw.uiv.response.ModifyCBMResponse;
 import com.nokia.nsw.uiv.response.ModifySPRResponse;
 import com.nokia.nsw.uiv.utils.Constants;
@@ -89,9 +90,18 @@ public class ModifySPR implements HttpAction {
             String subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getOntSN();
             String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId() + Constants.UNDER_SCORE  + request.getOntSN();
             String ontName ="ONT" + request.getOntSN();
-            Validations.validateLength(subscriberName,"Subscriber");
-            Validations.validateLength(subscriptionName,"Subscription");
-            Validations.validateLength(ontName,"ONT");
+
+            try
+            {
+                Validations.validateLength(subscriberName,"Subscriber");
+                Validations.validateLength(subscriptionName,"Subscription");
+                Validations.validateLength(ontName,"ONT");
+            }
+            catch (BadRequestException bre){
+                return new CreateServiceIPTVResponse("400", ERROR_PREFIX +  bre.getMessage(),
+                        Instant.now().toString(), "","");
+            }
+
 
             // 3. Fetch Entities
            Optional<Customer>  subscriberOpt = customerRepository.findByDiscoveredName(subscriberName);
@@ -432,15 +442,31 @@ public class ModifySPR implements HttpAction {
                                                String newServiceId) throws BadRequestException, AccessForbiddenException {
         String oldSubscriptionName = request.getSubscriberName() +Constants.UNDER_SCORE + request.getServiceId() +Constants.UNDER_SCORE+ request.getOntSN();
         String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
-        Validations.validateLength(oldSubscriptionName,"Subscription");
-        Validations.validateLength(productName,"Product");
+        try {
+            Validations.validateLength(oldSubscriptionName,"Subscription");
+            Validations.validateLength(productName,"Product");
+        }
+        catch (BadRequestException bre){
+            new ModifySPRResponse("400", ERROR_PREFIX + bre.getMessage(),
+                    Instant.now().toString(), "", "");
+            return;
+        }
+
+
         String cfsName = "CFS" + Constants.UNDER_SCORE + oldSubscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + oldSubscriptionName;
 
         String subscriptionNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + newServiceId + Constants.UNDER_SCORE + request.getOntSN();
         String productNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + request.getProductSubtype()+Constants.UNDER_SCORE + newServiceId;
-        Validations.validateLength(subscriptionNameNew,"New Subscription");
-        Validations.validateLength(productNameNew,"New Product");
+        try {
+            Validations.validateLength(subscriptionNameNew,"New Subscription");
+            Validations.validateLength(productNameNew,"New Product");
+        }
+        catch (BadRequestException bre){
+            new ModifySPRResponse("400", ERROR_PREFIX + bre.getMessage(),
+                    Instant.now().toString(), "", "");
+            return;
+        }
         String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
         String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
 
