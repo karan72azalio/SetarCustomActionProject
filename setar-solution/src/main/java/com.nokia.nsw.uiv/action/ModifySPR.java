@@ -87,43 +87,48 @@ public class ModifySPR implements HttpAction {
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
 
             // 2. Name Construction
-            String subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getOntSN();
-            String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId() + Constants.UNDER_SCORE  + request.getOntSN();
-            String ontName ="ONT" + request.getOntSN();
+            String subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getOntSN();
+            String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getServiceId() + Constants.UNDER_SCORE + request.getOntSN();
+            String ontName = "ONT" + request.getOntSN();
 
-            try
-            {
-                Validations.validateLength(subscriberName,"Subscriber");
-                Validations.validateLength(subscriptionName,"Subscription");
-                Validations.validateLength(ontName,"ONT");
-            }
-            catch (BadRequestException bre){
-                return new CreateServiceIPTVResponse("400", ERROR_PREFIX +  bre.getMessage(),
-                        Instant.now().toString(), "","");
+            try {
+                Validations.validateLength(ontName, "ONT");
+                Validations.validateLength(subscriberName, "Subscriber");
+                Validations.validateLength(subscriptionName, "Subscription");
+            } catch (BadRequestException bre) {
+                return new ModifySPRResponse("400", ERROR_PREFIX + bre.getMessage(),
+                        Instant.now().toString(), "", "");
             }
 
 
             // 3. Fetch Entities
-           Optional<Customer>  subscriberOpt = customerRepository.findByDiscoveredName(subscriberName);
+            Optional<Customer> subscriberOpt = customerRepository.findByDiscoveredName(subscriberName);
             Customer subscriber = null;
-            if(!subscriberOpt.isPresent()){
+            if (!subscriberOpt.isPresent()) {
                 flag = "partly";
-            }else{
+            } else {
                 subscriber = subscriberOpt.get();
             }
             Subscription subscription = subscriptionRepository.findByDiscoveredName(subscriptionName)
                     .orElseThrow(() -> new BadRequestException("No entry found to modify Subscription: " + subscriptionName));
 
             // 4. Route to correct handler
-            if (isBroadband(request)) {
-                success = handleFibernetOrBroadband(request, subscriber, subscription);
-            } else if (isEnterprise(request)) {
-                success = handleEVPN(request, subscription);
-            } else if (isVoip(request)) {
-                success = handleVOIP(request, subscription, ontName);
-            } else if (isOntModification(request)) {
-                success = handleModifyONT(request, ontName,flag);
+            try {
+                if (isBroadband(request)) {
+                    success = handleFibernetOrBroadband(request, subscriber, subscription);
+                } else if (isEnterprise(request)) {
+                    success = handleEVPN(request, subscription);
+                } else if (isVoip(request)) {
+                    success = handleVOIP(request, subscription, ontName);
+                } else if (isOntModification(request)) {
+                    success = handleModifyONT(request, ontName, flag);
+                }
+            } catch (BadRequestException bre) {
+                log.error("Validation or not found error: {}", bre.getMessage(), bre);
+                String msg = ERROR_PREFIX + bre.getMessage();
+                return new ModifySPRResponse("400", msg, getCurrentTimestamp(), "", "");
             }
+
 
             // 5. Response
             if (success) {
@@ -137,7 +142,7 @@ public class ModifySPR implements HttpAction {
         } catch (BadRequestException bre) {
             log.error("Validation or not found error: {}", bre.getMessage(), bre);
             String msg = ERROR_PREFIX + bre.getMessage();
-            return new ModifySPRResponse("409", msg, getCurrentTimestamp(), "", "");
+            return new ModifySPRResponse("400", msg, getCurrentTimestamp(), "", "");
         } catch (ModificationNotAllowedException ex) {
             log.error("Persistence error: {}", ex.getMessage(), ex);
             String msg = ERROR_PREFIX + ex.getMessage();
@@ -165,7 +170,7 @@ public class ModifySPR implements HttpAction {
 
             if (!request.getServiceId().equals(request.getModifyParam3())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam3());
-            }else{
+            } else {
                 subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 subscription.setProperties(subProps);
                 subscriptionRepository.save(subscription);
@@ -213,7 +218,7 @@ public class ModifySPR implements HttpAction {
 
             if (!request.getServiceId().equals(request.getModifyParam1())) {
                 updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
-            }else{
+            } else {
                 subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                 subscription.setProperties(subProps);
                 subscriptionRepository.save(subscription);
@@ -235,7 +240,7 @@ public class ModifySPR implements HttpAction {
         return false;
     }
 
-    private boolean handleVOIP(ModifySPRRequest request, Subscription subscription, String ontName) throws ModificationNotAllowedException {
+    private boolean handleVOIP(ModifySPRRequest request, Subscription subscription, String ontName) throws ModificationNotAllowedException, BadRequestException {
         if (List.of("Package", "Product").contains(request.getModifyType())) {
             try {
                 Map<String, Object> subProps = subscription.getProperties();
@@ -254,28 +259,30 @@ public class ModifySPR implements HttpAction {
                 LogicalDevice ont = logicalCustomDeviceRepository.findByDiscoveredName(ontName)
                         .orElseThrow(() -> new BadRequestException("No entry found to modify ONT"));
                 logicalCustomDeviceRepository.save(ont, 2);
-                String tempNumberOnt2 = ont.getProperties().get("potsPort2Number")!=null?ont.getProperties().get("potsPort2Number").toString():"";
+                String tempNumberOnt2 = ont.getProperties().get("potsPort2Number") != null ? ont.getProperties().get("potsPort2Number").toString() : "";
                 if (tempNumberOnt2 == null || tempNumberOnt2 == "") {
                     tempNumberOnt2 = "empty";
                 }
                 if (tempNumberOnt2.equals(request.getServiceId())) {
-                    subProps.put("voipNumber1",request.getModifyParam1());
-                    ont.getProperties().put("potsPort2Number",request.getModifyParam1());
+                    subProps.put("voipNumber1", request.getModifyParam1());
+                    ont.getProperties().put("potsPort2Number", request.getModifyParam1());
                 } else {
-                    subProps.put("voipNumber1",request.getModifyParam1());
-                    ont.getProperties().put("potsPort1Number",request.getModifyParam1());
+                    subProps.put("voipNumber1", request.getModifyParam1());
+                    ont.getProperties().put("potsPort1Number", request.getModifyParam1());
                 }
                 logicalCustomDeviceRepository.save(ont);
                 subscription.setProperties(subProps);
                 if (!request.getServiceId().equals(request.getModifyParam1())) {
                     updateSubscriptionAndChildren(request, subscription, request.getModifyParam1());
-                }else{
+                } else {
                     subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
                     subscription.setProperties(subProps);
                     subscriptionRepository.save(subscription);
                 }
                 return true;
-            } catch (Exception e) {
+            } catch (BadRequestException e) {
+                throw new BadRequestException(e.getMessage());
+            }catch (Exception e) {
                 throw new ModificationNotAllowedException("Failed to modify VOIP number: " + e.getMessage());
             }
         }
@@ -284,145 +291,152 @@ public class ModifySPR implements HttpAction {
 
     private boolean handleModifyONT(ModifySPRRequest request, String ontName, String flag) throws BadRequestException, AccessForbiddenException {
         LogicalDevice ont = logicalCustomDeviceRepository.findByDiscoveredName(ontName)
-                .orElseThrow(() -> new BadRequestException("No entry found to modify ONT: "+ontName));
+                .orElseThrow(() -> new BadRequestException("No entry found to modify ONT: " + ontName));
         Customer iptvSubscriber = customerRepository.findByDiscoveredName(request.getSubscriberName()).get();
         Set<Subscription> iptvSubscriptions = iptvSubscriber.getSubscription();
-        for(Subscription subscription:iptvSubscriptions){
+        for (Subscription subscription : iptvSubscriptions) {
             subscription = subscriptionRepository.findByDiscoveredName(subscription.getDiscoveredName()).get();
-            subscription.getProperties().put("serviceSN",request.getModifyParam1());
-            subscriptionRepository.save(subscription,2);
+            subscription.getProperties().put("serviceSN", request.getModifyParam1());
+            subscriptionRepository.save(subscription, 2);
         }
         Set<Service> services = ont.getUsingService();
-        for(Service s:services){
+        for (Service s : services) {
             Optional<Customer> setarSubscriber1 = Optional.empty();
-            String subscriberNewName="";
-            try{
-                    Service rfs = s;
-                    String[] rfsNameArray = rfs.getDiscoveredName().split("_");
-                    String subscriber = rfsNameArray[1];
-                    String subscriberNameForOnt = subscriber + Constants.UNDER_SCORE +request.getOntSN();
-                    setarSubscriber1 =customerRepository.findByDiscoveredName(subscriberNameForOnt);
-                    subscriberNewName = subscriber + Constants.UNDER_SCORE +request.getModifyParam1();
-                    String ontExist = "";
-                    String ontNameNew = "ONT" + request.getModifyParam1();
-                    Optional<LogicalDevice> ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontName);
-                    if(!ontDevice.isPresent()){
-                        ontExist = "fail";
-                    }
-                    Set<Subscription> subscriptions = setarSubscriber1.get().getSubscription();
-                    for(Subscription subs: subscriptions){
+            String subscriberNewName = "";
+            try {
+                Service rfs = s;
+                String[] rfsNameArray = rfs.getDiscoveredName().split("_");
+                String subscriber = rfsNameArray[1];
+                String subscriberNameForOnt = subscriber + Constants.UNDER_SCORE + request.getOntSN();
+                setarSubscriber1 = customerRepository.findByDiscoveredName(subscriberNameForOnt);
+                subscriberNewName = subscriber + Constants.UNDER_SCORE + request.getModifyParam1();
+                String ontExist = "";
+                String ontNameNew = "ONT" + request.getModifyParam1();
+                try {
+                    Validations.validateLength(ontNameNew, "New ONT");
+                } catch (BadRequestException bre) {
+                    throw new BadRequestException(bre.getMessage());
+                }
+                Optional<LogicalDevice> ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontName);
+                if (!ontDevice.isPresent()) {
+                    ontExist = "fail";
+                }
+                Set<Subscription> subscriptions = setarSubscriber1.get().getSubscription();
+                for (Subscription subs : subscriptions) {
+                    subs = subscriptionRepository.findByDiscoveredName(subs.getDiscoveredName()).get();
+                    String serviceSubType = subs.getProperties().get("serviceSubType") != null ? subs.getProperties().get("serviceSubType").toString() : "";
+                    if ((serviceSubType.equalsIgnoreCase("Bridged") && request.getOntModel().contains("XS-2426G-B"))) {
+
+                        LogicalDevice oltDevice = (LogicalDevice) ontDevice.get().getUsedResource().stream().findFirst().get();
+                        oltDevice = logicalCustomDeviceRepository.findByDiscoveredName(oltDevice.getDiscoveredName()).get();
+                        oltDevice.getProperties().put("veipServiceTemplate", request.getTemplateNameVEIP());
+                        oltDevice.getProperties().put("veipHsiTemplate", request.getTemplateNameVLAN());
+                        logicalCustomDeviceRepository.save(oltDevice, 2);
                         subs = subscriptionRepository.findByDiscoveredName(subs.getDiscoveredName()).get();
-                        String serviceSubType = subs.getProperties().get("serviceSubType")!=null?subs.getProperties().get("serviceSubType").toString():"";
-                        if((serviceSubType.equalsIgnoreCase("Bridged") && request.getOntModel().contains("XS-2426G-B"))){
+                        subs.getProperties().put("evpnTemplateVLAN", request.getTemplateNameVLAN());
+                    }
+                    String subscriptionName = subs.getDiscoveredName();
+                    String serviceID = subs.getProperties().get("serviceID") != null ? subs.getProperties().get("serviceID").toString() : "";
+                    String subscriptionNameNew = subscriber + Constants.UNDER_SCORE + serviceID + Constants.UNDER_SCORE + request.getModifyParam1();
+                    String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
+                    String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
+                    String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
+                    String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
+                    subs.setDiscoveredName(subscriberNewName);
+                    subs.getProperties().put("serviceSN", request.getModifyParam1());
+                    subs.getProperties().put("gatewayMacAddress", request.getModifyParam2());
+                    subscriptionRepository.save(subs, 2);
 
-                            LogicalDevice oltDevice = (LogicalDevice) ontDevice.get().getUsedResource().stream().findFirst().get();
-                            oltDevice = logicalCustomDeviceRepository.findByDiscoveredName(oltDevice.getDiscoveredName()).get();
-                            oltDevice.getProperties().put("veipServiceTemplate",request.getTemplateNameVEIP());
-                            oltDevice.getProperties().put("veipHsiTemplate",request.getTemplateNameVLAN());
-                            logicalCustomDeviceRepository.save(oltDevice,2);
-                            subs = subscriptionRepository.findByDiscoveredName(subs.getDiscoveredName()).get();
-                            subs.getProperties().put("evpnTemplateVLAN",request.getTemplateNameVLAN());
+                    Service cfsOld = serviceCustomRepository.findByDiscoveredName(cfsName).get();
+                    cfsOld.setDiscoveredName(cfsNameNew);
+                    cfsOld.getProperties().put("serviceEndDate", getCurrentTimestamp());
+                    serviceCustomRepository.save(cfsOld, 2);
+                    Service rfsOld = serviceCustomRepository.findByDiscoveredName(rfsName).get();
+                    rfsOld.setDiscoveredName(rfsNameNew);
+                    if (request.getFxOrderId() != null) {
+                        rfsOld.getProperties().put("transactionId", request.getFxOrderId());
+                    }
+                    rfsOld.getProperties().put("transactionType", request.getModifyType());
+                    if (ontExist != "fail") {
+                        ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontDevice.get().getDiscoveredName());
+                        if (!ontDevice.isPresent()) {
+                            ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontNameNew);
                         }
-                        String subscriptionName = subs.getDiscoveredName();
-                        String serviceID = subs.getProperties().get("serviceID")!=null?subs.getProperties().get("serviceID").toString():"";
-                        String subscriptionNameNew = subscriber + Constants.UNDER_SCORE + serviceID + Constants.UNDER_SCORE + request.getModifyParam1();
-                        String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
-                        String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
-                        String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
-                        String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
-                        subs.setDiscoveredName(subscriberNewName);
-                        subs.getProperties().put("serviceSN",request.getModifyParam1());
-                        subs.getProperties().put("gatewayMacAddress",request.getModifyParam2());
-                        subscriptionRepository.save(subs,2);
+                        Set<LogicalResource> tempInterfaces = ontDevice.get().getContained();
+                        if (!tempInterfaces.isEmpty()) {
+                            for (LogicalResource d : tempInterfaces) {
+                                LogicalInterface temp = (LogicalInterface) d;
+                                temp = logicalInterfaceRepository.findByDiscoveredName(temp.getDiscoveredName()).get();
+                                String vlanName = temp.getDiscoveredName();
+                                String vlanPort = temp.getProperties().get("configuredPort") != null ? temp.getProperties().get("configuredPort").toString() : "";
+                                if (vlanName.contains(request.getOntSN())) {
+                                    for (int i = 2; i <= 8; i++) {
+                                        Integer tempID = i;
+                                        String freeTemp = tempID.toString();
 
-                        Service cfsOld = serviceCustomRepository.findByDiscoveredName(cfsName).get();
-                        cfsOld.setDiscoveredName(cfsNameNew);
-                        cfsOld.getProperties().put("serviceEndDate",getCurrentTimestamp());
-                        serviceCustomRepository.save(cfsOld,2);
-                        Service rfsOld = serviceCustomRepository.findByDiscoveredName(rfsName).get();
-                        rfsOld.setDiscoveredName(rfsNameNew);
-                        if (request.getFxOrderId() != null) {
-                            rfsOld.getProperties().put("transactionId",request.getFxOrderId());
-                        }
-                        rfsOld.getProperties().put("transactionType",request.getModifyType());
-                        if (ontExist != "fail") {
-                            ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontDevice.get().getDiscoveredName());
-                            if(!ontDevice.isPresent()){
-                                ontDevice = logicalCustomDeviceRepository.findByDiscoveredName(ontNameNew);
-                            }
-                            Set<LogicalResource> tempInterfaces = ontDevice.get().getContained();
-                            if (!tempInterfaces.isEmpty()) {
-                                for(LogicalResource d:tempInterfaces) {
-                                    LogicalInterface temp = (LogicalInterface)d;
-                                    temp = logicalInterfaceRepository.findByDiscoveredName(temp.getDiscoveredName()).get();
-                                    String vlanName = temp.getDiscoveredName();
-                                    String vlanPort = temp.getProperties().get("configuredPort")!=null?temp.getProperties().get("configuredPort").toString():"";
-                                    if (vlanName.contains(request.getOntSN())) {
-                                        for (int i = 2; i <= 8; i++) {
-                                            Integer tempID = i;
-                                            String freeTemp = tempID.toString();
+                                        if (vlanName.endsWith(freeTemp) == true) {
 
-                                            if (vlanName.endsWith(freeTemp) == true) {
-
-                                                String tempName = request.getModifyParam1() + Constants.UNDER_SCORE + "P" + vlanPort + Constants.UNDER_SCORE + "SINGLETAGGED" + Constants.UNDER_SCORE + freeTemp;
-                                                System.out.println("++++++  {630}  ++++++" );
-                                                temp.setDiscoveredName(tempName);
-                                                temp.getProperties().put("configuredOnt",request.getModifyParam1());
-                                                logicalInterfaceRepository.save(temp,2);
-                                                break;
-                                            }
+                                            String tempName = request.getModifyParam1() + Constants.UNDER_SCORE + "P" + vlanPort + Constants.UNDER_SCORE + "SINGLETAGGED" + Constants.UNDER_SCORE + freeTemp;
+                                            System.out.println("++++++  {630}  ++++++");
+                                            temp.setDiscoveredName(tempName);
+                                            temp.getProperties().put("configuredOnt", request.getModifyParam1());
+                                            logicalInterfaceRepository.save(temp, 2);
+                                            break;
                                         }
                                     }
-
                                 }
-                            }
-                            if (ontDevice.get().getDiscoveredName().contains(request.getOntSN())) {
-                                LogicalDevice tempOnt = logicalCustomDeviceRepository.findByDiscoveredName(ontDevice.get().getDiscoveredName()).get();
-                                log.error("++++++  ontModel  ++++++" +request.getOntModel());
-                                tempOnt.setDiscoveredName(ontNameNew);
-                                tempOnt.getProperties().put("serialNo",request.getModifyParam1());
-                                tempOnt.getProperties().put("deviceModel",request.getOntModel());
-                                logicalCustomDeviceRepository.save(tempOnt,2);
-                            }
 
+                            }
                         }
+                        if (ontDevice.get().getDiscoveredName().contains(request.getOntSN())) {
+                            LogicalDevice tempOnt = logicalCustomDeviceRepository.findByDiscoveredName(ontDevice.get().getDiscoveredName()).get();
+                            log.error("++++++  ontModel  ++++++" + request.getOntModel());
+                            tempOnt.setDiscoveredName(ontNameNew);
+                            tempOnt.getProperties().put("serialNo", request.getModifyParam1());
+                            tempOnt.getProperties().put("deviceModel", request.getOntModel());
+                            logicalCustomDeviceRepository.save(tempOnt, 2);
+                        }
+
                     }
-                try{
-                    Optional<LogicalDevice> cpeDeviceOldOpt =  logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getOntSN());
-                    Optional<LogicalDevice> cpeDeviceNewOpt =  logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getModifyParam1());
+                }
+                try {
+                    Optional<LogicalDevice> cpeDeviceOldOpt = logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getOntSN());
+                    Optional<LogicalDevice> cpeDeviceNewOpt = logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getModifyParam1());
 
                     LogicalDevice cpeDeviceOld = null;
                     LogicalDevice cpeDeviceNew = null;
 
-                    if(cpeDeviceOldOpt.isPresent() && cpeDeviceNewOpt.isPresent()){
+                    if (cpeDeviceOldOpt.isPresent() && cpeDeviceNewOpt.isPresent()) {
                         cpeDeviceNew = cpeDeviceNewOpt.get();
                         cpeDeviceOld = cpeDeviceOldOpt.get();
-                        String voipPort1 = (cpeDeviceOld.getProperties().get("voipPort1")!=null)?cpeDeviceOld.getProperties().get("voipPort1").toString():"";
-                        String voipPort2 = (cpeDeviceOld.getProperties().get("voipPort2")!=null)?cpeDeviceOld.getProperties().get("voipPort1").toString():"";
-                        Map<String,Object> cpeNewProps = cpeDeviceNew.getProperties();
-                        cpeNewProps.put("AdministrativeState","Allocated");
-                        cpeNewProps.put("description","Internet");
-                        cpeNewProps.put("modelSubType","HFC");
-                        cpeNewProps.put("voipPort1",voipPort1);
-                        cpeNewProps.put("voipPort2",voipPort2);
+                        String voipPort1 = (cpeDeviceOld.getProperties().get("voipPort1") != null) ? cpeDeviceOld.getProperties().get("voipPort1").toString() : "";
+                        String voipPort2 = (cpeDeviceOld.getProperties().get("voipPort2") != null) ? cpeDeviceOld.getProperties().get("voipPort1").toString() : "";
+                        Map<String, Object> cpeNewProps = cpeDeviceNew.getProperties();
+                        cpeNewProps.put("AdministrativeState", "Allocated");
+                        cpeNewProps.put("description", "Internet");
+                        cpeNewProps.put("modelSubType", "HFC");
+                        cpeNewProps.put("voipPort1", voipPort1);
+                        cpeNewProps.put("voipPort2", voipPort2);
                         cpeDeviceNew.setProperties(cpeNewProps);
-                        logicalCustomDeviceRepository.save(cpeDeviceNew,2);
+                        logicalCustomDeviceRepository.save(cpeDeviceNew, 2);
 
                         cpeDeviceOld = logicalCustomDeviceRepository.findByDiscoveredName(cpeDeviceOldOpt.get().getDiscoveredName()).get();
-                        Map<String,Object> cpeOldProps = cpeDeviceOld.getProperties();
-                        cpeOldProps.put("AdministrativeState","Available");
-                        cpeOldProps.put("description","");
-                        cpeOldProps.put("modelSubType","");
-                        cpeOldProps.put("voipPort1","Available");
-                        cpeOldProps.put("voipPort2","Available");
+                        Map<String, Object> cpeOldProps = cpeDeviceOld.getProperties();
+                        cpeOldProps.put("AdministrativeState", "Available");
+                        cpeOldProps.put("description", "");
+                        cpeOldProps.put("modelSubType", "");
+                        cpeOldProps.put("voipPort1", "Available");
+                        cpeOldProps.put("voipPort2", "Available");
                         cpeDeviceOld.setProperties(cpeOldProps);
-                        logicalCustomDeviceRepository.save(cpeDeviceOld,2);
+                        logicalCustomDeviceRepository.save(cpeDeviceOld, 2);
                     }
-                }catch (Exception e){
-                    log.error("Exception while retrieving cpeDevice: "+e.getMessage());
+                } catch (Exception e) {
+                    log.error("Exception while retrieving cpeDevice: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                log.error("Exception occure while processing RFS: "+e.getMessage());
+            } catch (BadRequestException e) {
+                throw new BadRequestException(e.getMessage());
+            }catch (Exception e) {
+                log.error("Exception occure while processing RFS: " + e.getMessage());
                 return false;
             }
             if (flag != "partly") {
@@ -440,36 +454,26 @@ public class ModifySPR implements HttpAction {
     private void updateSubscriptionAndChildren(ModifySPRRequest request,
                                                Subscription subscription,
                                                String newServiceId) throws BadRequestException, AccessForbiddenException {
-        String oldSubscriptionName = request.getSubscriberName() +Constants.UNDER_SCORE + request.getServiceId() +Constants.UNDER_SCORE+ request.getOntSN();
-        String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
-        try {
-            Validations.validateLength(oldSubscriptionName,"Subscription");
-            Validations.validateLength(productName,"Product");
-        }
-        catch (BadRequestException bre){
-            new ModifySPRResponse("400", ERROR_PREFIX + bre.getMessage(),
-                    Instant.now().toString(), "", "");
-            return;
-        }
-
-
+        String oldSubscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getServiceId() + Constants.UNDER_SCORE + request.getOntSN();
+        String productName = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceId();
         String cfsName = "CFS" + Constants.UNDER_SCORE + oldSubscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + oldSubscriptionName;
 
-        String subscriptionNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + newServiceId + Constants.UNDER_SCORE + request.getOntSN();
-        String productNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + request.getProductSubtype()+Constants.UNDER_SCORE + newServiceId;
+        String subscriptionNameNew = request.getSubscriberName() + Constants.UNDER_SCORE + newServiceId + Constants.UNDER_SCORE + request.getOntSN();
+        String productNameNew = request.getSubscriberName() + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + newServiceId;
         try {
-            Validations.validateLength(subscriptionNameNew,"New Subscription");
-            Validations.validateLength(productNameNew,"New Product");
-        }
-        catch (BadRequestException bre){
-            new ModifySPRResponse("400", ERROR_PREFIX + bre.getMessage(),
-                    Instant.now().toString(), "", "");
-            return;
+            Validations.validateLength(subscriptionNameNew, "New Subscription");
+            Validations.validateLength(productNameNew, "New Product");
+        } catch (BadRequestException bre) {
+            throw new BadRequestException(bre.getMessage());
         }
         String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
         String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
-
+        try {
+            Validations.validateLength(productName, "Product");
+        } catch (BadRequestException bre) {
+            throw new BadRequestException("400 " + ERROR_PREFIX + bre.getMessage());
+        }
         productCustomRepository.findByDiscoveredName(productName).ifPresent(product -> {
             product.setDiscoveredName(productNameNew);
             productCustomRepository.save(product, 2);
@@ -477,7 +481,7 @@ public class ModifySPR implements HttpAction {
 
         serviceCustomRepository.findByDiscoveredName(cfsName).ifPresent(cfs -> {
             cfs.setDiscoveredName(cfsNameNew);
-            cfs.getProperties().put("serviceEndDate",getCurrentTimestamp());
+            cfs.getProperties().put("serviceEndDate", getCurrentTimestamp());
             serviceCustomRepository.save(cfs, 2);
         });
 
@@ -493,19 +497,19 @@ public class ModifySPR implements HttpAction {
         tempSubscription.setProperties(subscription.getProperties());
         tempSubscription.setDiscoveredName(subscriptionNameNew);
         subscriptionRepository.save(tempSubscription);
-        if("Modify_Number".equalsIgnoreCase(request.getModifyType())){
-           LogicalDevice cpeDevice = logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getOntSN()).get();
+        if ("Modify_Number".equalsIgnoreCase(request.getModifyType())) {
+            LogicalDevice cpeDevice = logicalCustomDeviceRepository.findByDiscoveredName("ONT_" + request.getOntSN()).get();
 
-            String voipNumber1 = cpeDevice.getProperties().get("voipPort1")!=null?cpeDevice.getProperties().get("voipPort1").toString():"";
-            String voipNumber2 = cpeDevice.getProperties().get("voipPort2")!=null?cpeDevice.getProperties().get("voipPort2").toString():"";
+            String voipNumber1 = cpeDevice.getProperties().get("voipPort1") != null ? cpeDevice.getProperties().get("voipPort1").toString() : "";
+            String voipNumber2 = cpeDevice.getProperties().get("voipPort2") != null ? cpeDevice.getProperties().get("voipPort2").toString() : "";
 
-            if(request.getServiceId().equalsIgnoreCase(voipNumber1)){
-                cpeDevice.getProperties().put("voipPort1",request.getModifyParam1());
+            if (request.getServiceId().equalsIgnoreCase(voipNumber1)) {
+                cpeDevice.getProperties().put("voipPort1", request.getModifyParam1());
 
-            }else if(request.getServiceId().equalsIgnoreCase(voipNumber2)){
-                cpeDevice.getProperties().put("voipPort2",request.getModifyParam1());
+            } else if (request.getServiceId().equalsIgnoreCase(voipNumber2)) {
+                cpeDevice.getProperties().put("voipPort2", request.getModifyParam1());
             }
-            logicalCustomDeviceRepository.save(cpeDevice,2);
+            logicalCustomDeviceRepository.save(cpeDevice, 2);
         }
 
     }
