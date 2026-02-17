@@ -12,5 +12,5 @@ public class ModifySPRResponse {
     private String message;
     private String timestamp;
     private String ontName;
-    private String subscriptionId;
+    private String subscriptionName;
 }

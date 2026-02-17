@@ -1,6 +1,7 @@
 package com.nokia.nsw.uiv.action;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.*;
 
 import com.nokia.nsw.uiv.exception.AccessForbiddenException;
@@ -18,6 +19,7 @@ import com.nokia.nsw.uiv.model.service.Subscription;
 import com.nokia.nsw.uiv.model.service.SubscriptionRepository;
 import com.nokia.nsw.uiv.repository.*;
 import com.nokia.nsw.uiv.request.ModifySPRRequest;
+import com.nokia.nsw.uiv.response.ModifyCBMResponse;
 import com.nokia.nsw.uiv.response.ModifySPRResponse;
 import com.nokia.nsw.uiv.utils.Constants;
 import com.nokia.nsw.uiv.utils.Validations;
@@ -87,10 +89,9 @@ public class ModifySPR implements HttpAction {
             String subscriberName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getOntSN();
             String subscriptionName = request.getSubscriberName() + Constants.UNDER_SCORE  + request.getServiceId() + Constants.UNDER_SCORE  + request.getOntSN();
             String ontName ="ONT" + request.getOntSN();
-
-            if (ontName.length() > 100) {
-                throw new BadRequestException("ONT name too long");
-            }
+            Validations.validateLength(subscriberName,"Subscriber");
+            Validations.validateLength(subscriptionName,"Subscription");
+            Validations.validateLength(ontName,"ONT");
 
             // 3. Fetch Entities
            Optional<Customer>  subscriberOpt = customerRepository.findByDiscoveredName(subscriberName);
@@ -431,11 +432,15 @@ public class ModifySPR implements HttpAction {
                                                String newServiceId) throws BadRequestException, AccessForbiddenException {
         String oldSubscriptionName = request.getSubscriberName() +Constants.UNDER_SCORE + request.getServiceId() +Constants.UNDER_SCORE+ request.getOntSN();
         String productName = request.getSubscriberName()+ Constants.UNDER_SCORE + request.getProductSubtype() +Constants.UNDER_SCORE+ request.getServiceId();
+        Validations.validateLength(oldSubscriptionName,"Subscription");
+        Validations.validateLength(productName,"Product");
         String cfsName = "CFS" + Constants.UNDER_SCORE + oldSubscriptionName;
         String rfsName = "RFS" + Constants.UNDER_SCORE + oldSubscriptionName;
 
         String subscriptionNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + newServiceId + Constants.UNDER_SCORE + request.getOntSN();
         String productNameNew = request.getSubscriberName() +Constants.UNDER_SCORE + request.getProductSubtype()+Constants.UNDER_SCORE + newServiceId;
+        Validations.validateLength(subscriptionNameNew,"New Subscription");
+        Validations.validateLength(productNameNew,"New Product");
         String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
         String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
 
@@ -502,4 +507,5 @@ public class ModifySPR implements HttpAction {
     private String getCurrentTimestamp() {
         return java.time.Instant.now().toString();
     }
+
 }

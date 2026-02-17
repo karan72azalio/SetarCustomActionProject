@@ -56,7 +56,7 @@ public class Validations {
 
     public static void validateLength(String str, String type) throws BadRequestException {
         if (str.length() > 100) {
-            throw new BadRequestException(type + " length is too long");
+            throw new BadRequestException(type + " name too long");
         }
     }
 
