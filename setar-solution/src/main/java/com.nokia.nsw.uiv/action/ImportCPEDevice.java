@@ -69,7 +69,12 @@ public class ImportCPEDevice implements HttpAction {
 
             String devName = request.getCpeType() + Constants.UNDER_SCORE + request.getCpeSerialNo();
             log.error("devName :: {}", devName);
-
+            try {
+                Validations.validateLength(devName, "CPEDevice");
+            } catch (BadRequestException bre) {
+                return new ImportCPEDeviceResponse("400", ERROR_PREFIX + " : " + bre.getMessage(),
+                        Instant.now().toString());
+            }
             Optional<LogicalDevice> optDevice = cpeDeviceRepository.findByDiscoveredName(devName);
             LogicalDevice cpeDevice;
             if (optDevice.isPresent()) {
