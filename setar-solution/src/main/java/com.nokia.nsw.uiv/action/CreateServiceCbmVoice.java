@@ -86,7 +86,7 @@ public class CreateServiceCbmVoice implements HttpAction {
             log.error(Constants.MANDATORY_PARAMS_VALIDATION_COMPLETED);
         } catch (BadRequestException bre) {
             return createErrorResponse(CODE_MISSING_PARAMS,
-                    "Missing mandatory parameter(s): " + bre.getMessage());
+                    bre.getMessage());
         }
         AtomicBoolean isSubscriberExist = new AtomicBoolean(true);
         AtomicBoolean isSubscriptionExist = new AtomicBoolean(true);

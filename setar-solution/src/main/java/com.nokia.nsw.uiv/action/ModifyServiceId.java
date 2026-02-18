@@ -73,9 +73,19 @@ public class ModifyServiceId implements HttpAction {
                         Instant.now().toString()
                 );
             }
-
+            try {
+                Validations.validateLength(req.getServiceId(), "serviceId");
+                Validations.validateLength(req.getServiceIdNew(), "serviceIdNew");
+            } catch (Exception bre) {
+                return new ModifyServiceIdResponse(
+                        "400",
+                        ERROR_PREFIX  + bre.getMessage(),
+                        Instant.now().toString()
+                );
+            }
             String oldServiceId = req.getServiceId();
             String newServiceId = req.getServiceIdNew();
+
             boolean updatesApplied = false;
 
             log.error("------------Test Trace # 3--------------- old=" + oldServiceId + ", new=" + newServiceId);
