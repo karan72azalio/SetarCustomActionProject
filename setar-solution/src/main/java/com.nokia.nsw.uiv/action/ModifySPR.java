@@ -338,10 +338,17 @@ public class ModifySPR implements HttpAction {
                     String subscriptionName = subs.getDiscoveredName();
                     String serviceID = subs.getProperties().get("serviceID") != null ? subs.getProperties().get("serviceID").toString() : "";
                     String subscriptionNameNew = subscriber + Constants.UNDER_SCORE + serviceID + Constants.UNDER_SCORE + request.getModifyParam1();
+                    String productName = subscriber + Constants.UNDER_SCORE + request.getProductSubtype() + Constants.UNDER_SCORE + request.getServiceId();
                     String cfsName = "CFS" + Constants.UNDER_SCORE + subscriptionName;
                     String rfsName = "RFS" + Constants.UNDER_SCORE + subscriptionName;
                     String cfsNameNew = "CFS" + Constants.UNDER_SCORE + subscriptionNameNew;
                     String rfsNameNew = "RFS" + Constants.UNDER_SCORE + subscriptionNameNew;
+                    try {
+                        Validations.validateLength(subscriptionNameNew, "New Subscription");
+                        Validations.validateLength(productName, "New Product");
+                    } catch (BadRequestException bre) {
+                        throw new BadRequestException(bre.getMessage());
+                    }
                     subs.setDiscoveredName(subscriberNewName);
                     subs.getProperties().put("serviceSN", request.getModifyParam1());
                     subs.getProperties().put("gatewayMacAddress", request.getModifyParam2());
