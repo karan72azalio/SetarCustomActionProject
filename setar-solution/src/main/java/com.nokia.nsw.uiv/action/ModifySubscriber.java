@@ -71,8 +71,8 @@ public class ModifySubscriber implements HttpAction {
             String oldSubscriberName = req.getSubscriberNameOld();
             String newSubscriberName = req.getSubscriberName();
             try {
-                Validations.validateLength(oldSubscriberName, "subscriberNameOld");
-                Validations.validateLength(newSubscriberName, "subscriberNameNew");
+                Validations.validateLength(oldSubscriberName, "Existing Subscriber");
+                Validations.validateLength(newSubscriberName, "New Subscriber");
             } catch (Exception bre) {
                 log.error("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
                 return new ModifySubscriberResponse(

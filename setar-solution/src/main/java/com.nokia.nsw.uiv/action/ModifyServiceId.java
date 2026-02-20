@@ -74,8 +74,8 @@ public class ModifyServiceId implements HttpAction {
                 );
             }
             try {
-                Validations.validateLength(req.getServiceId(), "serviceId");
-                Validations.validateLength(req.getServiceIdNew(), "serviceIdNew");
+                Validations.validateLength(req.getServiceId(), "Existing Entity");
+                Validations.validateLength(req.getServiceIdNew(), "New Entity");
             } catch (Exception bre) {
                 return new ModifyServiceIdResponse(
                         "400",
