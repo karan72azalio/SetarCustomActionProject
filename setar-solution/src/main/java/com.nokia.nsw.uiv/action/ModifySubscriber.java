@@ -77,7 +77,7 @@ public class ModifySubscriber implements HttpAction {
                 log.error("------------Test Trace # 2--------------- Missing mandatory param: " + bre.getMessage());
                 return new ModifySubscriberResponse(
                         "400",
-                        ERROR_PREFIX + "Missing mandatory parameter: " + bre.getMessage(),
+                        ERROR_PREFIX + bre.getMessage(),
                         Instant.now().toString()
                 );
             }
